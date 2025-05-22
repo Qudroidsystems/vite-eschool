@@ -7,37 +7,36 @@ use App\Models\Schoolterm;
 
 class SchooltermController extends Controller
 {
-
-
-    function __construct()
+    public function __construct()
     {
-         $this->middleware('permission:term-list|term-create|term-edit|term-delete', ['only' => ['index','store']]);
-         $this->middleware('permission:term-create', ['only' => ['create','store']]);
-         $this->middleware('permission:term-edit', ['only' => ['edit','update','updateterm']]);
-         $this->middleware('permission:term-delete', ['only' => ['destroy','deleteterm']]);
+        $this->middleware('permission:View term|Create term|Update term|Delete term', ['only' => ['index']]);
+        $this->middleware('permission:Create term', ['only' => ['store']]);
+        $this->middleware('permission:Update term', ['only' => ['update', 'updateterm']]);
+        $this->middleware('permission:Delete term', ['only' => ['destroy', 'deleteterm']]);
     }
+
     /**
      * Display a listing of the resource.
      *
+     * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        //
-        $terms = Schoolterm::all();
-        return view('term.index')->with('terms',$terms);
+        $pagetitle = "Term Management";
+        $query = Schoolterm::query();
 
-    }
+        if ($request->has('search')) {
+            $query->where('term', 'like', '%' . $request->query('search') . '%');
+        }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-        return view('term.create');
+        $terms = $query->paginate(10);
+
+        if ($request->ajax()) {
+            return response()->json(['terms' => $terms->items()]);
+        }
+
+        return view('term.index')->with('terms', $terms)->with('pagetitle', $pagetitle);
     }
 
     /**
@@ -48,43 +47,15 @@ class SchooltermController extends Controller
      */
     public function store(Request $request)
     {
-        //
-        $input = $request->all();
-        $checkterm = Schoolterm::where('term',$request->input('term'))->exists();
-        if($checkterm){
-            return redirect()->route('term.index')
-            ->with('danger', 'Ooops, Term is already taken');
+        $request->validate(['term' => 'required|string|max:255']);
 
-        }else{
-            Schoolterm::create($input);
-            return redirect()->route('term.index')
-            ->with('success', 'Term has been Created Successfuly');
+        $checkterm = Schoolterm::where('term', $request->input('term'))->exists();
+        if ($checkterm) {
+            return response()->json(['success' => false, 'message' => 'Term is already taken'], 422);
         }
-    }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-        $term = Schoolterm::find($id);
-
-        return view('term.edit')->with('term',$term);
+        Schoolterm::create($request->only('term'));
+        return response()->json(['success' => true, 'message' => 'Term has been created successfully']);
     }
 
     /**
@@ -96,49 +67,41 @@ class SchooltermController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $request->validate(['term' => 'required|string|max:255']);
 
-        $checkterm = Schoolterm::where('term',$request->input('term'))->exists();
-        if($checkterm){
-            return redirect()->route('create.index')
-            ->with('danger', 'Ooops, Term is already taken');
-
-        }else{
-
-            $term = Schoolterm::find($id);
-            $input= $request->all();
-            $term->update($input);
-            return redirect()->route('create.index')
-            ->with('success', 'Term has been Edited Successfuly');
+        $checkterm = Schoolterm::where('term', $request->input('term'))->where('id', '!=', $id)->exists();
+        if ($checkterm) {
+            return response()->json(['success' => false, 'message' => 'Term is already taken'], 422);
         }
 
-
-
-
+        $term = Schoolterm::findOrFail($id);
+        $term->update($request->only('term'));
+        return response()->json(['success' => true, 'message' => 'Term has been updated successfully']);
     }
 
-
+    /**
+     * Update term via AJAX.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function updateterm(Request $request)
     {
+        $request->validate([
+            'id' => 'required|exists:schoolterms,id',
+            'term' => 'required|string|max:255'
+        ]);
 
-            //echo $request->id;
-        $checkterm = Schoolterm::where('term',$request->input('term'))->exists();
-        if($checkterm){
-            return redirect()->route('term.index')
-            ->with('danger', 'Ooops, Term is already taken');
-
-        }else{
-
-            $term = Schoolterm::find($request->id);
-            $input= $request->all();
-            $term->update($input);
-            return redirect()->route('term.index')
-            ->with('success', 'Term has been Edited Successfuly');
+        $checkterm = Schoolterm::where('term', $request->input('term'))->where('id', '!=', $request->id)->exists();
+        if ($checkterm) {
+            return response()->json(['success' => false, 'message' => 'Term is already taken'], 422);
         }
 
-
-
+        $term = Schoolterm::findOrFail($request->id);
+        $term->update($request->only('term'));
+        return response()->json(['success' => true, 'message' => 'Term has been updated successfully']);
     }
+
     /**
      * Remove the specified resource from storage.
      *
@@ -147,31 +110,22 @@ class SchooltermController extends Controller
      */
     public function destroy($id)
     {
-        //
-        Schoolterm::find($id)->delete();
-
-        return redirect()->route('term.index')
-            ->with('success', 'School Term deleted successfully.');
+        $term = Schoolterm::findOrFail($id);
+        $term->delete();
+        return response()->json(['success' => true, 'message' => 'Term has been deleted successfully']);
     }
 
-
+    /**
+     * Delete term via AJAX.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function deleteterm(Request $request)
     {
-        Schoolterm::find($request->termid)->delete();
-        //check data deleted or not
-        if ($request->termid) {
-            $success = true;
-            $message = "Term has been removed";
-        } else {
-            $success = true;
-            $message = "Term not found";
-        }
-
-        //  return response
-        return response()->json([
-            'success' => $success,
-            'message' => $message,
-        ]);
-
+        $request->validate(['termid' => 'required|exists:schoolterms,id']);
+        $term = Schoolterm::findOrFail($request->termid);
+        $term->delete();
+        return response()->json(['success' => true, 'message' => 'Term has been deleted successfully']);
     }
 }

@@ -67,7 +67,7 @@
                         <div class="card">
                             <div class="card-header d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">Session <span class="badge bg-dark-subtle text-dark ms-1">{{ $data->total() }}</span></h5>
+                                    <h5 class="card-title mb-0">Session <span class="badge bg-dark-subtle text-dark ms-1">{{ $sessions->total() }}</span></h5>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
@@ -91,7 +91,7 @@
                                             </tr>
                                         </thead>
                                         <tbody class="list form-check-all">
-                                            @forelse ($data as $session)
+                                            @forelse ($sessions as $session)
                                                 <tr>
                                                     <td class="id" data-id="{{ $session->id }}">
                                                         <div class="form-check">
@@ -124,22 +124,22 @@
                                 <div class="row mt-3 align-items-center" id="pagination-element">
                                     <div class="col-sm">
                                         <div class="text-muted text-center text-sm-start">
-                                            Showing <span class="fw-semibold">{{ $data->count() }}</span> of <span class="fw-semibold">{{ $data->total() }}</span> Results
+                                            Showing <span class="fw-semibold">{{ $sessions->count() }}</span> of <span class="fw-semibold">{{ $sessions->total() }}</span> Results
                                         </div>
                                     </div>
                                     <div class="col-sm-auto mt-3 mt-sm-0">
                                         <div class="pagination-wrap hstack gap-2 justify-content-center">
-                                            <a class="page-item pagination-prev {{ $data->onFirstPage() ? 'disabled' : '' }}" href="{{ $data->previousPageUrl() }}">
+                                            <a class="page-item pagination-prev {{ $sessions->onFirstPage() ? 'disabled' : '' }}" href="{{ $sessions->previousPageUrl() }}">
                                                 <i class="mdi mdi-chevron-left align-middle"></i>
                                             </a>
                                             <ul class="pagination listjs-pagination mb-0">
-                                                @foreach ($data->links()->elements[0] as $page => $url)
-                                                    <li class="page-item {{ $data->currentPage() == $page ? 'active' : '' }}">
+                                                @foreach ($sessions->links()->elements[0] as $page => $url)
+                                                    <li class="page-item {{ $sessions->currentPage() == $page ? 'active' : '' }}">
                                                         <a class="page-link" href="{{ $url }}">{{ $page }}</a>
                                                     </li>
                                                 @endforeach
                                             </ul>
-                                            <a class="page-item pagination-next {{ $data->hasMorePages() ? '' : 'disabled' }}" href="{{ $data->nextPageUrl() }}">
+                                            <a class="page-item pagination-next {{ $sessions->hasMorePages() ? '' : 'disabled' }}" href="{{ $sessions->nextPageUrl() }}">
                                                 <i class="mdi mdi-chevron-right align-middle"></i>
                                             </a>
                                         </div>
@@ -152,7 +152,7 @@
             </div>
         </div>
 
-        <!-- Add Session Modal -->
+                        <!-- Add Session Modal -->
             <div id="addSessionModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
@@ -160,7 +160,7 @@
                             <h5 id="exampleModalLabel" class="modal-title">Add Session</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <form class="tablelist-form" autocomplete="off" id="add-user-form">
+                        <form class="tablelist-form" autocomplete="off" id="add-session-form">
                             <div class="modal-body">
                                 <input type="hidden" id="add-id-field" name="id">
                                 <div class="mb-3">
@@ -186,17 +186,15 @@
                 </div>
             </div>
 
-
-
         <!-- Edit Session Modal -->
         <div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 id="exampleModalLabel" class="modal-title">Edit Session</h5>
+                        <h5 id="editModalLabel" class="modal-title">Edit Session</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form class="tablelist-form" autocomplete="off" id="edit-user-form">
+                    <form class="tablelist-form" autocomplete="off" id="edit-session-form">
                         <div class="modal-body">
                             <input type="hidden" id="edit-id-field" name="id">
                             <div class="mb-3">
@@ -204,49 +202,40 @@
                                 <input type="text" name="session" id="edit-session" class="form-control" placeholder="Enter session name" required>
                             </div>
                             <div class="mb-3">
-                                <label for="edit-status" class="form-label">Select Status</label>
-                                <select name="status" id="edit-status" class="form-control form-control-solid mb-3 mb-lg-0" required>
+                                <label for="edit-sessionstatus" class="form-label">Select Status</label>
+                                <select name="sessionstatus" id="edit-sessionstatus" class="form-control" required>
                                     <option value="" selected>Select Session Status</option>
                                     <option value="Current">Current</option>
                                     <option value="Past">Past</option>
                                 </select>
                             </div>
-                            <div class="alert alert-danger d-none" id="alert-error-msg"></div>
+                            <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary" id="add-btn">Update Session</button>
+                            <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- Delete Session Modal -->
-        <div id="deleteRecordModal" class="modal fade zoomIn" tabindex="-1" aria-hidden="true">
+        <!-- Delete Confirmation Modal -->
+        <div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="btn-close" id="deleteRecord-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-body text-center">
+                        <h4>Are you sure?</h4>
+                        <p>You won't be able to revert this!</p>
                     </div>
-                    <div class="modal-body p-md-5">
-                        <div class="text-center">
-                            <div class="text-danger">
-                                <i class="bi bi-trash display-4"></i>
-                            </div>
-                            <div class="mt-4">
-                                <h3 class="mb-2">Are you sure?</h3>
-                                <p class="text-muted fs-lg mx-3 mb-0">Are you sure you want to remove this record?</p>
-                            </div>
-                        </div>
-                        <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
-                            <button type="button" class="btn w-sm btn-light btn-hover" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn w-sm btn-danger btn-hover" id="delete-record">Yes, Delete It!</button>
-                        </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-danger" id="delete-record">Delete</button>
                     </div>
                 </div>
             </div>
         </div>
+
     </div>
     <!-- End Page-content -->
 

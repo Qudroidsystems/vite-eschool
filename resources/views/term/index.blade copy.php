@@ -1,10 +1,6 @@
 @extends('layouts.master')
 @section('content')
-<?php
-use Spatie\Permission\Models\Permission;
-use App\Models\User;
-use Spatie\Permission\Models\Role;
-?>
+
             <!--begin::Main-->
             <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
                 <!--begin::Content wrapper-->
@@ -29,7 +25,7 @@ use Spatie\Permission\Models\Role;
                                     <ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
                                                         <!--begin::Item-->
                                                         <li class="breadcrumb-item text-muted">
-                                                            <a href="{{ route('session.index') }}" class="text-muted text-hover-primary">School Session </a>
+                                                            <a href="{{ route('term.index') }}" class="text-muted text-hover-primary">School Session </a>
                                                                         </li>
                                                             <!--end::Item-->
                                                                 <!--begin::Item-->
@@ -47,27 +43,27 @@ use Spatie\Permission\Models\Role;
                                 </div>
                             <!--end::Page title-->
                                 @if ($errors->any())
-                                    <div class="alert alert-danger">
-                                        <strong>Whoops!</strong> There were some problems with your input.<br><br>
-                                        <ul>
-                                            @foreach ($errors->all() as $error)
-                                                <li>{{ $error }}</li>
-                                            @endforeach
-                                        </ul>
-                                    </div>
+                                <div class="alert alert-danger">
+                                    <strong>Whoops!</strong> There were some problems with your input.<br><br>
+                                    <ul>
+                                        @foreach ($errors->all() as $error)
+                                            <li>{{ $error }}</li>
+                                        @endforeach
+                                    </ul>
+                                </div>
                                 @endif
 
                                 @if (\Session::has('status'))
-                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                        {{ \Session::get('status') }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                        </div>
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                {{ \Session::get('status') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
                                 @endif
                                 @if (\Session::has('success'))
-                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                        {{ \Session::get('success') }}
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                        </div>
+                                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                {{ \Session::get('success') }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                </div>
                                 @endif
 
                             </div>
@@ -84,7 +80,7 @@ use Spatie\Permission\Models\Role;
                         <div class="d-flex flex-wrap flex-stack my-5">
                             <!--begin::Heading-->
                             <h2 class="fs-2 fw-semibold my-2">
-                                Session
+                                Term
                                 <span class="fs-6 text-gray-400 ms-1">Database</span>
                             </h2>
                             <!--end::Heading-->
@@ -104,13 +100,11 @@ use Spatie\Permission\Models\Role;
                     <div class="card-toolbar">
                               <!--begin::Toolbar-->
                                     <div class="d-flex justify-content-end" data-kt-user-table-toolbar="base">
-                                        @can('session-create')
                                                 <!--begin::Add user-->
                                                 <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#kt_modal_add_user">
-                                                    <i class="ki-duotone ki-plus fs-2"></i>        Create New Session
+                                                    <i class="ki-duotone ki-plus fs-2"></i>       Create New Term
                                                 </button>
                                                 <!--end::Add user-->
-                                        @endcan
                                     </div>
 
                                      <!--begin::Modal - Add task-->
@@ -122,7 +116,7 @@ use Spatie\Permission\Models\Role;
                                                     <!--begin::Modal header-->
                                                     <div class="modal-header" id="kt_modal_add_user_header">
                                                         <!--begin::Modal title-->
-                                                        <h2 class="fw-bold">Create New Session</h2>
+                                                        <h2 class="fw-bold">Create New Term</h2>
                                                         <!--end::Modal title-->
 
                                                         <!--begin::Close-->
@@ -136,7 +130,7 @@ use Spatie\Permission\Models\Role;
                                                     <!--begin::Modal body-->
                                                     <div class="modal-body scroll-y mx-5 mx-xl-15 my-7">
                                                         <!--begin::Form-->
-                                                        <form id="kt_modal_add_user_form" class="form" action="{{ route('session.store') }}" method="POST">
+                                                        <form id="kt_modal_add_user_form" class="form" action="{{ route('term.store') }}" method="POST">
                                                             @csrf
                                                             <!--begin::Scroll-->
                                                             <div class="d-flex flex-column scroll-y me-n7 pe-7" id="kt_modal_add_user_scroll" data-kt-scroll="true" data-kt-scroll-activate="{default: false, lg: true}" data-kt-scroll-max-height="auto" data-kt-scroll-dependencies="#kt_modal_add_user_header" data-kt-scroll-wrappers="#kt_modal_add_user_scroll" data-kt-scroll-offset="300px">
@@ -145,36 +139,15 @@ use Spatie\Permission\Models\Role;
                                                                 <!--begin::Input group-->
                                                                 <div class="fv-row mb-7">
                                                                     <!--begin::Label-->
-                                                                    <label class="required fw-semibold fs-6 mb-2">Session Name</label>
+                                                                    <label class="required fw-semibold fs-6 mb-2">Term Name</label>
                                                                     <!--end::Label-->
 
                                                                     <!--begin::Input-->
-                                                                    <input type="text" name="session" id="session" class="form-control form-control-solid mb-3 mb-lg-0" placeholder="Session"  />
+                                                                    <input type="text" name="term" id="term" class="form-control form-control-solid mb-3 mb-lg-0" placeholder="Term ..."  />
                                                                     <!--end::Input-->
                                                                 </div>
                                                                 <!--end::Input group-->
 
-
-                                                                <!--begin::Input group-->
-                                                                <div class="mb-7">
-                                                                    <!--begin::Label-->
-                                                                    <label class="required fw-semibold fs-6 mb-5">Select Status</label>
-                                                                    <!--end::Label-->
-                                                                            <!--begin::Input row-->
-                                                                            <div class="fv-row mb-7">
-
-                                                                                    <!--begin::Input-->
-                                                                                    <select name ="status" id="status" class="form-control form-control-solid mb-3 mb-lg-0"  >
-                                                                                        <option value="" selected>Select Session Status</option>
-                                                                                        <option value="Current">Current</option>
-                                                                                        <option value="Past">Past</option>
-                                                                                    </select>
-                                                                                    <!--end::Input-->
-
-                                                                            </div>
-                                                                            <!--end::Input row-->
-                                                                        </div>
-                                                                        <!--end::Input group-->
 
 
 
@@ -218,7 +191,7 @@ use Spatie\Permission\Models\Role;
                                                     <!--begin::Modal header-->
                                                     <div class="modal-header">
                                                         <!--begin::Modal title-->
-                                                        <h2 class="fw-bold">Update Session</h2>
+                                                        <h2 class="fw-bold">Update Term</h2>
                                                         <!--end::Modal title-->
 
                                                         <!--begin::Close-->
@@ -231,42 +204,12 @@ use Spatie\Permission\Models\Role;
                                                     <!--begin::Modal body-->
                                                     <div id="formcontent" class="modal-body scroll-y mx-5 my-7">
                                                         <!--begin::Form-->
-                                                        <form id="kt_modal_update_role_form" class="form" action="{{ route('session.updatesession') }}" method="POST">
+                                                        <form id="kt_modal_update_role_form" class="form" action="{{ route('term.updateterm') }}" method="POST">
                                                             @csrf
 
                                                             <!--begin::Scroll-->
                                                             <div id="content">
-                                                                    {{-- <div class="d-flex flex-column scroll-y me-n7 pe-7" id="kt_modal_update_role_scroll" data-kt-scroll="true" data-kt-scroll-activate="{default: false, lg: true}" data-kt-scroll-max-height="auto" data-kt-scroll-dependencies="#kt_modal_update_role_header" data-kt-scroll-wrappers="#kt_modal_update_role_scroll" data-kt-scroll-offset="300px">
-                                                                        <!--begin::Input group-->
-                                                                        <div class="fv-row mb-10">
-                                                                            <!--begin::Label-->
-                                                                            <label class="fs-5 fw-bold form-label mb-2">
-                                                                                <span class="required">Session name</span>
-                                                                            </label>
-                                                                            <!--end::Label-->
 
-                                                                                <!--begin::Input-->
-                                                                                <input class="form-control form-control-solid" placeholder="Enter Session name"
-                                                                                name="session" id="session" value="" />
-                                                                                <!--end::Input-->
-                                                                        </div>
-                                                                            <!--end::Input group-->
-
-
-                                                                        <!--begin::Input group-->
-                                                                        <div class="fv-row mb-10">
-                                                                            <!--begin::Label-->
-                                                                            <label class="fs-5 fw-bold form-label mb-2">
-                                                                                <span class="required">Session Status</span>
-                                                                            </label>
-                                                                            <!--end::Label-->
-                                                                            <!--begin::Input-->
-                                                                            <input class="form-control form-control-solid" id="status" placeholder="Session Status"
-                                                                            name="status" value="" />
-                                                                            <!--end::Input-->
-                                                                        </div>
-
-                                                                    </div> --}}
                                                             </div>
 
 
@@ -303,7 +246,7 @@ use Spatie\Permission\Models\Role;
 
 
                                     </div>
-                                <!--end::Card toolbar-->
+                                    <!--end::Card toolbar-->
                                             <!--begin::Card toolbar-->
                                             <div class="card-toolbar">
                                                 <!--begin::Search-->
@@ -354,36 +297,34 @@ use Spatie\Permission\Models\Role;
                             <input class="form-check-input" type="checkbox" data-kt-check="true" data-kt-check-target="#kt_roles_view_table .form-check-input" value="1" />
                         </div>
                     </th>
-                    <th class="min-w-125px" style="color: rgb(51, 35, 200)">SN</th>
-                    <th class="min-w-125px" style="color: rgb(51, 35, 200)">Session</th>
-                    <th class="min-w-125px" style="color: rgb(51, 35, 200)">Status</th>
-                    <th class="min-w-125px" style="color: rgb(51, 35, 200)">Date Updated</th>
-                    <th class="min-w-100px" style="color: rgb(51, 35, 200)">Actions</th>
+                    <th class="min-w-125px">SN</th>
+                    <th class="min-w-125px">Term</th>
+
+                    <th class="min-w-125px">Date Updated</th>
+                    <th class="min-w-100px">Actions</th>
                 </tr>
             </thead>
             <tbody class="fw-semibold text-gray-600">
                 @php
                  $i = 0
                @endphp
-            @foreach ($sessions as $session)
+            @foreach ($terms as $term)
 
 
-                    <tr data-url="{{ route('session.destroy',$session->id) }}">
+                    <tr data-url="{{ route('term.destroy',$term->id) }}">
                         <td>
                             <div class="form-check form-check-sm form-check-custom form-check-solid">
                                 <input class="form-check-input" type="checkbox" value="1" />
                             </div>
                         </td>
-                        <td class="sessionid">  <input type="hidden" id="sessid"  value="{{ $session->id }}" />{{ ++$i }}</td>
-                        <td id="session" class="d-flex align-items-center session">
-                            {{ $session->session }}
+                        <td class="termid">  <input type="hidden" id="tid"  value="{{ $term->id }}" />{{ ++$i }}</td>
+                        <td id="term" class="d-flex align-items-center term">
+                            {{ $term->term }}
                         </td>
 
-                        <td id="status" class="status">
-                            {{ $session->status }}
-                        </td>
+
                         <td>
-                            {{  $session->updated_at }}
+                            {{  $term->updated_at }}
                         </td>
                         <td >
                             <a href="#" class="btn btn-light btn-active-light-primary btn-flex btn-center btn-sm" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
@@ -391,15 +332,15 @@ use Spatie\Permission\Models\Role;
                                 <i class="ki-duotone ki-down fs-5 ms-1"></i>                    </a>
                             <!--begin::Menu-->
                                 <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-semibold fs-7 w-125px py-4" data-kt-menu="true">
-                                    @can('session-edit')
+                                    @can('term-edit')
                                         <!--begin::Menu item-->
                                         <div class="menu-item px-3">
 
-                                            <button type="button" class="sel-session btn btn-light btn-active-primary" data-bs-toggle="modal" data-bs-target="#kt_modal_update_role">Edit</button>
+                                            <button type="button" class="sel-term btn btn-light btn-active-primary" data-bs-toggle="modal" data-bs-target="#kt_modal_update_role">Edit</button>
                                         </div>
                                         <!--end::Menu item-->
                                     @endcan
-                                    @can('session-delete')
+                                    @can('term-delete')
                                     <div class="menu-item px-3" >
                                         {{-- <form method="post" class="menu-link px-3" data-kt-roles-table-filter="delete_row" data-route="">
                                           @csrf
@@ -409,7 +350,7 @@ use Spatie\Permission\Models\Role;
                                         href="javascript:void(0)"
                                         id="show-user"
                                         data-kt-roles-table-filter="delete_row"
-                                        data-url="{{ route('session.deletesession', ['sessionid'=>$session->id]) }}"
+                                        data-url="{{ route('term.deleteterm', ['termid'=>$term->id]) }}"
                                         class="btn btn-danger btn-sm">Delete</a>
                                     </div>
                                     <!--end::Menu item-->

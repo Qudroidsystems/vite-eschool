@@ -45,6 +45,16 @@
         @include('layouts.pages-assets.css.session-list-css')
    @endif
 
+   @if (Route::is('term.*'))
+        @include('layouts.pages-assets.css.term-list-css')
+   @endif
+
+   @if (Route::is('schoolhouse.*'))
+         @include('layouts.pages-assets.css.schoolhouse-list-css')
+   @endif
+
+
+
 
        
 
@@ -1612,6 +1622,14 @@
       @if (Route::is('session.*'))
            @include('layouts.pages-assets.js.session-list-js')
       @endif  
+
+      @if (Route::is('term.*'))
+         @include('layouts.pages-assets.js.term-list-js')
+      @endif
+
+      @if (Route::is('schoolhouse.*'))
+         @include('layouts.pages-assets.js.schoolhouse-list-js')
+      @endif
 
 
      
