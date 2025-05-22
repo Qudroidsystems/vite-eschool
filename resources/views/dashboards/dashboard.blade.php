@@ -129,7 +129,7 @@
                                         <input type="text" class="form-control form-control-sm" id="exampleInputPassword1" data-provider="flatpickr" data-range-date="true" data-date-format="d M, Y" data-default-date="01 Feb 2023 to 28 Feb 2023">
                                     </div>
                                 </div>
-                                <div class="card-body">
+                                {{-- <div class="card-body">
                                     <div class="row align-items-center">
                                         <div class="col-lg-3">
                                             <div class="nav flex-column nav-light nav-pills gap-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
@@ -196,12 +196,12 @@
                                             </div>
                                         </div><!--end col-->
                                     </div><!--end row-->
-                                </div>
+                                </div> --}}
                             </div>
                         </div><!--end col-->
                     </div><!--end row-->
 
-                    <div class="row">
+                    {{-- <div class="row">
                         <div class="col-xxl-9">
                             <div class="card" id="propertyList">
                                 <div class="card-header align-items-center d-flex">
@@ -1179,7 +1179,7 @@
                                 </div>
                             </div>
                         </div><!--end col-->
-                    </div><!--end row-->
+                    </div><!--end row--> --}}
 
                 </div>
                 <!-- container-fluid -->
