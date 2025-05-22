@@ -99,7 +99,7 @@
                         </div><!--end col-->
                     </div><!--end row-->
 
-                    <div class="row">
+                    {{-- <div class="row">
                         <div class="col-xxl-4 order-last order-xxl-first">
                             <div class="card">
                                 <div class="card-header d-flex">
@@ -199,7 +199,8 @@
                                 </div>
                             </div>
                         </div><!--end col--> --}}
-                    </div><!--end row-->
+                    </div> --}}
+                    <!--end row-->
 
                     {{-- <div class="row">
                         <div class="col-xxl-9">
