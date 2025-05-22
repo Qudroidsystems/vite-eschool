@@ -120,8 +120,9 @@
                                     <div id="property_type" data-colors='["--tb-primary", "--tb-secondary", "--tb-light","--tb-danger", "--tb-success"]' class="e-charts shadow-none" style="height: 336px;"></div>
                                 </div>
                             </div>
-                        </div><!--end col-->
-                        {{-- <div class="col-xxl-8">
+                        </div>
+                        <!--end col-->
+                        <div class="col-xxl-8">
                             <div class="card">
                                 <div class="card-header d-flex align-items-center">
                                     <h5 class="card-title flex-grow-1 mb-0">Revenue Overview</h5>
@@ -198,7 +199,7 @@
                                     </div><!--end row-->
                                 </div>
                             </div>
-                        </div><!--end col--> --}}
+                        </div><!--end col-->
                     </div> --}}
                     <!--end row-->
 
