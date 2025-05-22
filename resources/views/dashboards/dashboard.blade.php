@@ -121,7 +121,7 @@
                                 </div>
                             </div>
                         </div><!--end col-->
-                        <div class="col-xxl-8">
+                        {{-- <div class="col-xxl-8">
                             <div class="card">
                                 <div class="card-header d-flex align-items-center">
                                     <h5 class="card-title flex-grow-1 mb-0">Revenue Overview</h5>
@@ -129,7 +129,7 @@
                                         <input type="text" class="form-control form-control-sm" id="exampleInputPassword1" data-provider="flatpickr" data-range-date="true" data-date-format="d M, Y" data-default-date="01 Feb 2023 to 28 Feb 2023">
                                     </div>
                                 </div>
-                                {{-- <div class="card-body">
+                                <div class="card-body">
                                     <div class="row align-items-center">
                                         <div class="col-lg-3">
                                             <div class="nav flex-column nav-light nav-pills gap-3" id="v-pills-tab" role="tablist" aria-orientation="vertical">
@@ -196,9 +196,9 @@
                                             </div>
                                         </div><!--end col-->
                                     </div><!--end row-->
-                                </div> --}}
+                                </div>
                             </div>
-                        </div><!--end col-->
+                        </div><!--end col--> --}}
                     </div><!--end row-->
 
                     {{-- <div class="row">
