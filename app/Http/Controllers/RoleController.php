@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
-use App\Models\User;
 use App\Models\BadgeModel;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
-use Illuminate\Support\Facades\DB;
-use Illuminate\View\View;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\View\View;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 class RoleController extends Controller
 {
@@ -285,45 +286,30 @@ class RoleController extends Controller
     }
 
 
-    public function removeUserRole($userid, $roleid)
+  /**
+     * Remove user from role.
+     */
+    public function removeuserrole(Request $request, $userid, $roleid): JsonResponse
     {
-        // Find the user and role
-        $user = User::find($userid);
-        $role = Role::find($roleid);
-    
-        // Check if user and role exist
-        if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User not found',
-            ], 404);
+        \Log::info("Removing user role", ['user_id' => $userid, 'role_id' => $roleid]);
+        try {
+            $user = User::findOrFail($userid);
+            \Log::info("User found", ['user_id' => $userid]);
+            $role = Role::findOrFail($roleid);
+            \Log::info("Role found", ['role_id' => $roleid]);
+            $user->removeRole($role->name);
+            \Log::info("User role removed successfully", ['user_id' => $userid, 'role_id' => $roleid]);
+            return response()->json(['success' => true, 'message' => 'User role removed successfully']);
+        } catch (\Exception $e) {
+            \Log::error("Error removing user role", [
+                'error' => $e->getMessage(),
+                'user_id' => $userid,
+                'role_id' => $roleid,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return response()->json(['message' => 'Error removing user role: ' . $e->getMessage()], 500);
         }
-    
-        if (!$role) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Role not found',
-            ], 404);
-        }
-    
-        // Check if the user has the role
-        if (!$user->hasRole($role->name)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'User does not have this role',
-            ], 400);
-        }
-    
-        // Remove the role
-        $user->removeRole($role->name);
-    
-        // Return success response
-        return response()->json([
-            'success' => true,
-            'message' => 'User role removed successfully',
-        ], 200);
     }
-
 
     // delete user
     public function delete($id)

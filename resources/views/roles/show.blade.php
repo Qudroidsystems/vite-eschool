@@ -333,6 +333,6 @@ use Spatie\Permission\Models\Permission;
             </div> <!-- container-fluid -->
         </div><!-- End Page-content -->
 
-       
+
     </div>
 @endsection

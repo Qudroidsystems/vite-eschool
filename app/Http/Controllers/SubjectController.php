@@ -49,7 +49,7 @@ class SubjectController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'subject' => 'required|unique:subject,subject',
-            'subject_code' => 'required|min:4|unique:subject,subject_code',
+            'subject_code' => 'required|min:3|unique:subject,subject_code',
             'remark' => 'required',
         ], [
             'subject.required' => 'Please enter a subject name!',
