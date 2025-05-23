@@ -27,13 +27,14 @@ class SchoolArmController extends Controller
                   ->orWhere('description', 'like', '%' . $request->query('search') . '%');
         }
 
+        $data = Schoolarm::latest()->paginate(5);
         $all_arms = $query->orderBy('arm')->paginate(30);
 
         if ($request->ajax()) {
             return response()->json(['arms' => $all_arms->items()]);
         }
 
-        return view('arm.index')->with('all_arms', $all_arms)->with('pagetitle', $pagetitle);
+        return view('arm.index')->with('all_arms', $all_arms)->with('data', $data)->with('pagetitle', $pagetitle);
     }
 
     public function store(Request $request)
