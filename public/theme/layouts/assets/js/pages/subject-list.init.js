@@ -82,33 +82,98 @@ function handleCheckboxChange(e) {
     }
 }
 
-// Event delegation for edit and remove buttons
+// Event delegation for edit, remove, and pagination buttons
 document.addEventListener('click', function (e) {
     if (e.target.closest('.edit-item-btn')) {
         handleEditClick(e);
     } else if (e.target.closest('.remove-item-btn')) {
         handleRemoveClick(e);
+    } else if (e.target.closest('.pagination-prev, .pagination-next, .pagination .page-link')) {
+        e.preventDefault();
+        const url = e.target.closest('a').getAttribute('data-url');
+        if (url) fetchPage(url);
     }
 });
+
+// Fetch paginated data
+function fetchPage(url) {
+    if (!url) return;
+    console.log("Fetching page:", url);
+    axios.get(url, {
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+    }).then(function (response) {
+        console.log("Fetch page success:", response.data);
+        document.querySelector("#kt_roles_view_table tbody").innerHTML = response.data.html;
+        document.getElementById("pagination-element").outerHTML = response.data.pagination;
+        if (subjectList) {
+            subjectList.reIndex();
+        }
+        ischeckboxcheck();
+        document.querySelector("#pagination-element .text-muted").innerHTML =
+            `Showing <span class="fw-semibold">${response.data.count}</span> of <span class="fw-semibold">${response.data.total}</span> Results`;
+        // Update noresult display
+        const noResult = document.querySelector(".noresult");
+        const rowCount = document.querySelectorAll("#kt_roles_view_table tbody tr").length;
+        if (noResult) {
+            noResult.style.display = rowCount === 0 ? "block" : "none";
+        }
+    }).catch(function (error) {
+        console.error("Error fetching page:", error);
+        Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "Error loading page",
+            text: error.response?.data?.message || "An error occurred",
+            showConfirmButton: true
+        });
+    });
+}
 
 // Delete single subject
 function handleRemoveClick(e) {
     e.preventDefault();
     var itemId = e.target.closest("tr").querySelector(".id").getAttribute("data-id");
+    var deleteUrl = e.target.closest("tr").getAttribute("data-url");
+    var modal = new bootstrap.Modal(document.getElementById("deleteRecordModal"));
+    modal.show();
+
     var deleteButton = document.getElementById("delete-record");
     if (deleteButton) {
-        deleteButton.addEventListener("click", function () {
-            axios.delete(`/subject/${itemId}`).then(function () {
+        deleteButton.onclick = function () {
+            console.log("Sending DELETE request for subject:", itemId);
+            axios.delete(deleteUrl).then(function (response) {
+                console.log("Delete subject success:", response.data);
                 Swal.fire({
                     position: "center",
                     icon: "success",
-                    title: "Subject deleted successfully!",
+                    title: response.data.message || "Subject deleted successfully!",
                     showConfirmButton: false,
                     timer: 2000,
                     showCloseButton: true
                 });
-                window.location.reload();
+                if (subjectList) {
+                    subjectList.remove("id", itemId);
+                }
+                const row = document.querySelector(`tr[data-id="${itemId}"]`);
+                if (row) row.remove();
+                modal.hide();
+                // Update noresult display
+                const noResult = document.querySelector(".noresult");
+                const rowCount = document.querySelectorAll("#kt_roles_view_table tbody tr").length;
+                if (noResult) {
+                    noResult.style.display = rowCount === 0 ? "block" : "none";
+                } else if (rowCount === 0) {
+                    document.querySelector("#kt_roles_view_table tbody").innerHTML =
+                        '<tr><td colspan="7" class="noresult" style="display: block;">No results found</td></tr>';
+                }
+                // Fetch previous page if table is empty and pagination exists
+                if (rowCount === 0 && document.querySelector("#pagination-element .pagination-prev")) {
+                    const prevUrl = document.querySelector("#pagination-element .pagination-prev").getAttribute("data-url");
+                    console.log("Fetching previous page:", prevUrl);
+                    fetchPage(prevUrl);
+                }
             }).catch(function (error) {
+                console.error("Delete subject error:", error.response);
                 Swal.fire({
                     position: "center",
                     icon: "error",
@@ -116,14 +181,9 @@ function handleRemoveClick(e) {
                     text: error.response?.data?.message || "An error occurred",
                     showConfirmButton: true
                 });
+                modal.hide();
             });
-        }, { once: true });
-    }
-    try {
-        var modal = new bootstrap.Modal(document.getElementById("deleteRecordModal"));
-        modal.show();
-    } catch (error) {
-        console.error("Error opening delete modal:", error);
+        };
     }
 }
 

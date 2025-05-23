@@ -67,7 +67,7 @@
                         <div class="card">
                             <div class="card-header d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">Subjects <span class="badge bg-dark-subtle text-dark ms-1">{{ count($allSubjects) }}</span></h5>
+                                    <h5 class="card-title mb-0">Subjects <span class="badge bg-dark-subtle text-dark ms-1">{{ $subjects->total() }}</span></h5>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
@@ -97,8 +97,8 @@
                                             </tr>
                                         </thead>
                                         <tbody class="fw-semibold text-gray-600 list form-check-all">
-                                            @php $i = 0 @endphp
-                                            @forelse ($allSubjects as $subject)
+                                            @php $i = ($subjects->currentPage() - 1) * $subjects->perPage() @endphp
+                                            @forelse ($subjects as $subject)
                                                 <tr data-url="{{ route('subject.destroy', $subject->id) }}">
                                                     <td class="id" data-id="{{ $subject->id }}">
                                                         <div class="form-check form-check-sm form-check-custom form-check-solid">
@@ -132,6 +132,30 @@
                                             @endforelse
                                         </tbody>
                                     </table>
+                                </div>
+                                <div class="row mt-3 align-items-center" id="pagination-element">
+                                    <div class="col-sm">
+                                        <div class="text-muted text-center text-sm-start">
+                                            Showing <span class="fw-semibold">{{ $subjects->count() }}</span> of <span class="fw-semibold">{{ $subjects->total() }}</span> Results
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-auto mt-3 mt-sm-0">
+                                        <div class="pagination-wrap hstack gap-2 justify-content-center">
+                                            <a class="page-item pagination-prev {{ $subjects->onFirstPage() ? 'disabled' : '' }}" href="javascript:void(0);" data-url="{{ $subjects->previousPageUrl() }}">
+                                                <i class="mdi mdi-chevron-left align-middle"></i>
+                                            </a>
+                                            <ul class="pagination listjs-pagination mb-0">
+                                                @foreach ($subjects->links()->elements[0] as $page => $url)
+                                                    <li class="page-item {{ $subjects->currentPage() == $page ? 'active' : '' }}">
+                                                        <a class="page-link" href="javascript:void(0);" data-url="{{ $url }}">{{ $page }}</a>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                            <a class="page-item pagination-next {{ $subjects->hasMorePages() ? '' : 'disabled' }}" href="javascript:void(0);" data-url="{{ $subjects->nextPageUrl() }}">
+                                                <i class="mdi mdi-chevron-right align-middle"></i>
+                                            </a>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -226,4 +250,5 @@
         <!-- End Page-content -->
     </div>
 </div>
+
 @endsection

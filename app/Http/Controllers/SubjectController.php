@@ -21,12 +21,21 @@ class SubjectController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         $pagetitle = "Subject Management";
-        $all_subjects = Subject::all();
+        $subjects = Subject::paginate(10); // Paginate with 10 items per page
 
-        return view('subject.index')->with('allSubjects', $all_subjects)->with('pagetitle', $pagetitle);
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('subject.partials.table', compact('subjects'))->render(),
+                'pagination' => view('subject.partials.pagination', compact('subjects'))->render(),
+                'count' => $subjects->count(),
+                'total' => $subjects->total(),
+            ]);
+        }
+
+        return view('subject.index', compact('subjects', 'pagetitle'));
     }
 
     /**
