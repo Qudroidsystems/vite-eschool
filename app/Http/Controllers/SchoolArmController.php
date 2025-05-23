@@ -27,7 +27,7 @@ class SchoolArmController extends Controller
                   ->orWhere('description', 'like', '%' . $request->query('search') . '%');
         }
 
-        $all_arms = $query->orderBy('arm')->paginate(10);
+        $all_arms = $query->orderBy('arm')->paginate(30);
 
         if ($request->ajax()) {
             return response()->json(['arms' => $all_arms->items()]);

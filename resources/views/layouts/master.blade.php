@@ -85,7 +85,7 @@
         @include('layouts.pages-assets.css.schoolbill-list-css')
    @endif  
 
-   @if (Route::is('schoolbill.*'))
+   @if (Route::is('schoolbilltermsession.*'))
         @include('layouts.pages-assets.css.schoolbilltermsession-list-css')
    @endif  
 </head>
