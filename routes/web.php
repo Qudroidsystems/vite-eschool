@@ -96,11 +96,6 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/subjectteacherid/{subjectteacherid}', [SubjectTeacherController::class, 'deletesubjectteacher'])->name('subjectteacher.deletesubjectteacher');
     Route::post('subjectteacherid', [SubjectTeacherController::class, 'updatesubjectteacher'])->name('subjectteacher.updatesubjectteacher');
 
-    // Route::resource('classteacher', ClassTeacherController::class);
-    // Route::get('/classteacherid/{classteacherid}', [ClassTeacherController::class, 'deleteclassteacher'])->name('classteacher.deleteclassteacher');
-    // Route::post('classteacherid', [ClassTeacherController::class, 'updateclassteacher'])->name('classteacher.updateclassteacher');
-
-
    Route::resource('classteacher', ClassTeacherController::class);
    Route::delete('classteacher/deleteclassteacher/{classteacherid}', [ClassTeacherController::class, 'deleteclassteacher'])->name('classteacher.deleteclassteacher');
 

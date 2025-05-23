@@ -76,10 +76,18 @@
    @if (Route::is('subjectteacher.*'))
         @include('layouts.pages-assets.css.subjectteacher-list-css')
    @endif   
+
    @if (Route::is('subjectclass.*'))
         @include('layouts.pages-assets.css.subjectclass-list-css')
    @endif   
 
+   @if (Route::is('schoolbill.*'))
+        @include('layouts.pages-assets.css.schoolbill-list-css')
+   @endif  
+
+   @if (Route::is('schoolbill.*'))
+        @include('layouts.pages-assets.css.schoolbilltermsession-list-css')
+   @endif  
 </head>
 
 <body>
@@ -442,11 +450,16 @@
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarBills">
                                 <ul class="nav nav-sm flex-column">
+                                    @can('View schoolbill')
+                                          <li class="nav-item">
+                                            <a href="{{ route('schoolbill.index') }}" class="nav-link" data-key="t-list-view">Bills</a>
+                                          </li>
+                                    @endcan
                                     <li class="nav-item">
-                                        <a href="apps-invoices-list.html" class="nav-link" data-key="t-list-view">Bills</a>
+                                      
                                     </li>
                                     <li class="nav-item">
-                                        <a href="apps-invoices-overview.html" class="nav-link" data-key="t-overview">Appy Bills</a>
+                                        <a href="{{ route('schoolbilltermsession.index') }}" class="nav-link" data-key="t-overview">Appy Bills</a>
                                     </li>
                                 
                                 </ul>
@@ -1699,6 +1712,14 @@
 
       @if (Route::is('subjectclass.*'))
             @include('layouts.pages-assets.js.subjectclass-list-js')
+      @endif
+
+      @if (Route::is('schoolbill.*'))
+            @include('layouts.pages-assets.js.schoolbill-list-js')
+      @endif
+
+      @if (Route::is('schoolbilltermsession.*'))
+            @include('layouts.pages-assets.js.schoolbilltermsession-list-js')
       @endif
       </body>
       
