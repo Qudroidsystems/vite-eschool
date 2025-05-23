@@ -53,10 +53,32 @@
          @include('layouts.pages-assets.css.schoolhouse-list-css')
    @endif
 
+   @if (Route::is('schoolarm.*'))
+       @include('layouts.pages-assets.css.arm-list-css')
+   @endif
 
+   @if (Route::is('classcategories.*'))
+        @include('layouts.pages-assets.css.classcategory-list-css')
+   @endif
 
-
+   @if (Route::is('schoolclass.*'))
+         @include('layouts.pages-assets.css.schoolclass-list-css')
+   @endif
        
+   @if (Route::is('classteacher.*'))
+        @include('layouts.pages-assets.css.classteacher-list-css')
+   @endif
+
+   @if (Route::is('subject.*'))
+       @include('layouts.pages-assets.css.subject-list-css')
+   @endif
+
+   @if (Route::is('subjectteacher.*'))
+        @include('layouts.pages-assets.css.subjectteacher-list-css')
+   @endif   
+   @if (Route::is('subjectclass.*'))
+        @include('layouts.pages-assets.css.subjectclass-list-css')
+   @endif   
 
 </head>
 
@@ -357,18 +379,29 @@
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarClassessettings">
                                 <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="apps-invoices-list.html" class="nav-link" data-key="t-list-view">Class Arm</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="apps-invoices-overview.html" class="nav-link" data-key="t-overview">Class Category</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="apps-invoices-create.html" class="nav-link" data-key="t-create-invoice">Class Name</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="apps-invoices-create.html" class="nav-link" data-key="t-create-invoice">Class Teacher</a>
-                                    </li>
+                                    @can('View school-arm')
+                                         <li class="nav-item">
+                                            <a href="{{ route('schoolarm.index') }}" class="nav-link" data-key="t-list-view">Class Arm</a>
+                                        </li>
+                                    @endcan
+                                   
+                                    @can('View class-category')
+                                        <li class="nav-item">
+                                             <a href="{{ route('classcategories.index') }}" class="nav-link" data-key="t-overview">Class Category</a>
+                                        </li>
+                                    @endcan
+                                    @can('View school-class')
+                                         <li class="nav-item">
+                                            <a href="{{ route('schoolclass.index') }}" class="nav-link" data-key="t-create-invoice">Class Name</a>
+                                         </li>
+                                    @endcan
+                                    @can('View class-teacher')
+                                        <li class="nav-item">
+                                            <a href="{{ route('classteacher.index') }}" class="nav-link" data-key="t-create-invoice">Class Teacher</a>
+                                        </li>
+                                    @endcan
+                                   
+                                    
                                 </ul>
                             </div>
                         </li> 
@@ -380,15 +413,24 @@
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarSub">
                                 <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="apps-invoices-list.html" class="nav-link" data-key="t-list-view">Subject</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="apps-invoices-overview.html" class="nav-link" data-key="t-overview">Assign Subject Teacher</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="apps-invoices-create.html" class="nav-link" data-key="t-create-invoice">Assign Class Subject</a>
-                                    </li>
+                                    @can('View subjects')
+                                          <li class="nav-item">
+                                              <a href="{{ route('subject.index') }}" class="nav-link" data-key="t-list-view">Subject</a>
+                                          </li>
+                                    @endcan
+
+                                    @can('View subject-teacher')
+                                          <li class="nav-item">
+                                            <a href="{{ route('subjectteacher.index') }}" class="nav-link" data-key="t-overview">Assign Subject Teacher</a>
+                                          </li>
+                                    @endcan
+
+                                    @can('View subject-class')
+                                          <li class="nav-item">
+                                            <a href="{{ route('subjectclass.index') }}" class="nav-link" data-key="t-create-invoice">Assign Class Subject</a>
+                                          </li>
+                                    @endcan
+                                
                                 </ul>
                             </div>
                         </li> 
@@ -1631,8 +1673,33 @@
          @include('layouts.pages-assets.js.schoolhouse-list-js')
       @endif
 
+      @if (Route::is('schoolarm.*'))
+          @include('layouts.pages-assets.js.arm-list-js')
+      @endif
 
-     
+      @if (Route::is('classcategories.*'))
+            @include('layouts.pages-assets.js.classcategory-list-js')
+      @endif
+
+      @if (Route::is('schoolclass.*'))
+           @include('layouts.pages-assets.js.schoolclass-list-js')
+      @endif
+
+      @if (Route::is('classteacher.*'))
+            @include('layouts.pages-assets.js.classteacher-list-js')
+      @endif
+
+      @if (Route::is('subject.*'))
+            @include('layouts.pages-assets.js.subject-list-js')
+      @endif
+
+      @if (Route::is('subjectteacher.*'))
+            @include('layouts.pages-assets.js.subjectteacher-list-js')
+      @endif
+
+      @if (Route::is('subjectclass.*'))
+            @include('layouts.pages-assets.js.subjectclass-list-js')
+      @endif
       </body>
       
       </html>

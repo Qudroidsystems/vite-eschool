@@ -2,161 +2,151 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use Illuminate\Http\Request;
 use App\Models\Classcategory;
-use Illuminate\Support\Facades\Validator;
-use PhpOffice\PhpSpreadsheet\Calculation\Category;
+use Illuminate\Support\Facades\Log;
 
 class ClasscategoryController extends Controller
 {
-
-
-    function __construct()
+    public function __construct()
     {
-         $this->middleware('permission:classcategory-list|classcategory-create|classcategory-edit|classcategory-delete', ['only' => ['index','store']]);
-         $this->middleware('permission:classcategory-create', ['only' => ['create','store']]);
-         $this->middleware('permission:classcategory-edit', ['only' => ['edit','update']]);
-         $this->middleware('permission:classcategory-delete', ['only' => ['destroy']]);
-    }
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-
-        $classcategories = Classcategory::all();
-         return view('classcategories.index')->with('classcategories',$classcategories);
-
-
+        $this->middleware('permission:View class-category|Create class-category|Update class-category|Delete class-category', ['only' => ['index']]);
+        $this->middleware('permission:Create class-category', ['only' => ['store']]);
+        $this->middleware('permission:Update class-category', ['only' => ['update', 'updateclasscategory']]);
+        $this->middleware('permission:Delete class-category', ['only' => ['destroy', 'deleteclasscategory']]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
+    public function index(Request $request)
     {
-        //
+        Log::info('Index Class Category Request:', $request->all());
+        $pagetitle = "Class Category Management";
+        $query = Classcategory::query();
+
+        if ($request->has('search')) {
+            $query->where('category', 'like', '%' . $request->query('search') . '%')
+                  ->orWhere('ca1score', 'like', '%' . $request->query('search') . '%')
+                  ->orWhere('ca2score', 'like', '%' . $request->query('search') . '%')
+                  ->orWhere('ca3score', 'like', '%' . $request->query('search') . '%')
+                  ->orWhere('examscore', 'like', '%' . $request->query('search') . '%');
+        }
+
+        $classcategories = $query->orderBy('category')->paginate(10);
+
+        if ($request->ajax()) {
+            return response()->json(['categories' => $classcategories->items()]);
+        }
+
+        return view('classcategories.index')->with('classcategories', $classcategories)->with('pagetitle', $pagetitle);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
-        $classcategories =  classcategory::where('category',$request->category)
-        ->exists();
+        Log::info('Store Class Category Request:', $request->all());
+        $request->validate([
+            'category' => 'required|string|max:255|unique:classcategories,category',
+            'ca1score' => 'required|numeric|min:0',
+            'ca2score' => 'required|numeric|min:0',
+            'ca3score' => 'required|numeric|min:0',
+            'examscore' => 'required|numeric|min:0'
+        ]);
 
-            if($classcategories){
-            return redirect()->back()->with('danger', 'Record already exists');
-            }else{
+        $checkCategory = Classcategory::where('category', $request->input('category'))->exists();
+        if ($checkCategory) {
+            Log::warning('Class category already taken:', ['category' => $request->input('category')]);
+            return response()->json(['success' => false, 'message' => 'Class category is already taken'], 422);
+        }
 
-            $input = $request->all();
-            Classcategory::create($input);
-            return redirect()->back()->with('success', 'Record has been successfully created!');
+        $category = Classcategory::create([
+            'category' => $request->input('category'),
+            'ca1score' => $request->input('ca1score'),
+            'ca2score' => $request->input('ca2score'),
+            'ca3score' => $request->input('ca3score'),
+            'examscore' => $request->input('examscore')
+        ]);
+        Log::info('Class Category Created:', $category->toArray());
 
-}
+        return response()->json(['success' => true, 'message' => 'Class category has been created successfully']);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-
-
-        $cat = Classcategory::find($id);
-        return View('classcategories.edit')->with('cat',$cat);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
-        $input = $request->all();
-        $sclass = classcategory::find($id);
-        $sclass->update($input);
+        Log::info('Update Class Category Request:', ['id' => $id, 'data' => $request->all()]);
+        $request->validate([
+            'category' => "required|string|max:255|unique:classcategories,category,$id",
+            'ca1score' => 'required|numeric|min:0',
+            'ca2score' => 'required|numeric|min:0',
+            'ca3score' => 'required|numeric|min:0',
+            'examscore' => 'required|numeric|min:0'
+        ]);
 
-        return redirect()->route('classcategories.index')
-            ->with('success', 'Class category updated successfully.');
+        $checkCategory = Classcategory::where('category', $request->input('category'))->where('id', '!=', $id)->exists();
+        if ($checkCategory) {
+            Log::warning('Class category already taken:', ['category' => $request->input('category')]);
+            return response()->json(['success' => false, 'message' => 'Class category is already taken'], 422);
+        }
+
+        $category = Classcategory::findOrFail($id);
+        $category->update([
+            'category' => $request->input('category'),
+            'ca1score' => $request->input('ca1score'),
+            'ca2score' => $request->input('ca2score'),
+            'ca3score' => $request->input('ca3score'),
+            'examscore' => $request->input('examscore')
+        ]);
+        Log::info('Class Category Updated:', $category->toArray());
+
+        return response()->json(['success' => true, 'message' => 'Class category has been updated successfully']);
     }
 
-    public function updateclasscategory(Request $request)
-    {
-        $this->Validate($request, [
-           // 'category' => 'required|numeric',
-            'ca1score' => 'required|numeric',
-            'ca2score' => 'required|numeric',
-            'ca3score' => 'required|numeric',
-            'examscore' => 'required|numeric',
-
-        ]
-    );
-
-
-        $input = $request->all();
-        $sclass = classcategory::find($request->id);
-        $sclass->update($input);
-
-        return redirect()->route('classcategories.index')
-            ->with('success', 'Class category updated successfully.');
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
-        //
+        Log::info('Delete Class Category Request:', ['id' => $id]);
+        $category = Classcategory::findOrFail($id);
+        $category->delete();
+        Log::info('Class Category Deleted:', ['id' => $id]);
+
+        return response()->json(['success' => true, 'message' => 'Class category has been deleted successfully']);
     }
 
     public function deleteclasscategory(Request $request)
     {
-        classcategory::find($request->classcategoryid)->delete();
-        //check data deleted or not
-        if ($request->classcategoryid) {
-            $success = true;
-            $message = "Class Category has been removed";
-        } else {
-            $success = true;
-            $message = "Class Category not found";
-        }
+        Log::info('Delete Class Category AJAX Request:', $request->all());
+        $request->validate(['classcategoryid' => 'required|exists:classcategories,id']);
+        $category = Classcategory::findOrFail($request->classcategoryid);
+        $category->delete();
+        Log::info('Class Category Deleted via AJAX:', ['id' => $request->classcategoryid]);
 
-        //  return response
-        return response()->json([
-            'success' => $success,
-            'message' => $message,
-        ]);
-
+        return response()->json(['success' => true, 'message' => 'Class category has been deleted successfully']);
     }
 
+    public function updateclasscategory(Request $request)
+    {
+        Log::info('Update Class Category AJAX Request:', $request->all());
+        $request->validate([
+            'id' => 'required|exists:classcategories,id',
+            'category' => "required|string|max:255|unique:classcategories,category,{$request->id}",
+            'ca1score' => 'required|numeric|min:0',
+            'ca2score' => 'required|numeric|min:0',
+            'ca3score' => 'required|numeric|min:0',
+            'examscore' => 'required|numeric|min:0'
+        ]);
+
+        $checkCategory = Classcategory::where('category', $request->input('category'))->where('id', '!=', $request->id)->exists();
+        if ($checkCategory) {
+            Log::warning('Class category already taken:', ['category' => $request->input('category')]);
+            return response()->json(['success' => false, 'message' => 'Class category is already taken'], 422);
+        }
+
+        $category = Classcategory::findOrFail($request->id);
+        $category->update([
+            'category' => $request->input('category'),
+            'ca1score' => $request->input('ca1score'),
+            'ca2score' => $request->input('ca2score'),
+            'ca3score' => $request->input('ca3score'),
+            'examscore' => $request->input('examscore')
+        ]);
+        Log::info('Class Category Updated via AJAX:', $category->toArray());
+
+        return response()->json(['success' => true, 'message' => 'Class category has been updated successfully']);
+    }
 }

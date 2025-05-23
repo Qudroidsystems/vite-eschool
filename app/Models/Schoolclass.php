@@ -10,9 +10,17 @@ class Schoolclass extends Model
     use HasFactory;
     protected $table = "schoolclass";
 
-    protected $fillable = [
-        'schoolclass',
-        'arm',
-        'classcategoryid',
-    ];
+    protected $fillable = ['schoolclass','arm','classcategoryid'];
+
+
+
+    public function armRelation()
+    {
+        return $this->belongsTo(Schoolarm::class, 'arm', 'id');
+    }
+
+    public function classcategory()
+    {
+        return $this->belongsTo(Classcategory::class, 'classcategoryid', 'id');
+    }
 }

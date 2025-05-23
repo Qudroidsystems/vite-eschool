@@ -15,22 +15,13 @@ use App\Models\SubjectRegistrationStatus;
 
 class SubjectTeacherController extends Controller
 {
-
-
-
-
-
-    function __construct()
+    public function __construct()
     {
-        //ini_set('memory_limit','15024M');
-         $this->middleware('permission:subject_teacher-list|subject_teacher-assign|subject_teacher-edit|subject_teacher-delete', ['only' => ['index','store']]);
-         $this->middleware('permission:subject_teacher-assign', ['only' => ['create','store']]);
-         $this->middleware('permission:subject_teacher-edit', ['only' => ['edit','update','updatesubjectteacher']]);
-         $this->middleware('permission:subject_teacher-delete', ['only' => ['destroy','destroysubjectteacher']]);
+        $this->middleware('permission:View subject-teacher|Create subject-teacher|Update subject-teacher|Delete subject-teacher', ['only' => ['index', 'store']]);
+        $this->middleware('permission:Create subject-teacher', ['only' => ['create', 'store']]);
+        $this->middleware('permission:Update subject-teacher', ['only' => ['edit', 'update', 'updatesubjectteacher']]);
+        $this->middleware('permission:Delete subject-teacher', ['only' => ['destroy', 'deletesubjectteacher']]);
     }
-
-
-
 
     /**
      * Display a listing of the resource.
@@ -39,51 +30,41 @@ class SubjectTeacherController extends Controller
      */
     public function index()
     {
-        //
+        $pagetitle = "Subject Teacher Management";
 
         $schoolterms = Schoolterm::all();
         $schoolsessions = Schoolsession::all();
         $subjects = Subject::all();
-        $staffs = User::whereHas('roles', function($q){ $q->where('name', '!=','Student'); })
-        ->get(['users.id as userid','users.name as name','users.avatar as avatar']);
-
-
-        // $subjectteachers = SubjectTeacher::leftJoin('users', 'users.id','=','subjectteacher.staffid')
-        // ->leftJoin('subject', 'subject.id','=','subjectteacher.subjectid')
-        // ->leftJoin('schoolterm', 'schoolterm.id','=','subjectteacher.termid')
-        // ->leftJoin('schoolsession', 'schoolsession.id','=','subjectteacher.sessionid')
-        // ->get(['subjectteacher.id as id','users.id as userid','users.name as staffname','users.avatar as avatar','subject.subject as subjectname',
-        // 'subject.subject_code as subjectcode',
-        // 'schoolterm.term as termname','schoolsession.session as sessionname','subjectteacher.updated_at as date']);
-
+        $staffs = User::whereHas('roles', function ($q) {
+            $q->where('name', '!=', 'Student');
+        })->get(['users.id as userid', 'users.name as name', 'users.avatar as avatar']);
 
         $subjectteachers = SubjectTeacher::leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
             ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
-           //->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
+            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
             ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
-            ->selectRaw('subjectteacher.subjectid, subjectteacher.sessionid,
-                        GROUP_CONCAT(DISTINCT users.id) as userids,
-                        GROUP_CONCAT(DISTINCT users.name SEPARATOR ", ") as staffnames,
-                        GROUP_CONCAT(DISTINCT users.avatar SEPARATOR ", ") as avatars,
-                        subject.subject as subjectname, subject.subject_code as subjectcode,
-                        schoolsession.session as sessionname,
-                        COUNT(subjectteacher.id) as id,
-                        MAX(subjectteacher.updated_at) as date')
-            ->groupBy('subjectteacher.subjectid',
-                        'subjectteacher.sessionid',
-                        'subject.subject',
-                        'subject.subject_code',
-                        'schoolsession.session')
-            ->get();
+            ->get([
+                'subjectteacher.id as id',
+                'users.id as userid',
+                'users.name as staffname',
+                'users.avatar as avatar',
+                'subject.id as subjectid',
+                'subject.subject as subjectname',
+                'subject.subject_code as subjectcode',
+                'schoolterm.id as termid',
+                'schoolterm.term as termname',
+                'schoolsession.id as sessionid',
+                'schoolsession.session as sessionname',
+                'subjectteacher.updated_at' // Use updated_at directly
+            ]);
 
-
-    return view('subjectteacher.index')->with('subjectteacher',$subjectteachers)
-                    ->with('success', 'Welcome To Subject Teacher Management Account')
-                    ->with('terms',$schoolterms)
-                    ->with('schoolsessions',$schoolsessions)
-                    ->with('staffs',$staffs)
-                    ->with('subjects',$subjects);
-
+        return view('subjectteacher.index')
+            ->with('subjectteacher', $subjectteachers)
+            ->with('terms', $schoolterms)
+            ->with('schoolsessions', $schoolsessions)
+            ->with('staffs', $staffs)
+            ->with('subjects', $subjects)
+            ->with('pagetitle', $pagetitle);
     }
 
     /**
@@ -93,92 +74,76 @@ class SubjectTeacherController extends Controller
      */
     public function create()
     {
-        //
         $schoolterms = Schoolterm::all();
         $schoolsessions = Schoolsession::all();
         $subjects = Subject::all();
-        $staffs = User::whereHas('roles', function($q){ $q->where('name', '!=','Student'); })
-        ->get(['users.id as userid','users.name as name']);
+        $staffs = User::whereHas('roles', function ($q) {
+            $q->where('name', '!=', 'Student');
+        })->get(['users.id as userid', 'users.name as name']);
 
         return view('subjectteacher.create')
-                    ->with('terms',$schoolterms)
-                    ->with('schoolsessions',$schoolsessions)
-                    ->with('staffs',$staffs)
-                    ->with('subjects',$subjects);
+            ->with('terms', $schoolterms)
+            ->with('schoolsessions', $schoolsessions)
+            ->with('staffs', $staffs)
+            ->with('subjects', $subjects);
     }
 
     /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
-        //
-        echo $request->termid;
+        $validator = Validator::make($request->all(), [
+            'staffid' => 'required|exists:users,id',
+            'subjectid' => 'required|exists:subject,id',
+            'termid' => 'required|exists:schoolterm,id',
+            'sessionid' => 'required|exists:schoolsession,id',
+        ], [
+            'staffid.required' => 'Please select a subject teacher!',
+            'staffid.exists' => 'Selected teacher does not exist!',
+            'subjectid.required' => 'Please select a subject!',
+            'subjectid.exists' => 'Selected subject does not exist!',
+            'termid.required' => 'Please select a term!',
+            'termid.exists' => 'Selected term does not exist!',
+            'sessionid.required' => 'Please select a session!',
+            'sessionid.exists' => 'Selected session does not exist!',
+        ]);
 
-            $validator = Validator::make($request->all(), [
-                'staffid' => 'required',
-                'subjectid' => 'required',
-                'termid' => 'required',
-                'sessionid'=>'required',
-            ],
-            ['staffid.required'=>'Select a Subject Teacher!',
-            'subjectid.required'=>'Select a subject !',
-            'termid.required'=>'Select School Term',
-            'session.required'=>'Select School Session!',
-            ]
-                );
-                if ($validator->fails()) {
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
-                    return redirect()->back()->withErrors($validator)
-                                            ->withInput();
+        $exists = SubjectTeacher::where('staffid', $request->input('staffid'))
+            ->where('subjectid', $request->input('subjectid'))
+            ->where('termid', $request->input('termid'))
+            ->where('sessionid', $request->input('sessionid'))
+            ->exists();
 
-                }
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This teacher is already assigned to the selected subject, term, and session.'
+            ], 422);
+        }
 
+        $subjectteacher = SubjectTeacher::create([
+            'staffid' => $request->input('staffid'),
+            'subjectid' => $request->input('subjectid'),
+            'termid' => $request->input('termid'),
+            'sessionid' => $request->input('sessionid'),
+        ]);
 
-
-            for ($i = 1; $i < 4; $i++) {
-                // Check if the record already exists for this staff, subject, term, and session
-                $subjectteachercheck = Subjectteacher::where('staffid', $request->staffid)
-                    ->where('subjectid', $request->subjectid)
-                    ->where('termid', $i) // Include the term in the check
-                    ->where('sessionid', $request->sessionid)
-                    ->exists();
-
-                if ($subjectteachercheck) {
-                    // Return an error if the record already exists for any term
-                    return redirect()->back()->with('danger', "Ooops! Record already exists for term ID: $i!");
-                }
-
-                // Create a new SubjectTeacher instance if the record doesn't exist
-                $subt = new SubjectTeacher();
-                $subt->staffid = $request->staffid;
-                $subt->subjectid = $request->subjectid;
-                $subt->termid = $i; // Current term ID from the loop
-                $subt->sessionid = $request->sessionid;
-                $subt->save();
-
-
-
-            }
-
-            // Return a success message
-            return redirect()->back()->with('success', 'Subject Teacher has been created successfully!');
-
-
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
+        return response()->json([
+            'success' => true,
+            'message' => 'Subject Teacher added successfully.',
+            'data' => $subjectteacher
+        ], 201);
     }
 
     /**
@@ -189,30 +154,43 @@ class SubjectTeacherController extends Controller
      */
     public function edit($id)
     {
-        //
-        $subjectteachers = SubjectTeacher::where('subjectteacher.id',$id)
-        ->leftJoin('users', 'users.id','=','subjectteacher.staffid')
-        ->leftJoin('subject', 'subject.id','=','subjectteacher.subjectid')
-        ->leftJoin('schoolterm', 'schoolterm.id','=','subjectteacher.termid')
-        ->leftJoin('schoolsession', 'schoolsession.id','=','subjectteacher.sessionid')
-        ->get(['subjectteacher.id as id','users.id as userid','users.name as staffname','subject.subject as subjectname',
-        'schoolterm.term as termname','schoolsession.session as sessionname','subjectteacher.updated_at as editdate',
-        'subjectteacher.created_at as date','subject.id as subid','schoolsession.id as sessionid','schoolterm.id as termid']);
+        $subjectteachers = SubjectTeacher::where('subjectteacher.id', $id)
+            ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
+            ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
+            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
+            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
+            ->first([
+                'subjectteacher.id as id',
+                'users.id as userid',
+                'users.name as staffname',
+                'users.avatar as avatar',
+                'subject.id as subid',
+                'subject.subject as subjectname',
+                'schoolterm.id as termid',
+                'schoolterm.term as termname',
+                'schoolsession.id as sessionid',
+                'schoolsession.session as sessionname',
+                'subjectteacher.updated_at as editdate',
+                'subjectteacher.created_at as date'
+            ]);
 
+        if (!$subjectteachers) {
+            return redirect()->route('subjectteacher.index')->with('danger', 'Subject Teacher not found.');
+        }
 
         $schoolterms = Schoolterm::all();
         $schoolsessions = Schoolsession::all();
         $subjects = Subject::all();
-        $staffs = User::whereHas('roles', function($q){ $q->where('name', '!=','Student'); })
-        ->get(['users.id as userid','users.name as name']);
+        $staffs = User::whereHas('roles', function ($q) {
+            $q->where('name', '!=', 'Student');
+        })->get(['users.id as userid', 'users.name as name']);
 
-
-
-        return View('subjectteacher.edit')->with('subjectteachers',$subjectteachers)
-                                          ->with('terms',$schoolterms)
-                                          ->with('schoolsessions',$schoolsessions)
-                                          ->with('subjects',$subjects)
-                                          ->with('staffs',$staffs);
+        return view('subjectteacher.edit')
+            ->with('subjectteachers', collect([$subjectteachers]))
+            ->with('terms', $schoolterms)
+            ->with('schoolsessions', $schoolsessions)
+            ->with('staffs', $staffs)
+            ->with('subjects', $subjects);
     }
 
     /**
@@ -220,184 +198,177 @@ class SubjectTeacherController extends Controller
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(Request $request, $id)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'staffid' => 'required|exists:users,id',
+            'subjectid' => 'required|exists:subject,id',
+            'termid' => 'required|exists:schoolterm,id',
+            'sessionid' => 'required|exists:schoolsession,id',
+        ], [
+            'staffid.required' => 'Please select a subject teacher!',
+            'staffid.exists' => 'Selected teacher does not exist!',
+            'subjectid.required' => 'Please select a subject!',
+            'subjectid.exists' => 'Selected subject does not exist!',
+            'termid.required' => 'Please select a term!',
+            'termid.exists' => 'Selected term does not exist!',
+            'sessionid.required' => 'Please select a session!',
+            'sessionid.exists' => 'Selected session does not exist!',
+        ]);
 
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
-       $subjectteachercheck = Subjectteacher::where('staffid',$request->staffid)
-        ->where('subjectid',$request->subjectid)
-        ->where('termid',$request->termid)
-        ->where('sessionid',$request->sessionid)
-        ->exists();
-            if ($subjectteachercheck){
+        $exists = SubjectTeacher::where('staffid', $request->input('staffid'))
+            ->where('subjectid', $request->input('subjectid'))
+            ->where('termid', $request->input('termid'))
+            ->where('sessionid', $request->input('sessionid'))
+            ->where('id', '!=', $id)
+            ->exists();
 
-            return redirect()->back()->with('danger', 'Ooops! Record already exist!');
-            }
-            else{
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This teacher is already assigned to the selected subject, term, and session.'
+            ], 422);
+        }
 
-                $input = $request->all();
-                $subjectteacher = Subjectteacher::find($id);
-                $subjectteacher->update($input);
+        $subjectteacher = SubjectTeacher::find($id);
+        if (!$subjectteacher) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Subject Teacher not found.'
+            ], 404);
+        }
 
+        $subjectteacher->update([
+            'staffid' => $request->input('staffid'),
+            'subjectid' => $request->input('subjectid'),
+            'termid' => $request->input('termid'),
+            'sessionid' => $request->input('sessionid'),
+        ]);
 
+        // Update related records
+        $sub = SubjectTeacher::where('subjectteacher.id', $id)
+            ->leftJoin('subjectclass', 'subjectclass.subjectteacherid', '=', 'subjectteacher.id')
+            ->leftJoin('broadsheet', 'broadsheet.subjectclassid', '=', 'subjectclass.id')
+            ->get(['broadsheet.staffid as bstaffid', 'broadsheet.subjectclassid as subclass', 'broadsheet.termid as term', 'broadsheet.session as session']);
 
-                $sub = Subjectteacher::where('subjectteacher.staffid',$request->staffid)
-                ->where('subjectteacher.subjectid',$request->subjectid)
-                ->where('subjectteacher.termid',$request->termid)
-                ->where('subjectteacher.sessionid',$request->sessionid)
-                ->leftJoin('subjectclass','subjectclass.subjectteacherid','=','subjectteacher.id')
-                ->leftJoin('broadsheet','broadsheet.subjectclassid','=','subjectclass.id')
-                ->get(['broadsheet.staffid as bstaffid','broadsheet.subjectclassid as subclass',
-                'broadsheet.termid as term','broadsheet.session as session']);
+        foreach ($sub as $value) {
+            Broadsheet::where('subjectclassid', $value->subclass)
+                ->where('termid', $value->term)
+                ->where('session', $value->session)
+                ->update(['staffid' => $request->input('staffid')]);
 
-                   foreach ($sub as $key => $value) {
-                    //updating broadsheet...
-                    $bupdate = Broadsheet::where('broadsheet.subjectclassid',$value->subclass)
-                    ->where('broadsheet.termid',$value->term)
-                    ->where('broadsheet.session',$value->session);
-                    $bupdate->update(['staffid'=> $request->staffid]);
-                    //  echo $value->bstaffid." ".$value->subclass."<br>";
+            SubjectRegistrationStatus::where('subjectclassid', $value->subclass)
+                ->where('termid', $value->term)
+                ->where('sessionid', $value->session)
+                ->update(['staffid' => $request->input('staffid')]);
+        }
 
-                    //updating subject registration status...
-                    $sub = SubjectRegistrationStatus::where('subjectclassid',$value->subclass)
-                    ->where('termid',$value->term)
-                    ->where('sessionid',$value->session);
-                    $sub->update(['staffid'=> $request->staffid]);
-
-                    //updating subject teacher...
-                    $subt = Subjectteacher::where('staffid',$value->staffid)
-                    ->where('termid',$value->term)
-                    ->where('sessionid',$value->session);
-                    $subt->update(['staffid'=> $request->staffid]);
-
-                   }
-
-
-
-          if($subjectteacher != null){
-
-                return redirect()->route('subjectteacher.edit',[$id])
-                ->with('success', 'Subject Teacher updated successfully.');
-
-            }else{
-
-
-                return redirect()->route('subjectteacher.edit',[$id])
-                ->with('danger', 'Hi, It seems this record can not be updated.');
-               }
-
-            }
-
+        return response()->json([
+            'success' => true,
+            'message' => 'Subject Teacher updated successfully.',
+            'data' => $subjectteacher
+        ], 200);
     }
 
+    /**
+     * Legacy update method for non-AJAX requests.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
     public function updatesubjectteacher(Request $request)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'staffid' => 'required|exists:users,id',
+            'subjectid' => 'required|exists:subject,id',
+            'termid' => 'required|exists:schoolterm,id',
+            'sessionid' => 'required|exists:schoolsession,id',
+        ]);
 
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
 
-       $subjectteachercheck = Subjectteacher::where('staffid',$request->update_housemasterid)
-        ->where('subjectid',$request->update_subjectid)
-        ->where('termid',$request->update_termid)
-        ->where('sessionid',$request->update_sessionid)
-        ->exists();
-            if ($subjectteachercheck){
+        $exists = SubjectTeacher::where('staffid', $request->input('staffid'))
+            ->where('subjectid', $request->input('subjectid'))
+            ->where('termid', $request->input('termid'))
+            ->where('sessionid', $request->input('sessionid'))
+            ->where('id', '!=', $request->id)
+            ->exists();
 
-            return redirect()->back()->with('danger', 'Ooops! Record already exist!');
-            }
-            else{
+        if ($exists) {
+            return redirect()->back()->with('danger', 'This teacher is already assigned to the selected subject, term, and session.');
+        }
 
-                $input = $request->all();
-                $subjectteacher = Subjectteacher::find($request->id);
-                $subjectteacher->update($input);
+        $subjectteacher = SubjectTeacher::find($request->id);
+        if (!$subjectteacher) {
+            return redirect()->back()->with('danger', 'Subject Teacher not found.');
+        }
 
+        $subjectteacher->update([
+            'staffid' => $request->input('staffid'),
+            'subjectid' => $request->input('subjectid'),
+            'termid' => $request->input('termid'),
+            'sessionid' => $request->input('sessionid'),
+        ]);
 
-
-                $sub = Subjectteacher::where('subjectteacher.staffid',$request->update_housemasterid)
-                ->where('subjectteacher.subjectid',$request->update_subjectid)
-                ->where('subjectteacher.termid',$request->update_termid)
-                ->where('subjectteacher.sessionid',$request->update_sessionid)
-                ->leftJoin('subjectclass','subjectclass.subjectteacherid','=','subjectteacher.id')
-                ->leftJoin('broadsheet','broadsheet.subjectclassid','=','subjectclass.id')
-                ->get(['broadsheet.staffid as bstaffid','broadsheet.subjectclassid as subclass',
-                'broadsheet.termid as term','broadsheet.session as session']);
-
-                   foreach ($sub as $key => $value) {
-                    //updating broadsheet...
-                    $bupdate = Broadsheet::where('broadsheet.subjectclassid',$value->subclass)
-                    ->where('broadsheet.termid',$value->term)
-                    ->where('broadsheet.session',$value->session);
-                    $bupdate->update(['staffid'=> $request->housemasterid]);
-                    //  echo $value->bstaffid." ".$value->subclass."<br>";
-
-                    //updating subject registration status...
-                    $sub = SubjectRegistrationStatus::where('subjectclassid',$value->subclass)
-                    ->where('termid',$value->term)
-                    ->where('sessionid',$value->session);
-                    $sub->update(['staffid'=> $request->housemasterid]);
-
-                    //updating subject teacher...
-                    $subt = Subjectteacher::where('staffid',$value->staffid)
-                    ->where('termid',$value->term)
-                    ->where('sessionid',$value->session);
-                    $subt->update(['staffid'=> $request->housemasterid]);
-
-                   }
-
-
-
-          if($subjectteacher != null){
-
-                return redirect()->route('subjectteacher.index',[$request->id])
-                ->with('success', 'Subject Teacher updated successfully.');
-
-            }else{
-
-
-                return redirect()->route('subjectteacher.index',[$request->id])
-                ->with('danger', 'Hi, It seems this record can not be updated.');
-               }
-
-            }
-
+        return redirect()->route('subjectteacher.index')->with('success', 'Subject Teacher updated successfully.');
     }
-
 
     /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {
-        //
-        Subjectteacher::find($id)->delete();
-
-          // return redirect()->route('subjectteacher.index')
-          // ->with('success', 'Subject Teacher deleted successfully.');
-          return response()->json(['message' => $id]);
-    }
-
-    public function deletesubjectteacher(Request $request)
-    {
-        Subjectteacher::find($request->subjectteacherid)->delete();
-        //check data deleted or not
-        if ($request->subjectteacherid) {
-            $success = true;
-            $message = "Subject Teacher has been removed";
-        } else {
-            $success = true;
-            $message = "Subject Teacher not found";
+        $subjectteacher = SubjectTeacher::find($id);
+        if (!$subjectteacher) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Subject Teacher not found.'
+            ], 404);
         }
 
-        //  return response
-        return response()->json([
-            'success' => $success,
-            'message' => $message,
-        ]);
+        $subjectteacher->delete();
 
+        return response()->json([
+            'success' => true,
+            'message' => 'Subject Teacher deleted successfully.'
+        ], 200);
+    }
+
+    /**
+     * Handle AJAX delete request for subject teacher.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deletesubjectteacher(Request $request)
+    {
+        $subjectteacher = SubjectTeacher::find($request->subjectteacherid);
+        if (!$subjectteacher) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Subject Teacher not found.'
+            ], 404);
+        }
+
+        $subjectteacher->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Subject Teacher has been removed.'
+        ], 200);
     }
 }

@@ -8,11 +8,11 @@
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0">School House Management</h4>
+                        <h4 class="mb-sm-0">Class Teacher Management</h4>
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="javascript:void(0);">School House Management</a></li>
-                                <li class="breadcrumb-item active">School House</li>
+                                <li class="breadcrumb-item"><a href="javascript:void(0);">Class Teacher Management</a></li>
+                                <li class="breadcrumb-item active">Class Teachers</li>
                             </ol>
                         </div>
                     </div>
@@ -44,7 +44,7 @@
                 </div>
             @endif
 
-            <div id="houseList">
+            <div id="classTeacherList">
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="card">
@@ -52,7 +52,7 @@
                                 <div class="row g-3">
                                     <div class="col-xxl-3">
                                         <div class="search-box">
-                                            <input type="text" class="form-control search" placeholder="Search houses">
+                                            <input type="text" class="form-control search" placeholder="Search class teachers">
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
                                     </div>
@@ -67,13 +67,13 @@
                         <div class="card">
                             <div class="card-header d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">School House <span class="badge bg-dark-subtle text-dark ms-1">{{ $schoolhouses->total() }}</span></h5>
+                                    <h5 class="card-title mb-0">Class Teachers <span class="badge bg-dark-subtle text-dark ms-1">{{ count($classteachers) }}</span></h5>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
                                         <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
-                                        @can('Create schoolhouse')
-                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addHouseModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Create House</button>
+                                        @can('Create class-teacher')
+                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addClassTeacherModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Create Class Teacher</button>
                                         @endcan
                                     </div>
                                 </div>
@@ -88,10 +88,10 @@
                                                         <input class="form-check-input" type="checkbox" id="checkAll" />
                                                     </div>
                                                 </th>
-                                                {{-- <th class="min-w-125px sort cursor-pointer" data-sort="schoolhouseid">SN</th> --}}
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="house">House</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="housecolour">House Colour</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="housemaster">House Master</th>
+                                                <th class="min-w-125px sort cursor-pointer" data-sort="sn">SN</th>
+                                                <th class="min-w-125px sort cursor-pointer" data-sort="staffname">Class Teacher</th>
+                                                <th class="min-w-125px sort cursor-pointer" data-sort="schoolclass">Class</th>
+                                                <th class="min-w-125px sort cursor-pointer" data-sort="schoolarm">Arm</th>
                                                 <th class="min-w-125px sort cursor-pointer" data-sort="term">Term</th>
                                                 <th class="min-w-125px sort cursor-pointer" data-sort="session">Session</th>
                                                 <th class="min-w-125px sort cursor-pointer" data-sort="datereg">Date Updated</th>
@@ -99,31 +99,43 @@
                                             </tr>
                                         </thead>
                                         <tbody class="fw-semibold text-gray-600 list form-check-all">
-                                            @php $i = ($schoolhouses->currentPage() - 1) * $schoolhouses->perPage() @endphp
-                                            @forelse ($schoolhouses as $sc)
-                                                <tr data-url="{{ route('schoolhouse.deletehouse',$sc->id) }}">
-                                                    <td class="id" data-id="{{ $sc->id }}">
+                                            @php $i = 0 @endphp
+                                            @forelse ($classteachers as $classteacher)
+                                                <tr data-url="{{ route('classteacher.destroy', $classteacher->id) }}">
+                                                    <td class="id" data-id="{{ $classteacher->id }}">
                                                         <div class="form-check form-check-sm form-check-custom form-check-solid">
                                                             <input class="form-check-input" type="checkbox" name="chk_child" />
                                                         </div>
                                                     </td>
-                                                    {{-- <td class="schoolhouseid">{{ ++$i }}</td> --}}
-                                                    <td class="house" data-house="{{ $sc->house }}">{{ $sc->house }}</td>
-                                                    <td class="housecolour" data-housecolour="{{ $sc->housecolour }}">
-                                                        <span class="badge text-white" style="background-color: {{ htmlspecialchars($sc->housecolour) }}">{{ $sc->housecolour }}</span>
+                                                    <td class="sn">{{ ++$i }}</td>
+                                                    <td class="staffname" data-staffid="{{ $classteacher->userid }}">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="symbol symbol-circle symbol-50px overflow-hidden me-3">
+                                                                <a href="#">
+                                                                    <div class="symbol-label">
+                                                                        <?php $image = $classteacher->avatar ?? 'unnamed.png'; ?>
+                                                                        <img src="{{ Storage::url('images/staffavatar/' . $image) }}" alt="{{ $classteacher->staffname }}" class="w-100" />
+                                                                    </div>
+                                                                </a>
+                                                            </div>
+                                                            <div class="d-flex flex-column">
+                                                                <a href="#" class="text-gray-800 text-hover-primary mb-1">{{ $classteacher->staffname }}</a>
+                                                            </div>
+                                                        </div>
                                                     </td>
-                                                    <td class="housemaster" data-housemaster="{{ $sc->housemaster }}">{{ $sc->housemaster }}</td>
-                                                    <td class="term" data-term="{{ $sc->term }}">{{ $sc->term }}</td>
-                                                    <td class="session" data-session="{{ $sc->session }}">{{ $sc->session }}</td>
-                                                    <td class="datereg">{{ $sc->updated_at->format('Y-m-d') }}</td>
+                                                    <td class="schoolclass" data-classid="{{ $classteacher->schoolclassid }}">{{ $classteacher->schoolclass }}</td>
+                                                    <td class="schoolarm" data-armid="{{ $classteacher->schoolarmid }}">{{ $classteacher->schoolarm }}</td>
+                                                    <td class="term" data-termid="{{ $classteacher->termid }}">{{ $classteacher->term }}</td>
+                                                    <td class="session" data-sessionid="{{ $classteacher->sessionid }}">{{ $classteacher->session }}</td>
+                                                    <td class="datereg">{{ $classteacher->updated_at->format('Y-m-d') }}</td>
                                                     <td>
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                            @can('Update schoolhouse')
+                                                            @can('Update class-teacher')
                                                                 <li>
                                                                     <a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"><i class="ph-pencil"></i></a>
                                                                 </li>
                                                             @endcan
-                                                            @can('Delete schoolhouse')
+                                                            @can('Delete class-teacher')
                                                                 <li>
                                                                     <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i class="ph-trash"></i></a>
                                                                 </li>
@@ -133,35 +145,11 @@
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="9" class="noresult" style="display: block;">No results found</td>
+                                                    <td colspan="8" class="noresult" style="display: block;">No results found</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
                                     </table>
-                                </div>
-                                <div class="row mt-3 align-items-center" id="pagination-element">
-                                    <div class="col-sm">
-                                        <div class="text-muted text-center text-sm-start">
-                                            Showing <span class="fw-semibold">{{ $schoolhouses->count() }}</span> of <span class="fw-semibold">{{ $schoolhouses->total() }}</span> Results
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-auto mt-3 mt-sm-0">
-                                        <div class="pagination-wrap hstack gap-2 justify-content-center">
-                                            <a class="page-item pagination-prev {{ $schoolhouses->onFirstPage() ? 'disabled' : '' }}" href="{{ $schoolhouses->previousPageUrl() }}">
-                                                <i class="mdi mdi-chevron-left align-middle"></i>
-                                            </a>
-                                            <ul class="pagination listjs-pagination mb-0">
-                                                @foreach ($schoolhouses->links()->elements[0] as $page => $url)
-                                                    <li class="page-item {{ $schoolhouses->currentPage() == $page ? 'active' : '' }}">
-                                                        <a class="page-link" href="{{ $url }}">{{ $page }}</a>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                            <a class="page-item pagination-next {{ $schoolhouses->hasMorePages() ? '' : 'disabled' }}" href="{{ $schoolhouses->nextPageUrl() }}">
-                                                <i class="mdi mdi-chevron-right align-middle"></i>
-                                            </a>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -169,39 +157,40 @@
                 </div>
             </div>
 
-            <!-- Add House Modal -->
-            <div id="addHouseModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+            <!-- Add Class Teacher Modal -->
+            <div id="addClassTeacherModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 id="exampleModalLabel" class="modal-title">Add School House</h5>
+                            <h5 id="exampleModalLabel" class="modal-title">Add Class Teacher</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <form class="tablelist-form" autocomplete="off" id="add-house-form">
+                        <form class="tablelist-form" autocomplete="off" id="add-classteacher-form">
                             <div class="modal-body">
                                 <input type="hidden" id="add-id-field" name="id">
                                 <div class="mb-3">
-                                    <label for="house" class="form-label">House Name</label>
-                                    <input type="text" name="house" id="house" class="form-control" placeholder="Enter house name" required>
+                                    <label for="staffid" class="form-label">Class Teacher</label>
+                                    <select name="staffid" id="staffid" class="form-control" required>
+                                        <option value="">Select Teacher</option>
+                                        @foreach ($subjectteachers as $teacher)
+                                            <option value="{{ $teacher->userid }}">{{ $teacher->name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="housecolour" class="form-label">House Colour</label>
-                                    <input type="text" name="housecolour" id="housecolour" class="form-control" placeholder="Enter house colour (e.g., red, #FF0000)" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="housemasterid" class="form-label">House Master</label>
-                                    <select name="housemasterid" id="housemasterid" class="form-control" required>
-                                        <option value="" selected>Select House Master</option>
-                                        @foreach ($staff as $s)
-                                            <option value="{{ $s->userid }}">{{ $s->name }}</option>
+                                    <label for="schoolclassid" class="form-label">Class</label>
+                                    <select name="schoolclassid" id="schoolclassid" class="form-control" required>
+                                        <option value="">Select Class</option>
+                                        @foreach ($schoolclass as $class)
+                                            <option value="{{ $class->id }}">{{ $class->schoolclass }} ({{ $class->schoolarm }})</option>
                                         @endforeach
                                     </select>
                                 </div>
                                 <div class="mb-3">
                                     <label for="termid" class="form-label">Term</label>
                                     <select name="termid" id="termid" class="form-control" required>
-                                        <option value="" selected>Select Term</option>
-                                        @foreach ($schoolterm as $term)
+                                        <option value="">Select Term</option>
+                                        @foreach ($schoolterms as $term)
                                             <option value="{{ $term->id }}">{{ $term->term }}</option>
                                         @endforeach
                                     </select>
@@ -209,8 +198,8 @@
                                 <div class="mb-3">
                                     <label for="sessionid" class="form-label">Session</label>
                                     <select name="sessionid" id="sessionid" class="form-control" required>
-                                        <option value="" selected>Select Session</option>
-                                        @foreach ($schoolsession as $session)
+                                        <option value="">Select Session</option>
+                                        @foreach ($schoolsessions as $session)
                                             <option value="{{ $session->id }}">{{ $session->session }}</option>
                                         @endforeach
                                     </select>
@@ -219,46 +208,47 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="add-btn">Add House</button>
+                                <button type="submit" class="btn btn-primary" id="add-btn">Add Class Teacher</button>
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
 
-            <!-- Edit House Modal -->
+           <!-- Edit Class Teacher Modal -->
             <div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 id="editModalLabel" class="modal-title">Edit School House</h5>
+                            <h5 id="editModalLabel" class="modal-title">Edit Class Teacher</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <form class="tablelist-form" autocomplete="off" id="edit-house-form">
+                        <form class="tablelist-form" autocomplete="off" id="edit-classteacher-form">
                             <div class="modal-body">
                                 <input type="hidden" id="edit-id-field" name="id">
                                 <div class="mb-3">
-                                    <label for="edit-house" class="form-label">House Name</label>
-                                    <input type="text" name="house" id="edit-house" class="form-control" placeholder="Enter house name" required>
+                                    <label for="edit-staffid" class="form-label">Class Teacher</label>
+                                    <select name="staffid" id="edit-staffid" class="form-control" required>
+                                        <option value="">Select Teacher</option>
+                                        @foreach ($subjectteachers as $teacher)
+                                            <option value="{{ $teacher->userid }}">{{ $teacher->name }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit-housecolour" class="form-label">House Colour</label>
-                                    <input type="text" name="housecolour" id="edit-housecolour" class="form-control" placeholder="Enter house colour (e.g., red, #FF0000)" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-housemasterid" class="form-label">House Master</label>
-                                    <select name="housemasterid" id="edit-housemasterid" class="form-control" required>
-                                        <option value="" selected>Select House Master</option>
-                                        @foreach ($staff as $s)
-                                            <option value="{{ $s->userid }}">{{ $s->name }}</option>
+                                    <label for="edit-schoolclassid" class="form-label">Class</label>
+                                    <select name="schoolclassid" id="edit-schoolclassid" class="form-control" required>
+                                        <option value="">Select Class</option>
+                                        @foreach ($schoolclass as $class)
+                                            <option value="{{ $class->id }}">{{ $class->schoolclass }} ({{ $class->schoolarm }})</option>
                                         @endforeach
                                     </select>
                                 </div>
                                 <div class="mb-3">
                                     <label for="edit-termid" class="form-label">Term</label>
                                     <select name="termid" id="edit-termid" class="form-control" required>
-                                        <option value="" selected>Select Term</option>
-                                        @foreach ($schoolterm as $term)
+                                        <option value="">Select Term</option>
+                                        @foreach ($schoolterms as $term)
                                             <option value="{{ $term->id }}">{{ $term->term }}</option>
                                         @endforeach
                                     </select>
@@ -266,8 +256,8 @@
                                 <div class="mb-3">
                                     <label for="edit-sessionid" class="form-label">Session</label>
                                     <select name="sessionid" id="edit-sessionid" class="form-control" required>
-                                        <option value="" selected>Select Session</option>
-                                        @foreach ($schoolsession as $session)
+                                        <option value="">Select Session</option>
+                                        @foreach ($schoolsessions as $session)
                                             <option value="{{ $session->id }}">{{ $session->session }}</option>
                                         @endforeach
                                     </select>
@@ -300,13 +290,6 @@
             </div>
         </div>
         <!-- End Page-content -->
-{{-- 
-        <!-- Scripts -->
-        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-        <script src="{{ asset('theme/layouts/assets/js/bootstrap.bundle.min.js') }}"></script>
-        <script src="{{ asset('theme/layouts/assets/js/list.min.js') }}"></script>
-        <script src="{{ asset('theme/layouts/assets/js/sweetalert2.min.js') }}"></script>
-        <script src="{{ asset('js/schoolhouse-list.init.js') }}"></script> --}}
     </div>
 </div>
 @endsection

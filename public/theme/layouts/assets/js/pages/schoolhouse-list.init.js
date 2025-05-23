@@ -1,4 +1,4 @@
-console.log("schoolhouse.init.js is loaded and executing!");
+console.log("schoolhouse-list.init.js is loaded and executing!");
 
 try {
     // Verify dependencies
@@ -14,6 +14,29 @@ try {
             clearTimeout(timeout);
             timeout = setTimeout(() => func.apply(this, args), wait);
         };
+    }
+
+    // Function to determine text color based on background brightness
+    function getContrastTextColor(bgColor) {
+        const div = document.createElement('div');
+        div.style.backgroundColor = bgColor;
+        document.body.appendChild(div);
+        const rgb = window.getComputedStyle(div).backgroundColor;
+        document.body.removeChild(div);
+
+        const rgbMatch = rgb.match(/\d+/g);
+        if (!rgbMatch) return 'white';
+        const [r, g, b] = rgbMatch.map(Number);
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        return luminance > 0.5 ? 'black' : 'white';
+    }
+
+    // Apply text color to badges
+    function updateBadgeTextColors() {
+        document.querySelectorAll('.housecolour .badge').forEach(badge => {
+            const bgColor = badge.style.backgroundColor || badge.textContent;
+            badge.style.color = getContrastTextColor(bgColor);
+        });
     }
 
     // Check all checkbox
@@ -101,14 +124,15 @@ try {
     function handleRemoveClick(e) {
         e.preventDefault();
         var itemId = e.target.closest("tr").querySelector(".id").getAttribute("data-id");
-        var deleteUrl = e.target.closest("tr").getAttribute("data-url");
+        console.log("Attempting to delete house with ID:", itemId);
         var deleteButton = document.getElementById("delete-record");
         if (deleteButton) {
             deleteButton.addEventListener("click", function () {
-                axios.post(deleteUrl, {
+                axios.post('/schoolhouse/deletehouse', {
                     houseid: itemId,
                     _token: document.querySelector('meta[name="csrf-token"]').content
                 }).then(function (response) {
+                    console.log("Delete response:", response.data);
                     Swal.fire({
                         position: "center",
                         icon: "success",
@@ -119,6 +143,7 @@ try {
                     });
                     window.location.reload();
                 }).catch(function (error) {
+                    console.error("Delete error:", error.response);
                     Swal.fire({
                         position: "center",
                         icon: "error",
@@ -140,7 +165,7 @@ try {
         var tr = e.target.closest("tr");
         if (editIdField) editIdField.value = itemId;
         if (editHouseField) editHouseField.value = tr.querySelector(".house").innerText;
-        if (editHouseColourField) editHouseColourField.value = tr.querySelector(".housecolour").innerText;
+        if (editHouseColourField) editHouseColourField.value = tr.querySelector(".housecolour .badge").innerText;
         if (editHousemasterIdField) {
             var housemaster = tr.querySelector(".housemaster").innerText;
             Array.from(editHousemasterIdField.options).forEach(option => {
@@ -185,14 +210,11 @@ try {
     // Delete multiple houses
     function deleteMultiple() {
         const ids_array = [];
-        const urls_array = [];
         const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
         checkboxes.forEach((checkbox) => {
             if (checkbox.checked) {
                 const id = checkbox.closest("tr").querySelector(".id").getAttribute("data-id");
-                const url = checkbox.closest("tr").getAttribute("data-url");
                 ids_array.push(id);
-                urls_array.push(url);
             }
         });
         if (ids_array.length > 0) {
@@ -208,9 +230,10 @@ try {
                 showCloseButton: true
             }).then((result) => {
                 if (result.value) {
-                    Promise.all(urls_array.map((url, index) => {
-                        return axios.post(url, {
-                            houseid: ids_array[index],
+                    Promise.all(ids_array.map((id) => {
+                        console.log("Deleting multiple house ID:", id);
+                        return axios.post('/schoolhouse/deletehouse', {
+                            houseid: id,
                             _token: document.querySelector('meta[name="csrf-token"]').content
                         });
                     })).then(() => {
@@ -223,6 +246,7 @@ try {
                         });
                         window.location.reload();
                     }).catch((error) => {
+                        console.error("Multiple delete error:", error.response);
                         Swal.fire({
                             title: "Error!",
                             text: error.response?.data?.message || "Failed to delete school houses",
@@ -274,6 +298,7 @@ try {
         addHouseForm.addEventListener("submit", function (e) {
             e.preventDefault();
             var errorMsg = document.getElementById("alert-error-msg");
+            var addBtn = document.getElementById("add-btn");
             if (errorMsg) {
                 errorMsg.classList.remove("d-none");
                 setTimeout(() => errorMsg.classList.add("d-none"), 2000);
@@ -288,6 +313,11 @@ try {
                 return false;
             }
 
+            if (addBtn) {
+                addBtn.disabled = true;
+                addBtn.innerHTML = "Adding...";
+            }
+
             axios.post('/schoolhouse', {
                 house: addHouseField.value,
                 housecolour: addHouseColourField.value,
@@ -296,6 +326,7 @@ try {
                 sessionid: addSessionIdField.value,
                 _token: document.querySelector('meta[name="csrf-token"]').content
             }).then(function (response) {
+                console.log("Add response:", response.data);
                 Swal.fire({
                     position: "center",
                     icon: "success",
@@ -306,8 +337,13 @@ try {
                 });
                 window.location.reload();
             }).catch(function (error) {
+                console.error("Add error:", error.response);
                 if (errorMsg) {
                     errorMsg.innerHTML = error.response?.data?.message || "Error adding school house";
+                }
+                if (addBtn) {
+                    addBtn.disabled = false;
+                    addBtn.innerHTML = "Add House";
                 }
             });
         });
@@ -319,6 +355,7 @@ try {
         editHouseForm.addEventListener("submit", function (e) {
             e.preventDefault();
             var errorMsg = document.getElementById("edit-alert-error-msg");
+            var updateBtn = document.getElementById("update-btn");
             if (errorMsg) {
                 errorMsg.classList.remove("d-none");
                 setTimeout(() => errorMsg.classList.add("d-none"), 2000);
@@ -333,8 +370,12 @@ try {
                 return false;
             }
 
-            axios.post('/schoolhouse/updatehouse', {
-                id: editIdField.value,
+            if (updateBtn) {
+                updateBtn.disabled = true;
+                updateBtn.innerHTML = "Updating...";
+            }
+
+            axios.put(`/schoolhouse/${editIdField.value}`, {
                 house: editHouseField.value,
                 housecolour: editHouseColourField.value,
                 housemasterid: editHousemasterIdField.value,
@@ -342,6 +383,7 @@ try {
                 sessionid: editSessionIdField.value,
                 _token: document.querySelector('meta[name="csrf-token"]').content
             }).then(function (response) {
+                console.log("Edit response:", response.data);
                 Swal.fire({
                     position: "center",
                     icon: "success",
@@ -352,8 +394,13 @@ try {
                 });
                 window.location.reload();
             }).catch(function (error) {
+                console.error("Edit error:", error.response);
                 if (errorMsg) {
                     errorMsg.innerHTML = error.response?.data?.message || "Error updating school house";
+                }
+                if (updateBtn) {
+                    updateBtn.disabled = false;
+                    updateBtn.innerHTML = "Update";
                 }
             });
         });
@@ -402,11 +449,12 @@ try {
 
         refreshCallbacks();
         ischeckboxcheck();
+        updateBadgeTextColors();
     });
 
     // Expose functions to global scope
     window.deleteMultiple = deleteMultiple;
 
 } catch (error) {
-    console.error("Error in schoolhouse.init.js:", error);
+    console.error("Error in schoolhouse-list.init.js:", error);
 }

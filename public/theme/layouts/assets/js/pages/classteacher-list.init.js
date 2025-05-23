@@ -1,4 +1,4 @@
-console.log("term.init.js is loaded and executing!");
+console.log("classteacher.init.js is loaded and executing!");
 
 // Verify dependencies
 try {
@@ -47,9 +47,15 @@ if (checkAll) {
 
 // Form fields
 var addIdField = document.getElementById("add-id-field");
-var addTermField = document.getElementById("term");
+var addStaffIdField = document.getElementById("staffid");
+var addSchoolClassIdField = document.getElementById("schoolclassid");
+var addTermIdField = document.getElementById("termid");
+var addSessionIdField = document.getElementById("sessionid");
 var editIdField = document.getElementById("edit-id-field");
-var editTermField = document.getElementById("edit-term");
+var editStaffIdField = document.getElementById("edit-staffid");
+var editSchoolClassIdField = document.getElementById("edit-schoolclassid");
+var editTermIdField = document.getElementById("edit-termid");
+var editSessionIdField = document.getElementById("edit-sessionid");
 
 // Checkbox handling
 function ischeckboxcheck() {
@@ -87,18 +93,18 @@ document.addEventListener('click', function (e) {
     }
 });
 
-// Delete single term
+// Delete single class teacher
 function handleRemoveClick(e) {
     e.preventDefault();
     var itemId = e.target.closest("tr").querySelector(".id").getAttribute("data-id");
     var deleteButton = document.getElementById("delete-record");
     if (deleteButton) {
         deleteButton.addEventListener("click", function () {
-            axios.delete(`/term/${itemId}`).then(function () {
+            axios.delete(`/classteacher/${itemId}`).then(function () {
                 Swal.fire({
                     position: "center",
                     icon: "success",
-                    title: "Term deleted successfully!",
+                    title: "Class Teacher deleted successfully!",
                     showConfirmButton: false,
                     timer: 2000,
                     showCloseButton: true
@@ -108,7 +114,7 @@ function handleRemoveClick(e) {
                 Swal.fire({
                     position: "center",
                     icon: "error",
-                    title: "Error deleting term",
+                    title: "Error deleting class teacher",
                     text: error.response?.data?.message || "An error occurred",
                     showConfirmButton: true
                 });
@@ -123,33 +129,49 @@ function handleRemoveClick(e) {
     }
 }
 
-// Edit term
+// Edit class teacher
 function handleEditClick(e) {
     e.preventDefault();
     var itemId = e.target.closest("tr").querySelector(".id").getAttribute("data-id");
     var tr = e.target.closest("tr");
     if (editIdField) editIdField.value = itemId;
-    if (editTermField) editTermField.value = tr.querySelector(".term").innerText;
+    if (editStaffIdField) editStaffIdField.value = tr.querySelector(".staffname")?.getAttribute("data-staffid") || "";
+    if (editSchoolClassIdField) editSchoolClassIdField.value = tr.querySelector(".schoolclass")?.getAttribute("data-classid") || "";
+    if (editTermIdField) editTermIdField.value = tr.querySelector(".term")?.getAttribute("data-termid") || "";
+    if (editSessionIdField) editSessionIdField.value = tr.querySelector(".session")?.getAttribute("data-sessionid") || "";
     try {
         var modal = new bootstrap.Modal(document.getElementById("editModal"));
         modal.show();
     } catch (error) {
         console.error("Error opening edit modal:", error);
+        Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "Error opening edit modal",
+            text: "Please try again or contact support.",
+            showConfirmButton: true
+        });
     }
 }
 
 // Clear form fields
 function clearAddFields() {
     if (addIdField) addIdField.value = "";
-    if (addTermField) addTermField.value = "";
+    if (addStaffIdField) addStaffIdField.value = "";
+    if (addSchoolClassIdField) addSchoolClassIdField.value = "";
+    if (addTermIdField) addTermIdField.value = "";
+    if (addSessionIdField) addSessionIdField.value = "";
 }
 
 function clearEditFields() {
     if (editIdField) editIdField.value = "";
-    if (editTermField) editTermField.value = "";
+    if (editStaffIdField) editStaffIdField.value = "";
+    if (editSchoolClassIdField) editSchoolClassIdField.value = "";
+    if (editTermIdField) editTermIdField.value = "";
+    if (editSessionIdField) editSessionIdField.value = "";
 }
 
-// Delete multiple terms
+// Delete multiple class teachers
 function deleteMultiple() {
     const ids_array = [];
     const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
@@ -173,11 +195,11 @@ function deleteMultiple() {
         }).then((result) => {
             if (result.value) {
                 Promise.all(ids_array.map((id) => {
-                    return axios.delete(`/term/${id}`);
+                    return axios.delete(`/classteacher/${id}`);
                 })).then(() => {
                     Swal.fire({
                         title: "Deleted!",
-                        text: "Your terms have been deleted.",
+                        text: "Your class teachers have been deleted.",
                         icon: "success",
                         confirmButtonClass: "btn btn-info w-xs mt-2",
                         buttonsStyling: false
@@ -186,7 +208,7 @@ function deleteMultiple() {
                 }).catch((error) => {
                     Swal.fire({
                         title: "Error!",
-                        text: error.response?.data?.message || "Failed to delete terms",
+                        text: error.response?.data?.message || "Failed to delete class teachers",
                         icon: "error",
                         confirmButtonClass: "btn btn-info w-xs mt-2",
                         buttonsStyling: false
@@ -205,12 +227,12 @@ function deleteMultiple() {
 }
 
 // Initialize List.js for client-side filtering
-var termList;
-var termListContainer = document.getElementById('termList');
-if (termListContainer && document.querySelectorAll('#termList tbody tr').length > 0) {
+var classTeacherList;
+var classTeacherListContainer = document.getElementById('classTeacherList');
+if (classTeacherListContainer && document.querySelectorAll('#classTeacherList tbody tr').length > 0) {
     try {
-        termList = new List('termList', {
-            valueNames: ['term', 'datereg'],
+        classTeacherList = new List('classTeacherList', {
+            valueNames: ['sn', 'staffname', 'schoolclass', 'schoolarm', 'term', 'session', 'datereg'],
             page: 1000,
             pagination: false,
             listClass: 'list'
@@ -219,14 +241,14 @@ if (termListContainer && document.querySelectorAll('#termList tbody tr').length 
         console.error("List.js initialization failed:", error);
     }
 } else {
-    console.warn("No terms available for List.js initialization");
+    console.warn("No class teachers available for List.js initialization");
 }
 
 // Update no results message
-if (termList) {
-    termList.on('searchComplete', function () {
+if (classTeacherList) {
+    classTeacherList.on('searchComplete', function () {
         var noResultRow = document.querySelector('.noresult');
-        if (termList.visibleItems.length === 0) {
+        if (classTeacherList.visibleItems.length === 0) {
             noResultRow.style.display = 'block';
         } else {
             noResultRow.style.display = 'none';
@@ -239,90 +261,102 @@ function filterData() {
     var searchInput = document.querySelector(".search-box input.search");
     var searchValue = searchInput ? searchInput.value : "";
     console.log("Filtering with search:", searchValue);
-    if (termList) {
-        termList.search(searchValue, ['term']);
+    if (classTeacherList) {
+        classTeacherList.search(searchValue, ['sn', 'staffname', 'schoolclass', 'schoolarm', 'term', 'session']);
     }
 }
 
-// Add term
-var addTermForm = document.getElementById("add-term-form");
-if (addTermForm) {
-    addTermForm.addEventListener("submit", function (e) {
+// Add class teacher
+var addClassTeacherForm = document.getElementById("add-classteacher-form");
+if (addClassTeacherForm) {
+    addClassTeacherForm.addEventListener("submit", function (e) {
         e.preventDefault();
         var errorMsg = document.getElementById("alert-error-msg");
         if (errorMsg) errorMsg.classList.add("d-none");
-        var formData = new FormData(addTermForm);
-        var term = formData.get('term');
-        if (!term) {
+        var formData = new FormData(addClassTeacherForm);
+        var staffid = formData.get('staffid');
+        var schoolclassid = formData.get('schoolclassid');
+        var termid = formData.get('termid');
+        var sessionid = formData.get('sessionid');
+        if (!staffid || !schoolclassid || !termid || !sessionid) {
             if (errorMsg) {
-                errorMsg.innerHTML = "Please enter a term name";
+                errorMsg.innerHTML = "Please fill all required fields";
                 errorMsg.classList.remove("d-none");
             }
             return;
         }
-        console.log("Submitting Add Term:", { term });
-        axios.post('/term', {
-            term: term
+        console.log("Submitting Add Class Teacher:", { staffid, schoolclassid, termid, sessionid });
+        axios.post('/classteacher', {
+            staffid: staffid,
+            schoolclassid: schoolclassid,
+            termid: termid,
+            sessionid: sessionid
         }, {
             headers: { 'Content-Type': 'application/json' }
         }).then(function (response) {
-            console.log("Add Term Success:", response.data);
+            console.log("Add Class Teacher Success:", response.data);
             Swal.fire({
                 position: "center",
                 icon: "success",
-                title: "Term added successfully!",
+                title: "Class Teacher added successfully!",
                 showConfirmButton: false,
                 timer: 2000,
                 showCloseButton: true
             });
             window.location.reload();
         }).catch(function (error) {
-            console.error("Add Term Error:", error.response);
+            console.error("Add Class Teacher Error:", error.response);
             if (errorMsg) {
-                errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error adding term";
+                errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error adding class teacher";
                 errorMsg.classList.remove("d-none");
             }
         });
     });
 }
 
-// Edit term
-var editTermForm = document.getElementById("edit-term-form");
-if (editTermForm) {
-    editTermForm.addEventListener("submit", function (e) {
+// Edit class teacher
+var editClassTeacherForm = document.getElementById("edit-classteacher-form");
+if (editClassTeacherForm) {
+    editClassTeacherForm.addEventListener("submit", function (e) {
         e.preventDefault();
         var errorMsg = document.getElementById("edit-alert-error-msg");
         if (errorMsg) errorMsg.classList.add("d-none");
-        var formData = new FormData(editTermForm);
-        var term = formData.get('term');
+        var formData = new FormData(editClassTeacherForm);
+        var staffid = formData.get('staffid');
+        var schoolclassid = formData.get('schoolclassid');
+        var termid = formData.get('termid');
+        var sessionid = formData.get('sessionid');
         var id = editIdField.value;
-        if (!term) {
+        if (!staffid || !schoolclassid || !termid || !sessionid) {
             if (errorMsg) {
-                errorMsg.innerHTML = "Please enter a term name";
+                errorMsg.innerHTML = "Please fill all required fields";
                 errorMsg.classList.remove("d-none");
             }
             return;
         }
-        console.log("Submitting Edit Term:", { id, term });
-        axios.put(`/term/${id}`, {
-            term: term
+        console.log("Submitting Edit Class Teacher:", { id, staffid, schoolclassid, termid, sessionid });
+        axios.put(`/classteacher/${id}`, {
+            staffid: staffid,
+            schoolclassid: schoolclassid,
+            termid: termid,
+            sessionid: sessionid
         }, {
             headers: { 'Content-Type': 'application/json' }
         }).then(function (response) {
-            console.log("Edit Term Success:", response.data);
+            console.log("Edit Class Teacher Success:", response.data);
             Swal.fire({
                 position: "center",
                 icon: "success",
-                title: "Term updated successfully!",
+                title: "Class Teacher updated successfully!",
                 showConfirmButton: false,
                 timer: 2000,
                 showCloseButton: true
             });
             window.location.reload();
         }).catch(function (error) {
-            console.error("Edit Term Error:", error.response);
+            console.error("Edit Class Teacher Error:", error.response);
             if (errorMsg) {
-                errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error updating term";
+                errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error updating class teacher";
                 errorMsg.classList.remove("d-none");
             }
         });
@@ -330,14 +364,14 @@ if (editTermForm) {
 }
 
 // Modal events
-var addModal = document.getElementById("addTermModal");
+var addModal = document.getElementById("addClassTeacherModal");
 if (addModal) {
     addModal.addEventListener("show.bs.modal", function (e) {
         if (e.relatedTarget.classList.contains("add-btn")) {
             var modalLabel = document.getElementById("exampleModalLabel");
             var addBtn = document.getElementById("add-btn");
-            if (modalLabel) modalLabel.innerHTML = "Add Term";
-            if (addBtn) addBtn.innerHTML = "Add Term";
+            if (modalLabel) modalLabel.innerHTML = "Add Class Teacher";
+            if (addBtn) addBtn.innerHTML = "Add Class Teacher";
         }
     });
     addModal.addEventListener("hidden.bs.modal", function () {
@@ -350,7 +384,7 @@ if (editModal) {
     editModal.addEventListener("show.bs.modal", function () {
         var modalLabel = document.getElementById("editModalLabel");
         var updateBtn = document.getElementById("update-btn");
-        if (modalLabel) modalLabel.innerHTML = "Edit Term";
+        if (modalLabel) modalLabel.innerHTML = "Edit Class Teacher";
         if (updateBtn) updateBtn.innerHTML = "Update";
     });
     editModal.addEventListener("hidden.bs.modal", function () {

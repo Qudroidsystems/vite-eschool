@@ -3,21 +3,17 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Subject;
 
-
 class SubjectController extends Controller
 {
-
-
-    function __construct()
+    public function __construct()
     {
-         $this->middleware('permission:subject-list|subject-create|subject-edit|subject-delete', ['only' => ['index','store']]);
-         $this->middleware('permission:subject-create', ['only' => ['create','store']]);
-         $this->middleware('permission:subject-edit', ['only' => ['edit','update','updatesubject']]);
-         $this->middleware('permission:subject-delete', ['only' => ['destroy','deletesubject']]);
+        $this->middleware('permission:View subjects|Create subjects|Update subjects|Delete subjects', ['only' => ['index', 'store']]);
+        $this->middleware('permission:Create subjects', ['only' => ['create', 'store']]);
+        $this->middleware('permission:Update subjects', ['only' => ['edit', 'update', 'updatesubject']]);
+        $this->middleware('permission:Delete subjects', ['only' => ['destroy', 'deletesubject']]);
     }
 
     /**
@@ -27,10 +23,10 @@ class SubjectController extends Controller
      */
     public function index()
     {
-        //
+        $pagetitle = "Subject Management";
         $all_subjects = Subject::all();
 
-        return View('subject.index')->with('allSubjects',$all_subjects);
+        return view('subject.index')->with('allSubjects', $all_subjects)->with('pagetitle', $pagetitle);
     }
 
     /**
@@ -40,59 +36,48 @@ class SubjectController extends Controller
      */
     public function create()
     {
-        //
-        return View('subject.create');
-
+        return view('subject.create');
     }
 
     /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
-         $subject = new Subject();
-         $validator = Validator::make($request->all(), [
-             'subject' => 'required|unique:subject',
-             'subject_code' => 'required||min:4|unique:subject',
-             'remark'=>'required',
-         ]
+        $validator = Validator::make($request->all(), [
+            'subject' => 'required|unique:subject,subject',
+            'subject_code' => 'required|min:4|unique:subject,subject_code',
+            'remark' => 'required',
+        ], [
+            'subject.required' => 'Please enter a subject name!',
+            'subject.unique' => 'This subject name is already taken!',
+            'subject_code.required' => 'Please enter a subject code!',
+            'subject_code.min' => 'Subject code must be at least 4 characters!',
+            'subject_code.unique' => 'This subject code is already taken!',
+            'remark.required' => 'Please enter a remark!',
+        ]);
 
-     );
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
-         if ($validator->fails()) {
-             //$errors = $validator->errors();
-            // return $errors->toJson();
-            return redirect()->back()->withErrors($validator)
-                                     ->withInput();
+        $subject = Subject::create([
+            'subject' => $request->input('subject'),
+            'subject_code' => $request->input('subject_code'),
+            'remark' => $request->input('remark'),
+        ]);
 
-         } else{
-         $subject->subject = $request->subject;
-         $subject->subject_code = $request->subject_code;
-         $subject->remark = $request->remark;
-         $subject->save();
-         if($subject != null){
-             return redirect()->back()->with('status', 'Subject Registered Successfully!');
-             }else{
-                echo "something went wrong...";
-             }
-         }
-
-        // echo "welcome here";
-
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
+        return response()->json([
+            'success' => true,
+            'message' => 'Subject added successfully.',
+            'data' => $subject
+        ], 201);
     }
 
     /**
@@ -103,10 +88,12 @@ class SubjectController extends Controller
      */
     public function edit($id)
     {
-        //
         $subject = Subject::find($id);
+        if (!$subject) {
+            return redirect()->route('subject.index')->with('danger', 'Subject not found.');
+        }
 
-        return view('subject.edit')->with('subject',$subject);
+        return view('subject.edit')->with('subject', $subject);
     }
 
     /**
@@ -114,82 +101,128 @@ class SubjectController extends Controller
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(Request $request, $id)
     {
-        //
-        $this->validate($request, [
-            'subject' => 'required',
-            'subject_code' => 'required|min:4|unique:subject',
-             'remark'=>'required',
+        $validator = Validator::make($request->all(), [
+            'subject' => 'required|unique:subject,subject,' . $id,
+            'subject_code' => 'required|min:4|unique:subject,subject_code,' . $id,
+            'remark' => 'required',
+        ], [
+            'subject.required' => 'Please enter a subject name!',
+            'subject.unique' => 'This subject name is already taken!',
+            'subject_code.required' => 'Please enter a subject code!',
+            'subject_code.min' => 'Subject code must be at least 4 characters!',
+            'subject_code.unique' => 'This subject code is already taken!',
+            'remark.required' => 'Please enter a remark!',
         ]);
 
-        $input = $request->all();
-
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
 
         $subject = Subject::find($id);
-        $subject->update($input);
+        if (!$subject) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Subject not found.'
+            ], 404);
+        }
 
-       return redirect()->route('subject.index')
-         ->with('success', 'Subject updated successfully.');
-
-    }
-
-    public function updatesubject(Request $request)
-    {
-
-        //
-        $this->validate($request, [
-            'subject' => 'required',
-            'subject_code' => 'required|min:4|unique:subject',
-             'remark'=>'required',
+        $subject->update([
+            'subject' => $request->input('subject'),
+            'subject_code' => $request->input('subject_code'),
+            'remark' => $request->input('remark'),
         ]);
 
-        $input = $request->all();
-
-
-        $subject = Subject::find($request->id);
-        $subject->update($input);
-
-
-
-        return redirect()->back()->with('success', 'Record has been successfully updated!');
+        return response()->json([
+            'success' => true,
+            'message' => 'Subject updated successfully.',
+            'data' => $subject
+        ], 200);
     }
 
+    /**
+     * Legacy update method for non-AJAX requests.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function updatesubject(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'subject' => 'required|unique:subject,subject,' . $request->id,
+            'subject_code' => 'required|min:4|unique:subject,subject_code,' . $request->id,
+            'remark' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        $subject = Subject::find($request->id);
+        if (!$subject) {
+            return redirect()->back()->with('danger', 'Subject not found.');
+        }
+
+        $subject->update([
+            'subject' => $request->input('subject'),
+            'subject_code' => $request->input('subject_code'),
+            'remark' => $request->input('remark'),
+        ]);
+
+        return redirect()->back()->with('success', 'Subject updated successfully.');
+    }
 
     /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {
-        //
-        Subject::find($id)->delete();
-
-        return redirect()->route('subject.index')
-            ->with('success', 'Subject deleted successfully.');
-    }
-
-    public function deletesubject(Request $request)
-    {
-        Subject::find($request->subjectid)->delete();
-        //check data deleted or not
-        if ($request->subjectid) {
-            $success = true;
-            $message = "Subject has been removed";
-        } else {
-            $success = true;
-            $message = "Subject not found";
+        $subject = Subject::find($id);
+        if (!$subject) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Subject not found.'
+            ], 404);
         }
 
-        //  return response
-        return response()->json([
-            'success' => $success,
-            'message' => $message,
-        ]);
+        $subject->delete();
 
+        return response()->json([
+            'success' => true,
+            'message' => 'Subject deleted successfully.'
+        ], 200);
+    }
+
+    /**
+     * Handle AJAX delete request for subject.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deletesubject(Request $request)
+    {
+        $subject = Subject::find($request->subjectid);
+        if (!$subject) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Subject not found.'
+            ], 404);
+        }
+
+        $subject->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Subject has been removed.'
+        ], 200);
     }
 }

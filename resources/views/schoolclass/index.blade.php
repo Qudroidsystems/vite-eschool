@@ -1,6 +1,5 @@
 @extends('layouts.master')
 @section('content')
-
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
@@ -8,11 +7,11 @@
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0">Term Management</h4>
+                        <h4 class="mb-sm-0">School Class Management</h4>
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="javascript:void(0);">Term Management</a></li>
-                                <li class="breadcrumb-item active">Term</li>
+                                <li class="breadcrumb-item"><a href="javascript:void(0);">School Class Management</a></li>
+                                <li class="breadcrumb-item active">Classes</li>
                             </ol>
                         </div>
                     </div>
@@ -44,7 +43,7 @@
                 </div>
             @endif
 
-            <div id="termList">
+            <div id="schoolClassList">
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="card">
@@ -52,7 +51,7 @@
                                 <div class="row g-3">
                                     <div class="col-xxl-3">
                                         <div class="search-box">
-                                            <input type="text" class="form-control search" placeholder="Search terms">
+                                            <input type="text" class="form-control search" placeholder="Search classes">
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
                                     </div>
@@ -67,13 +66,13 @@
                         <div class="card">
                             <div class="card-header d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">Term <span class="badge bg-dark-subtle text-dark ms-1">{{ count($terms) }}</span></h5>
+                                    <h5 class="card-title mb-0">School Classes <span class="badge bg-dark-subtle text-dark ms-1">{{ count($all_classes) }}</span></h5>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
                                         <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
-                                        @can('Create term')
-                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addTermModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Create Term</button>
+                                        @can('Create school-class')
+                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSchoolClassModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Create Class</button>
                                         @endcan
                                     </div>
                                 </div>
@@ -88,30 +87,36 @@
                                                         <input class="form-check-input" type="checkbox" id="checkAll" />
                                                     </div>
                                                 </th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="term">Term</th>
+                                                <th class="min-w-50px sort cursor-pointer" data-sort="schoolclassid">SN</th>
+                                                <th class="min-w-125px sort cursor-pointer" data-sort="schoolclass">Class</th>
+                                                <th class="min-w-125px sort cursor-pointer" data-sort="arm">Arm</th>
+                                                <th class="min-w-125px sort cursor-pointer" data-sort="classcategory">Category</th>
                                                 <th class="min-w-125px sort cursor-pointer" data-sort="datereg">Date Updated</th>
                                                 <th class="min-w-100px">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody class="fw-semibold text-gray-600 list form-check-all">
                                             @php $i = 0 @endphp
-                                            @forelse ($terms as $term)
-                                                <tr data-url="{{ route('term.deleteterm', ['termid' => $term->id]) }}">
-                                                    <td class="id" data-id="{{ $term->id }}">
+                                            @forelse ($all_classes as $class)
+                                                <tr data-url="{{ route('schoolclass.destroy', $class->id) }}">
+                                                    <td class="id" data-id="{{ $class->id }}">
                                                         <div class="form-check form-check-sm form-check-custom form-check-solid">
                                                             <input class="form-check-input" type="checkbox" name="chk_child" />
                                                         </div>
                                                     </td>
-                                                    <td class="term" data-term="{{ $term->term }}">{{ $term->term }}</td>
-                                                    <td class="datereg">{{ $term->updated_at->format('Y-m-d') }}</td>
+                                                    <td class="schoolclassid">{{ ++$i }}</td>
+                                                    <td class="schoolclass" data-schoolclass="{{ $class->schoolclass }}">{{ $class->schoolclass }}</td>
+                                                    <td class="arm" data-arm="{{ $class->arm_name }}">{{ $class->arm_name }}</td>
+                                                    <td class="classcategory" data-classcategory="{{ $class->classcategory }}">{{ $class->classcategory }}</td>
+                                                    <td class="datereg">{{ \Carbon\Carbon::parse($class->updated_at)->format('Y-m-d') }}</td>
                                                     <td>
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                            @can('Update term')
+                                                            @can('Update school-class')
                                                                 <li>
                                                                     <a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"><i class="ph-pencil"></i></a>
                                                                 </li>
                                                             @endcan
-                                                            @can('Delete term')
+                                                            @can('Delete school-class')
                                                                 <li>
                                                                     <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i class="ph-trash"></i></a>
                                                                 </li>
@@ -121,7 +126,7 @@
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="5" class="noresult" style="display: block;">No results found</td>
+                                                    <td colspan="7" class="noresult" style="display: block;">No results found</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
@@ -133,46 +138,83 @@
                 </div>
             </div>
 
-            <!-- Add Term Modal -->
-            <div id="addTermModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+           <!-- Add School Class Modal -->
+            <div id="addSchoolClassModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 id="exampleModalLabel" class="modal-title">Add Term</h5>
+                            <h5 id="exampleModalLabel" class="modal-title">Add School Class</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <form class="tablelist-form" autocomplete="off" id="add-term-form">
+                        <form class="tablelist-form" autocomplete="off" id="add-schoolclass-form">
                             <div class="modal-body">
                                 <input type="hidden" id="add-id-field" name="id">
                                 <div class="mb-3">
-                                    <label for="term" class="form-label">Term Name</label>
-                                    <input type="text" name="term" id="term" class="form-control" placeholder="Enter term name" required>
+                                    <label for="schoolclass" class="form-label">Class</label>
+                                    <input type="text" name="schoolclass" id="schoolclass" class="form-control" placeholder="Enter class name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="arm_id" class="form-label">Arm</label>
+                                    <select name="arm_id" id="arm_id" class="form-control" required>
+                                        <option value="">Select Arm</option>
+                                        @foreach ($arms as $arm)
+                                            <option value="{{ $arm->id }}">{{ $arm->arm }}</option>
+                                        @endforeach
+                                    </select>
+                                    
+                                </div>
+                                <div class="mb-3">
+                                    <label for="classcategoryid" class="form-label">Category</label>
+                                    <select name="classcategoryid" id="classcategoryid" class="form-control" required>
+                                        <option value="">Select Category</option>
+                                        @foreach ($classcategories as $category)
+                                            <option value="{{ $category->id }}">{{ $category->category }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div class="alert alert-danger d-none" id="alert-error-msg"></div>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="add-btn">Add Term</button>
+                                <button type="submit" class="btn btn-primary" id="add-btn">Add Class</button>
                             </div>
                         </form>
                     </div>
                 </div>
             </div>
 
-            <!-- Edit Term Modal -->
+            <!-- Edit School Class Modal -->
             <div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 id="editModalLabel" class="modal-title">Edit Term</h5>
+                            <h5 id="editModalLabel" class="modal-title">Edit School Class</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <form class="tablelist-form" autocomplete="off" id="edit-term-form">
+                        <form class="tablelist-form" autocomplete="off" id="edit-schoolclass-form">
                             <div class="modal-body">
                                 <input type="hidden" id="edit-id-field" name="id">
                                 <div class="mb-3">
-                                    <label for="edit-term" class="form-label">Term Name</label>
-                                    <input type="text" name="term" id="edit-term" class="form-control" placeholder="Enter term name" required>
+                                    <label for="edit-schoolclass" class="form-label">Class</label>
+                                    <input type="text" name="schoolclass" id="edit-schoolclass" class="form-control" placeholder="Enter class name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-arm_id" class="form-label">Arm</label>
+                                    <select name="arm_id" id="edit-arm_id" class="form-control" required>
+                                        <option value="">Select Arm</option>
+                                        @foreach ($arms as $arm)
+                                            <option value="{{ $arm->id }}">{{ $arm->arm }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit-classcategoryid" class="form-label">Category</label>
+                                    <select name="classcategoryid" id="edit-classcategoryid" class="form-control" required>
+                                        <option value="">Select Category</option>
+                                        @foreach ($classcategories as $category)
+                                            <option value="{{ $category->id }}">{{ $category->category }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
                             </div>
@@ -203,12 +245,12 @@
         </div>
         <!-- End Page-content -->
 
-        {{-- <!-- Scripts -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- Scripts -->
+        {{-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
         <script src="{{ asset('theme/layouts/assets/js/list.min.js') }}"></script>
         <script src="{{ asset('theme/layouts/assets/js/sweetalert2.min.js') }}"></script>
-        <script src="{{ asset('js/term.init.js') }}"></script> --}}
+        <script src="{{ asset('js/schoolclass.init.js') }}"></script> --}}
     </div>
 </div>
 @endsection

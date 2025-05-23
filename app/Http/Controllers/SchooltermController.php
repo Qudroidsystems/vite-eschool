@@ -15,14 +15,9 @@ class SchooltermController extends Controller
         $this->middleware('permission:Delete term', ['only' => ['destroy', 'deleteterm']]);
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function index(Request $request)
     {
+        // \Log::info('Index Term Request:', $request->all());
         $pagetitle = "Term Management";
         $query = Schoolterm::query();
 
@@ -39,93 +34,69 @@ class SchooltermController extends Controller
         return view('term.index')->with('terms', $terms)->with('pagetitle', $pagetitle);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
+        // \Log::info('Store Term Request:', $request->all());
         $request->validate(['term' => 'required|string|max:255']);
-
         $checkterm = Schoolterm::where('term', $request->input('term'))->exists();
         if ($checkterm) {
+            // \Log::warning('Term already taken:', ['term' => $request->input('term')]);
             return response()->json(['success' => false, 'message' => 'Term is already taken'], 422);
         }
-
-        Schoolterm::create($request->only('term'));
+        $term = Schoolterm::create($request->only('term'));
+        // \Log::info('Term Created:', $term->toArray());
         return response()->json(['success' => true, 'message' => 'Term has been created successfully']);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
+        // \Log::info('Update Term Request:', ['id' => $id, 'data' => $request->all()]);
         $request->validate(['term' => 'required|string|max:255']);
-
         $checkterm = Schoolterm::where('term', $request->input('term'))->where('id', '!=', $id)->exists();
         if ($checkterm) {
+            // \Log::warning('Term already taken:', ['term' => $request->input('term')]);
             return response()->json(['success' => false, 'message' => 'Term is already taken'], 422);
         }
-
         $term = Schoolterm::findOrFail($id);
         $term->update($request->only('term'));
+        // \Log::info('Term Updated:', $term->toArray());
         return response()->json(['success' => true, 'message' => 'Term has been updated successfully']);
     }
 
-    /**
-     * Update term via AJAX.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
+    public function destroy($id)
+    {
+        // \Log::info('Delete Term Request:', ['id' => $id]);
+        $term = Schoolterm::findOrFail($id);
+        $term->delete();
+        // \Log::info('Term Deleted:', ['id' => $id]);
+        return response()->json(['success' => true, 'message' => 'Term has been deleted successfully']);
+    }
+
+    public function deleteterm(Request $request)
+    {
+        \Log::info('Delete Term AJAX Request:', $request->all());
+        $request->validate(['termid' => 'required|exists:schoolterms,id']);
+        $term = Schoolterm::findOrFail($request->termid);
+        $term->delete();
+        // \Log::info('Term Deleted via AJAX:', ['id' => $request->termid]);
+        return response()->json(['success' => true, 'message' => 'Term has been deleted successfully']);
+    }
+
     public function updateterm(Request $request)
     {
+        // \Log::info('Update Term AJAX Request:', $request->all());
         $request->validate([
             'id' => 'required|exists:schoolterms,id',
             'term' => 'required|string|max:255'
         ]);
-
         $checkterm = Schoolterm::where('term', $request->input('term'))->where('id', '!=', $request->id)->exists();
         if ($checkterm) {
+            // \Log::warning('Term already taken:', ['term' => $request->input('term')]);
             return response()->json(['success' => false, 'message' => 'Term is already taken'], 422);
         }
-
         $term = Schoolterm::findOrFail($request->id);
         $term->update($request->only('term'));
+        // \Log::info('Term Updated via AJAX:', $term->toArray());
         return response()->json(['success' => true, 'message' => 'Term has been updated successfully']);
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        $term = Schoolterm::findOrFail($id);
-        $term->delete();
-        return response()->json(['success' => true, 'message' => 'Term has been deleted successfully']);
-    }
-
-    /**
-     * Delete term via AJAX.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-    public function deleteterm(Request $request)
-    {
-        $request->validate(['termid' => 'required|exists:schoolterms,id']);
-        $term = Schoolterm::findOrFail($request->termid);
-        $term->delete();
-        return response()->json(['success' => true, 'message' => 'Term has been deleted successfully']);
     }
 }

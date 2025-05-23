@@ -6,23 +6,19 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\ClassTeacher;
 use App\Models\Schoolclass;
-use App\Models\SubjectTeacher;
-use App\Models\Schoolsession;
-use App\Models\Schoolterm;
 use App\Models\User;
-
+use App\Models\Schoolterm;
+use App\Models\Schoolsession;
 
 class ClassTeacherController extends Controller
 {
-
-    function __construct()
+    public function __construct()
     {
-         $this->middleware('permission:class_teacher-list|class_teacher-create|class_teacher-edit|class_teacher-delete', ['only' => ['index','store']]);
-         $this->middleware('permission:class_teacher-create', ['only' => ['create','store']]);
-         $this->middleware('permission:class_teacher-edit', ['only' => ['edit','update']]);
-         $this->middleware('permission:class_teacher-delete', ['only' => ['destroy','deleteclassteacher']]);
+        $this->middleware('permission:View class-teacher|Create class-teacher|Update class-teacher|Delete class-teacher', ['only' => ['index', 'store']]);
+        $this->middleware('permission:Create class-teacher', ['only' => ['create', 'store']]);
+        $this->middleware('permission:Update class-teacher', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:Delete class-teacher', ['only' => ['destroy', 'deleteclassteacher']]);
     }
-
 
     /**
      * Display a listing of the resource.
@@ -31,30 +27,46 @@ class ClassTeacherController extends Controller
      */
     public function index()
     {
-        //
-        $schoolclass = Schoolclass::leftJoin('schoolarm', 'schoolarm.id','=','schoolclass.arm')
-        ->get(['schoolclass.id as id','schoolarm.arm as schoolarm','schoolclass.schoolclass as schoolclass',]);
-       // $subjectteachers = Subjectteacher::all();
-        $subjectteachers = User::whereHas('roles', function($q){ $q->where('name', '!=','Student'); })
-        ->get(['users.id as userid','users.name as name']);
+        $pagetitle = "Class Teacher Management";
+
+        $schoolclass = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->get(['schoolclass.id as id', 'schoolarm.arm as schoolarm', 'schoolclass.schoolclass as schoolclass']);
+
+        $subjectteachers = User::whereHas('roles', function ($q) {
+            $q->where('name', '!=', 'Student');
+        })->get(['users.id as userid', 'users.name as name']);
 
         $schoolterm = Schoolterm::all();
         $schoolsession = Schoolsession::all();
-        $classteachers = ClassTeacher::leftJoin('users', 'users.id','=','classteacher.staffid')
-        ->leftJoin('schoolclass', 'schoolclass.id','=','classteacher.schoolclassid')
-        ->leftJoin('schoolarm', 'schoolarm.id','=','schoolclass.arm')
-        ->leftJoin('schoolterm', 'schoolterm.id','=','classteacher.termid')
-        ->leftJoin('schoolsession', 'schoolsession.id','=','classteacher.sessionid')
-        ->get(['classteacher.id as id','users.id as userid','users.name as staffname','users.avatar as avatar',
-             'schoolclass.schoolclass as schoolclass','schoolarm.arm as schoolarm',
-            'schoolclass.description as classcategory','schoolterm.term as term',
-            'schoolsession.session as session','classteacher.updated_at as updated_at']);
 
-            return view('classteacher.index')->with('classteachers',$classteachers)
-                                             ->with('schoolclass',$schoolclass)
-                                             ->with('subjectteachers',$subjectteachers)
-                                             ->with('schoolterms',$schoolterm)
-                                             ->with('schoolsessions',$schoolsession);
+        $classteachers = ClassTeacher::leftJoin('users', 'users.id', '=', 'classteacher.staffid')
+            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'classteacher.schoolclassid')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'classteacher.termid')
+            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'classteacher.sessionid')
+            ->get([
+                'classteacher.id as id',
+                'users.id as userid',
+                'users.name as staffname',
+                'users.avatar as avatar',
+                'schoolclass.id as schoolclassid',
+                'schoolclass.schoolclass as schoolclass',
+                'schoolarm.id as schoolarmid',
+                'schoolarm.arm as schoolarm',
+                'schoolterm.id as termid',
+                'schoolterm.term as term',
+                'schoolsession.id as sessionid',
+                'schoolsession.session as session',
+                'classteacher.updated_at as updated_at'
+            ]);
+
+        return view('classteacher.index')
+            ->with('classteachers', $classteachers)
+            ->with('schoolclass', $schoolclass)
+            ->with('subjectteachers', $subjectteachers)
+            ->with('schoolterms', $schoolterm)
+            ->with('schoolsessions', $schoolsession)
+            ->with('pagetitle', $pagetitle);
     }
 
     /**
@@ -64,81 +76,79 @@ class ClassTeacherController extends Controller
      */
     public function create()
     {
-        //
-        $schoolclass = Schoolclass::all();
-       // $subjectteachers = Subjectteacher::all();
-        $subjectteachers = User::whereHas('roles', function($q){ $q->where('name', '!=','Student'); })
-        ->get(['users.id as userid','users.name as name']);
+        $schoolclass = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->get(['schoolclass.id as id', 'schoolarm.arm as schoolarm', 'schoolclass.schoolclass as schoolclass']);
+
+        $subjectteachers = User::whereHas('roles', function ($q) {
+            $q->where('name', '!=', 'Student');
+        })->get(['users.id as userid', 'users.name as name']);
 
         $schoolterm = Schoolterm::all();
         $schoolsession = Schoolsession::all();
 
-        return view('classteacher.create')->with('schoolclass',$schoolclass)
-                                        ->with('subjectteachers',$subjectteachers)
-                                        ->with('schoolterms',$schoolterm)
-                                        ->with('schoolsessions',$schoolsession);
-
+        return view('classteacher.create')
+            ->with('schoolclass', $schoolclass)
+            ->with('subjectteachers', $subjectteachers)
+            ->with('schoolterms', $schoolterm)
+            ->with('schoolsessions', $schoolsession);
     }
 
     /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function store(Request $request)
     {
-        //
-
         $validator = Validator::make($request->all(), [
-            'staffid' => 'required',
-            'schoolclassid' => 'required',
-            'termid' => 'required',
-            'sessionid'=>'required',
-        ],
-        ['staffid.required'=>'Select Teacher!',
-        'schoolclassid.required'=>'Select a Class Please!',
-        'termid.required'=>'Select School Term',
-        'session.required'=>'Select School Session!',
-        ]
-    );
-    if ($validator->fails()) {
+            'staffid' => 'required|exists:users,id',
+            'schoolclassid' => 'required|exists:schoolclass,id',
+            'termid' => 'required|exists:schoolterm,id',
+            'sessionid' => 'required|exists:schoolsession,id',
+        ], [
+            'staffid.required' => 'Please select a teacher!',
+            'staffid.exists' => 'Selected teacher does not exist!',
+            'schoolclassid.required' => 'Please select a class!',
+            'schoolclassid.exists' => 'Selected class does not exist!',
+            'termid.required' => 'Please select a term!',
+            'termid.exists' => 'Selected term does not exist!',
+            'sessionid.required' => 'Please select a session!',
+            'sessionid.exists' => 'Selected session does not exist!',
+        ]);
 
-        return redirect()->back()->withErrors($validator)
-                                 ->withInput();
-
-     }
-
-     $ct = ClassTeacher::where('schoolclassid',$request->input('schoolclassid'))
-                      -> where('termid',$request->input('termid'))
-                      -> where('sessionid',$request->input('sessionid'))
-                      ->exists();
-        if($ct){
-            return redirect()->route('classteacher.index')
-            ->with('danger', 'Hello. It seems you are assigning a teacher to class more than one');
-
-
-        }else{
-
-            $input = $request->all();
-            classteacher::create($input);
-
-        return redirect()->route('classteacher.index')
-        ->with('success', 'Teacher Assigned to Class successfully.');
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
         }
 
+        $exists = ClassTeacher::where('staffid', $request->input('staffid'))
+            ->where('schoolclassid', $request->input('schoolclassid'))
+            ->where('termid', $request->input('termid'))
+            ->where('sessionid', $request->input('sessionid'))
+            ->exists();
 
-    }
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This teacher is already assigned to the selected class, term, and session.'
+            ], 422);
+        }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
+        $classteacher = ClassTeacher::create([
+            'staffid' => $request->input('staffid'),
+            'schoolclassid' => $request->input('schoolclassid'),
+            'termid' => $request->input('termid'),
+            'sessionid' => $request->input('sessionid'),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Class Teacher added successfully.',
+            'data' => $classteacher
+        ], 201);
     }
 
     /**
@@ -149,98 +159,162 @@ class ClassTeacherController extends Controller
      */
     public function edit($id)
     {
-        $schoolclass = Schoolclass::all();
-        $subjectteachers = User::whereHas('roles', function($q){ $q->where('name', '!=','Student'); })
-        ->get(['users.id as userid','users.name as name']);
+        $schoolclass = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->get(['schoolclass.id as id', 'schoolarm.arm as schoolarm', 'schoolclass.schoolclass as schoolclass']);
+
+        $subjectteachers = User::whereHas('roles', function ($q) {
+            $q->where('name', '!=', 'Student');
+        })->get(['users.id as userid', 'users.name as name']);
+
         $schoolterm = Schoolterm::all();
         $schoolsession = Schoolsession::all();
 
-        $classteachers = ClassTeacher::where('classteacher.id',$id)
-        ->leftJoin('users', 'users.id','=','classteacher.staffid')
-        ->leftJoin('schoolclass', 'schoolclass.id','=','classteacher.schoolclassid')
-        ->leftJoin('schoolterm', 'schoolterm.id','=','classteacher.termid')
-        ->leftJoin('schoolsession', 'schoolsession.id','=','classteacher.sessionid')
-        ->get(['classteacher.id as ctid','users.id as userid','users.name as staffname',
-             'schoolclass.schoolclass as schoolclass','schoolclass.arm as schoolarm',
-             'schoolclass.id as classid','schoolsession.id as sessionid','schoolterm.id as termid',
-            'schoolclass.description as classcategory','schoolterm.term as term',
-            'schoolsession.session as session','classteacher.updated_at as updated_at']);
+        $classteacher = ClassTeacher::where('classteacher.id', $id)
+            ->leftJoin('users', 'users.id', '=', 'classteacher.staffid')
+            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'classteacher.schoolclassid')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'classteacher.termid')
+            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'classteacher.sessionid')
+            ->first([
+                'classteacher.id as ctid',
+                'users.id as userid',
+                'users.name as staffname',
+                'schoolclass.id as classid',
+                'schoolclass.schoolclass as schoolclass',
+                'schoolarm.id as schoolarmid',
+                'schoolarm.arm as schoolarm',
+                'schoolterm.id as termid',
+                'schoolterm.term as term',
+                'schoolsession.id as sessionid',
+                'schoolsession.session as session',
+                'classteacher.updated_at as updated_at'
+            ]);
 
+        if (!$classteacher) {
+            return redirect()->route('classteacher.index')->with('danger', 'Class Teacher not found.');
+        }
 
-       return view('classteacher.edit')->with('classteachers',$classteachers)
-                                         ->with('teachers',$subjectteachers)
-                                         ->with('schoolclasses',$schoolclass)
-                                         ->with('schoolterms',$schoolterm)
-                                         ->with('schoolsessions',$schoolsession);
+        return view('classteacher.edit')
+            ->with('classteachers', collect([$classteacher]))
+            ->with('teachers', $subjectteachers)
+            ->with('schoolclasses', $schoolclass)
+            ->with('schoolterms', $schoolterm)
+            ->with('schoolsessions', $schoolsession);
     }
 
-    /**
+  /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function update(Request $request, $id)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'staffid' => 'required|exists:users,id',
+            'schoolclassid' => 'required|exists:schoolclass,id',
+            'termid' => 'required|exists:schoolterm,id',
+            'sessionid' => 'required|exists:schoolsession,id',
+        ], [
+            'staffid.required' => 'Please select a teacher!',
+            'staffid.exists' => 'Selected teacher does not exist!',
+            'schoolclassid.required' => 'Please select a class!',
+            'schoolclassid.exists' => 'Selected class does not exist!',
+            'termid.required' => 'Please select a term!',
+            'termid.exists' => 'Selected term does not exist!',
+            'sessionid.required' => 'Please select a session!',
+            'sessionid.exists' => 'Selected session does not exist!',
+        ]);
 
-       $ct = ClassTeacher::where('staffid',$request->input('staffid'))
-                      -> where('schoolclassid',$request->input('schoolclassid'))
-                      -> where('termid',$request->input('termid'))
-                      -> where('sessionid',$request->input('sessionid'))
-                      ->exists();
-        if($ct){
-            return redirect()->route('classteacher.index')
-            ->with('danger', 'Hello. It seems you are assigning a teacher to class more than once');
-
-
-        }else{
-            $input = $request->all();
-            $classteacher = ClassTeacher::find($id);
-            $classteacher->update($input);
-           return redirect()->route('classteacher.edit',[$id])
-             ->with('success', 'Class Teacher updated successfully.');
-
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
         }
 
+        $exists = ClassTeacher::where('staffid', $request->input('staffid'))
+            ->where('schoolclassid', $request->input('schoolclassid'))
+            ->where('termid', $request->input('termid'))
+            ->where('sessionid', $request->input('sessionid'))
+            ->where('id', '!=', $id)
+            ->exists();
 
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'This teacher is already assigned to the selected class, term, and session.'
+            ], 422);
+        }
 
+        $classteacher = ClassTeacher::find($id);
+        if (!$classteacher) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Class Teacher not found.'
+            ], 404);
+        }
 
+        $classteacher->update([
+            'staffid' => $request->input('staffid'),
+            'schoolclassid' => $request->input('schoolclassid'),
+            'termid' => $request->input('termid'),
+            'sessionid' => $request->input('sessionid'),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Class Teacher updated successfully.',
+            'data' => $classteacher
+        ], 200);
     }
 
     /**
      * Remove the specified resource from storage.
      *
      * @param  int  $id
-     * @return \Illuminate\Http\Response
+     * @return \Illuminate\Http\JsonResponse
      */
     public function destroy($id)
     {
-        //
-              Classteacher::find($id)->delete();
-
-        return redirect()->route('classteacher.index')
-            ->with('success', 'Class Teacher deleted successfully.');
-    }
-
-    public function deleteclassteacher(Request $request)
-    {
-        classteacher::find($request->classteacherid)->delete();
-        //check data deleted or not
-        if ($request->classteacherid) {
-            $success = true;
-            $message = "Class Teacher has been removed";
-        } else {
-            $success = true;
-            $message = "Class Teacher not found";
+        $classteacher = ClassTeacher::find($id);
+        if (!$classteacher) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Class Teacher not found.'
+            ], 404);
         }
 
-        //  return response
-        return response()->json([
-            'success' => $success,
-            'message' => $message,
-        ]);
+        $classteacher->delete();
 
+        return response()->json([
+            'success' => true,
+            'message' => 'Class Teacher deleted successfully.'
+        ], 200);
+    }
+
+    /**
+     * Handle AJAX delete request for class teacher.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function deleteclassteacher(Request $request)
+    {
+        $classteacher = ClassTeacher::find($request->classteacherid);
+        if (!$classteacher) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Class Teacher not found.'
+            ], 404);
+        }
+
+        $classteacher->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Class Teacher has been removed.'
+        ], 200);
     }
 }

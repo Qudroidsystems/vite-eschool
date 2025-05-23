@@ -3,184 +3,129 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use App\Models\Schoolarm;
-
+use Illuminate\Support\Facades\Log;
 
 class SchoolArmController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    function __construct()
+    public function __construct()
     {
-         $this->middleware('permission:school_arm-list|school_arm-create|school_arm-edit|school_arm-delete', ['only' => ['index','store']]);
-         $this->middleware('permission:school_arm-create', ['only' => ['create','store']]);
-         $this->middleware('permission:school_arm-edit', ['only' => ['edit','update']]);
-         $this->middleware('permission:school_arm-delete', ['only' => ['destroy']]);
+        $this->middleware('permission:View school-arm|Create school-arm|Update school-arm|Delete school-arm', ['only' => ['index']]);
+        $this->middleware('permission:Create school-arm', ['only' => ['store']]);
+        $this->middleware('permission:Update school-arm', ['only' => ['update', 'updatearm']]);
+        $this->middleware('permission:Delete school-arm', ['only' => ['destroy', 'deletearm']]);
     }
 
-
-    public function index()
+    public function index(Request $request)
     {
-        //
-        $all_arms = Schoolarm::all()->sortBy('arm');
+        Log::info('Index School Arm Request:', $request->all());
+        $pagetitle = "School Arm Management";
+        $query = Schoolarm::query();
 
-        return View('arm.index')->with('all_arms',$all_arms);
+        if ($request->has('search')) {
+            $query->where('arm', 'like', '%' . $request->query('search') . '%')
+                  ->orWhere('description', 'like', '%' . $request->query('search') . '%');
+        }
 
+        $all_arms = $query->orderBy('arm')->paginate(10);
+
+        if ($request->ajax()) {
+            return response()->json(['arms' => $all_arms->items()]);
+        }
+
+        return view('arm.index')->with('all_arms', $all_arms)->with('pagetitle', $pagetitle);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-
-        return View('arm.create');
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
-        //
-        $sarm = new Schoolarm();
-        $validator = Validator::make($request->all(), [
-            'arm' => 'required|min:1|unique:schoolarm',
-            'remark' =>'required',
-        ]
+        Log::info('Store School Arm Request:', $request->all());
+        $request->validate([
+            'arm' => 'required|string|max:255|unique:schoolarm,arm',
+            'description' => 'required|string'
+        ]);
 
-    );
-
-        if ($validator->fails()) {
-            //$errors = $validator->errors();
-          // return $errors->toJson();
-           return redirect()->back()->withErrors($validator)
-                                    ->withInput();
-
-        } else{
-        $sarm->arm = $request->arm;
-        $sarm->description = $request->remark;
-        $sarm->save();
-        if($sarm != null){
-            return redirect()->back()->with('status', 'School class Arm Registered Successfully!');
-            }else{
-               echo "something went wrong...";
-            }
+        $checkArm = Schoolarm::where('arm', $request->input('arm'))->exists();
+        if ($checkArm) {
+            Log::warning('School arm already taken:', ['arm' => $request->input('arm')]);
+            return response()->json(['success' => false, 'message' => 'School arm is already taken'], 422);
         }
+
+        $arm = Schoolarm::create([
+            'arm' => $request->input('arm'),
+            'description' => $request->input('description')
+        ]);
+        Log::info('School Arm Created:', $arm->toArray());
+
+        return response()->json(['success' => true, 'message' => 'School arm has been created successfully']);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-        $sarm = Schoolarm::find($id);
-
-        return view('arm.edit')->with('sarm',$sarm);
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
-        //
-        $this->validate($request, [
-            'arm' => 'required|min:1|unique:schoolarm',
-             'description'=>'required',
+        Log::info('Update School Arm Request:', ['id' => $id, 'data' => $request->all()]);
+        $request->validate([
+            'arm' => "required|string|max:255|unique:schoolarm,arm,$id",
+            'description' => 'required|string'
         ]);
 
-        $input = $request->all();
-        //print_r( $input);
+        $checkArm = Schoolarm::where('arm', $request->input('arm'))->where('id', '!=', $id)->exists();
+        if ($checkArm) {
+            Log::warning('School arm already taken:', ['arm' => $request->input('arm')]);
+            return response()->json(['success' => false, 'message' => 'School arm is already taken'], 422);
+        }
 
-       $sarm = Schoolarm::find($id);
-        //print($sarm);
-        $sarm->update($input);
-
-        return redirect()->route('schoolarm.index')
-          ->with('success', 'Class Arm  has been updated successfully.');
-
-    }
-
-    public function updatearm(Request $request)
-    {
-
-
-        $this->validate($request, [
-            'arm' => 'required|min:1|unique:schoolarm',
-             'remark'=>'required',
+        $arm = Schoolarm::findOrFail($id);
+        $arm->update([
+            'arm' => $request->input('arm'),
+            'description' => $request->input('description')
         ]);
+        Log::info('School Arm Updated:', $arm->toArray());
 
-         $input = $request->all();
-         $sarm = Schoolarm::find($request->id);
-        //print($sarm);
-        $sarm->update($input);
-
-        return redirect()->back()->with('success', 'Record has been successfully updated!');
+        return response()->json(['success' => true, 'message' => 'School arm has been updated successfully']);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
-        //
-        Schoolarm::find($id)->delete();
+        Log::info('Delete School Arm Request:', ['id' => $id]);
+        $arm = Schoolarm::findOrFail($id);
+        $arm->delete();
+        Log::info('School Arm Deleted:', ['id' => $id]);
 
-        return redirect()->route('schoolarm.index')
-            ->with('success', 'Arm deleted successfully.');
-
+        return response()->json(['success' => true, 'message' => 'School arm has been deleted successfully']);
     }
 
     public function deletearm(Request $request)
     {
-        Schoolarm::find($request->armid)->delete();
-        //check data deleted or not
-        if ($request->armid) {
-            $success = true;
-            $message = "Arm has been removed";
-        } else {
-            $success = true;
-            $message = "Arm not found";
-        }
+        Log::info('Delete School Arm AJAX Request:', $request->all());
+        $request->validate(['armid' => 'required|exists:schoolarm,id']);
+        $arm = Schoolarm::findOrFail($request->armid);
+        $arm->delete();
+        Log::info('School Arm Deleted via AJAX:', ['id' => $request->armid]);
 
-        //  return response
-        return response()->json([
-            'success' => $success,
-            'message' => $message,
+        return response()->json(['success' => true, 'message' => 'School arm has been deleted successfully']);
+    }
+
+    public function updatearm(Request $request)
+    {
+        Log::info('Update School Arm AJAX Request:', $request->all());
+        $request->validate([
+            'id' => 'required|exists:schoolarm,id',
+            'arm' => "required|string|max:255|unique:schoolarm,arm,{$request->id}",
+            'description' => 'required|string'
         ]);
 
+        $checkArm = Schoolarm::where('arm', $request->input('arm'))->where('id', '!=', $request->id)->exists();
+        if ($checkArm) {
+            Log::warning('School arm already taken:', ['arm' => $request->input('arm')]);
+            return response()->json(['success' => false, 'message' => 'School arm is already taken'], 422);
+        }
+
+        $arm = Schoolarm::findOrFail($request->id);
+        $arm->update([
+            'arm' => $request->input('arm'),
+            'description' => $request->input('description')
+        ]);
+        Log::info('School Arm Updated via AJAX:', $arm->toArray());
+
+        return response()->json(['success' => true, 'message' => 'School arm has been updated successfully']);
     }
 }

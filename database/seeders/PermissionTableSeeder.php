@@ -19,6 +19,7 @@ class PermissionTableSeeder extends Seeder
            'Create user',
            'Update user',
            'Delete user',
+           
            'View role',
            'Create role',
            'Update role',
@@ -26,23 +27,64 @@ class PermissionTableSeeder extends Seeder
            'Add user-role',
            'Update user-role',
            'Remove user-role',
+
            'View permission',
            'Create permission',
            'Update permission',
            'Delete permission',
+
            'dashboard',
+
            'View session',
            'Create session',
            'Update session',
            'Delete session',
+
            'View term',
            'Create term',
            'Update term',
            'Delete term',
+
            'View schoolhouse',
            'Create schoolhouse',
            'Update schoolhouse',
            'Delete schoolhouse',
+
+           'View school-arm',
+           'Create school-arm',
+           'Update school-arm',
+           'Delete school-arm',
+
+           'View school-class',
+           'Create school-class',
+           'Update school-class',
+           'Delete school-class',
+           
+           'View class-category',
+           'Create class-category',
+           'Update class-category',
+           'Delete class-category',
+
+           'View class-teacher',
+           'Create class-teacher',
+           'Update class-teacher',
+           'Delete class-teacher',
+
+           'View subjects',
+           'Create subjects',
+           'Update subjects',
+           'Delete subjects',
+
+           'View subject-teacher',
+           'Create subject-teacher',
+           'Update subject-teacher',
+           'Delete subject-teacher',
+           
+           'View subject-class',
+           'Create subject-class',
+           'Update subject-class',
+           'Delete subject-class',
+
         //    'usermanagement-link',
         //    'staffmanagement-link',
         //    'basicsettingsmanagement-link',
@@ -56,10 +98,6 @@ class PermissionTableSeeder extends Seeder
         //    'myclass-list',
         //    'mysubject-list',
 
-        //    'class_teacher-list',
-        //    'class_teacher-Create',
-        //    'class_teacher-edit',
-        //    'class_teacher-Delete',
 
         //    'myresultroom-list',
         //    'myresultroom-creat',
@@ -71,15 +109,7 @@ class PermissionTableSeeder extends Seeder
         //    'parent-edit',
         //    'parent-Delete',
 
-        //    'school_arm-list',
-        //    'school_arm-Create',
-        //    'school_arm-edit',
-        //    'school_arm-Delete',
-
-        //    'school_class-list',
-        //    'school_class-Create',
-        //    'school_class-edit',
-        //    'school_class-Delete',
+     
 
           
 
@@ -102,25 +132,13 @@ class PermissionTableSeeder extends Seeder
 
         //    'studentresults-list',
 
-        //    'subject_class-list',
-        //    'subject_class-assign',
-        //    'subject_class-edit',
-        //    'subject_class-Delete',
 
         //    'subject_operation-list',
         //    'subject_operation-Create',
         //    'subject_operation-edit',
         //    'subject_operation-Delete',
 
-        //    'subject-list',
-        //    'subject-Create',
-        //    'subject-edit',
-        //    'subject-Delete',
-
-        //    'subject_teacher-list',
-        //    'subject_teacher-assign',
-        //    'subject_teacher-edit',
-        //    'subject_teacher-Delete',
+          
 
         //    'View_student-list',
 
@@ -130,10 +148,7 @@ class PermissionTableSeeder extends Seeder
 
    
 
-        //    'classcategory-list',
-        //    'classcategory-Create',
-        //    'classcategory-edit',
-        //    'classcategory-Delete',
+       
 
         //    'studenthouse-Create',
         //    'classsettings-Create',
@@ -159,6 +174,38 @@ class PermissionTableSeeder extends Seeder
                 if($word == "dashboard")
                 Permission::Create(['name' => $permission,'title'=>"Dashboard Management"]);
 
+                if($word == "school-arm")
+                Permission::Create(['name' => $permission,'title'=>"School Arm Management"]);
+
+                if($word == "school-class")
+                Permission::Create(['name' => $permission,'title'=>"School ClassManagement"]);
+
+                if($word == "session")
+                Permission::Create(['name' => $permission,'title'=>"School Session Management"]);
+
+                if($word == "term")
+                Permission::Create(['name' => $permission,'title'=>"School Term Management "]);
+
+                if($word == "schoolhouse")
+                Permission::Create(['name' => $permission,'title'=>"School House Management"]);
+
+                if($word == "class-category")
+                Permission::Create(['name' => $permission,'title'=>"Class Category Management"]);
+
+                if($word == "class-teacher")
+                Permission::Create(['name' => $permission,'title'=>"Class Teacher Management"]);
+
+                if($word == "subjects")
+                Permission::Create(['name' => $permission,'title'=>"Subject Management"]);
+
+                if($word == "subject-teacher")
+                Permission::Create(['name' => $permission,'title'=>"Subject Teacher Management"]);
+
+                if($word == "subject-class")
+                Permission::Create(['name' => $permission,'title'=>"Subject Class Management"]);
+
+
+
                 // if($word == "class_operation")
                 // Permission::Create(['name' => $permission,'title'=>"Class Operation Management"]);
 
@@ -168,26 +215,12 @@ class PermissionTableSeeder extends Seeder
                 // if($word == "mysubject")
                 // Permission::Create(['name' => $permission,'title'=>"User Subject Management"]);
 
-                // if($word == "class_teacher")
-                // Permission::Create(['name' => $permission,'title'=>"Class Teacher Management"]);
-
+           
                 // if($word == "myresultroom")
                 // Permission::Create(['name' => $permission,'title'=>"User Result Room Management"]);
 
                 // if($word == "parent")
                 // Permission::Create(['name' => $permission,'title'=>"Parent Management"]);
-
-                // if($word == "school_arm")
-                // Permission::Create(['name' => $permission,'title'=>"School Arm Management"]);
-
-                // if($word == "school_class")
-                // Permission::Create(['name' => $permission,'title'=>"School ClassManagement"]);
-
-                if($word == "session")
-                Permission::Create(['name' => $permission,'title'=>"School Session Management"]);
-
-                if($word == "term")
-                Permission::Create(['name' => $permission,'title'=>"School Term Management "]);
 
                 // if($word == "student")
                 // Permission::Create(['name' => $permission,'title'=>"Student Management"]);
@@ -198,17 +231,16 @@ class PermissionTableSeeder extends Seeder
                 // if($word == "student_bulk")
                 // Permission::Create(['name' => $permission,'title'=>"Student Management"]);
 
-                // if($word == "subject_class")
-                // Permission::Create(['name' => $permission,'title'=>"Subject Class Management"]);
+             
 
                 // if($word == "subject_operation")
                 // Permission::Create(['name' => $permission,'title'=>"Subject Operations Management"]);
 
-                // if($word == "subject")
-                // Permission::Create(['name' => $permission,'title'=>"Subject Management"]);
+                if($word == "subject")
+                Permission::Create(['name' => $permission,'title'=>"Subject Management"]);
 
-                // if($word == "subject_teacher")
-                // Permission::Create(['name' => $permission,'title'=>"Subject Teacher Management"]);
+                if($word == "subject_teacher")
+                Permission::Create(['name' => $permission,'title'=>"Subject Teacher Management"]);
 
                 // if($word == "View_student")
                 // Permission::Create(['name' => $permission,'title'=>"View Student Management "]);
@@ -218,12 +250,6 @@ class PermissionTableSeeder extends Seeder
 
                 // if($word == "student_picture")
                 // Permission::Create(['name' => $permission,'title'=>"Student Picture Management"]);
-
-                if($word == "schoolhouse")
-                Permission::Create(['name' => $permission,'title'=>"School House Management"]);
-
-                // if($word == "classcategory")
-                // Permission::Create(['name' => $permission,'title'=>"Class Category Management"]);
 
                 // if($word == "studenthouse")
                 // Permission::Create(['name' => $permission,'title'=>"Student house Management"]);

@@ -7,6 +7,7 @@ use App\Models\Schoolhouse;
 use App\Models\Schoolterm;
 use App\Models\Schoolsession;
 use App\Models\User;
+use Illuminate\Support\Facades\Validator;
 
 class SchoolHouseController extends Controller
 {
@@ -74,13 +75,26 @@ class SchoolHouseController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'house' => 'required|string|max:255',
-            'housecolour' => 'required|string|max:255',
+            'housecolour' => [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    if (!preg_match('/^#[0-9A-Fa-f]{6}$|^[a-zA-Z]+$|^rgb\(\d{1,3},\s*\d{1,3},\s*\d{1,3}\)$/', $value)) {
+                        $fail('The house colour must be a valid CSS color (name, hex, or RGB).');
+                    }
+                }
+            ],
             'housemasterid' => 'required|exists:users,id',
             'termid' => 'required|exists:schoolterm,id',
             'sessionid' => 'required|exists:schoolsession,id'
         ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
 
         $schoolhouse = Schoolhouse::where('house', $request->house)
             ->where('housemasterid', $request->housemasterid)
@@ -106,13 +120,26 @@ class SchoolHouseController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $request->validate([
+        $validator = Validator::make($request->all(), [
             'house' => 'required|string|max:255',
-            'housecolour' => 'required|string|max:255',
+            'housecolour' => [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    if (!preg_match('/^#[0-9A-Fa-f]{6}$|^[a-zA-Z]+$|^rgb\(\d{1,3},\s*\d{1,3},\s*\d{1,3}\)$/', $value)) {
+                        $fail('The house colour must be a valid CSS color (name, hex, or RGB).');
+                    }
+                }
+            ],
             'housemasterid' => 'required|exists:users,id',
             'termid' => 'required|exists:schoolterm,id',
             'sessionid' => 'required|exists:schoolsession,id'
         ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
 
         $schoolhouse = Schoolhouse::where('house', $request->house)
             ->where('housemasterid', $request->housemasterid)
@@ -139,14 +166,27 @@ class SchoolHouseController extends Controller
      */
     public function updatehouse(Request $request)
     {
-        $request->validate([
-            'id' => 'required|exists:schoolhouses,id',
+        $validator = Validator::make($request->all(), [
+            'id' => 'required|exists:schoolhouse,id',
             'house' => 'required|string|max:255',
-            'housecolour' => 'required|string|max:255',
+            'housecolour' => [
+                'required',
+                'string',
+                'max:255',
+                function ($attribute, $value, $fail) {
+                    if (!preg_match('/^#[0-9A-Fa-f]{6}$|^[a-zA-Z]+$|^rgb\(\d{1,3},\s*\d{1,3},\s*\d{1,3}\)$/', $value)) {
+                        $fail('The house colour must be a valid CSS color (name, hex, or RGB).');
+                    }
+                }
+            ],
             'housemasterid' => 'required|exists:users,id',
             'termid' => 'required|exists:schoolterm,id',
             'sessionid' => 'required|exists:schoolsession,id'
         ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success' => false, 'message' => $validator->errors()->first()], 422);
+        }
 
         $schoolhouse = Schoolhouse::where('house', $request->house)
             ->where('housemasterid', $request->housemasterid)

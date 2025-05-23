@@ -10,7 +10,5 @@ class Schoolterm extends Model
     use HasFactory;
     protected $table = "schoolterm";
 
-    protected $fillable = [
-        'term',
-    ];
+    protected $fillable = ['term'];
 }

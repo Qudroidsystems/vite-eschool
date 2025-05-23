@@ -1,4 +1,4 @@
-console.log("term.init.js is loaded and executing!");
+console.log("subject.init.js is loaded and executing!");
 
 // Verify dependencies
 try {
@@ -47,9 +47,13 @@ if (checkAll) {
 
 // Form fields
 var addIdField = document.getElementById("add-id-field");
-var addTermField = document.getElementById("term");
+var addSubjectField = document.getElementById("subject");
+var addSubjectCodeField = document.getElementById("subject_code");
+var addRemarkField = document.getElementById("remark");
 var editIdField = document.getElementById("edit-id-field");
-var editTermField = document.getElementById("edit-term");
+var editSubjectField = document.getElementById("edit-subject");
+var editSubjectCodeField = document.getElementById("edit-subject_code");
+var editRemarkField = document.getElementById("edit-remark");
 
 // Checkbox handling
 function ischeckboxcheck() {
@@ -87,18 +91,18 @@ document.addEventListener('click', function (e) {
     }
 });
 
-// Delete single term
+// Delete single subject
 function handleRemoveClick(e) {
     e.preventDefault();
     var itemId = e.target.closest("tr").querySelector(".id").getAttribute("data-id");
     var deleteButton = document.getElementById("delete-record");
     if (deleteButton) {
         deleteButton.addEventListener("click", function () {
-            axios.delete(`/term/${itemId}`).then(function () {
+            axios.delete(`/subject/${itemId}`).then(function () {
                 Swal.fire({
                     position: "center",
                     icon: "success",
-                    title: "Term deleted successfully!",
+                    title: "Subject deleted successfully!",
                     showConfirmButton: false,
                     timer: 2000,
                     showCloseButton: true
@@ -108,7 +112,7 @@ function handleRemoveClick(e) {
                 Swal.fire({
                     position: "center",
                     icon: "error",
-                    title: "Error deleting term",
+                    title: "Error deleting subject",
                     text: error.response?.data?.message || "An error occurred",
                     showConfirmButton: true
                 });
@@ -123,33 +127,46 @@ function handleRemoveClick(e) {
     }
 }
 
-// Edit term
+// Edit subject
 function handleEditClick(e) {
     e.preventDefault();
     var itemId = e.target.closest("tr").querySelector(".id").getAttribute("data-id");
     var tr = e.target.closest("tr");
     if (editIdField) editIdField.value = itemId;
-    if (editTermField) editTermField.value = tr.querySelector(".term").innerText;
+    if (editSubjectField) editSubjectField.value = tr.querySelector(".subject")?.innerText || "";
+    if (editSubjectCodeField) editSubjectCodeField.value = tr.querySelector(".subjectcode")?.innerText || "";
+    if (editRemarkField) editRemarkField.value = tr.querySelector(".remark")?.innerText || "";
     try {
         var modal = new bootstrap.Modal(document.getElementById("editModal"));
         modal.show();
     } catch (error) {
         console.error("Error opening edit modal:", error);
+        Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "Error opening edit modal",
+            text: "Please try again or contact support.",
+            showConfirmButton: true
+        });
     }
 }
 
 // Clear form fields
 function clearAddFields() {
     if (addIdField) addIdField.value = "";
-    if (addTermField) addTermField.value = "";
+    if (addSubjectField) addSubjectField.value = "";
+    if (addSubjectCodeField) addSubjectCodeField.value = "";
+    if (addRemarkField) addRemarkField.value = "";
 }
 
 function clearEditFields() {
     if (editIdField) editIdField.value = "";
-    if (editTermField) editTermField.value = "";
+    if (editSubjectField) editSubjectField.value = "";
+    if (editSubjectCodeField) editSubjectCodeField.value = "";
+    if (editRemarkField) editRemarkField.value = "";
 }
 
-// Delete multiple terms
+// Delete multiple subjects
 function deleteMultiple() {
     const ids_array = [];
     const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
@@ -173,11 +190,11 @@ function deleteMultiple() {
         }).then((result) => {
             if (result.value) {
                 Promise.all(ids_array.map((id) => {
-                    return axios.delete(`/term/${id}`);
+                    return axios.delete(`/subject/${id}`);
                 })).then(() => {
                     Swal.fire({
                         title: "Deleted!",
-                        text: "Your terms have been deleted.",
+                        text: "Your subjects have been deleted.",
                         icon: "success",
                         confirmButtonClass: "btn btn-info w-xs mt-2",
                         buttonsStyling: false
@@ -186,7 +203,7 @@ function deleteMultiple() {
                 }).catch((error) => {
                     Swal.fire({
                         title: "Error!",
-                        text: error.response?.data?.message || "Failed to delete terms",
+                        text: error.response?.data?.message || "Failed to delete subjects",
                         icon: "error",
                         confirmButtonClass: "btn btn-info w-xs mt-2",
                         buttonsStyling: false
@@ -205,12 +222,12 @@ function deleteMultiple() {
 }
 
 // Initialize List.js for client-side filtering
-var termList;
-var termListContainer = document.getElementById('termList');
-if (termListContainer && document.querySelectorAll('#termList tbody tr').length > 0) {
+var subjectList;
+var subjectListContainer = document.getElementById('subjectList');
+if (subjectListContainer && document.querySelectorAll('#subjectList tbody tr').length > 0) {
     try {
-        termList = new List('termList', {
-            valueNames: ['term', 'datereg'],
+        subjectList = new List('subjectList', {
+            valueNames: ['sn', 'subject', 'subjectcode', 'remark', 'datereg'],
             page: 1000,
             pagination: false,
             listClass: 'list'
@@ -219,14 +236,14 @@ if (termListContainer && document.querySelectorAll('#termList tbody tr').length 
         console.error("List.js initialization failed:", error);
     }
 } else {
-    console.warn("No terms available for List.js initialization");
+    console.warn("No subjects available for List.js initialization");
 }
 
 // Update no results message
-if (termList) {
-    termList.on('searchComplete', function () {
+if (subjectList) {
+    subjectList.on('searchComplete', function () {
         var noResultRow = document.querySelector('.noresult');
-        if (termList.visibleItems.length === 0) {
+        if (subjectList.visibleItems.length === 0) {
             noResultRow.style.display = 'block';
         } else {
             noResultRow.style.display = 'none';
@@ -239,90 +256,98 @@ function filterData() {
     var searchInput = document.querySelector(".search-box input.search");
     var searchValue = searchInput ? searchInput.value : "";
     console.log("Filtering with search:", searchValue);
-    if (termList) {
-        termList.search(searchValue, ['term']);
+    if (subjectList) {
+        subjectList.search(searchValue, ['sn', 'subject', 'subjectcode', 'remark']);
     }
 }
 
-// Add term
-var addTermForm = document.getElementById("add-term-form");
-if (addTermForm) {
-    addTermForm.addEventListener("submit", function (e) {
+// Add subject
+var addSubjectForm = document.getElementById("add-subject-form");
+if (addSubjectForm) {
+    addSubjectForm.addEventListener("submit", function (e) {
         e.preventDefault();
         var errorMsg = document.getElementById("alert-error-msg");
         if (errorMsg) errorMsg.classList.add("d-none");
-        var formData = new FormData(addTermForm);
-        var term = formData.get('term');
-        if (!term) {
+        var formData = new FormData(addSubjectForm);
+        var subject = formData.get('subject');
+        var subject_code = formData.get('subject_code');
+        var remark = formData.get('remark');
+        if (!subject || !subject_code || !remark) {
             if (errorMsg) {
-                errorMsg.innerHTML = "Please enter a term name";
+                errorMsg.innerHTML = "Please fill all required fields";
                 errorMsg.classList.remove("d-none");
             }
             return;
         }
-        console.log("Submitting Add Term:", { term });
-        axios.post('/term', {
-            term: term
+        console.log("Submitting Add Subject:", { subject, subject_code, remark });
+        axios.post('/subject', {
+            subject: subject,
+            subject_code: subject_code,
+            remark: remark
         }, {
             headers: { 'Content-Type': 'application/json' }
         }).then(function (response) {
-            console.log("Add Term Success:", response.data);
+            console.log("Add Subject Success:", response.data);
             Swal.fire({
                 position: "center",
                 icon: "success",
-                title: "Term added successfully!",
+                title: "Subject added successfully!",
                 showConfirmButton: false,
                 timer: 2000,
                 showCloseButton: true
             });
             window.location.reload();
         }).catch(function (error) {
-            console.error("Add Term Error:", error.response);
+            console.error("Add Subject Error:", error.response);
             if (errorMsg) {
-                errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error adding term";
+                errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error adding subject";
                 errorMsg.classList.remove("d-none");
             }
         });
     });
 }
 
-// Edit term
-var editTermForm = document.getElementById("edit-term-form");
-if (editTermForm) {
-    editTermForm.addEventListener("submit", function (e) {
+// Edit subject
+var editSubjectForm = document.getElementById("edit-subject-form");
+if (editSubjectForm) {
+    editSubjectForm.addEventListener("submit", function (e) {
         e.preventDefault();
         var errorMsg = document.getElementById("edit-alert-error-msg");
         if (errorMsg) errorMsg.classList.add("d-none");
-        var formData = new FormData(editTermForm);
-        var term = formData.get('term');
+        var formData = new FormData(editSubjectForm);
+        var subject = formData.get('subject');
+        var subject_code = formData.get('subject_code');
+        var remark = formData.get('remark');
         var id = editIdField.value;
-        if (!term) {
+        if (!subject || !subject_code || !remark) {
             if (errorMsg) {
-                errorMsg.innerHTML = "Please enter a term name";
+                errorMsg.innerHTML = "Please fill all required fields";
                 errorMsg.classList.remove("d-none");
             }
             return;
         }
-        console.log("Submitting Edit Term:", { id, term });
-        axios.put(`/term/${id}`, {
-            term: term
+        console.log("Submitting Edit Subject:", { id, subject, subject_code, remark });
+        axios.put(`/subject/${id}`, {
+            subject: subject,
+            subject_code: subject_code,
+            remark: remark
         }, {
             headers: { 'Content-Type': 'application/json' }
         }).then(function (response) {
-            console.log("Edit Term Success:", response.data);
+            console.log("Edit Subject Success:", response.data);
             Swal.fire({
                 position: "center",
                 icon: "success",
-                title: "Term updated successfully!",
+                title: "Subject updated successfully!",
                 showConfirmButton: false,
                 timer: 2000,
                 showCloseButton: true
             });
             window.location.reload();
         }).catch(function (error) {
-            console.error("Edit Term Error:", error.response);
+            console.error("Edit Subject Error:", error.response);
             if (errorMsg) {
-                errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error updating term";
+                errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error updating subject";
                 errorMsg.classList.remove("d-none");
             }
         });
@@ -330,14 +355,14 @@ if (editTermForm) {
 }
 
 // Modal events
-var addModal = document.getElementById("addTermModal");
+var addModal = document.getElementById("addSubjectModal");
 if (addModal) {
     addModal.addEventListener("show.bs.modal", function (e) {
         if (e.relatedTarget.classList.contains("add-btn")) {
             var modalLabel = document.getElementById("exampleModalLabel");
             var addBtn = document.getElementById("add-btn");
-            if (modalLabel) modalLabel.innerHTML = "Add Term";
-            if (addBtn) addBtn.innerHTML = "Add Term";
+            if (modalLabel) modalLabel.innerHTML = "Add Subject";
+            if (addBtn) addBtn.innerHTML = "Add Subject";
         }
     });
     addModal.addEventListener("hidden.bs.modal", function () {
@@ -350,7 +375,7 @@ if (editModal) {
     editModal.addEventListener("show.bs.modal", function () {
         var modalLabel = document.getElementById("editModalLabel");
         var updateBtn = document.getElementById("update-btn");
-        if (modalLabel) modalLabel.innerHTML = "Edit Term";
+        if (modalLabel) modalLabel.innerHTML = "Edit Subject";
         if (updateBtn) updateBtn.innerHTML = "Update";
     });
     editModal.addEventListener("hidden.bs.modal", function () {
