@@ -28,7 +28,7 @@ class SchoolArmController extends Controller
         }
 
         $data = Schoolarm::latest()->paginate(5);
-        $all_arms = $query->orderBy('arm')->paginate(30);
+        $all_arms = $query->orderBy('arm')->paginate(5);
 
         if ($request->ajax()) {
             return response()->json(['arms' => $all_arms->items()]);
