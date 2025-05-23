@@ -73,7 +73,7 @@
                                     <div class="d-flex flex-wrap align-items-start gap-2">
                                         <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
                                         @can('Create subject-class')
-                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSubjectClassModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Create Subject Class</button>
+                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSubjectClassModal" id="create-subject-class-btn"><i class="bi bi-plus-circle align-baseline me-1"></i> Create Subject Class</button>
                                         @endcan
                                     </div>
                                 </div>
@@ -157,9 +157,9 @@
                     </div>
                 </div>
             </div>
-            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSubjectClassModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Create Subject Class</button>
+
             <!-- Add Subject Class Modal -->
-            <div id="addSubjectClassModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+            <div id="addSubjectClassModal" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -174,7 +174,7 @@
                                     <select name="schoolclassid" id="schoolclassid" class="form-control" required>
                                         <option value="">Select Class</option>
                                         @foreach ($schoolclasses as $class)
-                                            <option value="{{ $class->id }}">{{ $class->schoolclass }} ({{ $class->arm }})</option>
+                                            <option value="{{ (string) $class->id }}">{{ $class->schoolclass }} ({{ $class->arm }})</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -183,7 +183,7 @@
                                     <select name="subjectteacherid" id="subjectteacherid" class="form-control" required>
                                         <option value="">Select Subject Teacher</option>
                                         @foreach ($subjectteacher as $teacher)
-                                            <option value="{{ $teacher->id }}">{{ $teacher->teachername }} ({{ $teacher->subject }})</option>
+                                            <option value="{{ (string) $teacher->id }}">{{ $teacher->teachername }} ({{ $teacher->subject }})</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -199,7 +199,7 @@
             </div>
 
             <!-- Edit Subject Class Modal -->
-            <div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+            <div id="editModal" class="modal fade" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -214,7 +214,7 @@
                                     <select name="schoolclassid" id="edit-schoolclassid" class="form-control" required>
                                         <option value="">Select Class</option>
                                         @foreach ($schoolclasses as $class)
-                                            <option value="{{ $class->id }}">{{ $class->schoolclass }} ({{ $class->arm }})</option>
+                                            <option value="{{ (string) $class->id }}">{{ $class->schoolclass }} ({{ $class->arm }})</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -223,7 +223,7 @@
                                     <select name="subjectteacherid" id="edit-subjectteacherid" class="form-control" required>
                                         <option value="">Select Subject Teacher</option>
                                         @foreach ($subjectteacher as $teacher)
-                                            <option value="{{ $teacher->id }}">{{ $teacher->teachername }} ({{ $teacher->subject }})</option>
+                                            <option value="{{ (string) $teacher->id }}">{{ $teacher->teachername }} ({{ $teacher->subject }})</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -239,7 +239,7 @@
             </div>
 
             <!-- Delete Confirmation Modal -->
-            <div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-hidden="true">
+            <div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-labelledby="deleteRecordModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-body text-center">
@@ -257,4 +257,23 @@
         <!-- End Page-content -->
     </div>
 </div>
+
+<script>
+    // Fallback to test modal manually
+    document.addEventListener('DOMContentLoaded', function () {
+        const createBtn = document.getElementById('create-subject-class-btn');
+        if (createBtn) {
+            createBtn.addEventListener('click', function () {
+                console.log('Fallback: Create Subject Class button clicked');
+                try {
+                    const modal = new bootstrap.Modal(document.getElementById('addSubjectClassModal'));
+                    modal.show();
+                    console.log('Fallback: Add modal opened');
+                } catch (error) {
+                    console.error('Fallback: Error opening add modal:', error);
+                }
+            });
+        }
+    });
+</script>
 @endsection

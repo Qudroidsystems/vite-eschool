@@ -23,11 +23,6 @@ class SubjectClassController extends Controller
         $this->middleware('permission:Delete subject-class', ['only' => ['destroy', 'deletesubjectclass']]);
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index()
     {
         $pagetitle = "Subject Class Management";
@@ -90,11 +85,6 @@ class SubjectClassController extends Controller
             ->with('pagetitle', $pagetitle);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function create()
     {
         $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
@@ -125,12 +115,6 @@ class SubjectClassController extends Controller
             ->with('subjectteacher', $subjectteachers);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -150,6 +134,14 @@ class SubjectClassController extends Controller
             ], 422);
         }
 
+        $subjectTeacher = SubjectTeacher::find($request->input('subjectteacherid'));
+        if (!$subjectTeacher) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Subject teacher not found.'
+            ], 404);
+        }
+
         $exists = Subjectclass::where('schoolclassid', $request->input('schoolclassid'))
             ->where('subjectteacherid', $request->input('subjectteacherid'))
             ->exists();
@@ -164,6 +156,7 @@ class SubjectClassController extends Controller
         $subjectclass = Subjectclass::create([
             'schoolclassid' => $request->input('schoolclassid'),
             'subjectteacherid' => $request->input('subjectteacherid'),
+            'subjectid' => $subjectTeacher->subjectid,
         ]);
 
         return response()->json([
@@ -173,12 +166,6 @@ class SubjectClassController extends Controller
         ], 201);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function edit($id)
     {
         $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
@@ -215,8 +202,8 @@ class SubjectClassController extends Controller
             ->first([
                 'subjectclass.id as scid',
                 'schoolclass.id as schoolclassid',
-                'schoolclass.schoolclass as schoolclass',
-                'schoolarm.arm as arm',
+                'schoolclass.schoolclass as sclass',
+                'schoolarm.arm as schoolarm',
                 'subjectteacher.id as subteacherid',
                 'subjectteacher.staffid as subtid',
                 'subjectteacher.subjectid as subid',
@@ -242,13 +229,6 @@ class SubjectClassController extends Controller
             ->with('subjectteachers', $subjectteachers);
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
@@ -266,6 +246,14 @@ class SubjectClassController extends Controller
                 'success' => false,
                 'errors' => $validator->errors()
             ], 422);
+        }
+
+        $subjectTeacher = SubjectTeacher::find($request->input('subjectteacherid'));
+        if (!$subjectTeacher) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Subject teacher not found.'
+            ], 404);
         }
 
         $exists = Subjectclass::where('schoolclassid', $request->input('schoolclassid'))
@@ -291,6 +279,7 @@ class SubjectClassController extends Controller
         $subjectclass->update([
             'schoolclassid' => $request->input('schoolclassid'),
             'subjectteacherid' => $request->input('subjectteacherid'),
+            'subjectid' => $subjectTeacher->subjectid,
         ]);
 
         return response()->json([
@@ -300,12 +289,6 @@ class SubjectClassController extends Controller
         ], 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function destroy($id)
     {
         $subjectclass = Subjectclass::find($id);
@@ -326,12 +309,6 @@ class SubjectClassController extends Controller
         ], 200);
     }
 
-    /**
-     * Handle AJAX delete request for subject class.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function deletesubjectclass(Request $request)
     {
         $subjectclass = Subjectclass::find($request->subjectclassid);

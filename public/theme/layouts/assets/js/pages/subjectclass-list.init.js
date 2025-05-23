@@ -310,6 +310,7 @@ if (addSubjectClassForm) {
             }
             return;
         }
+        console.log("Sending add request:", { schoolclassid, subjectteacherid });
         axios.post('/subjectclass', { schoolclassid, subjectteacherid })
             .then(function (response) {
                 console.log("Add success:", response.data);
@@ -324,7 +325,7 @@ if (addSubjectClassForm) {
                 window.location.reload();
             })
             .catch(function (error) {
-                console.error("Add error:", error);
+                console.error("Add error:", error.response?.data || error);
                 if (errorMsg) {
                     errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error adding subject class";
                     errorMsg.classList.remove("d-none");
@@ -352,6 +353,7 @@ if (editSubjectClassForm) {
             }
             return;
         }
+        console.log("Sending edit request:", { id, schoolclassid, subjectteacherid });
         axios.put(`/subjectclass/${id}`, { schoolclassid, subjectteacherid })
             .then(function (response) {
                 console.log("Edit success:", response.data);
@@ -366,7 +368,7 @@ if (editSubjectClassForm) {
                 window.location.reload();
             })
             .catch(function (error) {
-                console.error("Edit error:", error);
+                console.error("Edit error:", error.response?.data || error);
                 if (errorMsg) {
                     errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error updating subject class";
                     errorMsg.classList.remove("d-none");
@@ -402,7 +404,7 @@ if (editModal) {
         if (modalLabel) modalLabel.innerHTML = "Edit Subject Class";
         if (updateBtn) updateBtn.innerHTML = "Update";
     });
-    addModal.addEventListener("hidden.bs.modal", function () {
+    editModal.addEventListener("hidden.bs.modal", function () {
         console.log("Edit modal hidden");
         clearEditFields();
         const errorMsg = document.getElementById("edit-alert-error-msg");
