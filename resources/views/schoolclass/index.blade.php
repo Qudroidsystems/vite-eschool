@@ -1,5 +1,6 @@
 @extends('layouts.master')
 @section('content')
+
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
@@ -11,7 +12,7 @@
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
                                 <li class="breadcrumb-item"><a href="javascript:void(0);">School Class Management</a></li>
-                                <li class="breadcrumb-item active">Classes</li>
+                                <li class="breadcrumb-item active">School Classes</li>
                             </ol>
                         </div>
                     </div>
@@ -51,7 +52,7 @@
                                 <div class="row g-3">
                                     <div class="col-xxl-3">
                                         <div class="search-box">
-                                            <input type="text" class="form-control search" placeholder="Search classes">
+                                            <input type="text" class="form-control search" placeholder="Search school classes" value="{{ request()->query('search') }}">
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
                                     </div>
@@ -66,13 +67,13 @@
                         <div class="card">
                             <div class="card-header d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">School Classes <span class="badge bg-dark-subtle text-dark ms-1">{{ count($all_classes) }}</span></h5>
+                                    <h5 class="card-title mb-0">School Classes <span class="badge bg-dark-subtle text-dark ms-1">{{ $all_classes->total() }}</span></h5>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
                                         <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
                                         @can('Create school-class')
-                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSchoolClassModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Create Class</button>
+                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSchoolClassModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Create School Class</button>
                                         @endcan
                                     </div>
                                 </div>
@@ -87,8 +88,8 @@
                                                         <input class="form-check-input" type="checkbox" id="checkAll" />
                                                     </div>
                                                 </th>
-                                                <th class="min-w-50px sort cursor-pointer" data-sort="schoolclassid">SN</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="schoolclass">Class</th>
+                                                <th class="min-w-125px sort cursor-pointer" data-sort="schoolclassid">SN</th>
+                                                <th class="min-w-125px sort cursor-pointer" data-sort="schoolclass">School Class</th>
                                                 <th class="min-w-125px sort cursor-pointer" data-sort="arm">Arm</th>
                                                 <th class="min-w-125px sort cursor-pointer" data-sort="classcategory">Category</th>
                                                 <th class="min-w-125px sort cursor-pointer" data-sort="datereg">Date Updated</th>
@@ -96,7 +97,7 @@
                                             </tr>
                                         </thead>
                                         <tbody class="fw-semibold text-gray-600 list form-check-all">
-                                            @php $i = 0 @endphp
+                                            @php $i = ($all_classes->currentPage() - 1) * $all_classes->perPage() @endphp
                                             @forelse ($all_classes as $class)
                                                 <tr data-url="{{ route('schoolclass.destroy', $class->id) }}">
                                                     <td class="id" data-id="{{ $class->id }}">
@@ -108,7 +109,7 @@
                                                     <td class="schoolclass" data-schoolclass="{{ $class->schoolclass }}">{{ $class->schoolclass }}</td>
                                                     <td class="arm" data-arm="{{ $class->arm_name }}">{{ $class->arm_name }}</td>
                                                     <td class="classcategory" data-classcategory="{{ $class->classcategory }}">{{ $class->classcategory }}</td>
-                                                    <td class="datereg">{{ \Carbon\Carbon::parse($class->updated_at)->format('Y-m-d') }}</td>
+                                                    <td class="datereg">{{ $class->updated_at->format('Y-m-d') }}</td>
                                                     <td>
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
                                                             @can('Update school-class')
@@ -132,13 +133,37 @@
                                         </tbody>
                                     </table>
                                 </div>
+                                <div class="row mt-3 align-items-center" id="pagination-element">
+                                    <div class="col-sm">
+                                        <div class="text-muted text-center text-sm-start">
+                                            Showing <span class="fw-semibold">{{ $all_classes->count() }}</span> of <span class="fw-semibold">{{ $all_classes->total() }}</span> Results
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-auto mt-3 mt-sm-0">
+                                        <div class="pagination-wrap hstack gap-2 justify-content-center">
+                                            <a class="page-item pagination-prev {{ $all_classes->onFirstPage() ? 'disabled' : '' }}" href="javascript:void(0);" data-url="{{ $all_classes->previousPageUrl() }}">
+                                                <i class="mdi mdi-chevron-left align-middle"></i>
+                                            </a>
+                                            <ul class="pagination listjs-pagination mb-0">
+                                                @foreach ($all_classes->links()->elements[0] as $page => $url)
+                                                    <li class="page-item {{ $all_classes->currentPage() == $page ? 'active' : '' }}">
+                                                        <a class="page-link" href="javascript:void(0);" data-url="{{ $url }}">{{ $page }}</a>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                            <a class="page-item pagination-next {{ $all_classes->hasMorePages() ? '' : 'disabled' }}" href="javascript:void(0);" data-url="{{ $all_classes->nextPageUrl() }}">
+                                                <i class="mdi mdi-chevron-right align-middle"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-           <!-- Add School Class Modal -->
+            <!-- Add School Class Modal -->
             <div id="addSchoolClassModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
@@ -150,8 +175,8 @@
                             <div class="modal-body">
                                 <input type="hidden" id="add-id-field" name="id">
                                 <div class="mb-3">
-                                    <label for="schoolclass" class="form-label">Class</label>
-                                    <input type="text" name="schoolclass" id="schoolclass" class="form-control" placeholder="Enter class name" required>
+                                    <label for="schoolclass" class="form-label">School Class</label>
+                                    <input type="text" id="schoolclass" name="schoolclass" class="form-control" placeholder="Enter school class" required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="arm_id" class="form-label">Arm</label>
@@ -161,7 +186,6 @@
                                             <option value="{{ $arm->id }}">{{ $arm->arm }}</option>
                                         @endforeach
                                     </select>
-                                    
                                 </div>
                                 <div class="mb-3">
                                     <label for="classcategoryid" class="form-label">Category</label>
@@ -195,8 +219,8 @@
                             <div class="modal-body">
                                 <input type="hidden" id="edit-id-field" name="id">
                                 <div class="mb-3">
-                                    <label for="edit-schoolclass" class="form-label">Class</label>
-                                    <input type="text" name="schoolclass" id="edit-schoolclass" class="form-control" placeholder="Enter class name" required>
+                                    <label for="edit-schoolclass" class="form-label">School Class</label>
+                                    <input type="text" id="edit-schoolclass" name="schoolclass" class="form-control" placeholder="Enter school class" required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="edit-arm_id" class="form-label">Arm</label>
@@ -244,13 +268,6 @@
             </div>
         </div>
         <!-- End Page-content -->
-
-        <!-- Scripts -->
-        {{-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-        <script src="{{ asset('theme/layouts/assets/js/list.min.js') }}"></script>
-        <script src="{{ asset('theme/layouts/assets/js/sweetalert2.min.js') }}"></script>
-        <script src="{{ asset('js/schoolclass.init.js') }}"></script> --}}
     </div>
 </div>
 @endsection

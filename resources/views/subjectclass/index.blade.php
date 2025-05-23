@@ -67,7 +67,7 @@
                         <div class="card">
                             <div class="card-header d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">Subject Classes <span class="badge bg-dark-subtle text-dark ms-1">{{ count($subjectclasses) }}</span></h5>
+                                    <h5 class="card-title mb-0">Subject Classes <span class="badge bg-dark-subtle text-dark ms-1">{{ $subjectclasses->total() }}</span></h5>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
@@ -100,7 +100,7 @@
                                             </tr>
                                         </thead>
                                         <tbody class="fw-semibold text-gray-600 list form-check-all">
-                                            @php $i = 0 @endphp
+                                            @php $i = ($subjectclasses->currentPage() - 1) * $subjectclasses->perPage() @endphp
                                             @forelse ($subjectclasses as $sc)
                                                 <tr data-url="{{ route('subjectclass.destroy', $sc->scid) }}">
                                                     <td class="id" data-id="{{ $sc->scid }}">
@@ -146,11 +146,35 @@
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="10" class="noresult" style="display: none;">No results found</td>
+                                                    <td colspan="10" class="noresult" style="display: block;">No results found</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
                                     </table>
+                                </div>
+                                <div class="row mt-3 align-items-center" id="pagination-element">
+                                    <div class="col-sm">
+                                        <div class="text-muted text-center text-sm-start">
+                                            Showing <span class="fw-semibold">{{ $subjectclasses->count() }}</span> of <span class="fw-semibold">{{ $subjectclasses->total() }}</span> Results
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-auto mt-3 mt-sm-0">
+                                        <div class="pagination-wrap hstack gap-2 justify-content-center">
+                                            <a class="page-item pagination-prev {{ $subjectclasses->onFirstPage() ? 'disabled' : '' }}" href="javascript:void(0);" data-url="{{ $subjectclasses->previousPageUrl() }}">
+                                                <i class="mdi mdi-chevron-left align-middle"></i>
+                                            </a>
+                                            <ul class="pagination listjs-pagination mb-0">
+                                                @foreach ($subjectclasses->links()->elements[0] as $page => $url)
+                                                    <li class="page-item {{ $subjectclasses->currentPage() == $page ? 'active' : '' }}">
+                                                        <a class="page-link" href="javascript:void(0);" data-url="{{ $url }}">{{ $page }}</a>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                            <a class="page-item pagination-next {{ $subjectclasses->hasMorePages() ? '' : 'disabled' }}" href="javascript:void(0);" data-url="{{ $subjectclasses->nextPageUrl() }}">
+                                                <i class="mdi mdi-chevron-right align-middle"></i>
+                                            </a>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>

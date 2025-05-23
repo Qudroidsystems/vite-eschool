@@ -25,7 +25,8 @@ class ClassTeacherController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+
+    public function index(Request $request)
     {
         $pagetitle = "Class Teacher Management";
 
@@ -44,7 +45,7 @@ class ClassTeacherController extends Controller
             ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->leftJoin('schoolterm', 'schoolterm.id', '=', 'classteacher.termid')
             ->leftJoin('schoolsession', 'schoolsession.id', '=', 'classteacher.sessionid')
-            ->get([
+            ->select([
                 'classteacher.id as id',
                 'users.id as userid',
                 'users.name as staffname',
@@ -58,7 +59,17 @@ class ClassTeacherController extends Controller
                 'schoolsession.id as sessionid',
                 'schoolsession.session as session',
                 'classteacher.updated_at as updated_at'
+            ])
+            ->orderBy('staffname')
+            ->paginate(10); // Paginate 10 items per page
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('classteacher.index', compact('classteachers', 'schoolclass', 'subjectteachers', 'schoolterm', 'schoolsession', 'pagetitle'))->render(),
+                'count' => $classteachers->count(),
+                'total' => $classteachers->total(),
             ]);
+        }
 
         return view('classteacher.index')
             ->with('classteachers', $classteachers)
@@ -68,7 +79,6 @@ class ClassTeacherController extends Controller
             ->with('schoolsessions', $schoolsession)
             ->with('pagetitle', $pagetitle);
     }
-
     /**
      * Show the form for creating a new resource.
      *

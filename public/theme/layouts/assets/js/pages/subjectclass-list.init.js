@@ -99,44 +99,126 @@ if (createButton) {
     });
 }
 
-// Event delegation for edit and remove buttons
+// Event delegation for edit, remove, and pagination buttons
 document.addEventListener('click', function (e) {
     const editBtn = e.target.closest('.edit-item-btn');
     const removeBtn = e.target.closest('.remove-item-btn');
+    const paginationLink = e.target.closest('.pagination-prev, .pagination-next, .pagination .page-link');
     if (editBtn) {
         handleEditClick(e, editBtn);
     } else if (removeBtn) {
         handleRemoveClick(e, removeBtn);
+    } else if (paginationLink) {
+        e.preventDefault();
+        const url = paginationLink.getAttribute('data-url');
+        if (url) fetchPage(url);
     }
 });
+
+// Fetch paginated data
+function fetchPage(url) {
+    if (!url) return;
+    console.log("Fetching page:", url);
+    axios.get(url, {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(function (response) {
+        console.log("Fetch page success:", response.data);
+        // Extract table body and pagination from response HTML
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(response.data.html, 'text/html');
+        const newTbody = doc.querySelector('#kt_roles_view_table tbody');
+        const newPagination = doc.querySelector('#pagination-element');
+        const newBadge = doc.querySelector('.badge.bg-dark-subtle');
+        if (newTbody && newPagination && newBadge) {
+            document.querySelector('#kt_roles_view_table tbody').innerHTML = newTbody.innerHTML;
+            document.querySelector('#pagination-element').outerHTML = newPagination.outerHTML;
+            document.querySelector('.badge.bg-dark-subtle').outerHTML = newBadge.outerHTML;
+            if (subjectClassList) {
+                subjectClassList.reIndex();
+            }
+            initializeCheckboxes();
+            document.querySelector("#pagination-element .text-muted").innerHTML =
+                `Showing <span class="fw-semibold">${response.data.count}</span> of <span class="fw-semibold">${response.data.total}</span> Results`;
+            // Update noresult display
+            const noResult = document.querySelector(".noresult");
+            const rowCount = document.querySelectorAll("#kt_roles_view_table tbody tr").length;
+            if (noResult) {
+                noResult.style.display = rowCount === 0 ? "block" : "none";
+            }
+        } else {
+            console.error("Required elements not found in response");
+        }
+    }).catch(function (error) {
+        console.error("Error fetching page:", error);
+        Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "Error loading page",
+            text: error.response?.data?.message || "An error occurred",
+            showConfirmButton: true
+        });
+    });
+}
 
 // Delete single subject class
 function handleRemoveClick(e, button) {
     e.preventDefault();
     console.log("Remove button clicked");
     const itemId = button.closest("tr").querySelector(".id")?.getAttribute("data-id");
-    if (!itemId) {
-        console.error("Item ID not found");
+    const deleteUrl = button.closest("tr").getAttribute("data-url");
+    if (!itemId || !deleteUrl) {
+        console.error("Item ID or delete URL not found");
         return;
     }
+    const modal = new bootstrap.Modal(document.getElementById("deleteRecordModal"));
+    modal.show();
+    console.log("Delete modal opened");
+
     const deleteButton = document.getElementById("delete-record");
     if (deleteButton) {
         deleteButton.onclick = function () {
             console.log("Deleting subject class:", itemId);
-            axios.delete(`/subjectclass/${itemId}`)
-                .then(function () {
+            axios.delete(deleteUrl)
+                .then(function (response) {
+                    console.log("Delete success:", response.data);
                     Swal.fire({
                         position: "center",
                         icon: "success",
-                        title: "Subject Class deleted successfully!",
+                        title: response.data.message || "Subject Class deleted successfully!",
                         showConfirmButton: false,
                         timer: 2000,
                         showCloseButton: true
                     });
-                    window.location.reload();
+                    if (subjectClassList) {
+                        subjectClassList.remove("id", itemId);
+                    }
+                    const row = document.querySelector(`tr[data-id="${itemId}"]`);
+                    if (row) row.remove();
+                    modal.hide();
+                    // Update badge
+                    const badge = document.querySelector('.badge.bg-dark-subtle');
+                    if (badge) {
+                        const currentTotal = parseInt(badge.textContent);
+                        badge.textContent = currentTotal - 1;
+                    }
+                    // Update noresult display
+                    const noResult = document.querySelector(".noresult");
+                    const rowCount = document.querySelectorAll("#kt_roles_view_table tbody tr").length;
+                    if (noResult) {
+                        noResult.style.display = rowCount === 0 ? "block" : "none";
+                    } else if (rowCount === 0) {
+                        document.querySelector("#kt_roles_view_table tbody").innerHTML =
+                            '<tr><td colspan="10" class="noresult" style="display: block;">No results found</td></tr>';
+                    }
+                    // Fetch previous page if table is empty and pagination exists
+                    if (rowCount === 0 && document.querySelector("#pagination-element .pagination-prev")) {
+                        const prevUrl = document.querySelector("#pagination-element .pagination-prev").getAttribute("data-url");
+                        console.log("Fetching previous page:", prevUrl);
+                        fetchPage(prevUrl);
+                    }
                 })
                 .catch(function (error) {
-                    console.error("Delete error:", error);
+                    console.error("Delete error:", error.response?.data || error);
                     Swal.fire({
                         position: "center",
                         icon: "error",
@@ -144,15 +226,9 @@ function handleRemoveClick(e, button) {
                         text: error.response?.data?.message || "An error occurred",
                         showConfirmButton: true
                     });
+                    modal.hide();
                 });
         };
-    }
-    try {
-        const modal = new bootstrap.Modal(document.getElementById("deleteRecordModal"));
-        modal.show();
-        console.log("Delete modal opened");
-    } catch (error) {
-        console.error("Error opening delete modal:", error);
     }
 }
 
@@ -340,7 +416,7 @@ if (editSubjectClassForm) {
     editSubjectClassForm.addEventListener("submit", function (e) {
         e.preventDefault();
         console.log("Edit form submitted");
-        const errorMsg = document.getElementById("edit-alert-error-msg");
+        const errorMsg = document.getElementById("alert-error-msg");
         if (errorMsg) errorMsg.classList.add("d-none");
         const formData = new FormData(editSubjectClassForm);
         const schoolclassid = formData.get('schoolclassid');

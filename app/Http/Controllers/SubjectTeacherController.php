@@ -28,7 +28,7 @@ class SubjectTeacherController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
         $pagetitle = "Subject Teacher Management";
 
@@ -43,7 +43,7 @@ class SubjectTeacherController extends Controller
             ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
             ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
             ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
-            ->get([
+            ->select([
                 'subjectteacher.id as id',
                 'users.id as userid',
                 'users.name as staffname',
@@ -55,8 +55,18 @@ class SubjectTeacherController extends Controller
                 'schoolterm.term as termname',
                 'schoolsession.id as sessionid',
                 'schoolsession.session as sessionname',
-                'subjectteacher.updated_at' // Use updated_at directly
+                'subjectteacher.updated_at'
+            ])
+            ->orderBy('staffname')
+            ->paginate(10); // Paginate 10 items per page
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('subjectteacher.index', compact('subjectteachers', 'schoolterms', 'schoolsessions', 'subjects', 'staffs', 'pagetitle'))->render(),
+                'count' => $subjectteachers->count(),
+                'total' => $subjectteachers->total(),
             ]);
+        }
 
         return view('subjectteacher.index')
             ->with('subjectteacher', $subjectteachers)
@@ -66,7 +76,6 @@ class SubjectTeacherController extends Controller
             ->with('subjects', $subjects)
             ->with('pagetitle', $pagetitle);
     }
-
     /**
      * Show the form for creating a new resource.
      *

@@ -47,12 +47,16 @@ class SchoolClassController extends Controller
             });
         }
 
-        $all_classes = $query->orderBy('schoolclass.schoolclass')->get();
+        $all_classes = $query->orderBy('schoolclass.schoolclass')->paginate(10); // Paginate 10 items per page
         $arms = Schoolarm::all();
         $classcategories = Classcategory::all();
 
         if ($request->ajax()) {
-            return response()->json(['classes' => $all_classes]);
+            return response()->json([
+                'html' => view('schoolclass.index', compact('all_classes', 'arms', 'classcategories', 'pagetitle'))->render(),
+                'count' => $all_classes->count(),
+                'total' => $all_classes->total(),
+            ]);
         }
 
         return view('schoolclass.index')

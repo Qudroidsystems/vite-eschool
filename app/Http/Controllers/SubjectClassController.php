@@ -23,7 +23,7 @@ class SubjectClassController extends Controller
         $this->middleware('permission:Delete subject-class', ['only' => ['destroy', 'deletesubjectclass']]);
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $pagetitle = "Subject Class Management";
 
@@ -50,6 +50,7 @@ class SubjectClassController extends Controller
             ])
             ->sortBy('subject');
 
+        // Paginate subjectclasses
         $subjectclasses = Subjectclass::leftJoin('schoolclass', 'subjectclass.schoolclassid', '=', 'schoolclass.id')
             ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
             ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
@@ -57,7 +58,7 @@ class SubjectClassController extends Controller
             ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
             ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
             ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->get([
+            ->select([
                 'subjectclass.id as scid',
                 'schoolclass.id as schoolclassid',
                 'schoolclass.schoolclass as sclass',
@@ -76,7 +77,16 @@ class SubjectClassController extends Controller
                 'schoolsession.session as sessionname',
                 'subjectclass.updated_at'
             ])
-            ->sortBy('sclass');
+            ->orderBy('sclass')
+            ->paginate(10); // Paginate 10 items per page
+
+        if ($request->ajax()) {
+            return response()->json([
+                'html' => view('subjectclass.index', compact('subjectclasses', 'schoolclasses', 'subjectteachers', 'pagetitle'))->render(),
+                'count' => $subjectclasses->count(),
+                'total' => $subjectclasses->total(),
+            ]);
+        }
 
         return view('subjectclass.index')
             ->with('subjectclasses', $subjectclasses)

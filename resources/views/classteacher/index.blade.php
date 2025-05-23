@@ -67,7 +67,7 @@
                         <div class="card">
                             <div class="card-header d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">Class Teachers <span class="badge bg-dark-subtle text-dark ms-1">{{ count($classteachers) }}</span></h5>
+                                    <h5 class="card-title mb-0">Class Teachers <span class="badge bg-dark-subtle text-dark ms-1">{{ $classteachers->total() }}</span></h5>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
@@ -99,7 +99,7 @@
                                             </tr>
                                         </thead>
                                         <tbody class="fw-semibold text-gray-600 list form-check-all">
-                                            @php $i = 0 @endphp
+                                            @php $i = ($classteachers->currentPage() - 1) * $classteachers->perPage() @endphp
                                             @forelse ($classteachers as $classteacher)
                                                 <tr data-url="{{ route('classteacher.destroy', $classteacher->id) }}">
                                                     <td class="id" data-id="{{ $classteacher->id }}">
@@ -145,11 +145,35 @@
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="8" class="noresult" style="display: block;">No results found</td>
+                                                    <td colspan="9" class="noresult" style="display: block;">No results found</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
                                     </table>
+                                </div>
+                                <div class="row mt-3 align-items-center" id="pagination-element">
+                                    <div class="col-sm">
+                                        <div class="text-muted text-center text-sm-start">
+                                            Showing <span class="fw-semibold">{{ $classteachers->count() }}</span> of <span class="fw-semibold">{{ $classteachers->total() }}</span> Results
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-auto mt-3 mt-sm-0">
+                                        <div class="pagination-wrap hstack gap-2 justify-content-center">
+                                            <a class="page-item pagination-prev {{ $classteachers->onFirstPage() ? 'disabled' : '' }}" href="javascript:void(0);" data-url="{{ $classteachers->previousPageUrl() }}">
+                                                <i class="mdi mdi-chevron-left align-middle"></i>
+                                            </a>
+                                            <ul class="pagination listjs-pagination mb-0">
+                                                @foreach ($classteachers->links()->elements[0] as $page => $url)
+                                                    <li class="page-item {{ $classteachers->currentPage() == $page ? 'active' : '' }}">
+                                                        <a class="page-link" href="javascript:void(0);" data-url="{{ $url }}">{{ $page }}</a>
+                                                    </li>
+                                                @endforeach
+                                            </ul>
+                                            <a class="page-item pagination-next {{ $classteachers->hasMorePages() ? '' : 'disabled' }}" href="javascript:void(0);" data-url="{{ $classteachers->nextPageUrl() }}">
+                                                <i class="mdi mdi-chevron-right align-middle"></i>
+                                            </a>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -215,7 +239,7 @@
                 </div>
             </div>
 
-           <!-- Edit Class Teacher Modal -->
+            <!-- Edit Class Teacher Modal -->
             <div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
