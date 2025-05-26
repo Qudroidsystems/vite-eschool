@@ -53,7 +53,7 @@ class SubjectTeacherController extends Controller
                 'subjectteacher.updated_at'
             ])
             ->orderBy('staffname')
-            ->paginate(5);
+            ->paginate(200);
 
         if ($request->ajax()) {
             return response()->json([
