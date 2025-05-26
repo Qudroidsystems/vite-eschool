@@ -24,7 +24,7 @@ console.log("URLs:", { updateUrl, getArmsUrl });
 const options = {
     valueNames: ['schoolclassid', 'schoolclass', 'arm', 'classcategory', 'datereg'],
     page: perPage,
-    pagination: false
+    pagination: true
 };
 const schoolClassList = new List('schoolClassList', options);
 
