@@ -47,7 +47,7 @@ class SchoolClassController extends Controller
             });
         }
 
-        $all_classes = $query->orderBy('schoolclass.schoolclass')->paginate(10);
+        $all_classes = $query->orderBy('schoolclass.schoolclass')->paginate(100);
         $arms = Schoolarm::all();
         $classcategories = Classcategory::all();
 
