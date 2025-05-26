@@ -160,17 +160,17 @@
                                     </div>
                                     <div class="col-sm-auto mt-3 mt-sm-0">
                                         <div class="pagination-wrap hstack gap-2 justify-content-center">
-                                            <a class="page-item pagination-prev {{ $subjectclasses->onFirstPage() ? 'disabled' : '' }}" href="javascript:void(0);" data-url="{{ $subjectclasses->previousPageUrl() ? url($subjectclasses->previousPageUrl()) : '' }}">
+                                            <a class="page-item pagination-prev {{ $subjectclasses->onFirstPage() ? 'disabled' : '' }}" href="javascript:void(0);" data-url="{{ $subjectclasses->previousPageUrl() }}">
                                                 <i class="mdi mdi-chevron-left align-middle"></i>
                                             </a>
                                             <ul class="pagination listjs-pagination mb-0">
                                                 @foreach ($subjectclasses->links()->elements[0] as $page => $url)
                                                     <li class="page-item {{ $subjectclasses->currentPage() == $page ? 'active' : '' }}">
-                                                        <a class="page-link" href="javascript:void(0);" data-url="{{ url($url) }}">{{ $page }}</a>
+                                                        <a class="page-link" href="javascript:void(0);" data-url="{{ $url }}">{{ $page }}</a>
                                                     </li>
                                                 @endforeach
                                             </ul>
-                                            <a class="page-item pagination-next {{ $subjectclasses->hasMorePages() ? '' : 'disabled' }}" href="javascript:void(0);" data-url="{{ $subjectclasses->nextPageUrl() ? url($subjectclasses->nextPageUrl()) : '' }}">
+                                            <a class="page-item pagination-next {{ $subjectclasses->hasMorePages() ? '' : 'disabled' }}" href="javascript:void(0);" data-url="{{ $subjectclasses->nextPageUrl() }}">
                                                 <i class="mdi mdi-chevron-right align-middle"></i>
                                             </a>
                                         </div>
@@ -194,17 +194,13 @@
                             <div class="modal-body">
                                 <input type="hidden" id="add-id-field" name="id">
                                 <div class="mb-3">
-                                    <label class="form-label">Classes</label>
-                                    <div class="d-flex flex-column gap-2">
+                                    <label for="schoolclassid" class="form-label">Class</label>
+                                    <select name="schoolclassid" id="schoolclassid" class="form-control" required>
+                                        <option value="">Select Class</option>
                                         @foreach ($schoolclasses as $class)
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="schoolclassid[]" value="{{ (string) $class->id }}" id="add_class_{{ $class->id }}">
-                                                <label class="form-check-label" for="add_class_{{ $class->id }}">
-                                                    {{ $class->schoolclass }} ({{ $class->arm }})
-                                                </label>
-                                            </div>
+                                            <option value="{{ (string) $class->id }}">{{ $class->schoolclass }} ({{ $class->arm }})</option>
                                         @endforeach
-                                    </div>
+                                    </select>
                                 </div>
                                 <div class="mb-3">
                                     <label for="subjectteacherid" class="form-label">Subject Teacher</label>
@@ -238,17 +234,13 @@
                             <div class="modal-body">
                                 <input type="hidden" id="edit-id-field" name="id">
                                 <div class="mb-3">
-                                    <label class="form-label">Classes</label>
-                                    <div class="d-flex flex-column gap-2">
+                                    <label for="edit-schoolclassid" class="form-label">Class</label>
+                                    <select name="schoolclassid" id="edit-schoolclassid" class="form-control" required>
+                                        <option value="">Select Class</option>
                                         @foreach ($schoolclasses as $class)
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" name="schoolclassid[]" value="{{ (string) $class->id }}" id="edit_class_{{ $class->id }}">
-                                                <label class="form-check-label" for="edit_class_{{ $class->id }}">
-                                                    {{ $class->schoolclass }} ({{ $class->arm }})
-                                                </label>
-                                            </div>
+                                            <option value="{{ (string) $class->id }}">{{ $class->schoolclass }} ({{ $class->arm }})</option>
                                         @endforeach
-                                    </div>
+                                    </select>
                                 </div>
                                 <div class="mb-3">
                                     <label for="edit-subjectteacherid" class="form-label">Subject Teacher</label>
