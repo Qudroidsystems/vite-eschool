@@ -24,7 +24,7 @@ class SubjectController extends Controller
     public function index(Request $request)
     {
         $pagetitle = "Subject Management";
-        $subjects = Subject::paginate(5); // Paginate with 10 items per page
+        $subjects = Subject::paginate(10); // Paginate with 10 items per page
 
         if ($request->ajax()) {
             return response()->json([
