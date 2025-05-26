@@ -249,36 +249,27 @@ function initializeCheckboxLogic() {
 
 function refreshCallbacks() {
     console.log("refreshCallbacks executed at", new Date().toISOString());
-    // Use event delegation for remove and edit buttons
-    document.querySelector('#schoolClassList').addEventListener('click', function(e) {
-        const removeBtn = e.target.closest('.remove-item-btn');
-        const editBtn = e.target.closest('.edit-item-btn');
-        
-        if (removeBtn) {
-            handleRemoveClick(e);
-        }
-        if (editBtn) {
-            handleEditClick(e);
-        }
+    const removeButtons = document.getElementsByClassName("remove-item-btn");
+    const editButtons = document.getElementsByClassName("edit-item-btn");
+    console.log("Attaching event listeners to", removeButtons.length, "remove buttons and", editButtons.length, "edit buttons");
+
+    Array.from(removeButtons).forEach(function (btn) {
+        btn.removeEventListener("click", handleRemoveClick);
+        btn.addEventListener("click", handleRemoveClick);
+    });
+
+    Array.from(editButtons).forEach(function (btn) {
+        btn.removeEventListener("click", handleEditClick);
+        btn.addEventListener("click", handleEditClick);
     });
 }
 
 function handleRemoveClick(e) {
     e.preventDefault();
     try {
-        const tr = e.target.closest("tr");
-        const itemId = tr.querySelector(".id")?.getAttribute("data-id");
-        if (!itemId) {
-            throw new Error("Item ID not found");
-        }
+        const itemId = e.target.closest("tr").querySelector(".id").getAttribute("data-id");
         console.log("Remove button clicked for ID:", itemId);
-        
-        const modalElement = document.getElementById("deleteRecordModal");
-        if (!modalElement) {
-            throw new Error("Delete modal element not found");
-        }
-        
-        const modal = new bootstrap.Modal(modalElement);
+        const modal = new bootstrap.Modal(document.getElementById("deleteRecordModal"));
         modal.show();
         console.log("Delete modal opened");
 
@@ -290,8 +281,7 @@ function handleRemoveClick(e) {
                     headers: { 'X-CSRF-TOKEN': csrfToken }
                 }).then(function (response) {
                     console.log("Delete success:", response.data);
-                    schoolClassList.remove('schoolclassid', tr.querySelector('.schoolclassid').innerText);
-                    tr.remove();
+                    window.location.reload();
                     Swal.fire({
                         position: "center",
                         icon: "success",
@@ -300,8 +290,6 @@ function handleRemoveClick(e) {
                         timer: 2000,
                         showCloseButton: true
                     });
-                    modal.hide();
-                    updatePagination();
                 }).catch(function (error) {
                     console.error("Delete error:", error.response?.data || error.message);
                     Swal.fire({
@@ -313,18 +301,9 @@ function handleRemoveClick(e) {
                     });
                 });
             };
-        } else {
-            console.error("Delete button not found in modal");
         }
     } catch (error) {
         console.error("Error in remove-item-btn click:", error);
-        Swal.fire({
-            position: "center",
-            icon: "error",
-            title: "Error opening delete modal",
-            text: error.message,
-            showConfirmButton: true
-        });
     }
 }
 
