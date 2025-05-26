@@ -33,7 +33,7 @@ class SchoolBillController extends Controller
                 'student_status.id as statusId',
                 'school_bill.updated_at as updated_at'
             ])
-            ->paginate(10); // Paginate with 10 records per page
+            ->paginate(100); // Paginate with 10 records per page
 
         return view('schoolbill.index')
             ->with('schoolbills', $schoolbills)
