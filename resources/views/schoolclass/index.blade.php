@@ -223,6 +223,7 @@
                         </div>
                     </div>
                 </div>
+            
 
                 <!-- Edit School Class Modal -->
                 <div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">

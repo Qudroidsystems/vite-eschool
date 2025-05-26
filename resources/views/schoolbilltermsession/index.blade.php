@@ -154,121 +154,145 @@
                 </div>
             </div>
 
-            <!-- Add School Bill Term Session Modal -->
-            <div id="addSchoolBillTermSessionModal" class="modal fade" tabindex="-1" aria-labelledby="addSchoolBillTermSessionModalLabel" aria-hidden="true" data-bs-backdrop="static">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 id="addSchoolBillTermSessionModalLabel" class="modal-title">Add School Bill Term Session</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <!-- Add School Bill Term Session Modal -->
+                <div id="addSchoolBillTermSessionModal" class="modal fade" tabindex="-1" aria-labelledby="addSchoolBillTermSessionModalLabel" aria-hidden="true" data-bs-backdrop="static">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 id="addSchoolBillTermSessionModalLabel" class="modal-title">Add School Bill Term Session</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form class="tablelist-form" autocomplete="off" id="add-schoolbilltermsession-form">
+                                <div class="modal-body">
+                                    <input type="hidden" id="add-id-field" name="id">
+                                    <div class="mb-3">
+                                        <label for="bill_id" class="form-label">School Bill</label>
+                                        <select name="bill_id" id="bill_id" class="form-control" required>
+                                            <option value="">Select School Bill</option>
+                                            @foreach ($schoolbills as $bill)
+                                                <option value="{{ $bill->id }}">{{ $bill->title }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Select Classes</label>
+                                        <div class="d-flex flex-wrap gap-3 mb-3">
+                                            <div class="form-check form-check-outline form-check-primary">
+                                                <input class="form-check-input" type="checkbox" id="add-class-select-all">
+                                                <label class="form-check-label" for="add-class-select-all">Select All</label>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-3" id="add-class-checkboxes">
+                                            @foreach ($schoolclasses as $class)
+                                                <div class="form-check form-check-outline form-check-primary">
+                                                    <input class="form-check-input class-checkbox" type="checkbox" value="{{ $class->id }}" name="class_id[]">
+                                                    <label class="form-check-label">{{ $class->schoolclass }} {{ $class->arm }}</label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Select Term</label>
+                                        <div class="d-flex flex-wrap gap-3" id="add-term-radio">
+                                            @foreach ($terms as $term)
+                                                <div class="form-check form-check-outline form-check-primary">
+                                                    <input class="form-check-input term-radio" type="radio" value="{{ $term->id }}" name="termid_id" id="add-term-{{ $term->id }}" required>
+                                                    <label class="form-check-label" for="add-term-{{ $term->id }}">{{ $term->term }}</label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Select Session</label>
+                                        <div class="d-flex flex-wrap gap-3" id="add-session-radio">
+                                            @foreach ($schoolsessions as $session)
+                                                <div class="form-check form-check-outline form-check-primary">
+                                                    <input class="form-check-input session-radio" type="radio" value="{{ $session->id }}" name="session_id" id="add-session-{{ $session->id }}" required>
+                                                    <label class="form-check-label" for="add-session-{{ $session->id }}">{{ $session->session }}</label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-danger d-none" id="alert-error-msg"></div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-primary" id="add-btn">Add School Bill Term Session</button>
+                                </div>
+                            </form>
                         </div>
-                        <form class="tablelist-form" autocomplete="off" id="add-schoolbilltermsession-form">
-                            <div class="modal-body">
-                                <input type="hidden" id="add-id-field" name="id">
-                                <div class="mb-3">
-                                    <label for="bill_id" class="form-label">School Bill</label>
-                                    <select name="bill_id" id="bill_id" class="form-control" required>
-                                        <option value="">Select School Bill</option>
-                                        @foreach ($schoolbills as $bill)
-                                            <option value="{{ $bill->id }}">{{ $bill->title }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="class_id" class="form-label">School Class</label>
-                                    <select name="class_id" id="class_id" class="form-control" required>
-                                        <option value="">Select Class</option>
-                                        @foreach ($schoolclasses as $class)
-                                            <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->arm }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="termid_id" class="form-label">Term</label>
-                                    <select name="termid_id" id="termid_id" class="form-control" required>
-                                        <option value="">Select Term</option>
-                                        @foreach ($terms as $term)
-                                            <option value="{{ $term->id }}">{{ $term->term }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="session_id" class="form-label">Session</label>
-                                    <select name="session_id" id="session_id" class="form-control" required>
-                                        <option value="">Select Session</option>
-                                        @foreach ($schoolsessions as $session)
-                                            <option value="{{ $session->id }}">{{ $session->session }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="alert alert-danger d-none" id="alert-error-msg"></div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="add-btn">Add School Bill Term Session</button>
-                            </div>
-                        </form>
                     </div>
                 </div>
-            </div>
 
-            <!-- Edit School Bill Term Session Modal -->
-            <div id="editSchoolBillTermSessionModal" class="modal fade" tabindex="-1" aria-labelledby="editSchoolBillTermSessionModalLabel" aria-hidden="true" data-bs-backdrop="static">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 id="editSchoolBillTermSessionModalLabel" class="modal-title">Edit School Bill Term Session</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <!-- Edit School Bill Term Session Modal -->
+                <div id="editSchoolBillTermSessionModal" class="modal fade" tabindex="-1" aria-labelledby="editSchoolBillTermSessionModalLabel" aria-hidden="true" data-bs-backdrop="static">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 id="editSchoolBillTermSessionModalLabel" class="modal-title">Edit School Bill Term Session</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form class="tablelist-form" autocomplete="off" id="edit-schoolbilltermsession-form">
+                                <div class="modal-body">
+                                    <input type="hidden" id="edit-id-field" name="id">
+                                    <div class="mb-3">
+                                        <label for="edit-bill_id" class="form-label">School Bill</label>
+                                        <select name="bill_id" id="edit-bill_id" class="form-control" required>
+                                            <option value="">Select School Bill</option>
+                                            @foreach ($schoolbills as $bill)
+                                                <option value="{{ $bill->id }}">{{ $bill->title }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Select Classes</label>
+                                        <div class="d-flex flex-wrap gap-3 mb-3">
+                                            <div class="form-check form-check-outline form-check-primary">
+                                                <input class="form-check-input" type="checkbox" id="edit-class-select-all">
+                                                <label class="form-check-label" for="edit-class-select-all">Select All</label>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-3" id="edit-class-checkboxes">
+                                            @foreach ($schoolclasses as $class)
+                                                <div class="form-check form-check-outline form-check-primary">
+                                                    <input class="form-check-input class-checkbox" type="checkbox" value="{{ $class->id }}" name="class_id[]">
+                                                    <label class="form-check-label">{{ $class->schoolclass }} {{ $class->arm }}</label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Select Term</label>
+                                        <div class="d-flex flex-wrap gap-3" id="edit-term-radio">
+                                            @foreach ($terms as $term)
+                                                <div class="form-check form-check-outline form-check-primary">
+                                                    <input class="form-check-input term-radio" type="radio" value="{{ $term->id }}" name="termid_id" id="edit-term-{{ $term->id }}" required>
+                                                    <label class="form-check-label" for="edit-term-{{ $term->id }}">{{ $term->term }}</label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Select Session</label>
+                                        <div class="d-flex flex-wrap gap-3" id="edit-session-radio">
+                                            @foreach ($schoolsessions as $session)
+                                                <div class="form-check form-check-outline form-check-primary">
+                                                    <input class="form-check-input session-radio" type="radio" value="{{ $session->id }}" name="session_id" id="edit-session-{{ $session->id }}" required>
+                                                    <label class="form-check-label" for="edit-session-{{ $session->id }}">{{ $session->session }}</label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
+                                </div>
+                            </form>
                         </div>
-                        <form class="tablelist-form" autocomplete="off" id="edit-schoolbilltermsession-form">
-                            <div class="modal-body">
-                                <input type="hidden" id="edit-id-field" name="id">
-                                <div class="mb-3">
-                                    <label for="edit-bill_id" class="form-label">School Bill</label>
-                                    <select name="bill_id" id="edit-bill_id" class="form-control" required>
-                                        <option value="">Select School Bill</option>
-                                        @foreach ($schoolbills as $bill)
-                                            <option value="{{ $bill->id }}">{{ $bill->title }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-class_id" class="form-label">School Class</label>
-                                    <select name="class_id" id="edit-class_id" class="form-control" required>
-                                        <option value="">Select Class</option>
-                                        @foreach ($schoolclasses as $class)
-                                            <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->arm }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-termid_id" class="form-label">Term</label>
-                                    <select name="termid_id" id="edit-termid_id" class="form-control" required>
-                                        <option value="">Select Term</option>
-                                        @foreach ($terms as $term)
-                                            <option value="{{ $term->id }}">{{ $term->term }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-session_id" class="form-label">Session</label>
-                                    <select name="session_id" id="edit-session_id" class="form-control" required>
-                                        <option value="">Select Session</option>
-                                        @foreach ($schoolsessions as $session)
-                                            <option value="{{ $session->id }}">{{ $session->session }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
-                            </div>
-                        </form>
                     </div>
                 </div>
-            </div>
 
             <!-- Delete Confirmation Modal -->
             <div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-labelledby="deleteRecordModalLabel" aria-hidden="true">
