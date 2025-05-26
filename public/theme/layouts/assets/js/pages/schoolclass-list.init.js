@@ -1,6 +1,6 @@
 console.log("schoolclass.init.js is loaded and executing at", new Date().toISOString());
 
-var perPage = 5;
+var perPage = 10;
 var editlist = false;
 
 try {
