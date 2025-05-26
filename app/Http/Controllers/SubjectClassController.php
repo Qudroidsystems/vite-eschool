@@ -78,7 +78,7 @@ class SubjectClassController extends Controller
                 'subjectclass.updated_at'
             ])
             ->orderBy('sclass')
-            ->paginate(10);
+            ->paginate(100);
     
         if ($request->ajax()) {
             return response()->json([
