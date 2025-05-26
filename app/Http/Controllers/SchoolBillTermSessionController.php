@@ -52,7 +52,7 @@ class SchoolBillTermSessionController extends Controller
                 'school_bill.title as schoolbill',
                 'school_bill_class_term_session.updated_at as updated_at'
             ])
-            ->paginate(10); // Paginate with 10 records per page
+            ->paginate(100); // Paginate with 10 records per page
 
         return view('schoolbilltermsession.index')
             ->with('schoolbills', $schoolbills)
