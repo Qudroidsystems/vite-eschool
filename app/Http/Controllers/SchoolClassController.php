@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Classcategory;
 use App\Models\Schoolclass;
 use App\Models\Schoolarm;
-use App\Models\Classteacher;
+use App\Models\ClassTeacher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
@@ -268,7 +268,7 @@ class SchoolClassController extends Controller
         Log::info('Delete School Class Request:', ['id' => $id]);
 
         $schoolclass = Schoolclass::findOrFail($id);
-        Classteacher::where('schoolclassid', $id)->delete();
+        ClassTeacher::where('schoolclassid', $id)->delete();
         $schoolclass->delete();
 
         return response()->json(['message' => 'School class deleted successfully!']);
@@ -280,7 +280,7 @@ class SchoolClassController extends Controller
 
         $schoolclass = Schoolclass::find($request->schoolclassid);
         if ($schoolclass) {
-            Classteacher::where('schoolclassid', $request->schoolclassid)->delete();
+            ClassTeacher::where('schoolclassid', $request->schoolclassid)->delete();
             $schoolclass->delete();
             return response()->json([
                 'success' => true,
