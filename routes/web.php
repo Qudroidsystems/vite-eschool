@@ -119,6 +119,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::delete('schoolclass/{schoolclass}', [SchoolClassController::class, 'destroy'])->name('schoolclass.destroy');
     Route::post('schoolclass/deleteschoolclass', [SchoolClassController::class, 'deleteschoolclass'])->name('schoolclass.deleteschoolclass');
     Route::get('schoolclass/{schoolclass}/arms', [SchoolClassController::class, 'getArms'])->name('schoolclass.getarms');
+    Route::put('/schoolclass/{id}', [SchoolClassController::class, 'update'])->name('schoolclass.update');
 
     Route::resource('student', StudentController::class);
     Route::get('/studentid/{studentid}', [StudentController::class, 'deletestudent'])->name('student.deletestudent');

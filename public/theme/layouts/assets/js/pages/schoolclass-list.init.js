@@ -1,4 +1,4 @@
-console.log("schoolclass.init.js is loaded and executing at", new Date().toISOString());
+console.log("schoolclass-list.init.js is loaded and executing at", new Date().toISOString());
 
 var perPage = 100;
 var editlist = false;
@@ -181,6 +181,7 @@ function initializeCheckboxLogic() {
     const editModal = document.getElementById('editModal');
     if (editModal) {
         editModal.addEventListener('shown.bs.modal', function () {
+            console.log('Edit modal shown explicitly at', new Date().toISOString());
             const editArmSelectAll = document.getElementById('edit-arm-select-all');
             const editCategorySelectAll = document.getElementById('edit-category-select-all');
             const editArmCheckboxes = document.querySelectorAll('#edit-arm-checkboxes input[name="arm_id[]"]');
@@ -255,55 +256,68 @@ function refreshCallbacks() {
 
     Array.from(removeButtons).forEach(function (btn) {
         btn.removeEventListener("click", handleRemoveClick);
-        btn.addEventListener("click", handleRemoveClick);
+        btn.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleRemoveClick(e);
+        });
     });
 
     Array.from(editButtons).forEach(function (btn) {
         btn.removeEventListener("click", handleEditClick);
-        btn.addEventListener("click", handleEditClick);
+        btn.addEventListener("click", function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+            console.log("Edit button clicked explicitly at", new Date().toISOString());
+            handleEditClick(e);
+        });
     });
 }
 
 function handleRemoveClick(e) {
-    e.preventDefault();
-    console.log("Remove button clicked at", new Date().toISOString());
     try {
         const itemId = e.target.closest("tr").querySelector(".id").getAttribute("data-id");
         console.log("Remove button clicked for ID:", itemId);
+
+        // Close other modals
+        const editModal = document.getElementById("editModal");
+        if (editModal && bootstrap.Modal.getInstance(editModal)) {
+            bootstrap.Modal.getInstance(editModal).hide();
+            console.log("Closed edit modal");
+        }
+        const addModal = document.getElementById("addSchoolClassModal");
+        if (addModal && bootstrap.Modal.getInstance(addModal)) {
+            bootstrap.Modal.getInstance(addModal).hide();
+            console.log("Closed add modal");
+        }
+
         const modalElement = document.getElementById("deleteRecordModal");
         if (!modalElement) {
-            console.error("Delete modal element not found");
+            console.error("Delete modal element not found in DOM");
             Swal.fire({
                 position: "center",
                 icon: "error",
-                title: "Modal not found",
-                text: "The delete confirmation modal could not be found in the DOM.",
+                title: "Error",
+                text: "Delete modal not found in DOM",
                 showConfirmButton: true
             });
             return;
         }
-        if (typeof bootstrap === 'undefined') {
-            console.error("Bootstrap is not loaded");
-            Swal.fire({
-                position: "center",
-                icon: "error",
-                title: "Bootstrap Error",
-                text: "Bootstrap JavaScript is not loaded.",
-                showConfirmButton: true
-            });
-            return;
-        }
+
         const modal = new bootstrap.Modal(modalElement);
         modal.show();
         console.log("Delete modal opened");
+
         const deleteButton = document.getElementById("delete-record");
         if (deleteButton) {
+            console.log("Delete button found, attaching onclick");
             deleteButton.onclick = function () {
                 console.log("Deleting school class ID:", itemId);
                 axios.delete(`/schoolclass/${itemId}`, {
                     headers: { 'X-CSRF-TOKEN': csrfToken }
                 }).then(function (response) {
                     console.log("Delete success:", response.data);
+                    modal.hide();
                     window.location.reload();
                     Swal.fire({
                         position: "center",
@@ -315,6 +329,7 @@ function handleRemoveClick(e) {
                     });
                 }).catch(function (error) {
                     console.error("Delete error:", error.response?.data || error.message);
+                    modal.hide();
                     Swal.fire({
                         position: "center",
                         icon: "error",
@@ -324,6 +339,8 @@ function handleRemoveClick(e) {
                     });
                 });
             };
+        } else {
+            console.error("Delete button not found in deleteRecordModal");
         }
     } catch (error) {
         console.error("Error in remove-item-btn click:", error);
@@ -331,17 +348,16 @@ function handleRemoveClick(e) {
             position: "center",
             icon: "error",
             title: "Error",
-            text: "An error occurred while trying to open the delete modal.",
+            text: "Failed to open delete modal: " + error.message,
             showConfirmButton: true
         });
     }
 }
 
 function handleEditClick(e) {
-    e.preventDefault();
     try {
         const itemId = e.target.closest("tr").querySelector(".id").getAttribute("data-id");
-        console.log("Edit button clicked for ID:", itemId);
+        console.log("Edit button clicked for ID:", itemId, "at", new Date().toISOString());
         const tr = e.target.closest("tr");
         editlist = true;
         editIdField.value = itemId;
@@ -359,7 +375,7 @@ function handleEditClick(e) {
             headers: { 'X-CSRF-TOKEN': csrfToken }
         }).then(response => {
             if (response.data.success) {
-                const armIds = response.data.armIds.map(String); // Ensure string comparison
+                const armIds = response.data.armIds.map(String);
                 console.log("Arms fetched for ID", itemId, ":", armIds);
                 editArmCheckboxes.forEach(checkbox => {
                     const isChecked = armIds.includes(checkbox.value);
@@ -584,6 +600,8 @@ if (addSchoolClassForm) {
     });
 }
 
+
+
 const editSchoolClassForm = document.getElementById("edit-schoolclass-form");
 if (editSchoolClassForm) {
     editSchoolClassForm.addEventListener("submit", function (e) {
@@ -597,6 +615,8 @@ if (editSchoolClassForm) {
         const classcategoryid = Array.from(document.querySelectorAll('#edit-category-checkboxes input[name="classcategoryid[]"]:checked')).map(cb => cb.value)[0] || '';
         const id = editIdField.value;
 
+        console.log("Form data:", { id, schoolclass, arm_id, classcategoryid });
+
         if (!id || !schoolclass || !arm_id.length || !classcategoryid) {
             console.error("Validation failed:", { id, schoolclass, arm_id, classcategoryid });
             if (errorMsg) {
@@ -607,15 +627,16 @@ if (editSchoolClassForm) {
         }
 
         const url = updateUrl.replace(':id', id);
-        console.log("Sending edit request:", { url, id, schoolclass, arm_id, classcategoryid });
+        console.log("Sending edit request to:", url, "with data:", { schoolclass, arm_id, classcategoryid, _method: 'PUT' });
 
-        axios.put(url, {
+        axios.post(url, {
+            _method: 'PUT',
             schoolclass,
             arm_id,
             classcategoryid,
             _token: csrfToken
         }).then(function (response) {
-            console.log("Edit success:", response.data);
+            console.log("Edit success:", response.status, response.data);
             window.location.reload();
             Swal.fire({
                 position: "center",
@@ -626,35 +647,39 @@ if (editSchoolClassForm) {
                 showCloseButton: true
             });
         }).catch(function (error) {
-            console.error("PUT error:", error.response?.data || error.message);
-            if (error.response?.status === 405 || error.response?.status === 404) {
-                console.log("Falling back to POST with _method=PUT");
-                axios.post(url, {
-                    _method: 'PUT',
-                    schoolclass,
-                    arm_id,
-                    classcategoryid,
-                    _token: csrfToken
-                }).then(function (response) {
-                    console.log("POST fallback success:", response.data);
-                    window.location.reload();
-                    Swal.fire({
-                        position: "center",
-                        icon: "success",
-                        title: response.data.message || "School class updated successfully!",
-                        showConfirmButton: false,
-                        timer: 2000,
-                        showCloseButton: true
-                    });
-                }).catch(function (postError) {
-                    console.error("POST fallback error:", postError.response?.data || postError.message);
-                    handleError(postError, errorMsg);
-                });
-            } else {
-                handleError(error, errorMsg);
+            console.error("Edit error:", error.response?.status, error.response?.data || error.message);
+            const errorMsgText = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Failed to update school class";
+            if (errorMsg) {
+                errorMsg.innerHTML = errorMsgText;
+                errorMsg.classList.remove("d-none");
             }
+            Swal.fire({
+                position: "center",
+                icon: "error",
+                title: "Error updating school class",
+                text: errorMsgText,
+                showConfirmButton: true
+            });
         });
     });
+}
+
+
+function handleError(error, errorMsg) {
+    const errors = error.response?.data?.errors;
+    let errorMessage = "Error updating school class";
+    if (errors) {
+        errorMessage = Object.values(errors).flat().join(", ");
+    } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+    } else if (error.message) {
+        errorMessage = error.message;
+    }
+    console.error("Error details:", errorMessage);
+    if (errorMsg) {
+        errorMsg.innerHTML = errorMessage;
+        errorMsg.classList.remove("d-none");
+    }
 }
 
 function handleError(error, errorMsg) {
@@ -692,11 +717,7 @@ if (addModal) {
 const editModal = document.getElementById("editModal");
 if (editModal) {
     editModal.addEventListener("shown.bs.modal", function () {
-        console.log("Edit modal show event");
-        const modalLabel = document.getElementById("editModalLabel");
-        const updateBtn = document.getElementById("update-btn");
-        if (modalLabel) modalLabel.innerHTML = "Edit School Class";
-        if (updateBtn) updateBtn.innerHTML = "Update";
+        console.log("Edit modal shown explicitly at", new Date().toISOString());
     });
     editModal.addEventListener("hidden.bs.modal", function () {
         console.log("Edit modal hidden");

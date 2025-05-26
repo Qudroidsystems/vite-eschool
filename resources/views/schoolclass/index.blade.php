@@ -171,146 +171,117 @@
                             <h5 id="exampleModalLabel" class="modal-title">Add School Class</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                            <form class="tablelist-form" autocomplete="off" id="add-schoolclass-form">
-                                @csrf
-                                <div class="modal-body">
-                                    <input type="hidden" id="add-id-field" name="id">
-                                    <div class="mb-3">
-                                        <label for="schoolclass" class="form-label">School Class</label>
-                                        <input type="text" id="schoolclass" name="schoolclass" class="form-control" placeholder="Enter school class" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Select Arm</label>
-                                        {{-- <div class="d-flex flex-wrap gap-3 mb-3">
-                                            <div class="form-check form-check-outline form-check-primary">
-                                                <input class="form-check-input" type="checkbox" value="" id="add-arm-select-all">
-                                                <label class="form-check-label" for="add-arm-select-all">Select all</label>
-                                            </div>
-                                        </div> --}}
-                                        <div class="d-flex flex-wrap gap-3" id="add-arm-checkboxes">
-                                            @foreach ($arms as $arm)
-                                                <div class="form-check form-check-outline form-check-primary">
-                                                    <input class="form-check-input arm-checkbox" type="checkbox" value="{{ $arm->id }}" name="arm_id[]">
-                                                    <label class="form-check-label">{{ $arm->arm }}</label>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Select Category</label>
-                                        {{-- <div class="d-flex flex-wrap gap-3 mb-3">
-                                            <div class="form-check form-check-outline form-check-primary">
-                                                <input class="form-check-input" type="checkbox" value="" id="add-category-select-all">
-                                                <label class="form-check-label" for="add-category-select-all">Select all</label>
-                                            </div>
-                                        </div> --}}
-                                        <div class="d-flex flex-wrap gap-3" id="add-category-checkboxes">
-                                            @foreach ($classcategories as $category)
-                                                <div class="form-check form-check-outline form-check-primary">
-                                                    <input class="form-check-input category-checkbox" type="checkbox" value="{{ $category->id }}" name="classcategoryid[]">
-                                                    <label class="form-check-label">{{ $category->category }}</label>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                    <div class="alert alert-danger d-none" id="alert-error-msg"></div>
+                        <form class="tablelist-form" autocomplete="off" id="add-schoolclass-form">
+                            @csrf
+                            <div class="modal-body">
+                                <input type="hidden" id="add-id-field" name="id">
+                                <div class="mb-3">
+                                    <label for="schoolclass" class="form-label">School Class</label>
+                                    <input type="text" id="schoolclass" name="schoolclass" class="form-control" placeholder="Enter school class" required>
                                 </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                    <button type="submit" class="btn btn-primary" id="add-btn">Add Class</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Edit School Class Modal -->
-                <div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-                    <div class="modal-dialog modal-dialog-centered modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 id="editModalLabel" class="modal-title">Edit School Class</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <form class="tablelist-form" autocomplete="off" id="edit-schoolclass-form">
-                                @csrf
-                                <div class="modal-body">
-                                    <input type="hidden" id="edit-id-field" name="id">
-                                    <div class="mb-3">
-                                        <label for="edit-schoolclass" class="form-label">School Class</label>
-                                        <input type="text" id="edit-schoolclass" name="schoolclass" class="form-control" placeholder="Enter school class" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Select Arm</label>
-                                        <div class="d-flex flex-wrap gap-3 mb-3">
+                                <div class="mb-3">
+                                    <label class="form-label">Select Arm</label>
+                                    <div class="d-flex flex-wrap gap-3" id="add-arm-checkboxes">
+                                        @foreach ($arms as $arm)
                                             <div class="form-check form-check-outline form-check-primary">
-                                                {{-- <div class="form-check form-check">
-                                                    <input class="form-check-input" type="checkbox" value="" id="checkbox" id="edit-arm-select-all">
-                                                    <label class="form-check-label" for="edit-arm-select-all">Select all</label>
-                                                </div> --}}
+                                                <input class="form-check-input arm-checkbox" type="checkbox" value="{{ $arm->id }}" name="arm_id[]">
+                                                <label class="form-check-label">{{ $arm->arm }}</label>
                                             </div>
-                                        </div>
-                                        <div class="d-flex flex-wrap gap-3" id="edit-arm-checkboxes">
-                                            @foreach ($arms as $arm)
-                                                <div class="form-check form-check-outline form-check-primary">
-                                                    <input class="form-check-input arm-checkbox" type="checkbox" value="{{ $arm->id }}" name="arm_id[]">
-                                                    <label class="form-check-label">
-                                                        {{ $arm->arm }}
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                        <div class="mb-3">
-                                            <label class="form-label">Select Category</label>
-                                            <div class="d-flex flex-wrap gap-3 mb-3">
-                                                <div class="form-check form-check-outline form-check-primary">
-                                                    {{-- <input class="form-check-input" type="checkbox" value="" id="edit-category-select-all">
-                                                    <label class="form-check-label" for="edit-category-select-all">Select all</label>
-                                                </div> --}}
-                                            </div>
-                                            <div class="d-flex flex-wrap gap-3" id="edit-category-checkboxes">
-                                                @foreach ($classcategories as $category)
-                                                    <div class="form-check form-check-outline form-check-primary">
-                                                        <input class="form-check form-check-input category-checkbox" type="checkbox" value="{{ $category->id }}" name="classcategoryid[]">
-                                                        <label class="form-check-label">{{ $category->category }}</label>
-                                                    </div>
-                                                @endforeach
-                                            </div>
-                                        </div>
-                                        <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
+                                        @endforeach
                                     </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                        <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Select Category</label>
+                                    <div class="d-flex flex-wrap gap-3" id="add-category-checkboxes">
+                                        @foreach ($classcategories as $category)
+                                            <div class="form-check form-check-outline form-check-primary">
+                                                <input class="form-check-input category-checkbox" type="checkbox" value="{{ $category->id }}" name="classcategoryid[]">
+                                                <label class="form-check-label">{{ $category->category }}</label>
+                                            </div>
+                                        @endforeach
                                     </div>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Delete Confirmation Modal -->
-                  <!-- Delete Confirmation Modal -->
-                <div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Confirm Deletion</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body text-center">
-                                <h4>Are you sure?</h4>
-                                <p>You won't be able to revert this!</p>
+                                </div>
+                                <div class="alert alert-danger d-none" id="alert-error-msg"></div>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="button" class="btn btn-danger" id="delete-record">Delete</button>
+                                <button type="submit" class="btn btn-primary" id="add-btn">Add Class</button>
                             </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Edit School Class Modal -->
+            <div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 id="editModalLabel" class="modal-title">Edit School Class</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form class="tablelist-form" autocomplete="off" id="edit-schoolclass-form">
+                            @csrf
+                            <div class="modal-body">
+                                <input type="hidden" id="edit-id-field" name="id">
+                                <div class="mb-3">
+                                    <label for="edit-schoolclass" class="form-label">School Class</label>
+                                    <input type="text" id="edit-schoolclass" name="schoolclass" class="form-control" placeholder="Enter school class" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Select Arm</label>
+                                    <div class="d-flex flex-wrap gap-3" id="edit-arm-checkboxes">
+                                        @foreach ($arms as $arm)
+                                            <div class="form-check form-check-outline form-check-primary">
+                                                <input class="form-check-input arm-checkbox" type="checkbox" value="{{ $arm->id }}" name="arm_id[]">
+                                                <label class="form-check-label">{{ $arm->arm }}</label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Select Category</label>
+                                    <div class="d-flex flex-wrap gap-3" id="edit-category-checkboxes">
+                                        @foreach ($classcategories as $category)
+                                            <div class="form-check form-check-outline form-check-primary">
+                                                <input class="form-check-input category-checkbox" type="checkbox" value="{{ $category->id }}" name="classcategoryid[]">
+                                                <label class="form-check-label">{{ $category->category }}</label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete Confirmation Modal -->
+            <div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-labelledby="deleteRecordModalLabel" aria-hidden="true" data-bs-backdrop="static">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 id="deleteRecordModalLabel" class="modal-title">Confirm Deletion</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <h4>Are you sure?</h4>
+                            <p>You won't be able to revert this!</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-danger" id="delete-record">Delete</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
+    </div>
 
     <style>
         /* Enlarge checkboxes in modals */
@@ -326,8 +297,28 @@
             line-height: 1.5em;
             margin-left: 0.5em;
         }
+        /* Ensure delete modal is above other modals and backdrop */
+        #deleteRecordModal {
+            z-index: 1055;
+        }
+        #deleteRecordModal .modal-backdrop {
+            z-index: 1050;
+        }
+        /* Fix font path for Material Design Icons */
+        @font-face {
+            font-family: 'Material Design Icons';
+            src: url('{{ asset('theme/layouts/assets/fonts/materialdesignicons-webfont.woff2') }}?v=6.5.95') format('woff2'),
+                 url('{{ asset('theme/layouts/assets/fonts/materialdesignicons-webfont.ttf') }}?v=6.5.95') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
     </style>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/list.js@2.3.1/dist/list.min.js"></script>
+    <script src="{{ asset('theme/layouts/assets/js/schoolclass-list.init.js') }}"></script>
 
     <script>
         window.routeUrls = {
@@ -335,5 +326,4 @@
             getArms: '{{ route("schoolclass.getarms", ":id") }}'
         };
     </script>
-
 @endsection

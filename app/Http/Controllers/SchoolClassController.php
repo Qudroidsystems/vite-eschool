@@ -263,23 +263,23 @@ class SchoolClassController extends Controller
     }
 }
 
-        public function destroy($id)
-        {
-            Log::info('Delete School Class Request:', ['id' => $id]);
-            \DB::enableQueryLog(); // Enable query logging
+    public function destroy($id)
+    {
+        Log::info('Delete School Class Request:', ['id' => $id]);
+        \DB::enableQueryLog(); // Enable query logging
 
-            try {
-                $schoolclass = Schoolclass::findOrFail($id);
-                Classteacher::where('schoolclassid', $id)->delete();
-                $schoolclass->delete();
+        try {
+            $schoolclass = Schoolclass::findOrFail($id);
+            Classteacher::where('schoolclassid', $id)->delete();
+            $schoolclass->delete();
 
-                Log::info('Query Log:', \DB::getQueryLog()); // Log queries
-                return response()->json(['message' => 'School class deleted successfully!']);
-            } catch (\Exception $e) {
-                Log::error('Delete Error:', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-                return response()->json(['message' => 'Error deleting school class', 'error' => $e->getMessage()], 500);
-            }
+            Log::info('Query Log:', \DB::getQueryLog()); // Log queries
+            return response()->json(['message' => 'School class deleted successfully!']);
+        } catch (\Exception $e) {
+            Log::error('Delete Error:', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json(['message' => 'Error deleting school class', 'error' => $e->getMessage()], 500);
         }
+    }
 
         public function deleteschoolclass(Request $request)
         {
