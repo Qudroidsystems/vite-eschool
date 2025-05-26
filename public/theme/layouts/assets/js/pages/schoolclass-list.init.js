@@ -1,6 +1,6 @@
 console.log("schoolclass.init.js is loaded and executing at", new Date().toISOString());
 
-var perPage = 10;
+var perPage = 100;
 var editlist = false;
 
 try {
@@ -24,7 +24,7 @@ console.log("URLs:", { updateUrl, getArmsUrl });
 const options = {
     valueNames: ['schoolclassid', 'schoolclass', 'arm', 'classcategory', 'datereg'],
     page: perPage,
-    pagination: true
+    pagination: false
 };
 const schoolClassList = new List('schoolClassList', options);
 
