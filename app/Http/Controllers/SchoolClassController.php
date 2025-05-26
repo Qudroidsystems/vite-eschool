@@ -263,36 +263,43 @@ class SchoolClassController extends Controller
     }
 }
 
-    public function destroy($id)
-    {
-        Log::info('Delete School Class Request:', ['id' => $id]);
+        public function destroy($id)
+        {
+            Log::info('Delete School Class Request:', ['id' => $id]);
+            \DB::enableQueryLog(); // Enable query logging
 
-        $schoolclass = Schoolclass::findOrFail($id);
-        ClassTeacher::where('schoolclassid', $id)->delete();
-        $schoolclass->delete();
+            try {
+                $schoolclass = Schoolclass::findOrFail($id);
+                Classteacher::where('schoolclassid', $id)->delete();
+                $schoolclass->delete();
 
-        return response()->json(['message' => 'School class deleted successfully!']);
-    }
-
-    public function deleteschoolclass(Request $request)
-    {
-        Log::info('Delete School Class AJAX Request:', ['schoolclassid' => $request->schoolclassid]);
-
-        $schoolclass = Schoolclass::find($request->schoolclassid);
-        if ($schoolclass) {
-            ClassTeacher::where('schoolclassid', $request->schoolclassid)->delete();
-            $schoolclass->delete();
-            return response()->json([
-                'success' => true,
-                'message' => 'School class has been removed'
-            ]);
+                Log::info('Query Log:', \DB::getQueryLog()); // Log queries
+                return response()->json(['message' => 'School class deleted successfully!']);
+            } catch (\Exception $e) {
+                Log::error('Delete Error:', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+                return response()->json(['message' => 'Error deleting school class', 'error' => $e->getMessage()], 500);
+            }
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'School class not found'
-        ], 404);
-    }
+        public function deleteschoolclass(Request $request)
+        {
+            Log::info('Delete School Class AJAX Request:', ['schoolclassid' => $request->schoolclassid]);
+
+            $schoolclass = Schoolclass::find($request->schoolclassid);
+            if ($schoolclass) {
+                \DB::table('classteacher')->where('schoolclassid', $request->schoolclassid)->delete();
+                \DB::table('schoolclass')->where('id', $request->schoolclassid)->delete();
+                return response()->json([
+                    'success' => true,
+                    'message' => 'School class has been removed'
+                ]);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'School class not found'
+            ], 404);
+        }
 
     public function getArms($id)
 {

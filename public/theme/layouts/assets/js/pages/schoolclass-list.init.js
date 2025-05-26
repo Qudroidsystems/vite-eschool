@@ -266,13 +266,36 @@ function refreshCallbacks() {
 
 function handleRemoveClick(e) {
     e.preventDefault();
+    console.log("Remove button clicked at", new Date().toISOString());
     try {
         const itemId = e.target.closest("tr").querySelector(".id").getAttribute("data-id");
         console.log("Remove button clicked for ID:", itemId);
-        const modal = new bootstrap.Modal(document.getElementById("deleteRecordModal"));
+        const modalElement = document.getElementById("deleteRecordModal");
+        if (!modalElement) {
+            console.error("Delete modal element not found");
+            Swal.fire({
+                position: "center",
+                icon: "error",
+                title: "Modal not found",
+                text: "The delete confirmation modal could not be found in the DOM.",
+                showConfirmButton: true
+            });
+            return;
+        }
+        if (typeof bootstrap === 'undefined') {
+            console.error("Bootstrap is not loaded");
+            Swal.fire({
+                position: "center",
+                icon: "error",
+                title: "Bootstrap Error",
+                text: "Bootstrap JavaScript is not loaded.",
+                showConfirmButton: true
+            });
+            return;
+        }
+        const modal = new bootstrap.Modal(modalElement);
         modal.show();
         console.log("Delete modal opened");
-
         const deleteButton = document.getElementById("delete-record");
         if (deleteButton) {
             deleteButton.onclick = function () {
@@ -304,6 +327,13 @@ function handleRemoveClick(e) {
         }
     } catch (error) {
         console.error("Error in remove-item-btn click:", error);
+        Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "Error",
+            text: "An error occurred while trying to open the delete modal.",
+            showConfirmButton: true
+        });
     }
 }
 
