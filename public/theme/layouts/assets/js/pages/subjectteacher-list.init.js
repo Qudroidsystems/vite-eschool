@@ -47,14 +47,8 @@ if (checkAll) {
 // Form fields
 const addIdField = document.getElementById("add-id-field");
 const addStaffIdField = document.getElementById("staffid");
-const addSubjectIdField = document.getElementById("subjectid");
-const addTermIdField = document.getElementById("termid");
-const addSessionIdField = document.getElementById("sessionid");
 const editIdField = document.getElementById("edit-id-field");
 const editStaffIdField = document.getElementById("edit-staffid");
-const editSubjectIdField = document.getElementById("edit-subjectid");
-const editTermIdField = document.getElementById("edit-termid");
-const editSessionIdField = document.getElementById("edit-sessionid");
 
 // Checkbox handling
 function initializeCheckboxes() {
@@ -104,7 +98,6 @@ function fetchPage(url) {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
     }).then(function (response) {
         console.log("Fetch page success:", response.data);
-        // Extract table body and pagination from response HTML
         const parser = new DOMParser();
         const doc = parser.parseFromString(response.data.html, 'text/html');
         const newTbody = doc.querySelector('#kt_roles_view_table tbody');
@@ -120,7 +113,6 @@ function fetchPage(url) {
             initializeCheckboxes();
             document.querySelector("#pagination-element .text-muted").innerHTML =
                 `Showing <span class="fw-semibold">${response.data.count}</span> of <span class="fw-semibold">${response.data.total}</span> Results`;
-            // Update noresult display
             const noResult = document.querySelector(".noresult");
             const rowCount = document.querySelectorAll("#kt_roles_view_table tbody tr").length;
             if (noResult) {
@@ -176,27 +168,23 @@ function handleRemoveClick(e, button) {
                     const row = document.querySelector(`tr[data-id="${itemId}"]`);
                     if (row) row.remove();
                     modal.hide();
-                    // Update badge
                     const badge = document.querySelector('.badge.bg-dark-subtle');
                     if (badge) {
                         const currentTotal = parseInt(badge.textContent);
                         badge.textContent = currentTotal - 1;
                     }
-                    // Update noresult display
-                    const noResult = document.querySelector(".noresult");
                     const rowCount = document.querySelectorAll("#kt_roles_view_table tbody tr").length;
+                    const noResult = document.querySelector(".noresult");
                     if (noResult) {
                         noResult.style.display = rowCount === 0 ? "block" : "none";
                     } else if (rowCount === 0) {
                         document.querySelector("#kt_roles_view_table tbody").innerHTML =
                             '<tr><td colspan="9" class="noresult" style="display: block;">No results found</td></tr>';
                     }
-                    // Fetch previous page if table is empty and pagination exists
-                    if (rowCount === 0 && document.querySelector("#pagination-element .pagination-prev")) {
-                        const prevUrl = document.querySelector("#pagination-element .pagination-prev").getAttribute("data-url");
-                        console.log("Fetching previous page:", prevUrl);
-                        fetchPage(prevUrl);
-                    }
+                    // Refresh the current page to ensure table consistency
+                    const currentPageUrl = document.querySelector('.pagination .page-item.active .page-link')?.getAttribute('data-url') || window.location.href;
+                    console.log("Refreshing page after deletion:", currentPageUrl);
+                    fetchPage(currentPageUrl);
                 })
                 .catch(function (error) {
                     console.error("Delete error:", error.response?.data || error);
@@ -225,40 +213,49 @@ function handleEditClick(e, button) {
     }
     if (editIdField) editIdField.value = itemId;
     if (editStaffIdField) editStaffIdField.value = tr.querySelector(".subjectteacher")?.getAttribute("data-staffid") || "";
-    if (editSubjectIdField) editSubjectIdField.value = tr.querySelector(".subject")?.getAttribute("data-subjectid") || "";
-    if (editTermIdField) editTermIdField.value = tr.querySelector(".term")?.getAttribute("data-termid") || "";
-    if (editSessionIdField) editSessionIdField.value = tr.querySelector(".session")?.getAttribute("data-sessionid") || "";
-    try {
-        const modal = new bootstrap.Modal(document.getElementById("editModal"));
-        modal.show();
-        console.log("Edit modal opened");
-    } catch (error) {
-        console.error("Error opening edit modal:", error);
-        Swal.fire({
-            position: "center",
-            icon: "error",
-            title: "Error opening edit modal",
-            text: "Please try again or contact support.",
-            showConfirmButton: true
+    const termId = tr.querySelector(".term")?.getAttribute("data-termid") || "";
+    const sessionId = tr.querySelector(".session")?.getAttribute("data-sessionid") || "";
+    
+    // Fetch subjects for this teacher, term, and session
+    axios.get(`/subjectteacher/${itemId}/subjects`)
+        .then(function (response) {
+            const subjectIds = response.data.subjectIds || [];
+            document.querySelectorAll('#editModal input[name="subjectid[]"]').forEach(cb => {
+                cb.checked = subjectIds.includes(parseInt(cb.value));
+            });
+            document.querySelector(`#edit-term-${termId}`)?.setAttribute("checked", "checked");
+            document.querySelector(`#edit-session-${sessionId}`)?.setAttribute("checked", "checked");
+            const modal = new bootstrap.Modal(document.getElementById("editModal"));
+            modal.show();
+            console.log("Edit modal opened with subjects:", subjectIds);
+        })
+        .catch(function (error) {
+            console.error("Error fetching subjects:", error);
+            Swal.fire({
+                position: "center",
+                icon: "error",
+                title: "Error loading subjects",
+                text: error.response?.data?.message || "An error occurred",
+                showConfirmButton: true
+            });
         });
-    }
 }
 
 // Clear form fields
 function clearAddFields() {
     if (addIdField) addIdField.value = "";
     if (addStaffIdField) addStaffIdField.value = "";
-    if (addSubjectIdField) addSubjectIdField.value = "";
-    if (addTermIdField) addTermIdField.value = "";
-    if (addSessionIdField) addSessionIdField.value = "";
+    document.querySelectorAll('#addSubjectTeacherModal input[name="subjectid[]"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#addSubjectTeacherModal input[name="termid"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#addSubjectTeacherModal input[name="sessionid"]').forEach(cb => cb.checked = false);
 }
 
 function clearEditFields() {
     if (editIdField) editIdField.value = "";
     if (editStaffIdField) editStaffIdField.value = "";
-    if (editSubjectIdField) editSubjectIdField.value = "";
-    if (editTermIdField) editTermIdField.value = "";
-    if (editSessionIdField) editSessionIdField.value = "";
+    document.querySelectorAll('#editModal input[name="subjectid[]"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#editModal input[name="termid"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#editModal input[name="sessionid"]').forEach(cb => cb.checked = false);
 }
 
 // Delete multiple subject teachers
@@ -365,24 +362,24 @@ if (addSubjectTeacherForm) {
         if (errorMsg) errorMsg.classList.add("d-none");
         const formData = new FormData(addSubjectTeacherForm);
         const staffid = formData.get('staffid');
-        const subjectid = formData.get('subjectid');
+        const subjectids = formData.getAll('subjectid[]');
         const termid = formData.get('termid');
         const sessionid = formData.get('sessionid');
-        if (!staffid || !subjectid || !termid || !sessionid) {
+        if (!staffid || subjectids.length === 0 || !termid || !sessionid) {
             if (errorMsg) {
-                errorMsg.innerHTML = "Please fill all required fields";
+                errorMsg.innerHTML = "Please select a teacher, at least one subject, a term, and a session";
                 errorMsg.classList.remove("d-none");
             }
             return;
         }
-        console.log("Sending add request:", { staffid, subjectid, termid, sessionid });
-        axios.post('/subjectteacher', { staffid, subjectid, termid, sessionid })
+        console.log("Sending add request:", { staffid, subjectids, termid, sessionid });
+        axios.post('/subjectteacher', { staffid, subjectids, termid, sessionid })
             .then(function (response) {
                 console.log("Add success:", response.data);
                 Swal.fire({
                     position: "center",
                     icon: "success",
-                    title: "Subject Teacher added successfully!",
+                    title: response.data.message || "Subject Teacher(s) added successfully!",
                     showConfirmButton: false,
                     timer: 2000,
                     showCloseButton: true
@@ -394,6 +391,10 @@ if (addSubjectTeacherForm) {
                 if (errorMsg) {
                     errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error adding subject teacher";
                     errorMsg.classList.remove("d-none");
+                }
+                // Reload if some records were processed (partial success)
+                if (error.response?.data?.success && error.response?.data?.processed > 0) {
+                    setTimeout(() => window.location.reload(), 2000);
                 }
             });
     });
@@ -409,25 +410,25 @@ if (editSubjectTeacherForm) {
         if (errorMsg) errorMsg.classList.add("d-none");
         const formData = new FormData(editSubjectTeacherForm);
         const staffid = formData.get('staffid');
-        const subjectid = formData.get('subjectid');
+        const subjectids = formData.getAll('subjectid[]');
         const termid = formData.get('termid');
         const sessionid = formData.get('sessionid');
         const id = editIdField?.value;
-        if (!id || !staffid || !subjectid || !termid || !sessionid) {
+        if (!id || !staffid || subjectids.length === 0 || !termid || !sessionid) {
             if (errorMsg) {
-                errorMsg.innerHTML = "Please fill all required fields";
+                errorMsg.innerHTML = "Please select a teacher, at least one subject, a term, and a session";
                 errorMsg.classList.remove("d-none");
             }
             return;
         }
-        console.log("Sending edit request:", { id, staffid, subjectid, termid, sessionid });
-        axios.put(`/subjectteacher/${id}`, { staffid, subjectid, termid, sessionid })
+        console.log("Sending edit request:", { id, staffid, subjectids, termid, sessionid });
+        axios.put(`/subjectteacher/${id}`, { staffid, subjectids, termid, sessionid })
             .then(function (response) {
                 console.log("Edit success:", response.data);
                 Swal.fire({
                     position: "center",
                     icon: "success",
-                    title: "Subject Teacher updated successfully!",
+                    title: response.data.message || "Subject Teacher(s) updated successfully!",
                     showConfirmButton: false,
                     timer: 2000,
                     showCloseButton: true
@@ -439,6 +440,10 @@ if (editSubjectTeacherForm) {
                 if (errorMsg) {
                     errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error updating subject teacher";
                     errorMsg.classList.remove("d-none");
+                }
+                // Reload if some records were processed (partial success)
+                if (error.response?.data?.success && error.response?.data?.processed > 0) {
+                    setTimeout(() => window.location.reload(), 2000);
                 }
             });
     });

@@ -13,7 +13,7 @@ userList.on("updated", function (e) {
     document.getElementsByClassName("noresult")[0].style.display = e.matchingItems.length === 0 ? "block" : "none";
     setTimeout(() => {
         refreshCallbacks();
-        ischeckboxcheck(); // Reattach checkbox listeners after filter
+        ischeckboxcheck();
     }, 100);
 });
 
@@ -22,6 +22,16 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log("Initial userList items:", userList.items.length);
     refreshCallbacks();
     ischeckboxcheck();
+
+    // Initialize Choices.js
+    if (typeof Choices !== 'undefined') {
+        var addRoleVal = new Choices(document.getElementById("role"), { searchEnabled: true, removeItemButton: true });
+        var editRoleVal = new Choices(document.getElementById("edit-role"), { searchEnabled: true, removeItemButton: true });
+        var roleFilterVal = new Choices(document.getElementById("idRole"), { searchEnabled: true });
+        var emailFilterVal = new Choices(document.getElementById("idEmail"), { searchEnabled: true });
+    } else {
+        console.warn("Choices.js not available, falling back to native select");
+    }
 });
 
 if (checkAll) {
@@ -57,10 +67,20 @@ var addIdField = document.getElementById("add-id-field"),
     editPasswordConfirmField = document.getElementById("edit-password_confirmation"),
     date = new Date().toUTCString().slice(5, 16);
 
-var addRoleVal = typeof Choices !== 'undefined' ? new Choices(addRoleField, { searchEnabled: true, removeItemButton: true }) : null;
-var editRoleVal = typeof Choices !== 'undefined' ? new Choices(editRoleField, { searchEnabled: true, removeItemButton: true }) : null;
-var roleFilterVal = typeof Choices !== 'undefined' ? new Choices(document.getElementById("idRole"), { searchEnabled: true }) : null;
-var emailFilterVal = typeof Choices !== 'undefined' ? new Choices(document.getElementById("idEmail"), { searchEnabled: true }) : null;
+function ensureAxios() {
+    if (typeof axios === 'undefined') {
+        console.error("Axios is not defined. Please include Axios library.");
+        Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "Configuration error",
+            text: "Axios library is missing",
+            showConfirmButton: true
+        });
+        return false;
+    }
+    return true;
+}
 
 function ischeckboxcheck() {
     const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
@@ -106,17 +126,7 @@ function handleRemoveClick(e) {
         var itemId = e.target.closest("tr").querySelector(".id").getAttribute("data-id");
         console.log("Remove button clicked for ID:", itemId);
         document.getElementById("delete-record").addEventListener("click", function () {
-            if (typeof axios === 'undefined') {
-                console.error("Axios is not defined. Please include Axios library.");
-                Swal.fire({
-                    position: "center",
-                    icon: "error",
-                    title: "Configuration error",
-                    text: "Axios library is missing",
-                    showConfirmButton: true
-                });
-                return;
-            }
+            if (!ensureAxios()) return;
             axios.delete(`/users/${itemId}`, {
                 headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
             }).then(function () {
@@ -141,11 +151,16 @@ function handleRemoveClick(e) {
                 });
             });
         }, { once: true });
-        console.log("Opening deleteRecordModal...");
         var modal = new bootstrap.Modal(document.getElementById("deleteRecordModal"));
         modal.show();
     } catch (error) {
         console.error("Error in remove-item-btn click:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Failed to initiate delete",
+            showConfirmButton: true
+        });
     }
 }
 
@@ -153,26 +168,31 @@ function handleEditClick(e) {
     e.preventDefault();
     try {
         var itemId = e.target.closest("tr").querySelector(".id").getAttribute("data-id");
-        console.log("Edit button clicked for ID:", itemId);
         var tr = e.target.closest("tr");
+        console.log("Edit button clicked for ID:", itemId);
         editlist = true;
         editIdField.value = itemId;
         editNameField.value = tr.querySelector(".name a").innerText;
         editEmailField.value = tr.querySelector(".email").innerText;
-        var roles = tr.querySelector(".role").getAttribute("data-roles").split(",");
-        if (editRoleVal) {
-            editRoleVal.setChoiceByValue(roles.filter(role => role));
+        var roles = tr.querySelector(".role").getAttribute("data-role")?.split(",") || [];
+        if (typeof Choices !== 'undefined' && editRoleVal) {
+            editRoleVal.setChoiceByValue(roles.filter(role => role.trim()));
         } else {
-            console.warn("Choices.js not available, falling back to native select");
+            console.warn("Choices.js not available, using native select");
             Array.from(editRoleField.options).forEach(option => {
                 option.selected = roles.includes(option.value);
             });
         }
-        console.log("Opening editModal...");
         var modal = new bootstrap.Modal(document.getElementById("editModal"));
         modal.show();
     } catch (error) {
         console.error("Error in edit-item-btn click:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Failed to populate edit modal",
+            showConfirmButton: true
+        });
     }
 }
 
@@ -182,7 +202,7 @@ function clearAddFields() {
     addEmailField.value = "";
     addPasswordField.value = "";
     addPasswordConfirmField.value = "";
-    if (addRoleVal) {
+    if (typeof Choices !== 'undefined' && addRoleVal) {
         addRoleVal.setChoiceByValue([]);
     } else {
         Array.from(addRoleField.options).forEach(option => option.selected = false);
@@ -195,7 +215,7 @@ function clearEditFields() {
     editEmailField.value = "";
     editPasswordField.value = "";
     editPasswordConfirmField.value = "";
-    if (editRoleVal) {
+    if (typeof Choices !== 'undefined' && editRoleVal) {
         editRoleVal.setChoiceByValue([]);
     } else {
         Array.from(editRoleField.options).forEach(option => option.selected = false);
@@ -224,17 +244,7 @@ function deleteMultiple() {
             showCloseButton: true
         }).then((result) => {
             if (result.value) {
-                if (typeof axios === 'undefined') {
-                    console.error("Axios is not defined. Please include Axios library.");
-                    Swal.fire({
-                        position: "center",
-                        icon: "error",
-                        title: "Configuration error",
-                        text: "Axios library is missing",
-                        showConfirmButton: true
-                    });
-                    return;
-                }
+                if (!ensureAxios()) return;
                 Promise.all(ids_array.map((id) => {
                     return axios.delete(`/users/${id}`, {
                         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
@@ -274,8 +284,8 @@ function filterData() {
     var searchInput = document.querySelector(".search-box input.search").value.toLowerCase();
     var roleSelect = document.getElementById("idRole");
     var emailSelect = document.getElementById("idEmail");
-    var selectedRole = roleFilterVal ? roleFilterVal.getValue(true) : roleSelect.value;
-    var selectedEmail = emailFilterVal ? emailFilterVal.getValue(true) : emailSelect.value;
+    var selectedRole = typeof Choices !== 'undefined' && roleFilterVal ? roleFilterVal.getValue(true) : roleSelect.value;
+    var selectedEmail = typeof Choices !== 'undefined' && emailFilterVal ? emailFilterVal.getValue(true) : emailSelect.value;
 
     console.log("Filtering with:", { search: searchInput, role: selectedRole, email: selectedEmail });
 
@@ -316,11 +326,7 @@ document.getElementById("add-user-form").addEventListener("submit", function (e)
         return false;
     }
 
-    if (typeof axios === 'undefined') {
-        console.error("Axios is not defined. Please include Axios library.");
-        errorMsg.innerHTML = "Configuration error: Axios library is missing";
-        return false;
-    }
+    if (!ensureAxios()) return;
 
     var roles = Array.from(addRoleField.selectedOptions).map(option => option.value);
     axios.post('/users', {
@@ -342,7 +348,11 @@ document.getElementById("add-user-form").addEventListener("submit", function (e)
         });
     }).catch(function (error) {
         console.error("Error adding user:", error);
-        errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error adding user";
+        var message = error.response?.data?.message || "Error adding user";
+        if (error.response?.status === 422) {
+            message = Object.values(error.response.data.errors || {}).flat().join(", ");
+        }
+        errorMsg.innerHTML = message;
     });
 });
 
@@ -369,47 +379,52 @@ document.getElementById("edit-user-form").addEventListener("submit", function (e
         return false;
     }
 
-    if (typeof axios === 'undefined') {
-        console.error("Axios is not defined. Please include Axios library.");
-        errorMsg.innerHTML = "Configuration error: Axios library is missing";
-        return false;
-    }
+    if (!ensureAxios()) return;
 
-    var roles = Array.from(editRoleField.selectedOptions).map(option => option.value);
-    axios.put(`/users/${editIdField.value}`, {
+    var data = {
         name: editNameField.value,
         email: editEmailField.value,
-        roles: roles,
-        password: editPasswordField.value || undefined,
-        password_confirmation: editPasswordConfirmField.value || undefined,
+        roles: Array.from(editRoleField.selectedOptions).map(option => option.value),
         _token: document.querySelector('meta[name="csrf-token"]').content
-    }).then(function (response) {
-        window.location.reload();
-        Swal.fire({
-            position: "center",
-            icon: "success",
-            title: "User updated successfully!",
-            showConfirmButton: false,
-            timer: 2000,
-            showCloseButton: true
+    };
+    if (editPasswordField.value) {
+        data.password = editPasswordField.value;
+        data.password_confirmation = editPasswordConfirmField.value;
+    }
+
+    axios.put(`/users/${editIdField.value}`, data)
+        .then(function (response) {
+            window.location.reload();
+            Swal.fire({
+                position: "center",
+                icon: "success",
+                title: "User updated successfully!",
+                showConfirmButton: false,
+                timer: 2000,
+                showCloseButton: true
+            });
+        })
+        .catch(function (error) {
+            console.error("Error updating user:", error);
+            var message = error.response?.data?.message || "Error updating user";
+            if (error.response?.status === 422) {
+                message = Object.values(error.response.data.errors || {}).flat().join(", ");
+            }
+            errorMsg.innerHTML = message;
         });
-    }).catch(function (error) {
-        console.error("Error updating user:", error);
-        errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error updating user";
-    });
 });
 
 document.getElementById("showModal").addEventListener("show.bs.modal", function (e) {
     if (e.relatedTarget.classList.contains("add-btn")) {
         console.log("Opening showModal for adding user...");
-        document.getElementById("exampleModalLabel").innerHTML = "Add User";
+        document.getElementById("addModalLabel").innerHTML = "Add User";
         document.getElementById("add-btn").innerHTML = "Add User";
     }
 });
 
-document.getElementById("editModal").addEventListener("show.bs.modal", function (e) {
+document.getElementById("editModal").addEventListener("show.bs.modal", function () {
     console.log("Opening editModal...");
-    document.getElementById("exampleModalLabel").innerHTML = "Edit User";
+    document.getElementById("editModalLabel").innerHTML = "Edit User";
     document.getElementById("update-btn").innerHTML = "Update";
 });
 

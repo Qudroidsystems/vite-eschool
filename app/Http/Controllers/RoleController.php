@@ -272,44 +272,48 @@ class RoleController extends Controller
         $pagetitle = "Role Management";
     
         $this->validate($request, [
-            'name' => 'required',
-            'roleid' => 'required|exists:roles,id', // Validate that the role ID exists
+            'users' => 'required|array', // Validate users as an array
+            'users.*' => 'exists:users,id', // Ensure each user ID exists
+            'roleid' => 'required|exists:roles,id', // Validate role ID
         ]);
     
-        $user = User::findOrFail($request->input('name')); // Find user or fail
         $role = Role::findOrFail($request->input('roleid')); // Find role by ID
+        $userIds = $request->input('users'); // Get array of user IDs
     
-        $user->assignRole($role->name); // Assign role by name
+        foreach ($userIds as $userId) {
+            $user = User::findOrFail($userId); // Find user or fail
+            $user->assignRole($role->name); // Assign role to each user
+        }
     
-        return redirect()->route('roles.index')
-                        ->with('success', 'User added to role : successfully')->with('pagetitle', $pagetitle);
+        return redirect()->route('roles.show', $role->id)
+                        ->with('success', 'Users added to role successfully')
+                        ->with('pagetitle', $pagetitle);
     }
-
 
   /**
      * Remove user from role.
      */
     public function removeuserrole(Request $request, $userid, $roleid): JsonResponse
-    {
-        \Log::info("Removing user role", ['user_id' => $userid, 'role_id' => $roleid]);
-        try {
-            $user = User::findOrFail($userid);
-            \Log::info("User found", ['user_id' => $userid]);
-            $role = Role::findOrFail($roleid);
-            \Log::info("Role found", ['role_id' => $roleid]);
-            $user->removeRole($role->name);
-            \Log::info("User role removed successfully", ['user_id' => $userid, 'role_id' => $roleid]);
-            return response()->json(['success' => true, 'message' => 'User role removed successfully']);
-        } catch (\Exception $e) {
-            \Log::error("Error removing user role", [
-                'error' => $e->getMessage(),
-                'user_id' => $userid,
-                'role_id' => $roleid,
-                'trace' => $e->getTraceAsString()
-            ]);
-            return response()->json(['message' => 'Error removing user role: ' . $e->getMessage()], 500);
-        }
+{
+    \Log::info("Removing user role", ['user_id' => $userid, 'role_id' => $roleid]);
+    try {
+        $user = User::findOrFail($userid);
+       // \Log::info("User found", ['user_id' => $userid]);
+        $role = Role::findOrFail($roleid);
+       // \Log::info("Role found", ['role_id' => $roleid]);
+        $user->removeRole($role->name);
+      //  \Log::info("User role removed successfully", ['user_id' => $userid, 'role_id' => $roleid]);
+        return response()->json(['success' => true, 'message' => 'User role removed successfully']);
+    } catch (\Exception $e) {
+        \Log::error("Error removing user role", [
+            'error' => $e->getMessage(),
+            'user_id' => $userid,
+            'role_id' => $roleid,
+            'trace' => $e->getTraceAsString()
+        ]);
+        return response()->json(['message' => 'Error removing user role: ' . $e->getMessage()], 500);
     }
+}
 
     // delete user
     public function delete($id)

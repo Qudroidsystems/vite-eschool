@@ -159,17 +159,17 @@
                                     </div>
                                     <div class="col-sm-auto mt-3 mt-sm-0">
                                         <div class="pagination-wrap hstack gap-2 justify-content-center">
-                                            <a class="page-item pagination-prev {{ $classteachers->onFirstPage() ? 'disabled' : '' }}" href="javascript:void(0);" data-url="{{ $classteachers->previousPageUrl() }}">
+                                            <a class="page-item pagination-prev {{ $classteachers->onFirstPage() ? 'disabled' : '' }}" href="javascript:void(0);" data-url="{{ $classteachers->previousPageUrl() ? url($classteachers->previousPageUrl()) : '' }}">
                                                 <i class="mdi mdi-chevron-left align-middle"></i>
                                             </a>
                                             <ul class="pagination listjs-pagination mb-0">
                                                 @foreach ($classteachers->links()->elements[0] as $page => $url)
                                                     <li class="page-item {{ $classteachers->currentPage() == $page ? 'active' : '' }}">
-                                                        <a class="page-link" href="javascript:void(0);" data-url="{{ $url }}">{{ $page }}</a>
+                                                        <a class="page-link" href="javascript:void(0);" data-url="{{ url($url) }}">{{ $page }}</a>
                                                     </li>
                                                 @endforeach
                                             </ul>
-                                            <a class="page-item pagination-next {{ $classteachers->hasMorePages() ? '' : 'disabled' }}" href="javascript:void(0);" data-url="{{ $classteachers->nextPageUrl() }}">
+                                            <a class="page-item pagination-next {{ $classteachers->hasMorePages() ? '' : 'disabled' }}" href="javascript:void(0);" data-url="{{ $classteachers->nextPageUrl() ? url($classteachers->nextPageUrl()) : '' }}">
                                                 <i class="mdi mdi-chevron-right align-middle"></i>
                                             </a>
                                         </div>
@@ -202,31 +202,43 @@
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="schoolclassid" class="form-label">Class</label>
-                                    <select name="schoolclassid" id="schoolclassid" class="form-control" required>
-                                        <option value="">Select Class</option>
-                                        @foreach ($schoolclass as $class)
-                                            <option value="{{ $class->id }}">{{ $class->schoolclass }} ({{ $class->schoolarm }})</option>
+                                    <label class="form-label">Classes</label>
+                                    <div class="d-flex flex-column gap-2">
+                                        @foreach ($schoolclass->sortBy('schoolclass') as $class)
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="schoolclassid[]" value="{{ $class->id }}" id="class_{{ $class->id }}">
+                                                <label class="form-check-label" for="class_{{ $class->id }}">
+                                                    {{ $class->schoolclass }} ({{ $class->schoolarm }})
+                                                </label>
+                                            </div>
                                         @endforeach
-                                    </select>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="termid" class="form-label">Term</label>
-                                    <select name="termid" id="termid" class="form-control" required>
-                                        <option value="">Select Term</option>
+                                    <label class="form-label">Term</label>
+                                    <div class="d-flex flex-column gap-2">
                                         @foreach ($schoolterms as $term)
-                                            <option value="{{ $term->id }}">{{ $term->term }}</option>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="termid" value="{{ $term->id }}" id="term_{{ $term->id }}" required>
+                                                <label class="form-check-label" for="term_{{ $term->id }}">
+                                                    {{ $term->term }}
+                                                </label>
+                                            </div>
                                         @endforeach
-                                    </select>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="sessionid" class="form-label">Session</label>
-                                    <select name="sessionid" id="sessionid" class="form-control" required>
-                                        <option value="">Select Session</option>
+                                    <label class="form-label">Session</label>
+                                    <div class="d-flex flex-column gap-2">
                                         @foreach ($schoolsessions as $session)
-                                            <option value="{{ $session->id }}">{{ $session->session }}</option>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="sessionid" value="{{ $session->id }}" id="session_{{ $session->id }}" required>
+                                                <label class="form-check-label" for="session_{{ $session->id }}">
+                                                    {{ $session->session }}
+                                                </label>
+                                            </div>
                                         @endforeach
-                                    </select>
+                                    </div>
                                 </div>
                                 <div class="alert alert-danger d-none" id="alert-error-msg"></div>
                             </div>
@@ -260,31 +272,43 @@
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit-schoolclassid" class="form-label">Class</label>
-                                    <select name="schoolclassid" id="edit-schoolclassid" class="form-control" required>
-                                        <option value="">Select Class</option>
-                                        @foreach ($schoolclass as $class)
-                                            <option value="{{ $class->id }}">{{ $class->schoolclass }} ({{ $class->schoolarm }})</option>
+                                    <label class="form-label">Classes</label>
+                                    <div class="d-flex flex-column gap-2">
+                                        @foreach ($schoolclass->sortBy('schoolclass') as $class)
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="schoolclassid[]" value="{{ $class->id }}" id="edit_class_{{ $class->id }}">
+                                                <label class="form-check-label" for="edit_class_{{ $class->id }}">
+                                                    {{ $class->schoolclass }} ({{ $class->schoolarm }})
+                                                </label>
+                                            </div>
                                         @endforeach
-                                    </select>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit-termid" class="form-label">Term</label>
-                                    <select name="termid" id="edit-termid" class="form-control" required>
-                                        <option value="">Select Term</option>
+                                    <label class="form-label">Term</label>
+                                    <div class="d-flex flex-column gap-2">
                                         @foreach ($schoolterms as $term)
-                                            <option value="{{ $term->id }}">{{ $term->term }}</option>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="termid" value="{{ $term->id }}" id="edit_term_{{ $term->id }}" required>
+                                                <label class="form-check-label" for="edit_term_{{ $term->id }}">
+                                                    {{ $term->term }}
+                                                </label>
+                                            </div>
                                         @endforeach
-                                    </select>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit-sessionid" class="form-label">Session</label>
-                                    <select name="sessionid" id="edit-sessionid" class="form-control" required>
-                                        <option value="">Select Session</option>
+                                    <label class="form-label">Session</label>
+                                    <div class="d-flex flex-column gap-2">
                                         @foreach ($schoolsessions as $session)
-                                            <option value="{{ $session->id }}">{{ $session->session }}</option>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="sessionid" value="{{ $session->id }}" id="edit_session_{{ $session->id }}" required>
+                                                <label class="form-check-label" for="edit_session_{{ $session->id }}">
+                                                    {{ $session->session }}
+                                                </label>
+                                            </div>
                                         @endforeach
-                                    </select>
+                                    </div>
                                 </div>
                                 <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
                             </div>

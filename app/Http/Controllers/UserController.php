@@ -36,30 +36,30 @@ class UserController extends Controller
      */
     public function index(Request $request): View
     {
-
-        //page title
+        // Page title
         $pagetitle = "User Management";
 
-        
-        $data = User::latest()->paginate(5);
-        $roles = Role::pluck('name', 'name')->toArray(); // e.g., ['admin' => 'admin', 'editor' => 'editor']
-        $role_permissions = Role::with('permissions')->get();
+        // Fetch paginated users (10 per page to match JavaScript)
+        $data = User::latest()->paginate(10);
+        $roles = Role::pluck('name', 'name')->toArray();
+        $role_permissions = Role::all(); // Simplified, as permissions aren't used in view
 
-        // Debug role values
-        \Log::info('Roles for select:', $roles);
-        \Log::info('User roles example:', User::first()->getRoleNames()->toArray());
+        // Calculate users per role for chart
+        $role_counts = [];
+        foreach ($roles as $role) {
+            $role_counts[$role] = User::role($role)->count();
+        }
+        $role_counts['No Role'] = User::doesntHave('roles')->count();
 
-            // Add this line to fetch students
-        $students = Student::select('id', 'admissionNo', 'firstname', 'lastname')
-        ->where('statusId', 1) // Assuming 1 is for active students
-        ->orderBy('admissionNo')
-        ->get();
+        // Debug logs (only in debug mode)
+        if (config('app.debug')) {
+            \Log::info('Roles for select:', $roles);
+            \Log::info('User roles example:', User::first()->getRoleNames()->toArray());
+        }
 
-        return view('users.index',compact('data', 'students'))
-            ->with('i', ($request->input('page', 1) - 1) * 5)
-            ->with('roles',$roles)
-            ->with('role_perm',$role_permissions)
-            ->with('pagetitle',$pagetitle);
+        // Note: Removed $students as it's unused in the view
+        return view('users.index', compact('data', 'roles', 'role_permissions', 'pagetitle', 'role_counts'))
+            ->with('i', ($request->input('page', 1) - 1) * 10);
     }
 
     public function roles(): JsonResponse

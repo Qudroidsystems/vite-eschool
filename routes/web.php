@@ -42,9 +42,6 @@ use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\CBTController;
 use App\Http\Controllers\ResultController;
 
-
-
-
 Route::get('/', function () {
     return view('welcome');
 });
@@ -52,17 +49,17 @@ Route::get('/', function () {
 Auth::routes();
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
-
 Route::group(['middleware' => ['auth']], function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     Route::resource('roles', RoleController::class);
     Route::resource('users', UserController::class);
     Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
-    Route::get('/users/roles', [UserController::class, 'roles'])->middleware('auth');
+    Route::get('/users/all', [UserController::class, 'allUsers'])->name('users.all');
+    Route::get('/users/paginate', [UserController::class, 'paginate'])->name('users.paginate');
+    Route::get('/users/roles', [UserController::class, 'roles']);
     Route::resource('permissions', PermissionController::class);
 
-    
     Route::get('users/add-student', [UserController::class, 'createFromStudentForm'])->name('users.add-student-form');
     Route::post('users/create-from-student', [UserController::class, 'createFromStudent'])->name('users.createFromStudent');
     Route::get('/get-students', [UserController::class, 'getStudents'])->name('get.students');
@@ -74,42 +71,37 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('ajaxpasswordupdate', [BiodataController::class, 'ajaxpasswordupdate']);
 
     Route::get('/adduser/{id}', [RoleController::class, 'adduser'])->name('roles.adduser');
-    Route::get('/updateuserrole', [RoleController::class, 'updateuserrole'])->name('roles.updateuserrole');
-    // Route::get('/userid/{userid}/roleid/{roleid}', [RoleController::class, 'removeuserrole'])->name('roles.removeuserrole');
+    Route::post('/updateuserrole', [RoleController::class, 'updateuserrole'])->name('roles.updateuserrole');
     Route::delete('roles/removeuserrole/{userid}/{roleid}', [RoleController::class, 'removeuserrole'])->name('roles.removeuserrole');
-    // Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->name('dashboard');
-
-
 
     Route::resource('subject', SubjectController::class);
     Route::get('/subjectid/{subjectid}', [SubjectController::class, 'deletesubject'])->name('subject.deletesubject');
     Route::post('subjectid', [SubjectController::class, 'updatesubject'])->name('subject.updatesubject');
 
-
     Route::resource('subjectclass', SubjectClassController::class);
     Route::delete('subjectclass/deletesubjectclass/{subjectclassid}', [SubjectClassController::class, 'deletesubjectclass'])->name('subjectclass.deletesubjectclass');
+    Route::get('/subjectclass/assignments/{subjectteacherid}', [SubjectClassController::class, 'assignments'])->name('subjectclass.assignments');
+  
 
     Route::resource('staff', StaffController::class);
 
-
-
     Route::resource('subjectteacher', SubjectTeacherController::class);
+    Route::get('subjectteacher/{subjectteacher}/subjects', [SubjectTeacherController::class, 'getSubjects'])->name('subjectteacher.subjects');
     Route::get('/subjectteacherid/{subjectteacherid}', [SubjectTeacherController::class, 'deletesubjectteacher'])->name('subjectteacher.deletesubjectteacher');
     Route::post('subjectteacherid', [SubjectTeacherController::class, 'updatesubjectteacher'])->name('subjectteacher.updatesubjectteacher');
 
-   Route::resource('classteacher', ClassTeacherController::class);
-   Route::delete('classteacher/deleteclassteacher/{classteacherid}', [ClassTeacherController::class, 'deleteclassteacher'])->name('classteacher.deleteclassteacher');
+    Route::resource('classteacher', ClassTeacherController::class);
+    Route::get('/classteacher/assignments/{staffId}/{termId}/{sessionId}', [ClassTeacherController::class, 'assignments'])->name('classteacher.assignments');
+    Route::post('/classteacher/delete', [ClassTeacherController::class, 'deleteMultiple'])->name('classteacher.deleteMultiple');
+
 
     Route::resource('session', SchoolsessionController::class);
     Route::get('/sessionid/{sessionid}', [SchoolsessionController::class, 'deletesession'])->name('session.deletesession');
     Route::post('updatesessionid', [SchoolsessionController::class, 'updatesession'])->name('session.updatesession');
 
-    // School House Routes
     Route::resource('schoolhouse', SchoolHouseController::class);
     Route::post('schoolhouse/deletehouse', [SchoolHouseController::class, 'deletehouse'])->name('schoolhouse.deletehouse');
-    Route::post('schoolhouse/updatehouse', [SchoolHouseController::class, 'updatehouse'])->name('schoolhouse.updatehouse'); // For POST compatibility
-    // Note: Route::resource already defines PUT schoolhouse/{id} for updates
-
+    Route::post('schoolhouse/updatehouse', [SchoolHouseController::class, 'updatehouse'])->name('schoolhouse.updatehouse');
 
     Route::resource('term', SchooltermController::class);
     Route::post('term/deleteterm', [SchooltermController::class, 'deleteterm'])->name('term.deleteterm');
@@ -119,13 +111,13 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('schoolarm/deletearm', [SchoolArmController::class, 'deletearm'])->name('schoolarm.deletearm');
     Route::post('schoolarm/updatearm', [SchoolArmController::class, 'updatearm'])->name('schoolarm.updatearm');
 
-    //School Class Management Routes
     Route::get('schoolclass', [SchoolClassController::class, 'index'])->name('schoolclass.index');
     Route::post('schoolclass', [SchoolClassController::class, 'store'])->name('schoolclass.store');
     Route::put('schoolclass/{schoolclass}', [SchoolClassController::class, 'update'])->name('schoolclass.update');
     Route::delete('schoolclass/{schoolclass}', [SchoolClassController::class, 'destroy'])->name('schoolclass.destroy');
     Route::post('schoolclass/deleteschoolclass', [SchoolClassController::class, 'deleteschoolclass'])->name('schoolclass.deleteschoolclass');
-   
+    Route::get('schoolclass/{schoolclass}/arms', [SchoolClassController::class, 'getArms'])->name('schoolclass.getarms');
+
     Route::resource('student', StudentController::class);
     Route::get('/studentid/{studentid}', [StudentController::class, 'deletestudent'])->name('student.deletestudent');
     Route::get('/studentoverview/{id}', [StudentController::class, 'overview'])->name('student.overview');
@@ -153,54 +145,23 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('studentresults', StudentResultsController::class);
     Route::resource('subjectscoresheet', MyScoreSheetController::class);
 
-
-    //schoolbill routes...
     Route::resource('schoolbill', SchoolBillController::class);
     Route::get('/billid/{billid}', [SchoolBillController::class, 'deletebill'])->name('schoolbill.deletebill');
     Route::post('billid', [SchoolBillController::class, 'updatebill'])->name('schoolbill.updateschoolbill');
 
-    //schoolbill term session routes...
     Route::resource('schoolbilltermsession', SchoolBillTermSessionController::class);
     Route::get('/schoolbilltermsessionid/{schoolbilltermsessionid}', [SchoolBillTermSessionController::class, 'deleteschoolbilltermsession'])->name('schoolbilltermsession.deleteschoolbilltermsession');
     Route::post('schoolbilltermsessionbid', [SchoolBillTermSessionController::class, 'updateschoolbilltermsession'])->name('schoolbilltermsession.updateschoolbilltermsession');
 
-    //schoolpayment routes....
     Route::resource('schoolpayment', SchoolPaymentController::class);
     Route::get('/termsession/{studentid}', [SchoolPaymentController::class, 'termSession'])->name('schoolpayment.termsession');
     Route::get('termsessionpayments', [SchoolPaymentController::class, 'termSessionPayments'])->name('schoolpayment.termsessionpayments');
     Route::get('/studentinvoice/{studentid}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('schoolpayment.invoice');
     Route::get('/deletestudentpayment/{paymentid}/', [SchoolPaymentController::class, 'deletestudentpayment'])->name('schoolpayment.deletestudentpayment');
 
-    //analysis...
-    Route::resource('analysis', AnalysisController::class);
-    Route::post('analysisClassTermSession', [AnalysisController::class, 'analysisClassTermSession'])->name('analysis.analysisClassTermSession');
-    Route::get('analysis/export-pdf/{class_id}/{termid_id}/{session_id}', 'App\Http\Controllers\AnalysisController@exportPDF')->name('analysis.exportPDF');
-    Route::get('/analysis/pdf/{class_id}/{termid_id}/{session_id}/{action?}', [AnalysisController::class, 'exportPDF'])
-    ->name('analysis.viewPDF')
-    ->where('action', 'view|download');
-    
-    // School-wide payment analysis routes
-    // Route::get('/school-wide-payment-analysis/{termid_id}/{session_id}/{action?}', 'App\Http\Controllers\AnalysisController@schoolWidePaymentAnalysis')
-    // ->name('school.wide.payment.analysis')
-    // ->where('action', 'view|download');
-
-    // School-wide payment analysis routes
-    Route::get('/school-wide-payment-analysis/{termid_id}/{session_id}/{action?}/{format?}', 
-    'App\Http\Controllers\AnalysisController@schoolWidePaymentAnalysis')
-    ->name('school.wide.payment.analysis')
-    ->where([
-        'action' => 'view|download',
-        'format' => 'pdf|word'
-    ]);
-    
-    
-
-
-    //Route::resource('studentpersonalityprofile',StudentpersonalityprofileController::class);
     Route::get('/viewstudent/{id}/{termid}/{sessionid}', [ViewStudentController::class, 'show'])->name('viewstudent');
     Route::get('/subjectscoresheet/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'subjectscoresheet'])->name('subjectscoresheet');
 
-    //Route::resource('viewstudent', viewStudentController::class);
     Route::resource('subjectoperation', SubjectOperationController::class);
     Route::get('/subjectinfo/{id}/{schid}/{sessid}/{termid}', [SubjectOperationController::class, 'subjectinfo'])->name('subjectoperation.subjectinfo');
     Route::get('/viewresults/{id}/{schoolclassid}/{sessid}/{termid}', [StudentResultsController::class, 'viewresults']);
@@ -211,40 +172,17 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('importsheet', [MyScoreSheetController::class, 'importsheet'])->name('import.post.sheet');
     Route::get('/importform/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'importform']);
 
-    Route::delete('/ajaxsub/{id}', [AjaxSubController::class, 'delete']);
-    Route::delete('/ajaxsubclass/{id}', [AjaxSubclassController::class, 'delete']);
-    Route::delete('/ajaxclassteacher/{id}', [AjaxclassteacherController::class, 'delete']);
-    Route::delete('/ajaxclass/{id}', [AjaxclassController::class, 'delete']);
-    Route::delete('/ajaxarm/{id}', [AjaxarmController::class, 'delete']);
-    Route::delete('/ajaxsession/{id}', [AjaxsessionController::class, 'delete']);
-    Route::delete('/ajaxsubteacher/{id}', [AjaxsubteacherController::class, 'delete']);
-    Route::delete('/ajaxsubject/{id}', [AjaxsubjectController::class, 'delete']);
-    // Route::delete('/ajaxsubjectop/{id}', [AjaxsubjectopController::class, 'delete']);
-    Route::delete('/ajaxstudentdelete/{id}', [AjaxStudentDeleteController::class, 'delete']);
-    Route::delete('/ajaxschoolhousedelete/{id}', [AjaxschoolhouseController::class, 'delete']);
-    Route::delete('/ajaxclasssettings/{id}', [AjaxclasssettingsController::class, 'delete']);
     Route::get('image-upload', [StaffImageUploadController::class, 'imageUpload'])->name('image.upload');
     Route::post('image-upload', [StaffImageUploadController::class, 'imageUploadPost'])->name('image.upload.post');
 
-
-    //Exams routes...
     Route::resource('exams', ExamController::class);
-    //Route::post('/{exam}', [QuestionController::class, 'store'])->name('questions.store');
-    
-    //Questions routes...
+
     Route::resource('questions', QuestionController::class);
     Route::get('/questions/{question}/details', [QuestionController::class, 'showDetails']);
-   
     Route::get('/{question}/details', [QuestionController::class, 'details'])->name('questions.details');
     Route::get('/questions/{question}/edit', [QuestionController::class, 'edit'])->name('questions.edit');
-    //Route::put('/questions/{question}', [QuestionController::class, 'update'])->name('questions.update');
-    //Route::delete('/{question}', [QuestionController::class, 'destroy'])->name('questions.destroy');
 
-    //CBT  routes...
     Route::resource('cbt', CBTController::class);
     Route::get('/cbt/{examid}/takecbt', [CBTController::class, 'takeCBT'])->name('cbt.take');
     Route::post('/cbt/submit', [CBTController::class, 'submit'])->name('cbt.submit');
-
-
 });
-

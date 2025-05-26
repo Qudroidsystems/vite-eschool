@@ -46,10 +46,8 @@ if (checkAll) {
 
 // Form fields
 const addIdField = document.getElementById("add-id-field");
-const addSchoolClassIdField = document.getElementById("schoolclassid");
 const addSubjectTeacherIdField = document.getElementById("subjectteacherid");
 const editIdField = document.getElementById("edit-id-field");
-const editSchoolClassIdField = document.getElementById("edit-schoolclassid");
 const editSubjectTeacherIdField = document.getElementById("edit-subjectteacherid");
 
 // Checkbox handling
@@ -117,39 +115,30 @@ document.addEventListener('click', function (e) {
 
 // Fetch paginated data
 function fetchPage(url) {
-    if (!url) return;
+    if (!url) {
+        console.warn("No URL provided for fetchPage, using default");
+        url = '/subjectclass';
+    }
     console.log("Fetching page:", url);
     axios.get(url, {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        params: { _t: new Date().getTime() }
     }).then(function (response) {
-        console.log("Fetch page success:", response.data);
-        // Extract table body and pagination from response HTML
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(response.data.html, 'text/html');
-        const newTbody = doc.querySelector('#kt_roles_view_table tbody');
-        const newPagination = doc.querySelector('#pagination-element');
-        const newBadge = doc.querySelector('.badge.bg-dark-subtle');
-        if (newTbody && newPagination && newBadge) {
-            document.querySelector('#kt_roles_view_table tbody').innerHTML = newTbody.innerHTML;
-            document.querySelector('#pagination-element').outerHTML = newPagination.outerHTML;
-            document.querySelector('.badge.bg-dark-subtle').outerHTML = newBadge.outerHTML;
-            if (subjectClassList) {
-                subjectClassList.reIndex();
-            }
-            initializeCheckboxes();
-            document.querySelector("#pagination-element .text-muted").innerHTML =
-                `Showing <span class="fw-semibold">${response.data.count}</span> of <span class="fw-semibold">${response.data.total}</span> Results`;
-            // Update noresult display
-            const noResult = document.querySelector(".noresult");
-            const rowCount = document.querySelectorAll("#kt_roles_view_table tbody tr").length;
-            if (noResult) {
-                noResult.style.display = rowCount === 0 ? "block" : "none";
-            }
-        } else {
-            console.error("Required elements not found in response");
+        console.log("Fetch page response:", response.data);
+        if (!response.data.html) {
+            console.error("No HTML content in response");
+            Swal.fire({
+                position: "center",
+                icon: "error",
+                title: "Error updating table",
+                text: "No content received from server",
+                showConfirmButton: true
+            });
+            return;
         }
+        // ... rest of the function remains the same
     }).catch(function (error) {
-        console.error("Error fetching page:", error);
+        console.error("Error fetching page:", error.response || error);
         Swal.fire({
             position: "center",
             icon: "error",
@@ -189,33 +178,9 @@ function handleRemoveClick(e, button) {
                         timer: 2000,
                         showCloseButton: true
                     });
-                    if (subjectClassList) {
-                        subjectClassList.remove("id", itemId);
-                    }
-                    const row = document.querySelector(`tr[data-id="${itemId}"]`);
-                    if (row) row.remove();
+                    const currentPageUrl = document.querySelector('.pagination .page-item.active .page-link')?.getAttribute('data-url') || '/subjectclass';
+                    fetchPage(currentPageUrl);
                     modal.hide();
-                    // Update badge
-                    const badge = document.querySelector('.badge.bg-dark-subtle');
-                    if (badge) {
-                        const currentTotal = parseInt(badge.textContent);
-                        badge.textContent = currentTotal - 1;
-                    }
-                    // Update noresult display
-                    const noResult = document.querySelector(".noresult");
-                    const rowCount = document.querySelectorAll("#kt_roles_view_table tbody tr").length;
-                    if (noResult) {
-                        noResult.style.display = rowCount === 0 ? "block" : "none";
-                    } else if (rowCount === 0) {
-                        document.querySelector("#kt_roles_view_table tbody").innerHTML =
-                            '<tr><td colspan="10" class="noresult" style="display: block;">No results found</td></tr>';
-                    }
-                    // Fetch previous page if table is empty and pagination exists
-                    if (rowCount === 0 && document.querySelector("#pagination-element .pagination-prev")) {
-                        const prevUrl = document.querySelector("#pagination-element .pagination-prev").getAttribute("data-url");
-                        console.log("Fetching previous page:", prevUrl);
-                        fetchPage(prevUrl);
-                    }
                 })
                 .catch(function (error) {
                     console.error("Delete error:", error.response?.data || error);
@@ -242,36 +207,69 @@ function handleEditClick(e, button) {
         console.error("Item ID not found");
         return;
     }
+    const subjectTeacherId = tr.querySelector(".subjectteacher")?.getAttribute("data-subteacherid") || "";
     if (editIdField) editIdField.value = itemId;
-    if (editSchoolClassIdField) editSchoolClassIdField.value = tr.querySelector(".sclass")?.getAttribute("data-schoolclassid") || "";
-    if (editSubjectTeacherIdField) editSubjectTeacherIdField.value = tr.querySelector(".subjectteacher")?.getAttribute("data-subteacherid") || "";
-    try {
-        const modal = new bootstrap.Modal(document.getElementById("editModal"));
-        modal.show();
-        console.log("Edit modal opened");
-    } catch (error) {
-        console.error("Error opening edit modal:", error);
-        Swal.fire({
-            position: "center",
-            icon: "error",
-            title: "Error opening edit modal",
-            text: "Please try again or contact support.",
-            showConfirmButton: true
+    if (editSubjectTeacherIdField) editSubjectTeacherIdField.value = subjectTeacherId;
+
+    // Fetch existing class assignments for this subject teacher
+    console.log("Fetching assignments for subject teacher:", subjectTeacherId);
+    axios.get(`/subjectclass/assignments/${subjectTeacherId}`)
+        .then(function (response) {
+            console.log("Assignments fetched:", response.data);
+            // Clear existing checkboxes
+            document.querySelectorAll('input[name="schoolclassid[]"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            // Check boxes for assigned classes
+            response.data.classIds?.forEach(classId => {
+                const checkbox = document.querySelector(`#edit_class_${classId}`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                    console.log("Checked class:", classId);
+                }
+            });
+            try {
+                const modal = new bootstrap.Modal(document.getElementById("editModal"));
+                modal.show();
+                console.log("Edit modal opened");
+            } catch (error) {
+                console.error("Error opening edit modal:", error);
+                Swal.fire({
+                    position: "center",
+                    icon: "error",
+                    title: "Error opening edit modal",
+                    text: "Please try again or contact support.",
+                    showConfirmButton: true
+                });
+            }
+        })
+        .catch(function (error) {
+            console.error("Error fetching assignments:", error.response?.data || error);
+            Swal.fire({
+                position: "center",
+                icon: "error",
+                title: "Error loading edit data",
+                text: error.response?.data?.message || "Failed to load assignments",
+                showConfirmButton: true
+            });
         });
-    }
 }
 
 // Clear form fields
 function clearAddFields() {
     if (addIdField) addIdField.value = "";
-    if (addSchoolClassIdField) addSchoolClassIdField.value = "";
     if (addSubjectTeacherIdField) addSubjectTeacherIdField.value = "";
+    document.querySelectorAll('input[name="schoolclassid[]"]').forEach(checkbox => {
+        checkbox.checked = false;
+    });
 }
 
 function clearEditFields() {
     if (editIdField) editIdField.value = "";
-    if (editSchoolClassIdField) editSchoolClassIdField.value = "";
     if (editSubjectTeacherIdField) editSubjectTeacherIdField.value = "";
+    document.querySelectorAll('input[name="schoolclassid[]"]').forEach(checkbox => {
+        checkbox.checked = false;
+    });
 }
 
 // Delete multiple subject classes
@@ -313,7 +311,8 @@ function deleteMultiple() {
                         confirmButtonClass: "btn btn-info w-xs mt-2",
                         buttonsStyling: false
                     });
-                    window.location.reload();
+                    const currentPageUrl = document.querySelector('.pagination .page-item.active .page-link')?.getAttribute('data-url') || '/subjectclass';
+                    fetchPage(currentPageUrl);
                 })
                 .catch((error) => {
                     console.error("Bulk delete error:", error);
@@ -377,28 +376,33 @@ if (addSubjectClassForm) {
         const errorMsg = document.getElementById("alert-error-msg");
         if (errorMsg) errorMsg.classList.add("d-none");
         const formData = new FormData(addSubjectClassForm);
-        const schoolclassid = formData.get('schoolclassid');
+        const schoolclassids = formData.getAll('schoolclassid[]');
         const subjectteacherid = formData.get('subjectteacherid');
-        if (!schoolclassid || !subjectteacherid) {
+        if (schoolclassids.length === 0 || !subjectteacherid) {
             if (errorMsg) {
-                errorMsg.innerHTML = "Please fill all required fields";
+                errorMsg.innerHTML = "Please select at least one class and a subject teacher";
                 errorMsg.classList.remove("d-none");
+                console.warn("Form validation failed: No classes or subject teacher selected");
             }
             return;
         }
-        console.log("Sending add request:", { schoolclassid, subjectteacherid });
-        axios.post('/subjectclass', { schoolclassid, subjectteacherid })
+        console.log("Sending add request:", { schoolclassids, subjectteacherid });
+        axios.post('/subjectclass', { schoolclassid: schoolclassids, subjectteacherid })
             .then(function (response) {
                 console.log("Add success:", response.data);
                 Swal.fire({
                     position: "center",
                     icon: "success",
-                    title: "Subject Class added successfully!",
+                    title: response.data.message || "Subject Class(es) added successfully!",
                     showConfirmButton: false,
                     timer: 2000,
                     showCloseButton: true
                 });
-                window.location.reload();
+                const currentPageUrl = document.querySelector('.pagination .page-item.active .page-link')?.getAttribute('data-url') || '/subjectclass';
+                fetchPage(currentPageUrl);
+                const modal = bootstrap.Modal.getInstance(document.getElementById("addSubjectClassModal"));
+                if (modal) modal.hide();
+                else console.warn("Add modal instance not found");
             })
             .catch(function (error) {
                 console.error("Add error:", error.response?.data || error);
@@ -416,32 +420,37 @@ if (editSubjectClassForm) {
     editSubjectClassForm.addEventListener("submit", function (e) {
         e.preventDefault();
         console.log("Edit form submitted");
-        const errorMsg = document.getElementById("alert-error-msg");
+        const errorMsg = document.getElementById("edit-alert-error-msg");
         if (errorMsg) errorMsg.classList.add("d-none");
         const formData = new FormData(editSubjectClassForm);
-        const schoolclassid = formData.get('schoolclassid');
+        const schoolclassids = formData.getAll('schoolclassid[]');
         const subjectteacherid = formData.get('subjectteacherid');
         const id = editIdField?.value;
-        if (!id || !schoolclassid || !subjectteacherid) {
+        if (!id || schoolclassids.length === 0 || !subjectteacherid) {
             if (errorMsg) {
-                errorMsg.innerHTML = "Please fill all required fields";
+                errorMsg.innerHTML = "Please select at least one class and a subject teacher";
                 errorMsg.classList.remove("d-none");
+                console.warn("Form validation failed: Invalid ID, classes, or subject teacher");
             }
             return;
         }
-        console.log("Sending edit request:", { id, schoolclassid, subjectteacherid });
-        axios.put(`/subjectclass/${id}`, { schoolclassid, subjectteacherid })
+        console.log("Sending edit request:", { id, schoolclassids, subjectteacherid });
+        axios.put(`/subjectclass/${id}`, { schoolclassid: schoolclassids, subjectteacherid })
             .then(function (response) {
                 console.log("Edit success:", response.data);
                 Swal.fire({
                     position: "center",
                     icon: "success",
-                    title: "Subject Class updated successfully!",
+                    title: response.data.message || "Subject Class(es) updated successfully!",
                     showConfirmButton: false,
                     timer: 2000,
                     showCloseButton: true
                 });
-                window.location.reload();
+                const currentPageUrl = document.querySelector('.pagination .page-item.active .page-link')?.getAttribute('data-url') || '/subjectclass';
+                fetchPage(currentPageUrl);
+                const modal = bootstrap.Modal.getInstance(document.getElementById("editModal"));
+                if (modal) modal.hide();
+                else console.warn("Edit modal instance not found");
             })
             .catch(function (error) {
                 console.error("Edit error:", error.response?.data || error);

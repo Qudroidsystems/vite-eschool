@@ -24,6 +24,20 @@ use Spatie\Permission\Models\Role;
             </div>
             <!-- End page title -->
 
+            <!-- Users by Role Chart -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Users by Role</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="usersByRoleChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             @if ($errors->any())
                 <div class="alert alert-danger">
                     <strong>Whoops!</strong> There were some problems with your input.<br><br>
@@ -342,12 +356,54 @@ use Spatie\Permission\Models\Role;
         </div>
     </div>
     <!-- End Page-content -->
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Scripts -->
     {{-- <script src="{{ asset('theme/layouts/assets/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('theme/layouts/assets/js/list.min.js') }}"></script>
     <script src="{{ asset('theme/layouts/assets/js/choices.min.js') }}" defer></script>
     <script src="{{ asset('theme/layouts/assets/js/sweetalert2.min.js') }}"></script>
     <script src="{{ asset('js/user-list.init.js') }}"></script> --}}
+    <!-- Chart Initialization -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        var ctx = document.getElementById("usersByRoleChart").getContext("2d");
+        new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: @json(array_keys($role_counts)),
+                datasets: [{
+                    label: "Users by Role",
+                    data: @json(array_values($role_counts)),
+                    backgroundColor: ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b"],
+                    borderColor: ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b"],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: "Number of Users"
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: "Roles"
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: "top"
+                    }
+                }
+            }
+        });
+    });
+    </script>
 </div>
 @endsection

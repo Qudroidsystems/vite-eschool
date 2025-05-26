@@ -26,12 +26,12 @@ class SubjectClassController extends Controller
     public function index(Request $request)
     {
         $pagetitle = "Subject Class Management";
-
+    
         $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->get(['schoolclass.id as id', 'schoolclass.schoolclass as schoolclass', 'schoolarm.arm as arm'])
             ->sortBy('schoolclass');
-
-        $subjectteachers = SubjectTeacher::leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
+    
+        $subjectteacher = SubjectTeacher::leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
             ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
             ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
             ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
@@ -49,7 +49,7 @@ class SubjectClassController extends Controller
                 'schoolsession.session as sessionname'
             ])
             ->sortBy('subject');
-
+    
         // Paginate subjectclasses
         $subjectclasses = Subjectclass::leftJoin('schoolclass', 'subjectclass.schoolclassid', '=', 'schoolclass.id')
             ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
@@ -78,20 +78,20 @@ class SubjectClassController extends Controller
                 'subjectclass.updated_at'
             ])
             ->orderBy('sclass')
-            ->paginate(10); // Paginate 10 items per page
-
+            ->paginate(10);
+    
         if ($request->ajax()) {
             return response()->json([
-                'html' => view('subjectclass.index', compact('subjectclasses', 'schoolclasses', 'subjectteachers', 'pagetitle'))->render(),
+                'html' => view('subjectclass.index', compact('subjectclasses', 'schoolclasses', 'subjectteacher', 'pagetitle'))->render(),
                 'count' => $subjectclasses->count(),
                 'total' => $subjectclasses->total(),
             ]);
         }
-
+    
         return view('subjectclass.index')
             ->with('subjectclasses', $subjectclasses)
             ->with('schoolclasses', $schoolclasses)
-            ->with('subjectteacher', $subjectteachers)
+            ->with('subjectteacher', $subjectteacher)
             ->with('pagetitle', $pagetitle);
     }
 
@@ -127,23 +127,25 @@ class SubjectClassController extends Controller
 
     public function store(Request $request)
     {
+        // Validate the request
         $validator = Validator::make($request->all(), [
-            'schoolclassid' => 'required|exists:schoolclass,id',
+            'schoolclassid.*' => 'required|exists:schoolclass,id',
             'subjectteacherid' => 'required|exists:subjectteacher,id',
         ], [
-            'schoolclassid.required' => 'Please select a class!',
-            'schoolclassid.exists' => 'Selected class does not exist!',
+            'schoolclassid.*.required' => 'Please select at least one class!',
+            'schoolclassid.*.exists' => 'Selected class does not exist!',
             'subjectteacherid.required' => 'Please select a subject teacher!',
             'subjectteacherid.exists' => 'Selected subject teacher does not exist!',
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'errors' => $validator->errors()
             ], 422);
         }
-
+    
+        // Get validated data
         $subjectTeacher = SubjectTeacher::find($request->input('subjectteacherid'));
         if (!$subjectTeacher) {
             return response()->json([
@@ -151,28 +153,48 @@ class SubjectClassController extends Controller
                 'message' => 'Subject teacher not found.'
             ], 404);
         }
-
-        $exists = Subjectclass::where('schoolclassid', $request->input('schoolclassid'))
-            ->where('subjectteacherid', $request->input('subjectteacherid'))
-            ->exists();
-
-        if ($exists) {
+    
+        $schoolClassIds = $request->input('schoolclassid', []); // Default to empty array if null
+        if (empty($schoolClassIds)) {
             return response()->json([
                 'success' => false,
-                'message' => 'This subject teacher is already assigned to the selected class.'
+                'message' => 'Please select at least one class.'
             ], 422);
         }
-
-        $subjectclass = Subjectclass::create([
-            'schoolclassid' => $request->input('schoolclassid'),
-            'subjectteacherid' => $request->input('subjectteacherid'),
-            'subjectid' => $subjectTeacher->subjectid,
-        ]);
-
+    
+        $createdRecords = [];
+    
+        foreach ($schoolClassIds as $schoolClassId) {
+            // Check for existing assignment
+            $exists = Subjectclass::where('schoolclassid', $schoolClassId)
+                ->where('subjectteacherid', $request->input('subjectteacherid'))
+                ->exists();
+    
+            if ($exists) {
+                continue; // Skip if already assigned
+            }
+    
+            // Create new subject class record
+            $subjectclass = Subjectclass::create([
+                'schoolclassid' => $schoolClassId,
+                'subjectteacherid' => $request->input('subjectteacherid'),
+                'subjectid' => $subjectTeacher->subjectid,
+            ]);
+    
+            $createdRecords[] = $subjectclass;
+        }
+    
+        if (empty($createdRecords)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'All selected classes are already assigned to this subject teacher.'
+            ], 422);
+        }
+    
         return response()->json([
             'success' => true,
-            'message' => 'Subject Class added successfully.',
-            'data' => $subjectclass
+            'message' => 'Subject Class(es) added successfully.',
+            'data' => $createdRecords
         ], 201);
     }
 
@@ -242,22 +264,22 @@ class SubjectClassController extends Controller
     public function update(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'schoolclassid' => 'required|exists:schoolclass,id',
+            'schoolclassid.*' => 'required|exists:schoolclass,id',
             'subjectteacherid' => 'required|exists:subjectteacher,id',
         ], [
-            'schoolclassid.required' => 'Please select a class!',
-            'schoolclassid.exists' => 'Selected class does not exist!',
+            'schoolclassid.*.required' => 'Please select at least one class!',
+            'schoolclassid.*.exists' => 'Selected class does not exist!',
             'subjectteacherid.required' => 'Please select a subject teacher!',
             'subjectteacherid.exists' => 'Selected subject teacher does not exist!',
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'errors' => $validator->errors()
             ], 422);
         }
-
+    
         $subjectTeacher = SubjectTeacher::find($request->input('subjectteacherid'));
         if (!$subjectTeacher) {
             return response()->json([
@@ -265,39 +287,64 @@ class SubjectClassController extends Controller
                 'message' => 'Subject teacher not found.'
             ], 404);
         }
-
-        $exists = Subjectclass::where('schoolclassid', $request->input('schoolclassid'))
-            ->where('subjectteacherid', $request->input('subjectteacherid'))
+    
+        // Delete existing assignments for this subject teacher
+        Subjectclass::where('subjectteacherid', $request->input('subjectteacherid'))
             ->where('id', '!=', $id)
-            ->exists();
-
-        if ($exists) {
+            ->delete();
+    
+        $schoolClassIds = $request->input('schoolclassid');
+        $createdRecords = [];
+    
+        foreach ($schoolClassIds as $schoolClassId) {
+            $exists = Subjectclass::where('schoolclassid', $schoolClassId)
+                ->where('subjectteacherid', $request->input('subjectteacherid'))
+                ->where('id', '!=', $id)
+                ->exists();
+    
+            if ($exists) {
+                continue;
+            }
+    
+            $subjectclass = Subjectclass::updateOrCreate(
+                ['id' => $id],
+                [
+                    'schoolclassid' => $schoolClassId,
+                    'subjectteacherid' => $request->input('subjectteacherid'),
+                    'subjectid' => $subjectTeacher->subjectid,
+                ]
+            );
+    
+            $createdRecords[] = $subjectclass;
+        }
+    
+        if (empty($createdRecords)) {
             return response()->json([
                 'success' => false,
-                'message' => 'This subject teacher is already assigned to the selected class.'
+                'message' => 'All selected classes are already assigned to this subject teacher.'
             ], 422);
         }
+    
+        return response()->json([
+            'success' => true,
+            'message' => 'Subject Class(es) updated successfully.',
+            'data' => $createdRecords
+        ], 200);
+    }
 
-        $subjectclass = Subjectclass::find($id);
-        if (!$subjectclass) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Subject Class not found.'
-            ], 404);
-        }
 
-        $subjectclass->update([
-            'schoolclassid' => $request->input('schoolclassid'),
-            'subjectteacherid' => $request->input('subjectteacherid'),
-            'subjectid' => $subjectTeacher->subjectid,
-        ]);
+    public function assignments($subjectTeacherId)
+    {
+        $classIds = Subjectclass::where('subjectteacherid', $subjectTeacherId)
+            ->pluck('schoolclassid')
+            ->toArray();
 
         return response()->json([
             'success' => true,
-            'message' => 'Subject Class updated successfully.',
-            'data' => $subjectclass
+            'classIds' => $classIds
         ], 200);
     }
+
 
     public function destroy($id)
     {

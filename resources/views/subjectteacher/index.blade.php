@@ -201,31 +201,43 @@
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="subjectid" class="form-label">Subject</label>
-                                    <select name="subjectid" id="subjectid" class="form-control" required>
-                                        <option value="">Select Subject</option>
+                                    <label class="form-label">Subject</label>
+                                    <div class="checkbox-group" style="max-height: 150px; overflow-y: auto;">
                                         @foreach ($subjects as $subject)
-                                            <option value="{{ $subject->id }}">{{ $subject->subject }} ({{ $subject->subject_code }})</option>
+                                            <div class="form-check me-3">
+                                                <input class="form-check-input modal-checkbox" type="checkbox" name="subjectid[]" id="add-subject-{{ $subject->id }}" value="{{ $subject->id }}">
+                                                <label class="form-check-label" for="add-subject-{{ $subject->id }}">
+                                                    {{ $subject->subject }} ({{ $subject->subject_code }})
+                                                </label>
+                                            </div>
                                         @endforeach
-                                    </select>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="termid" class="form-label">Term</label>
-                                    <select name="termid" id="termid" class="form-control" required>
-                                        <option value="">Select Term</option>
+                                    <label class="form-label">Term</label>
+                                    <div class="checkbox-group">
                                         @foreach ($terms as $term)
-                                            <option value="{{ $term->id }}">{{ $term->term }}</option>
+                                            <div class="form-check me-3">
+                                                <input class="form-check-input" type="radio" name="termid" id="add-term-{{ $term->id }}" value="{{ $term->id }}" required>
+                                                <label class="form-check-label" for="add-term-{{ $term->id }}">
+                                                    {{ $term->term }}
+                                                </label>
+                                            </div>
                                         @endforeach
-                                    </select>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="sessionid" class="form-label">Session</label>
-                                    <select name="sessionid" id="sessionid" class="form-control" required>
-                                        <option value="">Select Session</option>
+                                    <label class="form-label">Session</label>
+                                    <div class="checkbox-group">
                                         @foreach ($schoolsessions as $session)
-                                            <option value="{{ $session->id }}">{{ $session->session }}</option>
+                                            <div class="form-check me-3">
+                                                <input class="form-check-input" type="radio" name="sessionid" id="add-session-{{ $session->id }}" value="{{ $session->id }}" required>
+                                                <label class="form-check-label" for="add-session-{{ $session->id }}">
+                                                    {{ $session->session }}
+                                                </label>
+                                            </div>
                                         @endforeach
-                                    </select>
+                                    </div>
                                 </div>
                                 <div class="alert alert-danger d-none" id="alert-error-msg"></div>
                             </div>
@@ -259,31 +271,43 @@
                                     </select>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit-subjectid" class="form-label">Subject</label>
-                                    <select name="subjectid" id="edit-subjectid" class="form-control" required>
-                                        <option value="">Select Subject</option>
+                                    <label class="form-label">Subject</label>
+                                    <div class="checkbox-group" style="max-height: 150px; overflow-y: auto;">
                                         @foreach ($subjects as $subject)
-                                            <option value="{{ $subject->id }}">{{ $subject->subject }} ({{ $subject->subject_code }})</option>
+                                            <div class="form-check me-3">
+                                                <input class="form-check-input modal-checkbox" type="checkbox" name="subjectid[]" id="edit-subject-{{ $subject->id }}" value="{{ $subject->id }}">
+                                                <label class="form-check-label" for="edit-subject-{{ $subject->id }}">
+                                                    {{ $subject->subject }} ({{ $subject->subject_code }})
+                                                </label>
+                                            </div>
                                         @endforeach
-                                    </select>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit-termid" class="form-label">Term</label>
-                                    <select name="termid" id="edit-termid" class="form-control" required>
-                                        <option value="">Select Term</option>
+                                    <label class="form-label">Term</label>
+                                    <div class="checkbox-group">
                                         @foreach ($terms as $term)
-                                            <option value="{{ $term->id }}">{{ $term->term }}</option>
+                                            <div class="form-check me-3">
+                                                <input class="form-check-input" type="radio" name="termid" id="edit-term-{{ $term->id }}" value="{{ $term->id }}" required>
+                                                <label class="form-check-label" for="edit-term-{{ $term->id }}">
+                                                    {{ $term->term }}
+                                                </label>
+                                            </div>
                                         @endforeach
-                                    </select>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
-                                    <label for="edit-sessionid" class="form-label">Session</label>
-                                    <select name="sessionid" id="edit-sessionid" class="form-control" required>
-                                        <option value="">Select Session</option>
+                                    <label class="form-label">Session</label>
+                                    <div class="checkbox-group">
                                         @foreach ($schoolsessions as $session)
-                                            <option value="{{ $session->id }}">{{ $session->session }}</option>
+                                            <div class="form-check me-3">
+                                                <input class="form-check-input" type="radio" name="sessionid" id="edit-session-{{ $session->id }}" value="{{ $session->id }}" required>
+                                                <label class="form-check-label" for="edit-session-{{ $session->id }}">
+                                                    {{ $session->session }}
+                                                </label>
+                                            </div>
                                         @endforeach
-                                    </select>
+                                    </div>
                                 </div>
                                 <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
                             </div>
@@ -315,4 +339,73 @@
         <!-- End Page-content -->
     </div>
 </div>
+
+@section('styles')
+<style>
+/* Enlarge checkboxes in the table */
+#kt_roles_view_table .form-check-input {
+    width: 2em;
+    height: 2em;
+    margin-top: 0.1em;
+}
+/* Adjust label alignment for table checkboxes */
+#kt_roles_view_table .form-check-label {
+    font-size: 1.1em;
+    line-height: 2em;
+    margin-left: 0.75em;
+}
+/* Style subject checkboxes in modals */
+.modal-checkbox {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    width: 2em;
+    height: 2em;
+    border: 2px solid #ced4da;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+    vertical-align: middle;
+    margin-top: 0.1em;
+}
+.modal-checkbox:checked {
+    background-color: #405189;
+    border-color: #405189;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='M6 10l3 3l6-6'/%3E%3C/svg%3E");
+    background-size: 70%;
+}
+.modal-checkbox:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.25rem rgba(64, 81, 137, 0.25);
+}
+/* Adjust label alignment for modal checkboxes and radio buttons */
+.modal .form-check-label {
+    font-size: 1em;
+    line-height: 1.5em;
+    margin-left: 0.75em;
+    margin-right: 1.5em;
+    cursor: pointer;
+}
+/* Horizontal checkbox/radio group */
+.checkbox-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.checkbox-group .form-check {
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+}
+/* Ensure native radio button styling */
+.checkbox-group input[type="radio"] {
+    -webkit-appearance: radio;
+    -moz-appearance: radio;
+    appearance: radio;
+    margin-top: 0.1em;
+}
+</style>
+@endsection
+
+
 @endsection

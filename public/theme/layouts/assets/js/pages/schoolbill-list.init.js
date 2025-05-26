@@ -405,9 +405,11 @@ if (editSchoolBillForm) {
     });
 }
 
-// Modal events
+// Add modal events
 const addModal = document.getElementById("addSchoolBillModal");
 if (addModal) {
+    const modalInstance = new bootstrap.Modal(addModal);
+    
     addModal.addEventListener("show.bs.modal", function (e) {
         console.log("Add modal show event");
         const modalLabel = document.getElementById("addSchoolBillModalLabel");
@@ -415,11 +417,28 @@ if (addModal) {
         if (modalLabel) modalLabel.innerHTML = "Add School Bill";
         if (addBtn) addBtn.innerHTML = "Add School Bill";
     });
+
     addModal.addEventListener("hidden.bs.modal", function () {
         console.log("Add modal hidden");
         clearAddFields();
         const errorMsg = document.getElementById("alert-error-msg");
         if (errorMsg) errorMsg.classList.add("d-none");
+        
+        // Manually reset the modal state
+        addModal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+        const modalBackdrop = document.querySelector('.modal-backdrop');
+        if (modalBackdrop) {
+            modalBackdrop.remove();
+        }
+    });
+
+    // Ensure close buttons work properly
+    const closeButtons = addModal.querySelectorAll('[data-bs-dismiss="modal"]');
+    closeButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            modalInstance.hide();
+        });
     });
 }
 

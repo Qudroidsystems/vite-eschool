@@ -107,7 +107,7 @@ use Spatie\Permission\Models\Permission;
                             <div class="flex-shrink-0">
                                 <div class="nav nav-pills gap-1" id="popularProperty" role="tablist" aria-orientation="vertical">
                                     @can('Update user-role')
-                                        <a href="{{ route('roles.adduser', $role->id) }}" class="btn btn-light btn-sm btn-active-success my-1">Add User</a>
+                                        <button type="button" class="btn btn-light btn-sm btn-active-success my-1" data-bs-toggle="modal" data-bs-target="#addUserModalgrid">Add User</button>
                                     @endcan
                                 </div>
                             </div>
@@ -217,13 +217,65 @@ use Spatie\Permission\Models\Permission;
                                 </div>
                                 <div class="mt-4">
                                     <h3 class="mb-2">Are you sure?</h3>
-                                    <p class="text-muted fs-lg mx-3 mb-0">Are you sure you want to remove this record?</p>
+                                    <p class="text-muted fs-lg mx-3 mb-0">Are you sure you want to remove this user from the role?</p>
                                 </div>
                             </div>
                             <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
                                 <button type="button" class="btn w-sm btn-light btn-hover" data-bs-dismiss="modal">Close</button>
-                                <button type="button" class="btn w-sm btn-danger btn-hover" id="delete-record">Yes, Delete It!</button>
+                                <button type="button" class="btn w-sm btn-danger btn-hover" id="delete-record">Yes, Remove It!</button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add user modal -->
+            <div class="modal fade" id="addUserModalgrid" tabindex="-1" aria-labelledby="addUserModalLabel" aria-modal="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="addUserModalLabel">Add Users to {{ $role->name }} Role</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form id="addUserRoleForm" class="form" action="{{ route('roles.updateuserrole') }}" method="POST">
+                                @csrf
+                                <div class="row g-3">
+                                    <div class="col-lg-12">
+                                        <label class="form-label">Role</label>
+                                        <input type="hidden" name="roleid" value="{{ $role->id }}" />
+                                        <input type="text" class="form-control" readonly value="{{ $role->name }}">
+                                    </div>
+                                    <div class="col-lg-12">
+                                        <label class="form-label">Select Users</label>
+                                        <div class="d-flex flex-wrap gap-3 mb-3">
+                                            <div class="form-check form-check-outline form-check-primary">
+                                                <input class="form-check-input" type="checkbox" value="" id="kt_users_select_all">
+                                                <label class="form-check-label" for="kt_users_select_all">Select all</label>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex flex-wrap gap-3">
+                                            @php
+                                                $users = User::whereDoesntHave('roles', function ($q) use ($role) {
+                                                    $q->where('name', $role->name);
+                                                })->get();
+                                            @endphp
+                                            @foreach ($users as $user)
+                                                <div class="form-check form-check-outline form-check-primary">
+                                                    <input class="form-check-input" type="checkbox" value="{{ $user->id }}" name="users[]">
+                                                    <label class="form-check-label">{{ $user->name }}</label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-12">
+                                        <div class="hstack gap-2 justify-content-end">
+                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                                            <button type="submit" class="btn btn-primary">Add Users</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -330,9 +382,130 @@ use Spatie\Permission\Models\Permission;
                         </div>
                     </div>
                 </div>
-            </div> <!-- container-fluid -->
+            </div>
+
+            <!-- JavaScript for handling modals and form submission -->
+            <script>
+                document.addEventListener("DOMContentLoaded", function () {
+                    // Select All for Permissions in Edit Role Modal
+                    const selectAllCheckbox = document.getElementById("kt_roles_select_all");
+                    const permissionCheckboxes = document.querySelectorAll('input[name="permission[]"]');
+
+                    if (selectAllCheckbox && permissionCheckboxes.length > 0) {
+                        selectAllCheckbox.addEventListener("change", function () {
+                            permissionCheckboxes.forEach((checkbox) => {
+                                checkbox.checked = this.checked;
+                            });
+                        });
+
+                        function updateSelectAllState() {
+                            const allChecked = Array.from(permissionCheckboxes).every(checkbox => checkbox.checked);
+                            const someChecked = Array.from(permissionCheckboxes).some(checkbox => checkbox.checked);
+                            selectAllCheckbox.checked = allChecked;
+                            selectAllCheckbox.indeterminate = someChecked && !allChecked;
+                        }
+
+                        permissionCheckboxes.forEach((checkbox) => {
+                            checkbox.addEventListener("change", updateSelectAllState);
+                        });
+
+                        updateSelectAllState();
+                    }
+
+                    // Select All for Users in Add User Modal
+                    const addUserModal = document.getElementById('addUserModalgrid');
+                    if (addUserModal) {
+                        addUserModal.addEventListener('shown.bs.modal', function () {
+                            const selectAllUsersCheckbox = document.getElementById("kt_users_select_all");
+                            const userCheckboxes = document.querySelectorAll('input[name="users[]"]');
+
+                            console.log('User checkboxes found:', userCheckboxes.length); // Debugging
+
+                            if (selectAllUsersCheckbox && userCheckboxes.length > 0) {
+                                // Toggle all user checkboxes when "Select all" is changed
+                                selectAllUsersCheckbox.addEventListener("change", function () {
+                                    console.log('Select all toggled:', this.checked); // Debugging
+                                    userCheckboxes.forEach((checkbox) => {
+                                        checkbox.checked = this.checked;
+                                    });
+                                    updateSelectAllUsersState();
+                                });
+
+                                // Update "Select all" state when individual checkboxes change
+                                function updateSelectAllUsersState() {
+                                    const allChecked = Array.from(userCheckboxes).every(checkbox => checkbox.checked);
+                                    const someChecked = Array.from(userCheckboxes).some(checkbox => checkbox.checked);
+                                    selectAllUsersCheckbox.checked = allChecked;
+                                    selectAllUsersCheckbox.indeterminate = someChecked && !allChecked;
+                                    console.log('Select all state:', { allChecked, someChecked, indeterminate: selectAllUsersCheckbox.indeterminate }); // Debugging
+                                }
+
+                                // Attach change listeners to individual checkboxes
+                                userCheckboxes.forEach((checkbox) => {
+                                    checkbox.addEventListener("change", function () {
+                                        console.log('Individual checkbox toggled:', this.value, this.checked); // Debugging
+                                        updateSelectAllUsersState();
+                                    });
+                                });
+
+                                // Initial state update
+                                updateSelectAllUsersState();
+                            } else {
+                                console.warn('No user checkboxes found or select all checkbox missing'); // Debugging
+                                if (selectAllUsersCheckbox) {
+                                    selectAllUsersCheckbox.disabled = true; // Disable if no checkboxes
+                                }
+                            }
+                        });
+                    }
+
+                    // Form submission validation for Add User Modal
+                    const addUserForm = document.getElementById("addUserRoleForm");
+                    if (addUserForm) {
+                        addUserForm.addEventListener("submit", function (e) {
+                            const userCheckboxes = document.querySelectorAll('input[name="users[]"]');
+                            if (!Array.from(userCheckboxes).some(checkbox => checkbox.checked)) {
+                                e.preventDefault();
+                                alert("Please select at least one user.");
+                            }
+                        });
+                    }
+
+                    // Delete Record Modal Handling
+                    const deleteRecordModal = document.getElementById('deleteRecordModal');
+                    const deleteRecordButton = document.getElementById('delete-record');
+                    if (deleteRecordModal && deleteRecordButton) {
+                        deleteRecordModal.addEventListener('show.bs.modal', function (event) {
+                            const button = event.relatedTarget;
+                            const url = button.getAttribute('data-url');
+                            deleteRecordButton.onclick = function () {
+                                console.log('Sending DELETE request to:', url); // Debugging
+                                fetch(url, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                        'Accept': 'application/json',
+                                    },
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        alert(data.message);
+                                        location.reload();
+                                    } else {
+                                        alert(data.message || 'Failed to remove user from role.');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+                                    alert('An error occurred while removing the user from the role.');
+                                });
+                            };
+                        });
+                    }
+                });
+            </script>
         </div><!-- End Page-content -->
-
-
     </div>
+</div>
 @endsection
