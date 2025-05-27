@@ -450,7 +450,7 @@
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarBills">
                                 <ul class="nav nav-sm flex-column">
-                                    @can('View schoolbills')
+                                    @can('View school-bills')
                                           <li class="nav-item">
                                             <a href="{{ route('schoolbill.index') }}" class="nav-link" data-key="t-list-view">Bills</a>
                                           </li>
