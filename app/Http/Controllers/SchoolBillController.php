@@ -10,10 +10,10 @@ class SchoolBillController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:View schoolbill|sCreate schoolbills|Update schoolbills|Delete schoolbills', ['only' => ['index', 'store']]);
-        $this->middleware('permission:Create schoolbills', ['only' => ['create', 'store']]);
-        $this->middleware('permission:Update schoolbills', ['only' => ['edit', 'update', 'updatebill']]);
-        $this->middleware('permission:Delete schoolbills', ['only' => ['destroy', 'deletebill']]);
+        $this->middleware('permission:View school-bills|sCreate school-bills|Update school-bills|Delete school-bills', ['only' => ['index', 'store']]);
+        $this->middleware('permission:Create school-bills', ['only' => ['create', 'store']]);
+        $this->middleware('permission:Update school-bills', ['only' => ['edit', 'update', 'updatebill']]);
+        $this->middleware('permission:Delete school-bills', ['only' => ['destroy', 'deletebill']]);
     }
 
     /**
