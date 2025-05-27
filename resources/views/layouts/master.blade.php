@@ -222,12 +222,17 @@
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarStudentmanagement">
                                 <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="apps-ecommerce-products.html" class="nav-link" data-key="t-products">All Students</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="apps-ecommerce-products-grid.html" class="nav-link" data-key="t-products-grid">Batch Student Registration</a>
-                                    </li>
+                                    @can('View Student')
+                                         <li class="nav-item">
+                                               <a href="{{ route('student.index') }}" class="nav-link" data-key="t-products">All Students</a>
+                                         </li>
+                                    @endcan
+                                   @can('student-bulk-upload')
+                                       <li class="nav-item">
+                                              <a href="{{ route('student.batchindex') }}" class="nav-link" data-key="t-products-grid">Batch Student Registration</a>
+                                       </li>
+                                   @endcan
+                                    
                                 </ul>
                             </div>
                         </li>

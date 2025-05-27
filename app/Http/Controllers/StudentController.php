@@ -31,22 +31,12 @@ class StudentController extends Controller
 
     public function __construct()
     {
-        $this->middleware("permission:student-list|student-create|student-edit|student-delete", ["only" => ["index", "store"]]);
-        $this->middleware("permission:student-create", [
-            "only" => ["create", "store"],
-        ]);
-        $this->middleware("permission:student-edit", [
-            "only" => ["edit", "update"],
-        ]);
-        $this->middleware("permission:student-delete", [
-            "only" => ["destroy", "deletestudent"],
-        ]);
-        $this->middleware("permission:student_bulk-upload", [
-            "only" => ["bulkupload"],
-        ]);
-        $this->middleware("permission:student_bulk-uploadsave", [
-            "only" => ["bulkuploadsave"],
-        ]);
+        $this->middleware("permission:View student|Create student|Update student|Delete student", ["only" => ["index", "store"]]);
+        $this->middleware("permission:Create student", ["only" => ["create", "store"], ]);
+        $this->middleware("permission:Update student", [ "only" => ["edit", "update"], ]);
+        $this->middleware("permission:Delete student", ["only" => ["destroy", "deletestudent"], ]);
+        $this->middleware("permission:student-bulk-upload", ["only" => ["bulkupload"], ]);
+        $this->middleware("permission:student-bulk-uploadsave", [ "only" => ["bulkuploadsave"],]);
     }
 
     /**
