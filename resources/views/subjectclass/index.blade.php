@@ -123,10 +123,16 @@
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td class="subject" data-subjectid="{{ $sc->subjectid }}">{{ $sc->subjectname }}</td>
+                                                    <td class="subject" data-subjectid="{{ $sc->subjectid }}">{{ $sc->subjectname }} ({{ $sc->subjectcode }})</td>
                                                     <td class="sclass" data-schoolclassid="{{ $sc->schoolclassid }}">{{ $sc->sclass }}</td>
                                                     <td class="schoolarm">{{ $sc->schoolarm }}</td>
-                                                    <td class="term" data-termid="{{ $sc->termid }}">{{ $sc->termname }}</td>
+                                                    <td class="term" data-termid="{{ $sc->termid }}">
+                                                        <span @if($sc->termname === 'First Term') style="color: green"
+                                                            @elseif($sc->termname === 'Second Term' || $sc->termname === 'Third Term') style="color: blue"
+                                                            @else style="color: inherit" @endif>
+                                                            {{ $sc->termname }}
+                                                        </span>
+                                                    </td>
                                                     <td class="session" data-sessionid="{{ $sc->sessionid }}">{{ $sc->sessionname }}</td>
                                                     <td class="datereg">{{ $sc->updated_at->format('Y-m-d') }}</td>
                                                     <td>
@@ -146,7 +152,7 @@
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="10" class="noresult" style="display: block;">No results found</td>
+                                                    <td colspan="10" class="noresult">No results found</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
@@ -155,24 +161,12 @@
                                 <div class="row mt-3 align-items-center" id="pagination-element">
                                     <div class="col-sm">
                                         <div class="text-muted text-center text-sm-start">
-                                            Showing <span class="fw-semibold">{{ $subjectclasses->count() }}</span> of <span class="fw-semibold">{{ $subjectclasses->total() }}</span> Results
+                                            Showing <strong>{{ $subjectclasses->count() }}</strong> of <span>{{ $subjectclasses->total() }}</span> Results
                                         </div>
                                     </div>
                                     <div class="col-sm-auto mt-3 mt-sm-0">
-                                        <div class="pagination-wrap hstack gap-2 justify-content-center">
-                                            <a class="page-item pagination-prev {{ $subjectclasses->onFirstPage() ? 'disabled' : '' }}" href="javascript:void(0);" data-url="{{ $subjectclasses->previousPageUrl() }}">
-                                                <i class="mdi mdi-chevron-left align-middle"></i>
-                                            </a>
-                                            <ul class="pagination listjs-pagination mb-0">
-                                                @foreach ($subjectclasses->links()->elements[0] as $page => $url)
-                                                    <li class="page-item {{ $subjectclasses->currentPage() == $page ? 'active' : '' }}">
-                                                        <a class="page-link" href="javascript:void(0);" data-url="{{ $url }}">{{ $page }}</a>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                            <a class="page-item pagination-next {{ $subjectclasses->hasMorePages() ? '' : 'disabled' }}" href="javascript:void(0);" data-url="{{ $subjectclasses->nextPageUrl() }}">
-                                                <i class="mdi mdi-chevron-right align-middle"></i>
-                                            </a>
+                                        <div class="pagination-wrap">
+                                            {{ $subjectclasses->links() }}
                                         </div>
                                     </div>
                                 </div>
@@ -180,99 +174,114 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Add Subject Class Modal -->
-            <div id="addSubjectClassModal" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 id="exampleModalLabel" class="modal-title">Add Subject Class</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <!-- Add Subject Class Modal -->
+                <div id="addSubjectClassModal" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 id="exampleModalLabel" class="modal-title">Add Subject Class</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form class="tablelist-form" autocomplete="off" id="add-subjectclass-form">
+                                <div class="modal-body">
+                                    <input type="hidden" id="add-id-field" name="id">
+                                    <div class="mb-3">
+                                        <label for="schoolclassid" class="form-label">Class</label>
+                                        <select name="schoolclassid" id="schoolclassid" class="form-control" required>
+                                            <option value="">Select Class</option>
+                                            @foreach ($schoolclasses as $class)
+                                                <option value="{{ $class->id }}">{{ $class->schoolclass }} ({{ $class->arm }})</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Subject Teachers</label>
+                                        <div class="checkbox-group" style="max-height: 150px; overflow-y: auto;">
+                                            @foreach ($subjectteacher->sortBy(['teachername', 'subject']) as $teacher)
+                                                <div class="form-check me-3">
+                                                    <input class="form-check-input modal-checkbox" type="checkbox" name="subjectteacherid[]" id="add-teacher-{{ $teacher->id }}" value="{{ $teacher->id }}">
+                                                    <label class="form-check-label" for="add-teacher-{{ $teacher->id }}">
+                                                        {{ $teacher->teachername }} ({{ $teacher->subject }} -- {{ $teacher->subjectcode }}) for
+                                                        <span style="color: {{ $teacher->termname === 'First Term' ? 'green' : ($teacher->termname === 'Second Term' || $teacher->termname === 'Third Term' ? 'blue' : 'inherit') }}">
+                                                            {{ $teacher->termname }}
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-danger d-none" id="alert-error-msg"></div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-primary" id="add-btn">Add Subject Class</button>
+                                </div>
+                            </form>
                         </div>
-                        <form class="tablelist-form" autocomplete="off" id="add-subjectclass-form">
-                            <div class="modal-body">
-                                <input type="hidden" id="add-id-field" name="id">
-                                <div class="mb-3">
-                                    <label for="schoolclassid" class="form-label">Class</label>
-                                    <select name="schoolclassid" id="schoolclassid" class="form-control" required>
-                                        <option value="">Select Class</option>
-                                        @foreach ($schoolclasses as $class)
-                                            <option value="{{ (string) $class->id }}">{{ $class->schoolclass }} ({{ $class->arm }})</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="subjectteacherid" class="form-label">Subject Teacher</label>
-                                    <select name="subjectteacherid" id="subjectteacherid" class="form-control" required>
-                                        <option value="">Select Subject Teacher</option>
-                                        @foreach ($subjectteacher as $teacher)
-                                            <option value="{{ (string) $teacher->id }}">{{ $teacher->teachername }} ({{ $teacher->subject }})</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="alert alert-danger d-none" id="alert-error-msg"></div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="add-btn">Add Subject Class</button>
-                            </div>
-                        </form>
                     </div>
                 </div>
-            </div>
 
-            <!-- Edit Subject Class Modal -->
-            <div id="editModal" class="modal fade" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true" data-bs-backdrop="static">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 id="editModalLabel" class="modal-title">Edit Subject Class</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <!-- Edit Subject Class Modal -->
+                <!-- Edit Subject Class Modal -->
+                <div id="editModal" class="modal fade" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true" data-bs-backdrop="static">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 id="editModalLabel" class="modal-title">Edit Subject Class</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form class="tablelist-form" autocomplete="off" id="edit-subjectclass-form">
+                                <div class="modal-body">
+                                    <input type="hidden" id="edit-id-field" name="id">
+                                    <div class="mb-3">
+                                        <label for="edit-schoolclassid" class="form-label">Class</label>
+                                        <select name="schoolclassid" id="edit-schoolclassid" class="form-control" required>
+                                            <option value="">Select Class</option>
+                                            @foreach ($schoolclasses as $class)
+                                                <option value="{{ $class->id }}">{{ $class->schoolclass }} ({{ $class->arm }})</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Subject Teachers</label>
+                                        <div class="checkbox-group" style="max-height: 150px; overflow-y: auto;">
+                                            @foreach ($subjectteacher->sortBy(['teachername', 'subject']) as $teacher)
+                                                <div class="form-check me-3">
+                                                    <input class="form-check-input modal-checkbox" type="checkbox" name="subjectteacherid[]" id="edit-teacher-{{ $teacher->id }}" value="{{ $teacher->id }}">
+                                                    <label class="form-check-label" for="edit-teacher-{{ $teacher->id }}">
+                                                        {{ $teacher->teachername }} ({{ $teacher->subject }} -- {{ $teacher->subjectcode }}) for 
+                                                        <span style="color: {{ $teacher->termname === 'First Term' ? 'green' : ($teacher->termname === 'Second Term' || $teacher->termname === 'Third Term' ? 'blue' : 'inherit') }}">
+                                                            {{ $teacher->termname }}
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
+                                </div>
+                            </form>
                         </div>
-                        <form class="tablelist-form" autocomplete="off" id="edit-subjectclass-form">
-                            <div class="modal-body">
-                                <input type="hidden" id="edit-id-field" name="id">
-                                <div class="mb-3">
-                                    <label for="edit-schoolclassid" class="form-label">Class</label>
-                                    <select name="schoolclassid" id="edit-schoolclassid" class="form-control" required>
-                                        <option value="">Select Class</option>
-                                        @foreach ($schoolclasses as $class)
-                                            <option value="{{ (string) $class->id }}">{{ $class->schoolclass }} ({{ $class->arm }})</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-subjectteacherid" class="form-label">Subject Teacher</label>
-                                    <select name="subjectteacherid" id="edit-subjectteacherid" class="form-control" required>
-                                        <option value="">Select Subject Teacher</option>
-                                        @foreach ($subjectteacher as $teacher)
-                                            <option value="{{ (string) $teacher->id }}">{{ $teacher->teachername }} ({{ $teacher->subject }})</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
-                            </div>
-                        </form>
                     </div>
                 </div>
-            </div>
 
-            <!-- Delete Confirmation Modal -->
-            <div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-labelledby="deleteRecordModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-body text-center">
-                            <h4>Are you sure?</h4>
-                            <p>You won't be able to revert this!</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-danger" id="delete-record">Delete</button>
+                <!-- Delete Confirmation Modal -->
+                <div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-labelledby="deleteRecordModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-body text-center">
+                                <h4>Are you sure?</h4>
+                                <p>You won't be able to revert this!</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger" id="delete-record">Delete</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -282,22 +291,5 @@
     </div>
 </div>
 
-<script>
-    // Fallback to test modal manually
-    document.addEventListener('DOMContentLoaded', function () {
-        const createBtn = document.getElementById('create-subject-class-btn');
-        if (createBtn) {
-            createBtn.addEventListener('click', function () {
-                console.log('Fallback: Create Subject Class button clicked');
-                try {
-                    const modal = new bootstrap.Modal(document.getElementById('addSubjectClassModal'));
-                    modal.show();
-                    console.log('Fallback: Add modal opened');
-                } catch (error) {
-                    console.error('Fallback: Error opening add modal:', error);
-                }
-            });
-        }
-    });
-</script>
+
 @endsection

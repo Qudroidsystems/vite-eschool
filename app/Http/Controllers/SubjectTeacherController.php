@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\Broadsheet;
 use App\Models\Subjectclass;
 use App\Models\SubjectRegistrationStatus;
+use Illuminate\Support\Facades\Log;
 
 class SubjectTeacherController extends Controller
 {
@@ -55,6 +56,12 @@ class SubjectTeacherController extends Controller
             ->orderBy('staffname')
             ->paginate(200);
 
+        Log::info('SubjectTeacher Index Query', [
+            'count' => $subjectteacher->count(),
+            'total' => $subjectteacher->total(),
+            'items' => $subjectteacher->items()
+        ]);
+
         if ($request->ajax()) {
             return response()->json([
                 'html' => view('subjectteacher.index', compact('subjectteacher', 'terms', 'schoolsessions', 'subjects', 'staffs', 'pagetitle'))->render(),
@@ -94,37 +101,40 @@ class SubjectTeacherController extends Controller
             'staffid' => 'required|exists:users,id',
             'subjectids' => 'required|array|min:1',
             'subjectids.*' => 'exists:subject,id',
-            'termid' => 'required|exists:schoolterm,id',
+            'termid' => 'required|array|min:1',
+            'termid.*' => 'exists:schoolterm,id',
             'sessionid' => 'required|exists:schoolsession,id',
         ], [
-            'staffid.required' => 'Please select a subject teacher!',
-            'staffid.exists' => 'Selected teacher does not exist!',
-            'subjectids.required' => 'Please select at least one subject!',
-            'subjectids.array' => 'Subjects must be an array!',
-            'subjectids.min' => 'Please select at least one subject!',
-            'subjectids.*.exists' => 'One or more selected subjects do not exist!',
-            'termid.required' => 'Please select a term!',
-            'termid.exists' => 'Selected term does not exist!',
-            'sessionid.required' => 'Please select a session!',
-            'sessionid.exists' => 'Selected session does not exist!',
+            'staffid.required' => 'Please select a teacher.',
+            'staffid.exists' => 'Selected teacher does not exist.',
+            'subjectids.required' => 'Please select at least one subject.',
+            'subjectids.array' => 'Subjects must be an array.',
+            'subjectids.min' => 'Please select at least one subject.',
+            'subjectids.*.exists' => 'One or more selected subjects do not exist.',
+            'termid.required' => 'Please select at least one term.',
+            'termid.array' => 'Terms must be an array.',
+            'termid.min' => 'Please select at least one term.',
+            'termid.*.exists' => 'One or more selected terms do not exist.',
+            'sessionid.required' => 'Please select a session.',
+            'sessionid.exists' => 'Selected session does not exist.',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
+                'message' => 'Please select a teacher, at least one subject, at least one term, and a session.',
                 'errors' => $validator->errors()
             ], 422);
         }
 
         $staffid = $request->input('staffid');
         $subjectids = $request->input('subjectids');
-        $termid = $request->input('termid');
+        $termids = $request->input('termid');
         $sessionid = $request->input('sessionid');
 
-        // Check for existing assignments
         $existing = SubjectTeacher::where('staffid', $staffid)
             ->whereIn('subjectid', $subjectids)
-            ->where('termid', $termid)
+            ->whereIn('termid', $termids)
             ->where('sessionid', $sessionid)
             ->pluck('subjectid')
             ->toArray();
@@ -133,20 +143,21 @@ class SubjectTeacherController extends Controller
             $existingSubjects = Subject::whereIn('id', $existing)->pluck('subject')->toArray();
             return response()->json([
                 'success' => false,
-                'message' => 'The teacher is already assigned to: ' . implode(', ', $existingSubjects) . ' for this term and session.'
+                'message' => 'The teacher is already assigned to: ' . implode(', ', $existingSubjects) . ' for one or more selected terms and session.'
             ], 422);
         }
 
-        // Create a record for each subject
         $createdRecords = [];
-        foreach ($subjectids as $subjectid) {
-            $subjectteacher = SubjectTeacher::create([
-                'staffid' => $staffid,
-                'subjectid' => $subjectid,
-                'termid' => $termid,
-                'sessionid' => $sessionid,
-            ]);
-            $createdRecords[] = $subjectteacher;
+        foreach ($termids as $termid) {
+            foreach ($subjectids as $subjectid) {
+                $subjectteacher = SubjectTeacher::create([
+                    'staffid' => $staffid,
+                    'subjectid' => $subjectid,
+                    'termid' => $termid,
+                    'sessionid' => $sessionid,
+                ]);
+                $createdRecords[] = $subjectteacher;
+            }
         }
 
         return response()->json([
@@ -203,101 +214,108 @@ class SubjectTeacherController extends Controller
             'staffid' => 'required|exists:users,id',
             'subjectids' => 'required|array|min:1',
             'subjectids.*' => 'exists:subject,id',
-            'termid' => 'required|exists:schoolterm,id',
-            'sessionid' => 'required|exists:schoolterm,id',
+            'termid' => 'required|array|min:1',
+            'termid.*' => 'exists:schoolterm,id',
+            'sessionid' => 'required|exists:schoolsession,id',
             'subjects_to_remove' => 'nullable|array',
             'subjects_to_remove.*' => 'exists:subject,id',
         ], [
-            'staffid.required' => 'Please select a subject teacher!',
-            'staffid.exists' => 'Selected teacher does not exist!',
-            'subjectids.required' => 'Please select at least one subject!',
-            'subjectids.array' => 'Subjects must be an array!',
-            'subjectids.min' => 'Please select at least one subject!',
-            'subjectids.*.exists' => 'One or more selected subjects do not exist!',
-            'termid.required' => 'Please select a term!',
-            'termid.exists' => 'Selected term does not exist!',
-            'sessionid.required' => 'Please select a session!',
-            'sessionid.exists' => 'Selected session does not exist!',
-            'subjects_to_remove.*.exists' => 'One or more subjects to remove do not exist!',
+            'staffid.required' => 'Please select a teacher.',
+            'staffid.exists' => 'Selected teacher does not exist.',
+            'subjectids.required' => 'Please select at least one subject.',
+            'subjectids.array' => 'Subjects must be an array.',
+            'subjectids.min' => 'Please select at least one subject.',
+            'subjectids.*.exists' => 'One or more selected subjects do not exist.',
+            'termid.required' => 'Please select at least one term.',
+            'termid.array' => 'Terms must be an array.',
+            'termid.min' => 'Please select at least one term.',
+            'termid.*.exists' => 'One or more selected terms do not exist.',
+            'sessionid.required' => 'Please select a session.',
+            'sessionid.exists' => 'Selected session does not exist.',
+            'subjects_to_remove.*.exists' => 'One or more subjects to remove do not exist.',
         ]);
-
+    
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
+                'message' => 'Please select a teacher, at least one subject, at least one term, and a session.',
                 'errors' => $validator->errors()
             ], 422);
         }
-
+    
         $staffid = $request->input('staffid');
         $subjectids = $request->input('subjectids');
-        $termid = $request->input('termid');
+        $termids = $request->input('termid');
         $sessionid = $request->input('sessionid');
         $subjectsToRemove = $request->input('subjects_to_remove', []);
-
-        // Check for conflicting assignments excluding the current record
+    
+        // Check for conflicts excluding the current record
         $existingConflicts = SubjectTeacher::where('staffid', $staffid)
             ->whereIn('subjectid', $subjectids)
-            ->where('termid', $termid)
+            ->whereIn('termid', $termids)
             ->where('sessionid', $sessionid)
             ->where('id', '!=', $id)
             ->pluck('subjectid')
             ->toArray();
-
+    
         if (!empty($existingConflicts)) {
             $existingSubjects = Subject::whereIn('id', $existingConflicts)->pluck('subject')->toArray();
             return response()->json([
                 'success' => false,
-                'message' => 'The teacher is already assigned to: ' . implode(', ', $existingSubjects) . ' for this term and session.'
+                'message' => 'The teacher is already assigned to: ' . implode(', ', $existingSubjects) . ' for one or more selected terms and session.'
             ], 422);
         }
-
-        // Delete explicitly removed subjects
+    
+        // Remove subjects for specified terms if provided
         if (!empty($subjectsToRemove)) {
             SubjectTeacher::where('staffid', $staffid)
                 ->whereIn('subjectid', $subjectsToRemove)
-                ->where('termid', $termid)
+                ->whereIn('termid', $termids)
                 ->where('sessionid', $sessionid)
                 ->delete();
         }
-
-        // Create or update records for selected subjects
+    
         $updatedRecords = [];
-        foreach ($subjectids as $subjectid) {
-            $subjectteacher = SubjectTeacher::updateOrCreate(
-                [
-                    'staffid' => $staffid,
-                    'subjectid' => $subjectid,
-                    'termid' => $termid,
-                    'sessionid' => $sessionid,
-                ],
-                [
-                    'staffid' => $staffid,
-                    'subjectid' => $subjectid,
-                    'termid' => $termid,
-                    'sessionid' => $sessionid,
-                ]
-            );
-            $updatedRecords[] = $subjectteacher;
+        foreach ($termids as $termid) {
+            foreach ($subjectids as $subjectid) {
+                $subjectteacher = SubjectTeacher::updateOrCreate(
+                    [
+                        'staffid' => $staffid,
+                        'subjectid' => $subjectid,
+                        'termid' => $termid,
+                        'sessionid' => $sessionid,
+                    ],
+                    [
+                        'staffid' => $staffid,
+                        'subjectid' => $subjectid,
+                        'termid' => $termid,
+                        'sessionid' => $sessionid,
+                    ]
+                );
+                $updatedRecords[] = $subjectteacher;
+            }
         }
-
-        // Update related broadsheet and registration status
-        $sub = SubjectTeacher::whereIn('subjectteacher.id', array_column($updatedRecords, 'subjectteacher.id'))
+    
+        // Update related records in Broadsheet and SubjectRegistrationStatus
+        $sub = SubjectTeacher::whereIn('subjectteacher.id', array_column($updatedRecords, 'id'))
             ->leftJoin('subjectclass', 'subjectclass.subjectteacherid', '=', 'subjectteacher.id')
             ->leftJoin('broadsheet', 'broadsheet.subjectclassid', '=', 'subjectclass.id')
-            ->get(['broadsheet.staffid as bstaffid', 'broadsheet.subjectclassid as subclass', 'broadsheet.termid as term', 'broadsheet.session as session']);
-
+            ->get(['broadsheet.staffid as bstaffid', 'broadsheet.subjectclassid as subclass', 'broadsheet.termid as term', 'broadsheet.session_id as session']);
+    
         foreach ($sub as $value) {
+            // Update Broadsheet with the correct session_id column
             Broadsheet::where('subjectclassid', $value->subclass)
                 ->where('termid', $value->term)
-                ->where('session', $value->session)
+                ->where('session_id', $value->session) // Changed from sessionid to session_id
                 ->update(['staffid' => $staffid]);
-
+    
+            // Update SubjectRegistrationStatus with the correct session_id column
             SubjectRegistrationStatus::where('subjectclassid', $value->subclass)
                 ->where('termid', $value->term)
-                ->where('sessionid', $value->session)
+                ->where('session_id', $value->session) // Changed from sessionid to session_id
                 ->update(['staffid' => $staffid]);
         }
-
+    
         return response()->json([
             'success' => true,
             'message' => 'Subject Teacher(s) updated successfully.',
@@ -311,61 +329,74 @@ class SubjectTeacherController extends Controller
             'staffid' => 'required|exists:users,id',
             'subjectids' => 'required|array|min:1',
             'subjectids.*' => 'exists:subject,id',
-            'termid' => 'required|exists:schoolterm,id',
+            'termid' => 'required|array|min:1',
+            'termid.*' => 'exists:schoolterm,id',
             'sessionid' => 'required|exists:schoolsession,id',
             'subjects_to_remove' => 'nullable|array',
             'subjects_to_remove.*' => 'exists:subject,id',
+        ], [
+            'staffid.required' => 'Please select a teacher.',
+            'staffid.exists' => 'Selected teacher does not exist.',
+            'subjectids.required' => 'Please select at least one subject.',
+            'subjectids.array' => 'Subjects must be an array.',
+            'subjectids.min' => 'Please select at least one subject.',
+            'subjectids.*.exists' => 'One or more selected subjects do not exist.',
+            'termid.required' => 'Please select at least one term.',
+            'termid.array' => 'Terms must be an array.',
+            'termid.min' => 'Please select at least one term.',
+            'termid.*.exists' => 'One or more selected terms do not exist.',
+            'sessionid.required' => 'Please select a session.',
+            'sessionid.exists' => 'Selected session does not exist.',
+            'subjects_to_remove.*.exists' => 'One or more subjects to remove do not exist.',
         ]);
-
+    
         if ($validator->fails()) {
             return redirect()->back()->withErrors($validator)->withInput();
         }
-
+    
         $staffid = $request->input('staffid');
         $subjectids = $request->input('subjectids');
-        $termid = $request->input('termid');
+        $termids = $request->input('termid');
         $sessionid = $request->input('sessionid');
         $subjectsToRemove = $request->input('subjects_to_remove', []);
-
-        // Check for conflicts
+    
         $existing = SubjectTeacher::where('staffid', $staffid)
             ->whereIn('subjectid', $subjectids)
-            ->where('termid', $termid)
+            ->whereIn('termid', $termids)
             ->where('sessionid', $sessionid)
-            ->where('id', '!=', $request->id)
             ->exists();
-
+    
         if ($existing) {
-            return redirect()->back()->with('danger', 'This teacher is already assigned to one or more selected subjects for this term and session.');
+            return redirect()->back()->with('danger', 'This teacher is already assigned to one or more selected subjects for one or more selected terms and session.');
         }
-
-        // Delete explicitly removed subjects
+    
         if (!empty($subjectsToRemove)) {
             SubjectTeacher::where('staffid', $staffid)
                 ->whereIn('subjectid', $subjectsToRemove)
-                ->where('termid', $termid)
+                ->whereIn('termid', $termids)
                 ->where('sessionid', $sessionid)
                 ->delete();
         }
-
-        // Create or update selected subjects
-        foreach ($subjectids as $subjectid) {
-            SubjectTeacher::updateOrCreate(
-                [
-                    'staffid' => $staffid,
-                    'subjectid' => $subjectid,
-                    'termid' => $termid,
-                    'sessionid' => $sessionid,
-                ],
-                [
-                    'staffid' => $staffid,
-                    'subjectid' => $subjectid,
-                    'termid' => $termid,
-                    'sessionid' => $sessionid,
-                ]
-            );
+    
+        foreach ($termids as $termid) {
+            foreach ($subjectids as $subjectid) {
+                SubjectTeacher::updateOrCreate(
+                    [
+                        'staffid' => $staffid,
+                        'subjectid' => $subjectid,
+                        'termid' => $termid,
+                        'sessionid' => $sessionid,
+                    ],
+                    [
+                        'staffid' => $staffid,
+                        'subjectid' => $subjectid,
+                        'termid' => $termid,
+                        'sessionid' => $sessionid,
+                    ]
+                );
+            }
         }
-
+    
         return redirect()->route('subjectteacher.index')->with('success', 'Subject Teacher updated successfully.');
     }
 
@@ -389,8 +420,21 @@ class SubjectTeacherController extends Controller
 
     public function deletesubjectteacher(Request $request)
     {
+        $validator = Validator::make($request->all(), [
+            'subjectteacherid' => 'required|exists:subjectteacher,id',
+        ]);
+
+        if ($validator->fails()) {
+            Log::error('Delete Subject Teacher Validation Failed', ['errors' => $validator->errors()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid subject teacher ID.'
+            ], 422);
+        }
+
         $subjectteacher = SubjectTeacher::find($request->subjectteacherid);
         if (!$subjectteacher) {
+            Log::error('Subject Teacher not found', ['subjectteacherid' => $request->subjectteacherid]);
             return response()->json([
                 'success' => false,
                 'message' => 'Subject Teacher not found.'
@@ -405,25 +449,49 @@ class SubjectTeacherController extends Controller
         ], 200);
     }
 
+
     public function getSubjects($id)
     {
+        \Log::info('getSubjects called', ['id' => $id]);
+
         $subjectteacher = SubjectTeacher::where('id', $id)->first();
         if (!$subjectteacher) {
+            \Log::error('Subject Teacher not found', ['id' => $id]);
             return response()->json([
                 'success' => false,
                 'message' => 'Subject Teacher not found.'
             ], 404);
         }
 
-        $subjectIds = SubjectTeacher::where('staffid', $subjectteacher->staffid)
-            ->where('termid', $subjectteacher->termid)
+        // Fetch subjects and terms for the same staff, subject, and session
+        $subjectTeachers = SubjectTeacher::where('staffid', $subjectteacher->staffid)
+            ->where('subjectid', $subjectteacher->subjectid)
             ->where('sessionid', $subjectteacher->sessionid)
-            ->pluck('subjectid')
-            ->toArray();
+            ->select('subjectid', 'termid')
+            ->get();
+
+        \Log::info('Subject Teachers fetched', [
+            'staffid' => $subjectteacher->staffid,
+            'subjectid' => $subjectteacher->subjectid,
+            'sessionid' => $subjectteacher->sessionid,
+            'count' => $subjectTeachers->count()
+        ]);
+
+        $subjectIds = $subjectTeachers->pluck('subjectid')->unique()->toArray();
+        $termIds = $subjectTeachers->pluck('termid')->unique()->toArray();
+
+        \Log::info('Subject and Term IDs', [
+            'subjectIds' => $subjectIds,
+            'termIds' => $termIds
+        ]);
 
         return response()->json([
             'success' => true,
-            'subjectIds' => $subjectIds
+            'staffid' => $subjectteacher->staffid,
+            'termIds' => $termIds ?: [],
+            'sessionid' => $subjectteacher->sessionid,
+            'subjectIds' => $subjectIds ?: []
         ], 200);
     }
+
 }

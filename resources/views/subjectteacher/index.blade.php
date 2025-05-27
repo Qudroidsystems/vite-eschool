@@ -1,6 +1,8 @@
 @extends('layouts.master')
 @section('content')
-
+@php
+    use App\Models\SubjectTeacher;
+@endphp
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
@@ -124,7 +126,34 @@
                                                     </td>
                                                     <td class="subject" data-subjectid="{{ $sc->subjectid }}">{{ $sc->subjectname }}</td>
                                                     <td class="subjectcode">{{ $sc->subjectcode }}</td>
-                                                    <td class="term" data-termid="{{ $sc->termid }}">{{ $sc->termname }}</td>
+                                                    <td class="term" data-termid="{{ $sc->termid }}">
+                                                        
+                                                        @php
+                                                        $term = SubjectTeacher::where('staffid', $sc->userid)
+                                                            ->where('subjectid', $sc->subjectid)
+                                                            ->where('sessionid', $sc->sessionid)
+                                                            ->join('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
+                                                            ->pluck('schoolterm.term')
+                                                            ->toArray();
+                                                        
+                                                        $coloredTerms = [];
+                                                        foreach($term as $t) {
+                                                            $color = '';
+                                                            $termLower = strtolower($t);
+                                                            
+                                                            if(preg_match('/(first|1st|one)/', $termLower)) {
+                                                                $color = 'color: green;';
+                                                            } elseif(preg_match('/(second|2nd|two)/', $termLower)) {
+                                                                $color = 'color: blue;';
+                                                            } elseif(preg_match('/(third|3rd|three)/', $termLower)) {
+                                                                $color = 'color: red;';
+                                                            }
+                                                            $coloredTerms[] = "<span style='$color'>$t</span>";
+                                                        }
+                                                    @endphp
+                                                    
+                                                    {!! implode(', ', $coloredTerms) !!}
+                                                    </td>
                                                     <td class="session" data-sessionid="{{ $sc->sessionid }}">{{ $sc->sessionname }}</td>
                                                     <td class="datereg">{{ $sc->updated_at->format('Y-m-d') }}</td>
                                                     <td>
@@ -217,8 +246,8 @@
                                     <label class="form-label">Term</label>
                                     <div class="checkbox-group">
                                         @foreach ($terms as $term)
-                                            <div class="form-check me-3">
-                                                <input class="form-check-input" type="radio" name="termid" id="add-term-{{ $term->id }}" value="{{ $term->id }}" required>
+                                            <div class=" Censored form-check me-3">
+                                                <input class="form-check-input modal-checkbox" type="checkbox" name="termid[]" id="add-term-{{ $term->id }}" value="{{ $term->id }}">
                                                 <label class="form-check-label" for="add-term-{{ $term->id }}">
                                                     {{ $term->term }}
                                                 </label>
@@ -288,7 +317,7 @@
                                     <div class="checkbox-group">
                                         @foreach ($terms as $term)
                                             <div class="form-check me-3">
-                                                <input class="form-check-input" type="radio" name="termid" id="edit-term-{{ $term->id }}" value="{{ $term->id }}" required>
+                                                <input class="form-check-input modal-checkbox" type="checkbox" name="termid[]" id="edit-term-{{ $term->id }}" value="{{ $term->id }}">
                                                 <label class="form-check-label" for="edit-term-{{ $term->id }}">
                                                     {{ $term->term }}
                                                 </label>

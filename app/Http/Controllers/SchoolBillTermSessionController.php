@@ -21,9 +21,6 @@ class SchoolBillTermSessionController extends Controller
         $this->middleware('permission:Delete schoolbill', ['only' => ['destroy', 'deleteschoolbilltermsession']]);
     }
 
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $pagetitle = "School Bill Term Session Management";
@@ -52,7 +49,7 @@ class SchoolBillTermSessionController extends Controller
                 'school_bill.title as schoolbill',
                 'school_bill_class_term_session.updated_at as updated_at'
             ])
-            ->paginate(100); // Paginate with 10 records per page
+            ->paginate(100);
 
         return view('schoolbilltermsession.index')
             ->with('schoolbills', $schoolbills)
@@ -63,35 +60,33 @@ class SchoolBillTermSessionController extends Controller
             ->with('pagetitle', $pagetitle);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         return view('schoolbilltermsession.create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'bill_id' => 'required|exists:school_bill,id',
-            'class_id' => 'required|exists:schoolclass,id',
-            'termid_id' => 'required|exists:schoolterm,id',
+            'class_id' => 'required|array|min:1',
+            'class_id.*' => 'exists:schoolclass,id',
+            'termid_id' => 'required|array|min:1',
+            'termid_id.*' => 'exists:schoolterm,id',
             'session_id' => 'required|exists:schoolsession,id',
-            'bill_id|class_id|termid_id|session_id' => 'unique:school_bill_class_term_session,bill_id,NULL,id,class_id,$request->class_id,termid_id,$request->termid_id,session_id,$request->session_id'
         ], [
             'bill_id.required' => 'Please select a school bill!',
             'bill_id.exists' => 'Selected school bill does not exist!',
-            'class_id.required' => 'Please select a class!',
-            'class_id.exists' => 'Selected class does not exist!',
-            'termid_id.required' => 'Please select a term!',
-            'termid_id.exists' => 'Selected term does not exist!',
+            'class_id.required' => 'Please select at least one class!',
+            'class_id.array' => 'Classes must be an array!',
+            'class_id.min' => 'Please select at least one class!',
+            'class_id.*.exists' => 'One or more selected classes do not exist!',
+            'termid_id.required' => 'Please select at least one term!',
+            'termid_id.array' => 'Terms must be an array!',
+            'termid_id.min' => 'Please select at least one term!',
+            'termid_id.*.exists' => 'One or more selected terms do not exist!',
             'session_id.required' => 'Please select a session!',
             'session_id.exists' => 'Selected session does not exist!',
-            'bill_id_class_id_termid_id_session_id.unique' => 'This combination of bill, class, term, and session already exists!'
         ]);
 
         if ($validator->fails()) {
@@ -101,24 +96,46 @@ class SchoolBillTermSessionController extends Controller
             ], 422);
         }
 
-        $schoolbillclasstermsessions = SchoolBillTermSession::create([
-            'bill_id' => $request->bill_id,
-            'class_id' => $request->class_id,
-            'termid_id' => $request->termid_id,
-            'session_id' => $request->session_id,
-            'createdBy' => auth()->id() // Use authenticated user's ID
-        ]);
+        $bill_id = $request->input('bill_id');
+        $class_ids = $request->input('class_id');
+        $term_ids = $request->input('termid_id');
+        $session_id = $request->input('session_id');
+
+        // Check for existing combinations
+        $existing = SchoolBillTermSession::where('bill_id', $bill_id)
+            ->whereIn('class_id', $class_ids)
+            ->whereIn('termid_id', $term_ids)
+            ->where('session_id', $session_id)
+            ->exists();
+
+        if ($existing) {
+            return response()->json([
+                'success' => false,
+                'message' => 'One or more combinations of bill, class, term, and session already exist!'
+            ], 422);
+        }
+
+        $createdRecords = [];
+        foreach ($term_ids as $term_id) {
+            foreach ($class_ids as $class_id) {
+                $record = SchoolBillTermSession::create([
+                    'bill_id' => $bill_id,
+                    'class_id' => $class_id,
+                    'termid_id' => $term_id,
+                    'session_id' => $session_id,
+                    'createdBy' => auth()->id()
+                ]);
+                $createdRecords[] = $record;
+            }
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'School Bill Term Session created successfully!',
-            'data' => $schoolbillclasstermsessions
+            'message' => 'School Bill Term Session(s) created successfully!',
+            'data' => $createdRecords
         ], 201);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(string $id)
     {
         $schoolbillclasstermsessions = SchoolBillTermSession::where('school_bill_class_term_session.id', $id)
@@ -168,9 +185,6 @@ class SchoolBillTermSessionController extends Controller
             ->with('schoolbillclasstermsessions', $schoolbillclasstermsessions);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, string $id)
     {
         $schoolbillclasstermsessions = SchoolBillTermSession::find($id);
@@ -183,20 +197,24 @@ class SchoolBillTermSessionController extends Controller
 
         $validator = Validator::make($request->all(), [
             'bill_id' => 'required|exists:school_bill,id',
-            'class_id' => 'required|exists:schoolclass,id',
-            'termid_id' => 'required|exists:schoolterm,id',
+            'class_id' => 'required|array|min:1',
+            'class_id.*' => 'exists:schoolclass,id',
+            'termid_id' => 'required|array|min:1',
+            'termid_id.*' => 'exists:schoolterm,id',
             'session_id' => 'required|exists:schoolsession,id',
-            'bill_id|class_id|termid_id|session_id' => 'unique:school_bill_class_term_session,bill_id,' . $id . ',id,class_id,$request->class_id,termid_id,$request->termid_id,session_id,$request->session_id'
         ], [
             'bill_id.required' => 'Please select a school bill!',
             'bill_id.exists' => 'Selected school bill does not exist!',
-            'class_id.required' => 'Please select a class!',
-            'class_id.exists' => 'Selected class does not exist!',
-            'termid_id.required' => 'Please select a term!',
-            'termid_id.exists' => 'Selected term does not exist!',
+            'class_id.required' => 'Please select at least one class!',
+            'class_id.array' => 'Classes must be an array!',
+            'class_id.min' => 'Please select at least one class!',
+            'class_id.*.exists' => 'One or more selected classes do not exist!',
+            'termid_id.required' => 'Please select at least one term!',
+            'termid_id.array' => 'Terms must be an array!',
+            'termid_id.min' => 'Please select at least one term!',
+            'termid_id.*.exists' => 'One or more selected terms do not exist!',
             'session_id.required' => 'Please select a session!',
             'session_id.exists' => 'Selected session does not exist!',
-            'bill_id_class_id_termid_id_session_id.unique' => 'This combination of bill, class, term, and session already exists!'
         ]);
 
         if ($validator->fails()) {
@@ -206,24 +224,54 @@ class SchoolBillTermSessionController extends Controller
             ], 422);
         }
 
-        $schoolbillclasstermsessions->update([
-            'bill_id' => $request->bill_id,
-            'class_id' => $request->class_id,
-            'termid_id' => $request->termid_id,
-            'session_id' => $request->session_id,
-            'createdBy' => auth()->id() // Update with current user's ID
-        ]);
+        $bill_id = $request->input('bill_id');
+        $class_ids = $request->input('class_id');
+        $term_ids = $request->input('termid_id');
+        $session_id = $request->input('session_id');
+
+        // Check for existing combinations, excluding the current record
+        $existing = SchoolBillTermSession::where('bill_id', $bill_id)
+            ->whereIn('class_id', $class_ids)
+            ->whereIn('termid_id', $term_ids)
+            ->where('session_id', $session_id)
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($existing) {
+            return response()->json([
+                'success' => false,
+                'message' => 'One or more combinations of bill, class, term, and session already exist!'
+            ], 422);
+        }
+
+        // Delete existing records for this bill_id and session_id to avoid duplicates
+        SchoolBillTermSession::where('bill_id', $schoolbillclasstermsessions->bill_id)
+            ->where('session_id', $schoolbillclasstermsessions->session_id)
+            ->where('class_id', $schoolbillclasstermsessions->class_id)
+            ->where('termid_id', $schoolbillclasstermsessions->termid_id)
+            ->delete();
+
+        $updatedRecords = [];
+        foreach ($term_ids as $term_id) {
+            foreach ($class_ids as $class_id) {
+                $record = SchoolBillTermSession::create([
+                    'bill_id' => $bill_id,
+                    'class_id' => $class_id,
+                    'termid_id' => $term_id,
+                    'session_id' => $session_id,
+                    'createdBy' => auth()->id()
+                ]);
+                $updatedRecords[] = $record;
+            }
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'School Bill Term Session updated successfully!',
-            'data' => $schoolbillclasstermsessions
+            'data' => $updatedRecords
         ], 200);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         $schoolbillclasstermsessions = SchoolBillTermSession::find($id);
@@ -242,9 +290,49 @@ class SchoolBillTermSessionController extends Controller
         ], 200);
     }
 
-    /**
-     * Custom delete method for AJAX.
-     */
+
+
+    public function getRelated($id)
+    {
+        \Log::info('getRelated called', ['id' => $id]);
+    
+        $schoolbillclasstermsessions = SchoolBillTermSession::where('id', $id)->first();
+        if (!$schoolbillclasstermsessions) {
+            \Log::error('School Bill Term Session not found', ['id' => $id]);
+            return response()->json([
+                'success' => false,
+                'message' => 'School Bill Term Session not found.'
+            ], 404);
+        }
+    
+        $relatedRecords = SchoolBillTermSession::where('bill_id', $schoolbillclasstermsessions->bill_id)
+            ->where('session_id', $schoolbillclasstermsessions->session_id)
+            ->select('class_id', 'termid_id')
+            ->get();
+    
+        \Log::info('Related records fetched', [
+            'bill_id' => $schoolbillclasstermsessions->bill_id,
+            'session_id' => $schoolbillclasstermsessions->session_id,
+            'count' => $relatedRecords->count()
+        ]);
+    
+        $classIds = $relatedRecords->pluck('class_id')->unique()->toArray();
+        $termIds = $relatedRecords->pluck('termid_id')->unique()->toArray();
+    
+        \Log::info('Class and Term IDs', [
+            'classIds' => $classIds,
+            'termIds' => $termIds
+        ]);
+    
+        return response()->json([
+            'success' => true,
+            'bill_id' => $schoolbillclasstermsessions->bill_id,
+            'class_ids' => $classIds ?: [],
+            'term_ids' => $termIds ?: [],
+            'session_id' => $schoolbillclasstermsessions->session_id
+        ], 200);
+    }
+
     public function deleteschoolbilltermsession(Request $request)
     {
         return $this->destroy($request->schoolbilltermsessionid);

@@ -1,4 +1,4 @@
-console.log("subjectteacher.init.js is loaded and executing!");
+console.log("subjectteacher.init.js is loaded and executing at", new Date().toISOString());
 
 // Verify dependencies
 try {
@@ -181,7 +181,7 @@ function handleRemoveClick(e, button) {
                         document.querySelector("#kt_roles_view_table tbody").innerHTML =
                             '<tr><td colspan="9" class="noresult" style="display: block;">No results found</td></tr>';
                     }
-                    // Refresh the current page to ensure table consistency
+                    // Refresh the current page
                     const currentPageUrl = document.querySelector('.pagination .page-item.active .page-link')?.getAttribute('data-url') || window.location.href;
                     console.log("Refreshing page after deletion:", currentPageUrl);
                     fetchPage(currentPageUrl);
@@ -204,40 +204,117 @@ function handleRemoveClick(e, button) {
 // Edit subject teacher
 function handleEditClick(e, button) {
     e.preventDefault();
-    console.log("Edit button clicked");
-    const itemId = button.closest("tr").querySelector(".id")?.getAttribute("data-id");
+    console.log("Edit button clicked at", new Date().toISOString());
+
+    // Get data from table row
     const tr = button.closest("tr");
-    if (!itemId) {
-        console.error("Item ID not found");
+    const itemId = tr.querySelector(".id")?.getAttribute("data-id");
+    const staffId = tr.querySelector(".subjectteacher")?.getAttribute("data-staffid");
+    const sessionId = tr.querySelector(".session")?.getAttribute("data-sessionid");
+
+    // Log data for debugging
+    console.log("Table row data:", { itemId, staffId, sessionId });
+
+    // Validate required data
+    if (!itemId || !staffId || !sessionId) {
+        console.error("Missing required data", { itemId, staffId, sessionId });
+        Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "Error",
+            text: "Unable to load subject teacher data",
+            showConfirmButton: true
+        });
         return;
     }
+
+    // Clear previous form data
+    clearEditFields();
+
+    // Set basic fields
     if (editIdField) editIdField.value = itemId;
-    if (editStaffIdField) editStaffIdField.value = tr.querySelector(".subjectteacher")?.getAttribute("data-staffid") || "";
-    const termId = tr.querySelector(".term")?.getAttribute("data-termid") || "";
-    const sessionId = tr.querySelector(".session")?.getAttribute("data-sessionid") || "";
-    
-    // Fetch subjects for this teacher, term, and session
-    axios.get(`/subjectteacher/${itemId}/subjects`)
+    if (editStaffIdField) {
+        const staffOption = editStaffIdField.querySelector(`option[value="${staffId}"]`);
+        if (staffOption) {
+            editStaffIdField.value = staffId;
+            console.log("Staff ID set to:", staffId);
+        } else {
+            console.error("Staff ID option not found in select:", staffId);
+        }
+    }
+
+    // Pre-select session
+    const sessionRadio = document.querySelector(`#edit-session-${sessionId}`);
+    if (sessionRadio) {
+        sessionRadio.checked = true;
+        console.log("Session radio set to:", sessionId);
+    } else {
+        console.error("Session radio button not found:", sessionId);
+    }
+
+    // Fetch subjects and terms via AJAX
+    axios.get(`/subjectteacher/${itemId}/subjects`, {
+        headers: { 'X-CSRF-TOKEN': csrfToken }
+    })
         .then(function (response) {
-            const subjectIds = response.data.subjectIds || [];
-            document.querySelectorAll('#editModal input[name="subjectid[]"]').forEach(cb => {
-                cb.checked = subjectIds.includes(parseInt(cb.value));
+            console.log("Subjects and terms response:", response.data);
+            if (!response.data.success) {
+                console.error("AJAX response unsuccessful:", response.data.message);
+                Swal.fire({
+                    position: "center",
+                    icon: "error",
+                    title: "Error",
+                    text: response.data.message || "Failed to fetch subjects and terms",
+                    showConfirmButton: true
+                });
+                return;
+            }
+
+            // Ensure subjectIds and termIds are arrays
+            const subjectIds = Array.isArray(response.data.subjectIds) ? response.data.subjectIds.map(Number) : [];
+            const termIds = Array.isArray(response.data.termIds) ? response.data.termIds.map(Number) : [];
+            console.log("Pre-selecting subjects:", subjectIds);
+            console.log("Pre-selecting terms:", termIds);
+
+            // Debug available checkboxes
+            const subjectCheckboxes = document.querySelectorAll('#editModal input[name="subjectid[]"]');
+            const termCheckboxes = document.querySelectorAll('#editModal input[name="termid[]"]');
+            console.log("Available subject checkboxes:", Array.from(subjectCheckboxes).map(cb => cb.value));
+            console.log("Available term checkboxes:", Array.from(termCheckboxes).map(cb => cb.value));
+
+            // Set subject checkboxes
+            subjectCheckboxes.forEach(cb => {
+                const value = Number(cb.value);
+                const isChecked = subjectIds.includes(value);
+                cb.checked = isChecked;
+                console.log(`Subject checkbox ${value}: ${isChecked ? "checked" : "unchecked"}`);
             });
-            document.querySelector(`#edit-term-${termId}`)?.setAttribute("checked", "checked");
-            document.querySelector(`#edit-session-${sessionId}`)?.setAttribute("checked", "checked");
+
+            // Set term checkboxes
+            termCheckboxes.forEach(cb => {
+                const value = Number(cb.value);
+                const isChecked = termIds.includes(value);
+                cb.checked = isChecked;
+                console.log(`Term checkbox ${value}: ${isChecked ? "checked" : "unchecked"}`);
+            });
+
+            // Open modal
             const modal = new bootstrap.Modal(document.getElementById("editModal"));
             modal.show();
-            console.log("Edit modal opened with subjects:", subjectIds);
+            console.log("Edit modal opened");
         })
         .catch(function (error) {
-            console.error("Error fetching subjects:", error);
+            console.error("Error fetching subjects and terms:", error.response?.status, error.response?.data || error.message);
             Swal.fire({
                 position: "center",
                 icon: "error",
-                title: "Error loading subjects",
-                text: error.response?.data?.message || "An error occurred",
+                title: "Error loading data",
+                text: error.response?.data?.message || "An error occurred while fetching subjects and terms",
                 showConfirmButton: true
             });
+            // Open modal anyway to allow editing with partial data
+            const modal = new bootstrap.Modal(document.getElementById("editModal"));
+            modal.show();
         });
 }
 
@@ -246,18 +323,16 @@ function clearAddFields() {
     if (addIdField) addIdField.value = "";
     if (addStaffIdField) addStaffIdField.value = "";
     document.querySelectorAll('#addSubjectTeacherModal input[name="subjectid[]"]').forEach(cb => cb.checked = false);
-    document.querySelectorAll('#addSubjectTeacherModal input[name="termid"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#addSubjectTeacherModal input[name="termid[]"]').forEach(cb => cb.checked = false);
     document.querySelectorAll('#addSubjectTeacherModal input[name="sessionid"]').forEach(cb => cb.checked = false);
 }
-
 function clearEditFields() {
     if (editIdField) editIdField.value = "";
     if (editStaffIdField) editStaffIdField.value = "";
     document.querySelectorAll('#editModal input[name="subjectid[]"]').forEach(cb => cb.checked = false);
-    document.querySelectorAll('#editModal input[name="termid"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#editModal input[name="termid[]"]').forEach(cb => cb.checked = false);
     document.querySelectorAll('#editModal input[name="sessionid"]').forEach(cb => cb.checked = false);
 }
-
 // Delete multiple subject teachers
 function deleteMultiple() {
     console.log("Delete multiple triggered");
@@ -363,17 +438,17 @@ if (addSubjectTeacherForm) {
         const formData = new FormData(addSubjectTeacherForm);
         const staffid = formData.get('staffid');
         const subjectids = formData.getAll('subjectid[]');
-        const termid = formData.get('termid');
+        const termids = formData.getAll('termid[]');
         const sessionid = formData.get('sessionid');
-        if (!staffid || subjectids.length === 0 || !termid || !sessionid) {
+        if (!staffid || subjectids.length === 0 || termids.length === 0 || !sessionid) {
             if (errorMsg) {
-                errorMsg.innerHTML = "Please select a teacher, at least one subject, a term, and a session";
+                errorMsg.innerHTML = "Please select a teacher, at least one subject, at least one term, and a session";
                 errorMsg.classList.remove("d-none");
             }
             return;
         }
-        console.log("Sending add request:", { staffid, subjectids, termid, sessionid });
-        axios.post('/subjectteacher', { staffid, subjectids, termid, sessionid })
+        console.log("Sending add request:", { staffid, subjectids, termids, sessionid });
+        axios.post('/subjectteacher', { staffid, subjectids, termid: termids, sessionid })
             .then(function (response) {
                 console.log("Add success:", response.data);
                 Swal.fire({
@@ -392,37 +467,42 @@ if (addSubjectTeacherForm) {
                     errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error adding subject teacher";
                     errorMsg.classList.remove("d-none");
                 }
-                // Reload if some records were processed (partial success)
                 if (error.response?.data?.success && error.response?.data?.processed > 0) {
                     setTimeout(() => window.location.reload(), 2000);
                 }
             });
     });
 }
-
 // Edit subject teacher
 const editSubjectTeacherForm = document.getElementById("edit-subjectteacher-form");
 if (editSubjectTeacherForm) {
     editSubjectTeacherForm.addEventListener("submit", function (e) {
         e.preventDefault();
-        console.log("Edit form submitted");
+        console.log("Edit form submitted at", new Date().toISOString());
         const errorMsg = document.getElementById("edit-alert-error-msg");
         if (errorMsg) errorMsg.classList.add("d-none");
         const formData = new FormData(editSubjectTeacherForm);
         const staffid = formData.get('staffid');
         const subjectids = formData.getAll('subjectid[]');
-        const termid = formData.get('termid');
+        const termids = formData.getAll('termid[]');
         const sessionid = formData.get('sessionid');
         const id = editIdField?.value;
-        if (!id || !staffid || subjectids.length === 0 || !termid || !sessionid) {
+        if (!id || !staffid || subjectids.length === 0 || termids.length === 0 || !sessionid) {
             if (errorMsg) {
-                errorMsg.innerHTML = "Please select a teacher, at least one subject, a term, and a session";
+                errorMsg.innerHTML = "Please select a teacher, at least one subject, at least one term, and a session";
                 errorMsg.classList.remove("d-none");
             }
             return;
         }
-        console.log("Sending edit request:", { id, staffid, subjectids, termid, sessionid });
-        axios.put(`/subjectteacher/${id}`, { staffid, subjectids, termid, sessionid })
+        console.log("Sending edit request:", { id, staffid, subjectids, termids, sessionid });
+        axios.post(`/subjectteacher/${id}`, {
+            _method: 'PUT',
+            staffid,
+            subjectids,
+            termid: termids,
+            sessionid,
+            _token: csrfToken
+        })
             .then(function (response) {
                 console.log("Edit success:", response.data);
                 Swal.fire({
@@ -436,12 +516,11 @@ if (editSubjectTeacherForm) {
                 window.location.reload();
             })
             .catch(function (error) {
-                console.error("Edit error:", error.response?.data || error);
+                console.error("Edit error:", error.response?.status, error.response?.data || error.message);
                 if (errorMsg) {
                     errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error updating subject teacher";
                     errorMsg.classList.remove("d-none");
                 }
-                // Reload if some records were processed (partial success)
                 if (error.response?.data?.success && error.response?.data?.processed > 0) {
                     setTimeout(() => window.location.reload(), 2000);
                 }

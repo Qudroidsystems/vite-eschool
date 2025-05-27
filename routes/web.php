@@ -81,14 +81,23 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('subjectclass', SubjectClassController::class);
     Route::delete('subjectclass/deletesubjectclass/{subjectclassid}', [SubjectClassController::class, 'deletesubjectclass'])->name('subjectclass.deletesubjectclass');
     Route::get('/subjectclass/assignments/{subjectteacherid}', [SubjectClassController::class, 'assignments'])->name('subjectclass.assignments');
+    Route::get('/subjectclass/assignments-by-teacher/{subjectTeacherId}', [SubjectClassController::class, 'assignmentsBySubjectTeacher'])->name('subjectclass.assignmentsByTeacher');
   
 
     Route::resource('staff', StaffController::class);
 
-    Route::resource('subjectteacher', SubjectTeacherController::class);
-    Route::get('subjectteacher/{subjectteacher}/subjects', [SubjectTeacherController::class, 'getSubjects'])->name('subjectteacher.subjects');
-    Route::get('/subjectteacherid/{subjectteacherid}', [SubjectTeacherController::class, 'deletesubjectteacher'])->name('subjectteacher.deletesubjectteacher');
-    Route::post('subjectteacherid', [SubjectTeacherController::class, 'updatesubjectteacher'])->name('subjectteacher.updatesubjectteacher');
+    // Route::resource('subjectteacher', SubjectTeacherController::class);
+    // Route::get('subjectteacher/{subjectteacher}/subjects', [SubjectTeacherController::class, 'getSubjects'])->name('subjectteacher.subjects');
+    // Route::get('/subjectteacherid/{subjectteacherid}', [SubjectTeacherController::class, 'deletesubjectteacher'])->name('subjectteacher.deletesubjectteacher');
+    // Route::post('subjectteacherid', [SubjectTeacherController::class, 'updatesubjectteacher'])->name('subjectteacher.updatesubjectteacher');
+    // Route::get('subjectteacher/{id}/subjects', [SubjectTeacherController::class, 'getSubjects'])->name('subjectteacher.subjects');
+
+
+
+    Route::resource('subjectteacher', SubjectTeacherController::class)->except(['update']);
+    Route::match(['put', 'post'], 'subjectteacher/{id}', [SubjectTeacherController::class, 'update'])->name('subjectteacher.update');
+    Route::get('subjectteacher/{id}/subjects', [SubjectTeacherController::class, 'getSubjects'])->name('subjectteacher.subjects');
+    Route::post('subjectteacher/delete', [SubjectTeacherController::class, 'deletesubjectteacher'])->name('subjectteacher.delete');
 
     Route::resource('classteacher', ClassTeacherController::class);
     Route::get('/classteacher/assignments/{staffId}/{termId}/{sessionId}', [ClassTeacherController::class, 'assignments'])->name('classteacher.assignments');
@@ -155,6 +164,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('schoolbilltermsession', SchoolBillTermSessionController::class);
     Route::get('/schoolbilltermsessionid/{schoolbilltermsessionid}', [SchoolBillTermSessionController::class, 'deleteschoolbilltermsession'])->name('schoolbilltermsession.deleteschoolbilltermsession');
     Route::post('schoolbilltermsessionbid', [SchoolBillTermSessionController::class, 'updateschoolbilltermsession'])->name('schoolbilltermsession.updateschoolbilltermsession');
+    Route::get('/schoolbilltermsession/{id}/related', 'App\Http\Controllers\SchoolBillTermSessionController@getRelated')->name('schoolbilltermsession.related');
 
     Route::resource('schoolpayment', SchoolPaymentController::class);
     Route::get('/termsession/{studentid}', [SchoolPaymentController::class, 'termSession'])->name('schoolpayment.termsession');

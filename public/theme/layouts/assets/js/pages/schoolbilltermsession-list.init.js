@@ -47,14 +47,14 @@ if (checkAll) {
 // Form fields
 const addIdField = document.getElementById("add-id-field");
 const addBillIdField = document.getElementById("bill_id");
-const addClassIdField = document.getElementById("class_id");
-const addTermIdField = document.getElementById("termid_id");
-const addSessionIdField = document.getElementById("session_id");
+const addClassIdField = document.getElementById("add-class-checkboxes");
+const addTermIdField = document.getElementById("add-term-checkboxes");
+const addSessionIdField = document.getElementById("add-session-radio");
 const editIdField = document.getElementById("edit-id-field");
 const editBillIdField = document.getElementById("edit-bill_id");
-const editClassIdField = document.getElementById("edit-class_id");
-const editTermIdField = document.getElementById("edit-termid_id");
-const editSessionIdField = document.getElementById("edit-session_id");
+const editClassIdField = document.getElementById("edit-class-checkboxes");
+const editTermIdField = document.getElementById("edit-term-checkboxes");
+const editSessionIdField = document.getElementById("edit-session-radio");
 
 // Checkbox handling
 function initializeCheckboxes() {
@@ -163,22 +163,133 @@ function handleRemoveClick(e, button) {
 // Edit school bill term session
 function handleEditClick(e, button) {
     e.preventDefault();
-    console.log("Edit button clicked");
+    console.log("Edit button clicked at", new Date().toISOString());
     const itemId = button.getAttribute("data-id");
     if (!itemId) {
         console.error("Item ID not found");
         return;
     }
+
+    // Clear previous form data
+    clearEditFields();
+
+    // Fallback to data attributes
+    const billId = button.getAttribute("data-bill_id") || "";
+    const classId = button.getAttribute("data-class_id") || "";
+    const termId = button.getAttribute("data-termid_id") || "";
+    const sessionId = button.getAttribute("data-session_id") || "";
+    console.log("Fallback data attributes:", { billId, classId, termId, sessionId });
+
+    // Set fallback values
     if (editIdField) editIdField.value = itemId;
-    if (editBillIdField) editBillIdField.value = button.getAttribute("data-bill_id") || "";
-    if (editClassIdField) editClassIdField.value = button.getAttribute("data-class_id") || "";
-    if (editTermIdField) editTermIdField.value = button.getAttribute("data-termid_id") || "";
-    if (editSessionIdField) editSessionIdField.value = button.getAttribute("data-session_id") || "";
+    if (editBillIdField) editBillIdField.value = billId;
+    if (classId && editClassIdField) {
+        const classCheckbox = document.querySelector(`#edit-class-${classId}`);
+        if (classCheckbox) {
+            classCheckbox.checked = true;
+            console.log("Class checkbox set to:", classId);
+        }
+    }
+    if (termId && editTermIdField) {
+        const termCheckbox = document.querySelector(`#edit-term-${termId}`);
+        if (termCheckbox) {
+            termCheckbox.checked = true;
+            console.log("Term checkbox set to:", termId);
+        }
+    }
+    if (sessionId && editSessionIdField) {
+        const sessionRadio = document.querySelector(`#edit-session-${sessionId}`);
+        if (sessionRadio) {
+            sessionRadio.checked = true;
+            console.log("Session radio set to:", sessionId);
+        }
+    }
+
+    // Fetch related records via AJAX
+    axios.get(`/schoolbilltermsession/${itemId}/related`, {
+        headers: { 'X-CSRF-TOKEN': csrfToken }
+    })
+        .then(function (response) {
+            console.log("Related records response:", response.data);
+            if (!response.data.success) {
+                console.error("AJAX response unsuccessful:", response.data.message);
+                Swal.fire({
+                    position: "center",
+                    icon: "error",
+                    title: "Error",
+                    text: response.data.message || "Failed to fetch related records",
+                    showConfirmButton: true
+                });
+                openEditModal();
+                return;
+            }
+
+            const { bill_id, class_ids = [], term_ids = [], session_id } = response.data;
+            console.log("Pre-selecting:", { bill_id, class_ids, term_ids, session_id });
+
+            // Update fields with AJAX data
+            if (editBillIdField && bill_id) {
+                editBillIdField.value = bill_id;
+                console.log("Bill ID set to:", bill_id);
+            }
+
+            // Set class checkboxes
+            const classCheckboxes = document.querySelectorAll('#edit-class-checkboxes .class-checkbox');
+            console.log("Available class checkboxes:", Array.from(classCheckboxes).map(cb => cb.value));
+            classCheckboxes.forEach(cb => {
+                const value = Number(cb.value);
+                const isChecked = Array.isArray(class_ids) && class_ids.includes(value);
+                cb.checked = isChecked;
+                console.log(`Class checkbox ${value}: ${isChecked ? "checked" : "unchecked"}`);
+            });
+
+            // Set term checkboxes
+            const termCheckboxes = document.querySelectorAll('#edit-term-checkboxes .term-checkbox');
+            console.log("Available term checkboxes:", Array.from(termCheckboxes).map(cb => cb.value));
+            termCheckboxes.forEach(cb => {
+                const value = Number(cb.value);
+                const isChecked = Array.isArray(term_ids) && term_ids.includes(value);
+                cb.checked = isChecked;
+                console.log(`Term checkbox ${value}: ${isChecked ? "checked" : "unchecked"}`);
+            });
+
+            // Set session radio
+            if (session_id) {
+                const sessionRadio = document.querySelector(`#edit-session-${session_id}`);
+                if (sessionRadio) {
+                    sessionRadio.checked = true;
+                    console.log("Session radio set to:", session_id);
+                } else {
+                    console.error("Session radio button not found:", session_id);
+                }
+            }
+
+            // Open modal
+            openEditModal();
+        })
+        .catch(function (error) {
+            console.error("Error fetching related records:", error.response?.status, error.response?.data || error.message);
+            Swal.fire({
+                position: "center",
+                icon: "error",
+                title: "Error loading data",
+                text: error.response?.data?.message || "An error occurred while fetching related records",
+                showConfirmButton: true
+            });
+            // Open modal with fallback data
+            openEditModal();
+        });
+}
+
+function openEditModal() {
     try {
-        const modal = new bootstrap.Modal(document.getElementById("editSchoolBillTermSessionModal"));
+        const modalElement = document.getElementById("editSchoolBillTermSessionModal");
+        if (!modalElement) {
+            throw new Error("Edit modal element not found");
+        }
+        const modal = new bootstrap.Modal(modalElement);
         modal.show();
         console.log("Edit modal opened");
-        updateEditFormStatus();
     } catch (error) {
         console.error("Error opening edit modal:", error);
         Swal.fire({
@@ -191,32 +302,35 @@ function handleEditClick(e, button) {
     }
 }
 
-// Update edit form status
-function updateEditFormStatus() {
-    [editBillIdField, editClassIdField, editTermIdField, editSessionIdField].forEach(field => {
-        if (field && field.value) {
-            field.querySelectorAll('option').forEach(option => {
-                option.selected = option.value === field.value;
-            });
-        }
-    });
-}
-
 // Clear form fields
 function clearAddFields() {
     if (addIdField) addIdField.value = "";
     if (addBillIdField) addBillIdField.value = "";
-    if (addClassIdField) addClassIdField.value = "";
-    if (addTermIdField) addTermIdField.value = "";
-    if (addSessionIdField) addSessionIdField.value = "";
+    if (addClassIdField) {
+        addClassIdField.querySelectorAll('.class-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('add-class-select-all').checked = false;
+    }
+    if (addTermIdField) {
+        addTermIdField.querySelectorAll('.term-checkbox').forEach(cb => cb.checked = false);
+    }
+    if (addSessionIdField) {
+        addSessionIdField.querySelectorAll('.session-radio').forEach(radio => radio.checked = false);
+    }
 }
 
 function clearEditFields() {
     if (editIdField) editIdField.value = "";
     if (editBillIdField) editBillIdField.value = "";
-    if (editClassIdField) editClassIdField.value = "";
-    if (editTermIdField) editTermIdField.value = "";
-    if (editSessionIdField) editSessionIdField.value = "";
+    if (editClassIdField) {
+        editClassIdField.querySelectorAll('.class-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('edit-class-select-all').checked = false;
+    }
+    if (editTermIdField) {
+        editTermIdField.querySelectorAll('.term-checkbox').forEach(cb => cb.checked = false);
+    }
+    if (editSessionIdField) {
+        editSessionIdField.querySelectorAll('.session-radio').forEach(radio => radio.checked = false);
+    }
 }
 
 // Delete multiple school bill term sessions
@@ -274,15 +388,15 @@ function deleteMultiple() {
     });
 }
 
-// Initialize List.js for client-side filtering on current page
+// Initialize List.js for client-side filtering
 let schoolBillTermSessionList;
 const schoolBillTermSessionListContainer = document.getElementById('schoolBillTermSessionList');
 if (schoolBillTermSessionListContainer && document.querySelectorAll('#schoolBillTermSessionList tbody tr').length > 0) {
     try {
         schoolBillTermSessionList = new List('schoolBillTermSessionList', {
             valueNames: ['sn', 'schoolbill', 'schoolclass', 'schoolterm', 'createdBy', 'updated_at'],
-            page: 1000, // Large page size to include all rows on current page
-            pagination: false // Disable List.js pagination to use Laravel's
+            page: 1000,
+            pagination: false
         });
         console.log("List.js initialized");
     } catch (error) {
@@ -302,7 +416,7 @@ if (schoolBillTermSessionList) {
     });
 }
 
-// Filter data (client-side for current page)
+// Filter data
 function filterData() {
     const searchInput = document.querySelector(".search-box input.search");
     const searchValue = searchInput?.value || "";
@@ -320,20 +434,25 @@ if (addSchoolBillTermSessionForm) {
         console.log("Add form submitted");
         const errorMsg = document.getElementById("alert-error-msg");
         if (errorMsg) errorMsg.classList.add("d-none");
+
         const formData = new FormData(addSchoolBillTermSessionForm);
         const data = {
             bill_id: formData.get('bill_id'),
-            class_id: formData.get('class_id'),
-            termid_id: formData.get('termid_id'),
+            class_id: formData.getAll('class_id[]').map(Number),
+            termid_id: formData.getAll('termid_id[]').map(Number),
             session_id: formData.get('session_id')
         };
-        if (!data.bill_id || !data.class_id || !data.termid_id || !data.session_id) {
+
+        console.log("Form data:", data);
+
+        if (!data.bill_id || data.class_id.length === 0 || data.termid_id.length === 0 || !data.session_id) {
             if (errorMsg) {
-                errorMsg.innerHTML = "Please fill all required fields";
+                errorMsg.innerHTML = "Please fill all required fields: School Bill, at least one Class, at least one Term, and Session.";
                 errorMsg.classList.remove("d-none");
             }
             return;
         }
+
         console.log("Sending add request:", data);
         axios.post('/schoolbilltermsession', data)
             .then(function (response) {
@@ -346,6 +465,10 @@ if (addSchoolBillTermSessionForm) {
                     timer: 2000,
                     showCloseButton: true
                 });
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById("addSchoolBillTermSessionModal"));
+                if (modal) modal.hide();
+                clearAddFields();
                 window.location.reload();
             })
             .catch(function (error) {
@@ -366,21 +489,26 @@ if (editSchoolBillTermSessionForm) {
         console.log("Edit form submitted");
         const errorMsg = document.getElementById("edit-alert-error-msg");
         if (errorMsg) errorMsg.classList.add("d-none");
+
         const formData = new FormData(editSchoolBillTermSessionForm);
         const id = editIdField?.value;
         const data = {
             bill_id: formData.get('bill_id'),
-            class_id: formData.get('class_id'),
-            termid_id: formData.get('termid_id'),
+            class_id: formData.getAll('class_id[]').map(Number),
+            termid_id: formData.getAll('termid_id[]').map(Number),
             session_id: formData.get('session_id')
         };
-        if (!id || !data.bill_id || !data.class_id || !data.termid_id || !data.session_id) {
+
+        console.log("Edit form data:", { id, ...data });
+
+        if (!id || !data.bill_id || data.class_id.length === 0 || data.termid_id.length === 0 || !data.session_id) {
             if (errorMsg) {
-                errorMsg.innerHTML = "Please fill all required fields";
+                errorMsg.innerHTML = "Please fill all required fields: School Bill, at least one Class, at least one Term, and Session.";
                 errorMsg.classList.remove("d-none");
             }
             return;
         }
+
         console.log("Sending edit request:", { id, ...data });
         axios.put(`/schoolbilltermsession/${id}`, data)
             .then(function (response) {
@@ -393,6 +521,10 @@ if (editSchoolBillTermSessionForm) {
                     timer: 2000,
                     showCloseButton: true
                 });
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById("editSchoolBillTermSessionModal"));
+                if (modal) modal.hide();
+                clearEditFields();
                 window.location.reload();
             })
             .catch(function (error) {
@@ -408,12 +540,13 @@ if (editSchoolBillTermSessionForm) {
 // Modal events
 const addModal = document.getElementById("addSchoolBillTermSessionModal");
 if (addModal) {
-    addModal.addEventListener("show.bs.modal", function (e) {
+    addModal.addEventListener("show.bs.modal", function () {
         console.log("Add modal show event");
         const modalLabel = document.getElementById("addSchoolBillTermSessionModalLabel");
         const addBtn = document.getElementById("add-btn");
         if (modalLabel) modalLabel.innerHTML = "Add School Bill Term Session";
         if (addBtn) addBtn.innerHTML = "Add School Bill Term Session";
+        clearAddFields();
     });
     addModal.addEventListener("hidden.bs.modal", function () {
         console.log("Add modal hidden");
@@ -464,7 +597,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     schoolBillTermSessionList.reIndex();
                     filterData();
                 }
-            }, 500); // Delay to ensure DOM is updated
+            }, 500);
         });
     });
 });
