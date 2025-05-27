@@ -15,6 +15,11 @@ class SchoolBillTermSessionPermissionTableSeeder extends Seeder
     {
         $permissions = [
         //    'Super role',
+           'View school-bills',
+           'Create school-bills',
+           'Update school-bills',
+           'Delete school-bills',   
+
            'View school-bill-for-term-session',
            'Create school-bill-for-term-session',
            'Update school-bill-for-term-session',
@@ -25,6 +30,11 @@ class SchoolBillTermSessionPermissionTableSeeder extends Seeder
             $str = $permission;
             $delimiter = ' ';
             $words = explode($delimiter, $str);
+
+            foreach ($words as $word) {
+                if($word == "school-bills")
+                Permission::Create(['name' => $permission,'title'=>"School bills  Management"]);
+            }
 
             foreach ($words as $word) {
                 if($word == "school-bill-for-term-session")
