@@ -17,7 +17,7 @@ class SchoolBillTermSessionController extends Controller
     {
         $this->middleware('permission:View school-bill-for-term-session|Create school-bill-for-term-session|Update school-bill-for-term-session|Delete school-bill-for-term-session', ['only' => ['index', 'store']]);
         $this->middleware('permission:Create school-bill-for-term-session', ['only' => ['create', 'store']]);
-        $this->middleware('permission:Updates school-bill-for-term-session', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:Update school-bill-for-term-session', ['only' => ['edit', 'update']]);
         $this->middleware('permission:Delete school-bill-for-term-session', ['only' => ['destroy', 'deleteschoolbilltermsession']]);
     }
 
