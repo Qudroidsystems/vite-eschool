@@ -37,11 +37,7 @@ if (checkAll) {
                 row.classList.remove("table-active");
             }
         });
-        const checkedCount = document.querySelectorAll('tbody input[name="chk_child"]:checked').length;
-        var removeActions = document.getElementById("remove-actions");
-        if (removeActions) {
-            removeActions.classList.toggle("d-none", checkedCount === 0);
-        }
+        updateRemoveActionsVisibility();
     };
 }
 
@@ -54,6 +50,24 @@ var editIdField = document.getElementById("edit-id-field");
 var editSubjectField = document.getElementById("edit-subject");
 var editSubjectCodeField = document.getElementById("edit-subject_code");
 var editRemarkField = document.getElementById("edit-remark");
+
+// Update remove actions visibility
+function updateRemoveActionsVisibility() {
+    const checkedCount = document.querySelectorAll('tbody input[name="chk_child"]:checked').length;
+    var removeActions = document.getElementById("remove-actions");
+    if (removeActions) {
+        removeActions.classList.toggle("d-none", checkedCount === 0);
+    }
+}
+
+// Update checkAll state
+function updateCheckAllState() {
+    const allCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]');
+    const checkedCount = document.querySelectorAll('tbody input[name="chk_child"]:checked').length;
+    if (checkAll) {
+        checkAll.checked = allCheckboxes.length > 0 && allCheckboxes.length === checkedCount;
+    }
+}
 
 // Checkbox handling
 function ischeckboxcheck() {
@@ -71,15 +85,64 @@ function handleCheckboxChange(e) {
     } else {
         row.classList.remove("table-active");
     }
-    const checkedCount = document.querySelectorAll('tbody input[name="chk_child"]:checked').length;
-    var removeActions = document.getElementById("remove-actions");
-    if (removeActions) {
-        removeActions.classList.toggle("d-none", checkedCount === 0);
+    updateRemoveActionsVisibility();
+    updateCheckAllState();
+}
+
+// Update no results display
+function updateNoResultsDisplay() {
+    const tbody = document.querySelector("#kt_roles_view_table tbody");
+    const rowCount = document.querySelectorAll("#kt_roles_view_table tbody tr:not(.noresult)").length;
+    
+    // Remove existing no results row
+    const existingNoResult = document.querySelector("#kt_roles_view_table tbody .noresult");
+    if (existingNoResult) {
+        existingNoResult.closest('tr').remove();
     }
-    const allCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]');
-    if (checkAll) {
-        checkAll.checked = allCheckboxes.length > 0 && allCheckboxes.length === checkedCount;
+    
+    if (rowCount === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="noresult text-center py-4">No results found</td></tr>';
     }
+}
+
+// Refresh table data
+function refreshTableData() {
+    console.log("Refreshing table data...");
+    const currentUrl = new URL(window.location.href);
+    const searchParams = currentUrl.searchParams;
+    
+    axios.get(currentUrl.pathname, {
+        params: Object.fromEntries(searchParams),
+        headers: { 
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    }).then(function (response) {
+        // If the response contains HTML (partial view), update the table
+        if (response.data.html) {
+            document.querySelector("#kt_roles_view_table tbody").innerHTML = response.data.html;
+            document.getElementById("pagination-element").outerHTML = response.data.pagination;
+            
+            // Update count display
+            document.querySelector("#pagination-element .text-muted").innerHTML =
+                `Showing <span class="fw-semibold">${response.data.count}</span> of <span class="fw-semibold">${response.data.total}</span> Results`;
+        } else {
+            // Fallback: reload the page
+            window.location.reload();
+        }
+        
+        // Re-initialize components
+        if (subjectList) {
+            subjectList.reIndex();
+        }
+        ischeckboxcheck();
+        updateNoResultsDisplay();
+        
+    }).catch(function (error) {
+        console.error("Error refreshing table data:", error);
+        // Fallback: reload the page
+        window.location.reload();
+    });
 }
 
 // Event delegation for edit, remove, and pagination buttons
@@ -111,12 +174,7 @@ function fetchPage(url) {
         ischeckboxcheck();
         document.querySelector("#pagination-element .text-muted").innerHTML =
             `Showing <span class="fw-semibold">${response.data.count}</span> of <span class="fw-semibold">${response.data.total}</span> Results`;
-        // Update noresult display
-        const noResult = document.querySelector(".noresult");
-        const rowCount = document.querySelectorAll("#kt_roles_view_table tbody tr").length;
-        if (noResult) {
-            noResult.style.display = rowCount === 0 ? "block" : "none";
-        }
+        updateNoResultsDisplay();
     }).catch(function (error) {
         console.error("Error fetching page:", error);
         Swal.fire({
@@ -139,10 +197,34 @@ function handleRemoveClick(e) {
 
     var deleteButton = document.getElementById("delete-record");
     if (deleteButton) {
+        // Remove existing event listeners
+        deleteButton.replaceWith(deleteButton.cloneNode(true));
+        deleteButton = document.getElementById("delete-record");
+        
         deleteButton.onclick = function () {
             console.log("Sending DELETE request for subject:", itemId);
             axios.delete(deleteUrl).then(function (response) {
                 console.log("Delete subject success:", response.data);
+                
+                // Remove row from DOM immediately
+                const row = document.querySelector(`tr[data-id="${itemId}"]`);
+                if (row) {
+                    row.remove();
+                }
+                
+                // Remove from List.js if initialized
+                if (subjectList) {
+                    subjectList.remove("id", itemId);
+                    subjectList.reIndex();
+                }
+                
+                // Update UI components
+                updateNoResultsDisplay();
+                updateRemoveActionsVisibility();
+                updateCheckAllState();
+                
+                modal.hide();
+                
                 Swal.fire({
                     position: "center",
                     icon: "success",
@@ -151,29 +233,20 @@ function handleRemoveClick(e) {
                     timer: 2000,
                     showCloseButton: true
                 });
-                if (subjectList) {
-                    subjectList.remove("id", itemId);
-                }
-                const row = document.querySelector(`tr[data-id="${itemId}"]`);
-                if (row) row.remove();
-                modal.hide();
-                // Update noresult display
-                const noResult = document.querySelector(".noresult");
-                const rowCount = document.querySelectorAll("#kt_roles_view_table tbody tr").length;
-                if (noResult) {
-                    noResult.style.display = rowCount === 0 ? "block" : "none";
-                } else if (rowCount === 0) {
-                    document.querySelector("#kt_roles_view_table tbody").innerHTML =
-                        '<tr><td colspan="7" class="noresult" style="display: block;">No results found</td></tr>';
-                }
-                // Fetch previous page if table is empty and pagination exists
-                if (rowCount === 0 && document.querySelector("#pagination-element .pagination-prev")) {
+                
+                // Check if we need to fetch previous page
+                const rowCount = document.querySelectorAll("#kt_roles_view_table tbody tr:not(.noresult)").length;
+                if (rowCount === 0 && document.querySelector("#pagination-element .pagination-prev:not(.disabled)")) {
                     const prevUrl = document.querySelector("#pagination-element .pagination-prev").getAttribute("data-url");
-                    console.log("Fetching previous page:", prevUrl);
-                    fetchPage(prevUrl);
+                    if (prevUrl) {
+                        console.log("Fetching previous page:", prevUrl);
+                        fetchPage(prevUrl);
+                    }
                 }
+                
             }).catch(function (error) {
                 console.error("Delete subject error:", error.response);
+                modal.hide();
                 Swal.fire({
                     position: "center",
                     icon: "error",
@@ -181,7 +254,6 @@ function handleRemoveClick(e) {
                     text: error.response?.data?.message || "An error occurred",
                     showConfirmButton: true
                 });
-                modal.hide();
             });
         };
     }
@@ -229,62 +301,137 @@ function clearEditFields() {
 // Delete multiple subjects
 function deleteMultiple() {
     const ids_array = [];
-    const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
+    const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+    
+    // Collect checked IDs
     checkboxes.forEach((checkbox) => {
-        if (checkbox.checked) {
-            const id = checkbox.closest("tr").querySelector(".id").getAttribute("data-id");
-            ids_array.push(id);
-        }
+        const id = checkbox.closest("tr").querySelector(".id").getAttribute("data-id");
+        ids_array.push(id);
     });
-    if (ids_array.length > 0) {
-        Swal.fire({
-            title: "Are you sure?",
-            text: "You won't be able to revert this!",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonClass: "btn btn-primary w-xs me-2 mt-2",
-            cancelButtonClass: "btn btn-danger w-xs mt-2",
-            confirmButtonText: "Yes, delete it!",
-            buttonsStyling: false,
-            showCloseButton: true
-        }).then((result) => {
-            if (result.value) {
-                Promise.all(ids_array.map((id) => {
-                    return axios.delete(`/subject/${id}`);
-                })).then(() => {
-                    Swal.fire({
-                        title: "Deleted!",
-                        text: "Your subjects have been deleted.",
-                        icon: "success",
-                        confirmButtonClass: "btn btn-info w-xs mt-2",
-                        buttonsStyling: false
-                    });
-                    window.location.reload();
-                }).catch((error) => {
-                    Swal.fire({
-                        title: "Error!",
-                        text: error.response?.data?.message || "Failed to delete subjects",
-                        icon: "error",
-                        confirmButtonClass: "btn btn-info w-xs mt-2",
-                        buttonsStyling: false
-                    });
-                });
-            }
-        });
-    } else {
+
+    console.log("Selected IDs for deletion:", ids_array);
+
+    if (ids_array.length === 0) {
+        console.warn("No checkboxes selected");
         Swal.fire({
             title: "Please select at least one checkbox",
+            icon: "info",
             confirmButtonClass: "btn btn-info",
             buttonsStyling: false,
             showCloseButton: true
         });
+        return;
     }
+
+    Swal.fire({
+        title: "Are you sure?",
+        text: "You won't be able to revert this!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonClass: "btn btn-primary w-xs me-2 mt-2",
+        cancelButtonClass: "btn btn-danger w-xs mt-2",
+        confirmButtonText: "Yes, delete it!",
+        buttonsStyling: false,
+        showCloseButton: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            console.log("Confirmed deletion, sending requests...");
+            Promise.allSettled(
+                ids_array.map((id) => {
+                    const row = document.querySelector(`tr[data-id="${id}"]`);
+                    const deleteUrl = row ? row.getAttribute("data-url") : `/subject/${id}`;
+                    console.log(`Deleting subject ID ${id} with URL: ${deleteUrl}`);
+                    return axios.delete(deleteUrl, {
+                        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+                    });
+                })
+            ).then((results) => {
+                console.log("Deletion results:", results);
+                let successCount = 0;
+                let errorMessages = [];
+
+                // Process deletion results and remove successful ones from DOM immediately
+                results.forEach((result, index) => {
+                    const id = ids_array[index];
+                    if (result.status === "fulfilled") {
+                        successCount++;
+                        // Remove row from DOM
+                        const row = document.querySelector(`tr[data-id="${id}"]`);
+                        if (row) {
+                            console.log(`Removing row for ID ${id} from DOM`);
+                            row.remove();
+                        }
+                        // Remove from List.js
+                        if (subjectList) {
+                            subjectList.remove("id", id);
+                        }
+                    } else {
+                        console.error(`Failed to delete ID ${id}:`, result.reason);
+                        errorMessages.push(`ID ${id}: ${result.reason.response?.data?.message || "Unknown error"}`);
+                    }
+                });
+
+                // Reindex List.js and update UI
+                if (subjectList) {
+                    subjectList.reIndex();
+                }
+                
+                // Update UI components
+                updateNoResultsDisplay();
+                updateRemoveActionsVisibility();
+                updateCheckAllState();
+
+                // Check if we need to fetch previous page
+                const rowCount = document.querySelectorAll("#kt_roles_view_table tbody tr:not(.noresult)").length;
+                if (rowCount === 0 && document.querySelector("#pagination-element .pagination-prev:not(.disabled)")) {
+                    const prevUrl = document.querySelector("#pagination-element .pagination-prev").getAttribute("data-url");
+                    if (prevUrl) {
+                        console.log("Table empty, fetching previous page:", prevUrl);
+                        fetchPage(prevUrl);
+                    }
+                }
+
+                // Show feedback to user
+                if (successCount === ids_array.length) {
+                    console.log("All deletions successful");
+                    Swal.fire({
+                        title: "Deleted!",
+                        text: `${successCount} subject(s) deleted successfully.`,
+                        icon: "success",
+                        confirmButtonClass: "btn btn-info w-xs mt-2",
+                        buttonsStyling: false,
+                        showCloseButton: true
+                    });
+                } else {
+                    console.warn("Partial deletion failure");
+                    Swal.fire({
+                        title: "Partial Success",
+                        text: `${successCount} subject(s) deleted. ${errorMessages.length} failed: ${errorMessages.join(", ")}`,
+                        icon: "warning",
+                        confirmButtonClass: "btn btn-info w-xs mt-2",
+                        buttonsStyling: false,
+                        showCloseButton: true
+                    });
+                }
+            }).catch((error) => {
+                console.error("Unexpected error in deleteMultiple:", error);
+                Swal.fire({
+                    title: "Error!",
+                    text: error.response?.data?.message || "Failed to delete subjects",
+                    icon: "error",
+                    confirmButtonClass: "btn btn-info w-xs mt-2",
+                    buttonsStyling: false,
+                    showCloseButton: true
+                });
+            });
+        }
+    });
 }
 
 // Initialize List.js for client-side filtering
 var subjectList;
 var subjectListContainer = document.getElementById('subjectList');
-if (subjectListContainer && document.querySelectorAll('#subjectList tbody tr').length > 0) {
+if (subjectListContainer && document.querySelectorAll('#subjectList tbody tr:not(.noresult)').length > 0) {
     try {
         subjectList = new List('subjectList', {
             valueNames: ['sn', 'subject', 'subjectcode', 'remark', 'datereg'],
@@ -299,14 +446,18 @@ if (subjectListContainer && document.querySelectorAll('#subjectList tbody tr').l
     console.warn("No subjects available for List.js initialization");
 }
 
-// Update no results message
+// Update no results message for search
 if (subjectList) {
     subjectList.on('searchComplete', function () {
         var noResultRow = document.querySelector('.noresult');
         if (subjectList.visibleItems.length === 0) {
-            noResultRow.style.display = 'block';
+            if (noResultRow) {
+                noResultRow.style.display = 'block';
+            }
         } else {
-            noResultRow.style.display = 'none';
+            if (noResultRow) {
+                noResultRow.style.display = 'none';
+            }
         }
     });
 }
@@ -356,7 +507,15 @@ if (addSubjectForm) {
                 timer: 2000,
                 showCloseButton: true
             });
-            window.location.reload();
+            
+            // Close modal and clear form
+            var modal = bootstrap.Modal.getInstance(document.getElementById("addSubjectModal"));
+            if (modal) modal.hide();
+            clearAddFields();
+            
+            // Refresh table data instead of full page reload
+            setTimeout(() => refreshTableData(), 500);
+            
         }).catch(function (error) {
             console.error("Add Subject Error:", error.response);
             if (errorMsg) {
@@ -403,7 +562,15 @@ if (editSubjectForm) {
                 timer: 2000,
                 showCloseButton: true
             });
-            window.location.reload();
+            
+            // Close modal and clear form
+            var modal = bootstrap.Modal.getInstance(document.getElementById("editModal"));
+            if (modal) modal.hide();
+            clearEditFields();
+            
+            // Refresh table data instead of full page reload
+            setTimeout(() => refreshTableData(), 500);
+            
         }).catch(function (error) {
             console.error("Edit Subject Error:", error.response);
             if (errorMsg) {
@@ -418,7 +585,7 @@ if (editSubjectForm) {
 var addModal = document.getElementById("addSubjectModal");
 if (addModal) {
     addModal.addEventListener("show.bs.modal", function (e) {
-        if (e.relatedTarget.classList.contains("add-btn")) {
+        if (e.relatedTarget && e.relatedTarget.classList.contains("add-btn")) {
             var modalLabel = document.getElementById("exampleModalLabel");
             var addBtn = document.getElementById("add-btn");
             if (modalLabel) modalLabel.innerHTML = "Add Subject";

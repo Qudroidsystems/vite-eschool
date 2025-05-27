@@ -173,39 +173,7 @@ function handleEditClick(e, button) {
     // Clear previous form data
     clearEditFields();
 
-    // Fallback to data attributes
-    const billId = button.getAttribute("data-bill_id") || "";
-    const classId = button.getAttribute("data-class_id") || "";
-    const termId = button.getAttribute("data-termid_id") || "";
-    const sessionId = button.getAttribute("data-session_id") || "";
-    console.log("Fallback data attributes:", { billId, classId, termId, sessionId });
-
-    // Set fallback values
-    if (editIdField) editIdField.value = itemId;
-    if (editBillIdField) editBillIdField.value = billId;
-    if (classId && editClassIdField) {
-        const classCheckbox = document.querySelector(`#edit-class-${classId}`);
-        if (classCheckbox) {
-            classCheckbox.checked = true;
-            console.log("Class checkbox set to:", classId);
-        }
-    }
-    if (termId && editTermIdField) {
-        const termCheckbox = document.querySelector(`#edit-term-${termId}`);
-        if (termCheckbox) {
-            termCheckbox.checked = true;
-            console.log("Term checkbox set to:", termId);
-        }
-    }
-    if (sessionId && editSessionIdField) {
-        const sessionRadio = document.querySelector(`#edit-session-${sessionId}`);
-        if (sessionRadio) {
-            sessionRadio.checked = true;
-            console.log("Session radio set to:", sessionId);
-        }
-    }
-
-    // Fetch related records via AJAX
+    // Fetch related records for the same bill_id and session_id
     axios.get(`/schoolbilltermsession/${itemId}/related`, {
         headers: { 'X-CSRF-TOKEN': csrfToken }
     })
@@ -220,16 +188,21 @@ function handleEditClick(e, button) {
                     text: response.data.message || "Failed to fetch related records",
                     showConfirmButton: true
                 });
-                openEditModal();
                 return;
             }
 
-            const { bill_id, class_ids = [], term_ids = [], session_id } = response.data;
+            // Extract data with proper defaults and type checking
+            const bill_id = response.data.bill_id || null;
+            const class_ids = Array.isArray(response.data.class_ids) ? response.data.class_ids : [];
+            const term_ids = Array.isArray(response.data.term_ids) ? response.data.term_ids : [];
+            const session_id = response.data.session_id || null;
+
             console.log("Pre-selecting:", { bill_id, class_ids, term_ids, session_id });
 
-            // Update fields with AJAX data
-            if (editBillIdField && bill_id) {
-                editBillIdField.value = bill_id;
+            // Set fields
+            if (editIdField) editIdField.value = itemId;
+            if (editBillIdField) {
+                editBillIdField.value = bill_id || "";
                 console.log("Bill ID set to:", bill_id);
             }
 
@@ -254,18 +227,29 @@ function handleEditClick(e, button) {
             });
 
             // Set session radio
-            if (session_id) {
-                const sessionRadio = document.querySelector(`#edit-session-${session_id}`);
-                if (sessionRadio) {
-                    sessionRadio.checked = true;
-                    console.log("Session radio set to:", session_id);
-                } else {
-                    console.error("Session radio button not found:", session_id);
-                }
+            const sessionRadio = document.querySelector(`#edit-session-${session_id}`);
+            if (sessionRadio) {
+                sessionRadio.checked = true;
+                console.log("Session radio set to:", session_id);
+            } else {
+                console.error("Session radio button not found:", session_id);
             }
 
             // Open modal
-            openEditModal();
+            try {
+                const modal = new bootstrap.Modal(document.getElementById("editSchoolBillTermSessionModal"));
+                modal.show();
+                console.log("Edit modal opened");
+            } catch (error) {
+                console.error("Error opening edit modal:", error);
+                Swal.fire({
+                    position: "center",
+                    icon: "error",
+                    title: "Error opening edit modal",
+                    text: "Please try again or contact support.",
+                    showConfirmButton: true
+                });
+            }
         })
         .catch(function (error) {
             console.error("Error fetching related records:", error.response?.status, error.response?.data || error.message);
@@ -276,30 +260,14 @@ function handleEditClick(e, button) {
                 text: error.response?.data?.message || "An error occurred while fetching related records",
                 showConfirmButton: true
             });
-            // Open modal with fallback data
-            openEditModal();
+            // Open modal anyway with empty form
+            try {
+                const modal = new bootstrap.Modal(document.getElementById("editSchoolBillTermSessionModal"));
+                modal.show();
+            } catch (modalError) {
+                console.error("Error opening modal after fetch error:", modalError);
+            }
         });
-}
-
-function openEditModal() {
-    try {
-        const modalElement = document.getElementById("editSchoolBillTermSessionModal");
-        if (!modalElement) {
-            throw new Error("Edit modal element not found");
-        }
-        const modal = new bootstrap.Modal(modalElement);
-        modal.show();
-        console.log("Edit modal opened");
-    } catch (error) {
-        console.error("Error opening edit modal:", error);
-        Swal.fire({
-            position: "center",
-            icon: "error",
-            title: "Error opening edit modal",
-            text: "Please try again or contact support.",
-            showConfirmButton: true
-        });
-    }
 }
 
 // Clear form fields
@@ -308,7 +276,8 @@ function clearAddFields() {
     if (addBillIdField) addBillIdField.value = "";
     if (addClassIdField) {
         addClassIdField.querySelectorAll('.class-checkbox').forEach(cb => cb.checked = false);
-        document.getElementById('add-class-select-all').checked = false;
+        const selectAll = document.getElementById('add-class-select-all');
+        if (selectAll) selectAll.checked = false;
     }
     if (addTermIdField) {
         addTermIdField.querySelectorAll('.term-checkbox').forEach(cb => cb.checked = false);
@@ -323,7 +292,8 @@ function clearEditFields() {
     if (editBillIdField) editBillIdField.value = "";
     if (editClassIdField) {
         editClassIdField.querySelectorAll('.class-checkbox').forEach(cb => cb.checked = false);
-        document.getElementById('edit-class-select-all').checked = false;
+        const selectAll = document.getElementById('edit-class-select-all');
+        if (selectAll) selectAll.checked = false;
     }
     if (editTermIdField) {
         editTermIdField.querySelectorAll('.term-checkbox').forEach(cb => cb.checked = false);
@@ -362,6 +332,7 @@ function deleteMultiple() {
         buttonsStyling: false,
         showCloseButton: true
     }).then((result) => {
+       
         if (result.isConfirmed) {
             Promise.all(ids_array.map((id) => axios.delete(`/schoolbilltermsession/${id}`)))
                 .then(() => {
