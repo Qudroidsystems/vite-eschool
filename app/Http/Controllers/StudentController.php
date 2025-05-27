@@ -4,23 +4,23 @@ namespace App\Http\Controllers;
 
 use App\Imports\StudentsImport;
 use App\Models\Broadsheet;
-use App\Models\ParentRegistration;
+use App\Models\Parentregistration;
 use App\Models\PromotionStatus;
 use App\Models\Schoolclass;
 use App\Models\Schoolsession;
 use App\Models\Schoolterm;
 use App\Models\Student;
 use App\Models\StudentBatchModel;
-use App\Models\StudentBillPaymentBook;
 use App\Models\Studentclass;
 use App\Models\Studenthouse;
 use App\Models\Studentpersonalityprofile;
 use App\Models\Studentpicture;
 use App\Models\SubjectRegistrationStatus;
 use App\Traits\ImageManager as TraitsImageManager;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
@@ -39,62 +39,488 @@ class StudentController extends Controller
         $this->middleware("permission:student-bulk-uploadsave", [ "only" => ["bulkuploadsave"],]);
     }
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+    public function index(Request $request)
     {
-        //
+          // Page title
+          $pagetitle = "User Management";
 
-        $student = Student::leftJoin("parentRegistration", "parentRegistration.id", "=", "studentRegistration.id")
-            ->leftJoin("studentpicture", "studentpicture.studentid", "=", "studentRegistration.id")
-            ->leftJoin("studenthouses", "studenthouses.studentid", "=", "studentRegistration.id")
-            ->leftJoin("schoolhouses", "schoolhouses.id", "=", "studenthouses.schoolhouse")
-            ->get([
-                "studentRegistration.id as id",
-                "studentRegistration.admissionNo as admissionNo",
-                "studentRegistration.registeredBy as registeredBy",
-                "studentRegistration.firstname as firstname",
-                "schoolhouses.house as house",
-                "studentRegistration.lastname as lastname",
-                "studentRegistration.dateofbirth as dateofbirth",
-                "studentRegistration.age as age",
-                "studentRegistration.gender as gender",
-                "studentRegistration.updated_at as updated_at",
-                "studentpicture.picture as picture",
-            ]);
+        $data = Student::leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select([
+                'studentRegistration.id',
+                'studentRegistration.admissionNo',
+                'studentRegistration.firstname',
+                'studentRegistration.lastname',
+                'studentRegistration.gender',
+                'studentRegistration.statusId',
+                'studentRegistration.created_at',
+                'studentpicture.picture',
+                'schoolclass.schoolclass',
+                'schoolarm.arm',
+                'studentclass.schoolclassid'
+            ])
+            ->latest()
+            ->paginate(10);
 
         $schoolclass = Schoolclass::all();
         $schoolterm = Schoolterm::all();
         $schoolsession = Schoolsession::all();
 
-        return view("student.index")
-            ->with("student", $student)
-            ->with("schoolclass", $schoolclass)
-            ->with("schoolterm", $schoolterm)
-            ->with("schoolsession", $schoolsession);
+        $status_counts = Student::groupBy('statusId')
+            ->selectRaw("CASE WHEN statusId = 1 THEN 'Old Student' ELSE 'New Student' END as student_status, COUNT(*) as student_count")
+            ->pluck('student_count', 'student_status')
+            ->toArray();
+        $status_counts = [
+            'Old Student' => $status_counts['Old Student'] ?? 0,
+            'New Student' => $status_counts['New Student'] ?? 0
+        ];
+
+        return view('student.index', compact('data', 'schoolclass', 'schoolterm', 'schoolsession', 'status_counts','pagetitle'))
+            ->with('i', ($request->input('page', 1) - 1) * 10);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function create()
     {
-        $schoolclass = Schoolclass::leftJoin("schoolarm", "schoolarm.id", "=", "schoolclass.arm")
-            ->get(["schoolclass.id as id", "schoolclass.schoolclass as schoolclass", "schoolarm.arm as arm"])
-            ->sortBy("sdesc");
+        $schoolclass = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->get(['schoolclass.id as id', 'schoolclass.schoolclass as schoolclass', 'schoolarm.arm as arm'])
+            ->sortBy('sdesc');
         $schoolterm = Schoolterm::all();
         $schoolsession = Schoolsession::all();
 
-        return view("student.create")
-            ->with("schoolclass", $schoolclass)
-            ->with("schoolterm", $schoolterm)
-            ->with("schoolsession", $schoolsession);
+        return view('student.create')
+            ->with('schoolclass', $schoolclass)
+            ->with('schoolterm', $schoolterm)
+            ->with('schoolsession', $schoolsession);
     }
+
+    public function store(Request $request): JsonResponse
+    {
+        Log::debug('Creating new student', $request->all());
+
+        try {
+            // Load states and LGAs for validation
+            $statesLgas = json_decode(file_get_contents(public_path('states_lgas.json')), true);
+            $states = array_column($statesLgas, 'state');
+            $lgas = collect($statesLgas)->pluck('lgas', 'state')->toArray();
+
+            $validator = Validator::make($request->all(), [
+                'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'admissionNo' => 'required|unique:studentRegistration,admissionNo',
+                'title' => 'required|in:Mr,Mrs,Miss',
+                'firstname' => 'required|string|max:255',
+                'lastname' => 'required|string|max:255',
+                'gender' => 'required|in:Male,Female',
+                'nationality' => 'required|string|max:255',
+                'state' => ['required', 'string', 'max:255', function ($attribute, $value, $fail) use ($states) {
+                    if (!in_array($value, $states)) {
+                        $fail('The selected state is invalid.');
+                    }
+                }],
+                'local' => ['required', 'string', 'max:255', function ($attribute, $value, $fail) use ($request, $lgas) {
+                    $state = $request->input('state');
+                    if (!isset($lgas[$state]) || !in_array($value, $lgas[$state])) {
+                        $fail('The selected local government is invalid for the chosen state.');
+                    }
+                }],
+                'religion' => 'required|in:Christianity,Islam,Others',
+                'dateofbirth' => 'required|date|before:today',
+                'bloodgroup' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+                'genotype' => 'nullable|in:AA,AS,SS,AC',
+                'schoolclassid' => 'required|exists:schoolclass,id',
+                'termid' => 'required|exists:schoolterm,id',
+                'sessionid' => 'required|exists:schoolsession,id',
+                'statusId' => 'required|in:1,2'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first()
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            $student = new Student();
+            $student->admissionNo = $request->admissionNo;
+            $student->title = $request->title; // Corrected from 'tittle'
+            $student->firstname = $request->firstname;
+            $student->lastname = $request->lastname;
+            $student->gender = $request->gender;
+            $student->nationality = $request->nationality;
+            $student->state = $request->state;
+            $student->local = $request->local;
+            $student->religion = $request->religion;
+            $student->dateofbirth = $request->dateofbirth;
+            $student->bloodgroup = $request->bloodgroup ?: null;
+            $student->genotype = $request->genotype ?: null;
+            $student->statusId = $request->statusId;
+            $student->registeredBy = auth()->user()->id;
+            $student->save();
+
+            $studentId = $student->id;
+
+            $studentClass = new Studentclass();
+            $studentClass->studentId = $studentId;
+            $studentClass->schoolclassid = $request->schoolclassid;
+            $studentClass->termid = $request->termid;
+            $studentClass->sessionid = $request->sessionid;
+            $studentClass->save();
+
+            $promotion = new PromotionStatus();
+            $promotion->studentId = $studentId;
+            $promotion->schoolclassid = $request->schoolclassid;
+            $promotion->termid = $request->termid;
+            $promotion->sessionid = $request->sessionid;
+            $promotion->promotionStatus = 'PROMOTED';
+            $promotion->classstatus = 'CURRENT';
+            $promotion->save();
+
+            $parent = new Parentregistration();
+            $parent->studentId = $studentId;
+            $parent->save();
+
+            $picture = new Studentpicture();
+            $picture->studentid = $studentId;
+            if ($request->hasFile('avatar')) {
+                $filename = $studentId . '_' . $request->file('avatar')->getClientOriginalName();
+                $path = $request->file('avatar')->storeAs('public/images/studentavatar', $filename);
+                $picture->picture = str_replace('public/', '', $path);
+            }
+            $picture->save();
+
+            $studenthouse = new Studenthouse();
+            $studenthouse->studentid = $studentId;
+            $studenthouse->termid = $request->termid;
+            $studenthouse->sessionid = $request->sessionid;
+            $studenthouse->save();
+
+            $studentpersonalityprofile = new Studentpersonalityprofile();
+            $studentpersonalityprofile->studentid = $studentId;
+            $studentpersonalityprofile->schoolclassid = $request->schoolclassid;
+            $studentpersonalityprofile->termid = $request->termid;
+            $studentpersonalityprofile->sessionid = $request->sessionid;
+            $studentpersonalityprofile->save();
+
+            DB::commit();
+
+            Log::debug("Student created successfully: ID {$studentId}");
+            return response()->json([
+                'success' => true,
+                'message' => 'Student created successfully'
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error creating student: {$e->getMessage()}\nStack trace: {$e->getTraceAsString()}");
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create student: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function edit($id): JsonResponse
+    {
+        try {
+            $student = Student::leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+                ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+                ->select([
+                    'studentRegistration.id',
+                    'studentRegistration.admissionNo',
+                    'studentRegistration.title',
+                    'studentRegistration.firstname',
+                    'studentRegistration.lastname',
+                    'studentRegistration.gender',
+                    'studentRegistration.nationality',
+                    'studentRegistration.state',
+                    'studentRegistration.local',
+                    'studentRegistration.religion',
+                    'studentRegistration.dateofbirth',
+                    'studentRegistration.bloodgroup',
+                    'studentRegistration.genotype',
+                    'studentRegistration.statusId',
+                    'studentpicture.picture',
+                    'studentclass.schoolclassid',
+                    'studentclass.termid',
+                    'studentclass.sessionid'
+                ])
+                ->where('studentRegistration.id', $id)
+                ->firstOrFail();
+
+            return response()->json([
+                'success' => true,
+                'student' => $student
+            ], 200);
+
+        } catch (\Exception $e) {
+            Log::error("Error fetching student: {$e->getMessage()}\nStack trace: {$e->getTraceAsString()}");
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch student: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function update(Request $request, $id): JsonResponse
+    {
+        Log::debug("Updating student ID {$id}", $request->all());
+
+        try {
+            // Load states and LGAs for validation
+            $statesLgas = json_decode(file_get_contents(public_path('states_lgas.json')), true);
+            $states = array_column($statesLgas, 'state');
+            $lgas = collect($statesLgas)->pluck('lgas', 'state')->toArray();
+
+            $validator = Validator::make($request->all(), [
+                'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'admissionNo' => "required|unique:studentRegistration,admissionNo,{$id}",
+                'title' => 'required|in:Mr,Mrs,Miss',
+                'firstname' => 'required|string|max:255',
+                'lastname' => 'required|string|max:255',
+                'gender' => 'required|in:Male,Female',
+                'nationality' => 'required|string|max:255',
+                'state' => ['required', 'string', 'max:255', function ($attribute, $value, $fail) use ($states) {
+                    if (!in_array($value, $states)) {
+                        $fail('The selected state is invalid.');
+                    }
+                }],
+                'local' => ['required', 'string', 'max:255', function ($attribute, $value, $fail) use ($request, $lgas) {
+                    $state = $request->input('state');
+                    if (!isset($lgas[$state]) || !in_array($value, $lgas[$state])) {
+                        $fail('The selected local government is invalid for the chosen state.');
+                    }
+                }],
+                'religion' => 'required|in:Christianity,Islam,Others',
+                'dateofbirth' => 'required|date|before:today',
+                'bloodgroup' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+                'genotype' => 'nullable|in:AA,AS,SS,AC',
+                'schoolclassid' => 'required|exists:schoolclass,id',
+                'termid' => 'required|exists:schoolterm,id',
+                'sessionid' => 'required|exists:schoolsession,id',
+                'statusId' => 'required|in:1,2'
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first()
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            $student = Student::findOrFail($id);
+            $student->admissionNo = $request->admissionNo;
+            $student->title = $request->title; // Corrected from 'tittle'
+            $student->firstname = $request->firstname;
+            $student->lastname = $request->lastname;
+            $student->gender = $request->gender;
+            $student->nationality = $request->nationality;
+            $student->state = $request->state;
+            $student->local = $request->local;
+            $student->religion = $request->religion;
+            $student->dateofbirth = $request->dateofbirth;
+            $student->bloodgroup = $request->bloodgroup ?: null;
+            $student->genotype = $request->genotype ?: null;
+            $student->statusId = $request->statusId;
+            $student->registeredBy = auth()->user()->id;
+            $student->save();
+
+            Studentclass::updateOrCreate(
+                ['studentId' => $id],
+                [
+                    'schoolclassid' => $request->schoolclassid,
+                    'termid' => $request->termid,
+                    'sessionid' => $request->sessionid
+                ]
+            );
+
+            if ($request->hasFile('avatar')) {
+                $picture = Studentpicture::where('studentid', $id)->first();
+                if ($picture && $picture->picture) {
+                    Storage::delete('public/' . $picture->picture);
+                }
+                $filename = $id . '_' . $request->file('avatar')->getClientOriginalName();
+                $path = $request->file('avatar')->storeAs('public/images/studentavatar', $filename);
+                Studentpicture::updateOrCreate(
+                    ['studentid' => $id],
+                    ['picture' => str_replace('public/', '', $path)]
+                );
+            }
+
+            DB::commit();
+
+            Log::debug("Student updated successfully: ID {$id}");
+            return response()->json([
+                'success' => true,
+                'message' => 'Student updated successfully'
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error updating student: {$e->getMessage()}\nStack trace: {$e->getTraceAsString()}");
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update student: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroy($id): JsonResponse
+    {
+        Log::debug("Deleting student ID {$id}");
+
+        try {
+            DB::beginTransaction();
+
+            $student = Student::findOrFail($id);
+            $picture = Studentpicture::where('studentid', $id)->first();
+            if ($picture && $picture->picture) {
+                Storage::delete('public/' . $picture->picture);
+            }
+
+            Studentclass::where('studentId', $id)->delete();
+            PromotionStatus::where('studentId', $id)->delete();
+            Parentregistration::where('studentId', $id)->delete();
+            Studentpicture::where('studentid', $id)->delete();
+            Broadsheet::where('studentId', $id)->delete();
+            SubjectRegistrationStatus::where('studentId', $id)->delete();
+            Studenthouse::where('studentid', $id)->delete();
+            Studentpersonalityprofile::where('studentid', $id)->delete();
+            $student->delete();
+
+            DB::commit();
+
+            Log::debug("Student deleted successfully: ID {$id}");
+            return response()->json([
+                'success' => true,
+                'message' => 'Student deleted successfully'
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error deleting student: {$e->getMessage()}\nStack trace: {$e->getTraceAsString()}");
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete student: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function destroyMultiple(Request $request): JsonResponse
+    {
+        Log::debug('Bulk deleting students', $request->all());
+
+        try {
+            $ids = $request->validate(['ids' => 'required|array|exists:studentRegistration,id'])['ids'];
+            DB::beginTransaction();
+
+            foreach ($ids as $id) {
+                $picture = Studentpicture::where('studentid', $id)->first();
+                if ($picture && $picture->picture) {
+                    Storage::delete('public/' . $picture->picture);
+                }
+
+                Studentclass::where('studentId', $id)->delete();
+                PromotionStatus::where('studentId', $id)->delete();
+                Parentregistration::where('studentId', $id)->delete();
+                Studentpicture::where('studentid', $id)->delete();
+                Broadsheet::where('studentId', $id)->delete();
+                SubjectRegistrationStatus::where('studentId', $id)->delete();
+                Studenthouse::where('studentid', $id)->delete();
+                Studentpersonalityprofile::where('studentid', $id)->delete();
+            }
+
+            Student::whereIn('id', $ids)->delete();
+
+            DB::commit();
+
+            Log::debug('Bulk deleted students: ' . implode(',', $ids));
+            return response()->json([
+                'success' => true,
+                'message' => 'Students deleted successfully'
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Bulk delete error: {$e->getMessage()}\nStack trace: {$e->getTraceAsString()}");
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete students: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+ 
+
+
+
+    public function deletestudent(Request $request)
+    {
+        Student::find($s)->delete();
+        Studentclass::where("studentId", $s)->delete();
+        Studenthouse::where("studentid", $s)->delete();
+        Promotionstatus::where("studentId", $s)->delete();
+        ParentRegistration::where("studentId", $s)->delete();
+        Studentpicture::where("studentid", $s)->delete();
+        Broadsheet::where("studentId", $s)->delete();
+        SubjectRegistrationStatus::where("studentId", $s)->delete();
+        // check data deleted or not
+        if ($s) {
+            $success = true;
+            $message = "Student has been removed";
+        } else {
+            $success = true;
+            $message = "Student not found";
+        }
+
+        //  return response
+        return response()->json([
+            "success" => $success,
+            "message" => $message,
+        ]);
+    }
+
+    public function deletestudentbatch(Request $request)
+    {
+        // StudentBatchModel::find($request->studentbatchid)->delete();
+        $batch = StudentBatchModel::where("id", $request->studentbatchid)
+            ->pluck("id")
+            ->first();
+        $sc = Student::where("batchid", $batch)->pluck("id");
+
+        foreach ($sc as $s) {
+            Studentclass::where("studentId", $s)->delete();
+            Studenthouse::where("studentid", $s)->delete();
+            PromotionStatus::where("studentId", $s)->delete();
+            ParentRegistration::where("studentId", $s)->delete();
+            Studentpicture::where("studentid", $s)->delete();
+            Broadsheet::where("studentId", $s)->delete();
+            SubjectRegistrationStatus::where("studentId", $s)->delete();
+            Studentpersonalityprofile::where("studentId", $s)->delete();
+        }
+        StudentBatchModel::where("id", $request->studentbatchid)->delete();
+        Student::where("batchid", $batch)->delete();
+        //check data deleted or not
+        if ($request->studentbatchid) {
+            $success = true;
+            $message = "Batch Upload has been removed";
+        } else {
+            $success = true;
+            $message = "Batch Upload not found";
+        }
+
+        //  return response
+        return response()->json([
+            "success" => $success,
+            "message" => $message,
+        ]);
+    }
+
+
 
     public function bulkupload()
     {
@@ -199,455 +625,5 @@ class StudentController extends Controller
                     ->with("status", implode(" ", $fail));
             }
         }
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        $validator = Validator::make(
-            $request->all(),
-            [
-                "avatar" => "required",
-                "admissionNo" => "required",
-                "title" => "required",
-                "firstname" => "required",
-                "lastname" => "required",
-                "othername" => "required",
-                "home_address" => "required",
-                "gender" => "required",
-                "home_address2" => "required",
-                "dateofbirth" => "required",
-                "age1" => "required",
-                "placeofbirth" => "required",
-                "nationality" => "required",
-                "religion" => "required",
-                "last_school" => "required",
-                "last_class" => "required",
-                "schoolclassid" => "required",
-                "termid" => "required",
-                "sessionid" => "required",
-                "statusId" => "required",
-            ],
-            [
-                "schoolclassid.required" => "Select Class Please!",
-                "termid.required" => "Select a School Term Please!",
-                "sessionid.required" => "Select a School Sessions Please!",
-                "avatar.required" => "Upload a picture Please!",
-                "placeofbirth.required" => "Place of Birth is required!",
-            ]
-        );
-
-        if ($validator->fails()) {
-            return redirect()
-                ->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
-
-        $studentbiodata = new Student();
-        $studentclass = new Studentclass();
-        $promotion = new Promotionstatus();
-        $parent = new ParentRegistration();
-        $picture = new Studentpicture();
-        $studenthouse = new Studenthouse();
-        $studentpersonalityprofile = new Studentpersonalityprofile();
-        $broadsheet = new Broadsheet();
-
-        $studentcheck = Student::where("admissionNo", $request->admissionNo)->exists();
-
-        if ($studentcheck) {
-            return redirect()
-                ->back()
-                ->with("status", "Ooops! Record already exist! OR Adminssion Number Registered already.");
-        } else {
-            //for student biodata...
-            $studentbiodata->admissionNo = $request->admissionNo;
-            $studentbiodata->tittle = $request->title;
-            $studentbiodata->firstname = $request->firstname;
-            $studentbiodata->lastname = $request->lastname;
-            $studentbiodata->othername = $request->othername;
-            $studentbiodata->gender = $request->gender;
-            $studentbiodata->home_address = $request->home_address;
-            $studentbiodata->home_address2 = $request->home_address;
-            $studentbiodata->dateofbirth = $request->dateofbirth;
-            $studentbiodata->age = $request->age1;
-            $studentbiodata->placeofbirth = $request->placeofbirth;
-            $studentbiodata->religion = $request->religion;
-            $studentbiodata->nationlity = $request->nationality;
-            $studentbiodata->state = $request->state;
-            $studentbiodata->local = $request->local;
-            $studentbiodata->last_school = $request->last_school;
-            $studentbiodata->last_class = $request->last_class;
-            $studentbiodata->registeredBy = $request->registeredBy;
-            $studentbiodata->statusId = $request->statusId;
-            $studentbiodata->save();
-            $studentId = $studentbiodata->id;
-
-            // for parent....
-            $parent->studentId = $studentId;
-            $parent->father_title = "";
-            $parent->mother_title = "";
-            $parent->father = "";
-            $parent->mother = "";
-            $parent->father_phone = "";
-            $parent->mother_phone = "";
-            $parent->parent_address = "";
-            $parent->office_address = "";
-            $parent->father_occupation = "";
-            $parent->religion = "";
-            $parent->save();
-
-            //student class registration for all the terms
-            //first term
-            $studentclass = new Studentclass();
-            $studentclass->studentId = $studentId;
-            $studentclass->schoolclassid = $request->schoolclassid;
-            $studentclass->termid = "1";
-            $studentclass->sessionid = $request->sessionid;
-            $studentclass->save();
-
-            //second term
-            $studentclass2 = new Studentclass();
-            $studentclass2->studentId = $studentId;
-            $studentclass2->schoolclassid = $request->schoolclassid;
-            $studentclass2->termid = "2";
-            $studentclass2->sessionid = $request->sessionid;
-            $studentclass2->save();
-
-            //third term
-            $studentclass3 = new Studentclass();
-            $studentclass3->studentId = $studentId;
-            $studentclass3->schoolclassid = $request->schoolclassid;
-            $studentclass3->termid = "3";
-            $studentclass3->sessionid = $request->sessionid;
-            $studentclass3->save();
-
-            //echo $studentId;
-            //for class history...
-            $promotion->studentId = $studentId;
-            $promotion->schoolclassid = $request->schoolclassid;
-            $promotion->termid = $request->termid;
-            $promotion->sessionid = $request->sessionid;
-            $promotion->promotionStatus = "PROMOTED";
-            $promotion->classstatus = "CURRENT";
-            $promotiondata = $promotion->save();
-            if (!$promotiondata) {
-                echo "something went wrong for student cass promotion data";
-            }
-
-            //for student picture...
-            $picture->studentid = $studentId;
-            $picture->save();
-
-            $request->validate([
-                "avatar" => "required|image|mimes:jpeg,png,jpg,gif,svg|max:2048",
-            ]);
-            $path = storage_path("images/studentavatar");
-            !is_dir($path) && mkdir($path, 0775, true);
-
-            if ($file = $request->file("avatar")) {
-                //$filename = $request->firstname.'_'. $request->lastname;
-                $filename = $studentId . "_" . $file->getClientOriginalName();
-                if (Storage::disk("public")->exists("images/studentavatar/" . $filename)) {
-                    Storage::disk("public")->delete("images/studentavatar/" . $filename);
-                    $this->studentuploads($file, $path, $studentId);
-                } else {
-                    $this->studentuploads($file, $path, $studentId);
-                    // dd('File does not exist.');
-                }
-
-                //updateOrCreate
-                Studentpicture::updateOrCreate(["studentid" => $studentId], ["picture" => $filename]);
-            }
-
-            //for student house...
-            $studenthouse->studentid = $studentId;
-            $studenthouse->termid = $request->termid;
-            $studenthouse->sessionid = $request->sessionid;
-            $studenthouse->save();
-
-            //for student personality profile...
-            $studentpersonalityprofile->studentid = $studentId;
-            $studentpersonalityprofile->schoolclassid = $request->schoolclassid;
-            $studentpersonalityprofile->termid = $request->termid;
-            $studentpersonalityprofile->sessionid = $request->sessionid;
-            $studentpersonalityprofile->save();
-
-            if ($studentbiodata != null) {
-                return redirect()
-                    ->back()
-                    ->with("success", "Student Details captured  Successfully!!");
-            } else {
-                return redirect()
-                    ->back()
-                    ->with("status", "Something went wrong!");
-            }
-        }
-    }
-
-
-    public function getStudents()
-    {
-        $students = Student::select('id', 'admissionNo', 'firstname', 'lastname')
-                    ->where('statusId', 1)
-                    ->orderBy('admissionNo')
-                    ->get();
-                    
-        return response()->json($students);
-    }
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        $student = Student::where("studentRegistration.id", $id)
-            ->leftJoin("parentRegistration", "parentRegistration.studentId", "=", "studentRegistration.id")
-            ->leftJoin("studentpicture", "studentpicture.studentid", "=", "studentRegistration.id")
-            ->leftJoin("studentclass", "studentclass.studentId", "=", "studentRegistration.id")
-            ->leftJoin("schoolclass", "schoolclass.id", "=", "studentclass.schoolclassid")
-            ->leftJoin("schoolterm", "schoolterm.id", "=", "studentclass.termid")
-            ->leftJoin("schoolsession", "schoolsession.id", "=", "studentclass.sessionid")
-            ->select([
-                "studentRegistration.id as sid",
-                "studentRegistration.admissionNo as admissionNo",
-                "studentRegistration.tittle as title", // Note: "tittle" might be a typo; should it be "title"?
-                "studentRegistration.firstname as firstname",
-                "studentRegistration.lastname as lastname",
-                "studentRegistration.othername as othername",
-                "studentRegistration.dateofbirth as dob",
-                "studentRegistration.age as age",
-                "studentRegistration.gender as gender",
-                "studentRegistration.placeofbirth as pob",
-                "studentRegistration.home_address as homeadd",
-                "studentRegistration.home_address2 as homeadd2",
-                "studentRegistration.religion as religion",
-                "studentRegistration.nationlity as nationality", // Typo: "nationlity" should be "nationality"
-                "studentRegistration.state as state",
-                "studentRegistration.local as local",
-                "studentRegistration.last_school as lastsch",
-                "studentRegistration.last_class as lastclass",
-                "studentRegistration.updated_at as updated_at",
-                "studentpicture.picture as picture", // Fixed: You had an empty alias here
-                "studentclass.schoolclassid as sclassid",
-                "schoolclass.schoolclass as schoolclass",
-                "schoolclass.arm as arm",
-                "schoolterm.term as term",
-                "studentclass.termid as termid",
-                "studentclass.sessionid as sessionid",
-                "schoolsession.session as session",
-            ])
-            ->firstOrFail(); // Use firstOrFail() to get a single record or throw a 404 if not found
-    
-        $schoolclass = Schoolclass::all();
-        $schoolterm = Schoolterm::all();
-        
-        $schoolsession = Schoolsession::all();
-    
-        return view("student.edit")
-            ->with("student", $student)
-            ->with("schoolclass", $schoolclass)
-            ->with("schoolterm", $schoolterm)
-            ->with("schoolsession", $schoolsession);
-    }
-
-    public function setting($id)
-    {
-    }
-
-    public function overview($id)
-    {
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-  public function update(Request $request, $sid)
-    {
-             // Validate all fields
-             $request->validate([
-                 'admissionNo' => 'required|string|max:255',
-                 'title' => 'required|string|in:Mr,Mrs,Miss',
-                 'firstname' => 'required|string|max:255',
-                 'lastname' => 'required|string|max:255',
-                 'othername' => 'nullable|string|max:255',
-                 'gender' => 'required|in:Male,Female',
-                 'home_address' => 'required|string|max:255',
-                 'home_address2' => 'nullable|string|max:255',
-                 'dateofbirth' => 'required|date',
-                 'age1' => 'required|string|max:255',
-                 'placeofbirth' => 'required|string|max:255',
-                 'nationality' => 'required|string|max:255',
-                 'state' => 'required|string|max:255',
-                 'local' => 'required|string|max:255',
-                 'religion' => 'required|string|in:Christianity,Islam,Others',
-                 'last_school' => 'nullable|string|max:255',
-                 'last_class' => 'nullable|string|max:255',
-                 'schoolclassid' => 'required|exists:schoolclass,id',
-                 'termid' => 'required|exists:schoolterm,id',
-                 'sessionid' => 'required|exists:schoolsession,id',
-                 'statusId' => 'required|in:1,2',
-                 'avatar' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
-             ]);
-     
-             // Find the student
-             $student = Student::where('id', $sid)->firstOrFail();
-     
-             // Update student details
-             $student->update([
-                 'admissionNo' => $request->admissionNo,
-                 'tittle' => $request->title, // Adjust column name if it's 'title'
-                 'firstname' => $request->firstname,
-                 'lastname' => $request->lastname,
-                 'othername' => $request->othername,
-                 'gender' => $request->gender,
-                 'home_address' => $request->home_address,
-                 'home_address2' => $request->home_address2,
-                 'dateofbirth' => $request->dateofbirth,
-                 'age1' => $request->age1,
-                 'placeofbirth' => $request->placeofbirth,
-                 'nationlity' => $request->nationality, // Adjust if 'nationality'
-                 'state' => $request->state,
-                 'local' => $request->local,
-                 'religion' => $request->religion,
-                 'last_school' => $request->last_school,
-                 'last_class' => $request->last_class,
-                 'registeredBy' => auth()->user()->id,
-             ]);
-     
-             // Handle avatar upload
-             if ($request->hasFile('avatar')) {
-                 if ($student->picture) {
-                     Storage::delete('public/' . $student->picture);
-                 }
-                 $path = $request->file('avatar')->store('public/student_pictures');
-                 $picturePath = str_replace('public/', '', $path);
-                 StudentPicture::updateOrCreate(
-                     ['studentid' => $student->id],
-                     ['picture' => $picturePath]
-                 );
-                 $student->picture = $picturePath; // Virtual attribute
-             }
-     
-             // Update student class
-             StudentClass::updateOrCreate(
-                 ['studentId' => $student->id],
-                 [
-                     'schoolclassid' => $request->schoolclassid,
-                     'termid' => $request->termid,
-                     'sessionid' => $request->sessionid,
-                     'statusId' => $request->statusId,
-                 ]
-             );
-     
-             return redirect()->route('student.index')->with('success', 'Student record updated successfully.');
-    
-     }
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
-
-        Student::find($id)->delete();
-        Studentclass::where("studentId", $id)->delete();
-        Promotionstatus::where("studentId", $id)->delete();
-        ParentRegistration::where("studentId", $id)->delete();
-        Studentpicture::where("studentid", $id)->delete();
-        Broadsheet::where("studentId", $id)->delete();
-        SubjectRegistrationStatus::where("studentId", $id)->delete();
-
-        return redirect()
-            ->back()
-            ->with("success", "Student data deleted Successfully!!");
-    }
-
-
-
-
-    public function deletestudent(Request $request)
-    {
-        Student::find($s)->delete();
-        Studentclass::where("studentId", $s)->delete();
-        Studenthouse::where("studentid", $s)->delete();
-        Promotionstatus::where("studentId", $s)->delete();
-        ParentRegistration::where("studentId", $s)->delete();
-        Studentpicture::where("studentid", $s)->delete();
-        Broadsheet::where("studentId", $s)->delete();
-        SubjectRegistrationStatus::where("studentId", $s)->delete();
-        // check data deleted or not
-        if ($s) {
-            $success = true;
-            $message = "Student has been removed";
-        } else {
-            $success = true;
-            $message = "Student not found";
-        }
-
-        //  return response
-        return response()->json([
-            "success" => $success,
-            "message" => $message,
-        ]);
-    }
-
-    public function deletestudentbatch(Request $request)
-    {
-        // StudentBatchModel::find($request->studentbatchid)->delete();
-        $batch = StudentBatchModel::where("id", $request->studentbatchid)
-            ->pluck("id")
-            ->first();
-        $sc = Student::where("batchid", $batch)->pluck("id");
-
-        foreach ($sc as $s) {
-            Studentclass::where("studentId", $s)->delete();
-            Studenthouse::where("studentid", $s)->delete();
-            PromotionStatus::where("studentId", $s)->delete();
-            ParentRegistration::where("studentId", $s)->delete();
-            Studentpicture::where("studentid", $s)->delete();
-            Broadsheet::where("studentId", $s)->delete();
-            SubjectRegistrationStatus::where("studentId", $s)->delete();
-            Studentpersonalityprofile::where("studentId", $s)->delete();
-        }
-        StudentBatchModel::where("id", $request->studentbatchid)->delete();
-        Student::where("batchid", $batch)->delete();
-        //check data deleted or not
-        if ($request->studentbatchid) {
-            $success = true;
-            $message = "Batch Upload has been removed";
-        } else {
-            $success = true;
-            $message = "Batch Upload not found";
-        }
-
-        //  return response
-        return response()->json([
-            "success" => $success,
-            "message" => $message,
-        ]);
     }
 }

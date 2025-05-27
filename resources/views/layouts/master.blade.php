@@ -88,6 +88,10 @@
    @if (Route::is('schoolbilltermsession.*'))
         @include('layouts.pages-assets.css.schoolbilltermsession-list-css')
    @endif  
+
+   @if (Route::is('student.*'))
+        @include('layouts.pages-assets.css.student-list-css')
+   @endif  
 </head>
 
 <body>
@@ -222,7 +226,7 @@
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarStudentmanagement">
                                 <ul class="nav nav-sm flex-column">
-                                    @can('View Student')
+                                    @can('View student')
                                          <li class="nav-item">
                                                <a href="{{ route('student.index') }}" class="nav-link" data-key="t-products">All Students</a>
                                          </li>
@@ -1724,6 +1728,9 @@
 
       @if (Route::is('schoolbilltermsession.*'))
             @include('layouts.pages-assets.js.schoolbilltermsession-list-js')
+      @endif
+      @if (Route::is('student.*'))
+             @include('layouts.pages-assets.js.student-list-js')
       @endif
       </body>
       
