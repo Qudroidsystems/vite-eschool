@@ -15,10 +15,10 @@ class SchoolBillTermSessionController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:View schoolbill|Create schoolbill|Update schoolbill|Delete schoolbill', ['only' => ['index', 'store']]);
-        $this->middleware('permission:Create schoolbill', ['only' => ['create', 'store']]);
-        $this->middleware('permission:Update schoolbill', ['only' => ['edit', 'update']]);
-        $this->middleware('permission:Delete schoolbill', ['only' => ['destroy', 'deleteschoolbilltermsession']]);
+        $this->middleware('permission:View school-bill-for-term-session|Create school-bill-for-term-session|Update school-bill-for-term-session|Delete school-bill-for-term-session', ['only' => ['index', 'store']]);
+        $this->middleware('permission:Create school-bill-for-term-session', ['only' => ['create', 'store']]);
+        $this->middleware('permission:Updates school-bill-for-term-session', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:Delete school-bill-for-term-session', ['only' => ['destroy', 'deleteschoolbilltermsession']]);
     }
 
     public function index()

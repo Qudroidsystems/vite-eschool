@@ -85,6 +85,7 @@ class PermissionTableSeeder extends Seeder
            'Update subject-class',
            'Delete subject-class',
 
+
         //    'usermanagement-link',
         //    'staffmanagement-link',
         //    'basicsettingsmanagement-link',

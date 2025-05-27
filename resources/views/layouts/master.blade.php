@@ -454,14 +454,13 @@
                                           <li class="nav-item">
                                             <a href="{{ route('schoolbill.index') }}" class="nav-link" data-key="t-list-view">Bills</a>
                                           </li>
+                                    @endcan  
+                                    @can('View school-bill-for-term-session')
+                                           <li class="nav-item">
+                                                <a href="{{ route('schoolbilltermsession.index') }}" class="nav-link" data-key="t-overview">Appy Bills</a>
+                                          </li>
                                     @endcan
-                                    <li class="nav-item">
-                                      
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('schoolbilltermsession.index') }}" class="nav-link" data-key="t-overview">Appy Bills</a>
-                                    </li>
-                                
+                                    
                                 </ul>
                             </div>
                         </li> 
