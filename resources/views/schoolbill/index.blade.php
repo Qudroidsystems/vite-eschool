@@ -72,7 +72,7 @@
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
                                         <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
-                                        @can('Create schoolbill')
+                                        @can('Create schoolbills')
                                             <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSchoolBillModal" id="create-school-bill-btn"><i class="bi bi-plus-circle align-baseline me-1"></i> Create School Bill</button>
                                         @endcan
                                     </div>
@@ -122,12 +122,12 @@
                                                     <td class="updated_at">{{ $bill->updated_at->format('Y-m-d') }}</td>
                                                     <td>
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                            @can('Update schoolbill')
+                                                            @can('Update schoolbills')
                                                                 <li>
                                                                     <a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" data-id="{{ $bill->id }}" data-title="{{ $bill->title }}" data-bill_amount="{{ $bill->bill_amount }}" data-description="{{ $bill->description }}" data-statusId="{{ $bill->statusId }}"><i class="ph-pencil"></i></a>
                                                                 </li>
                                                             @endcan
-                                                            @can('Delete schoolbill')
+                                                            @can('Delete schoolbills')
                                                                 <li>
                                                                     <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-id="{{ $bill->id }}"><i class="ph-trash"></i></a>
                                                                 </li>
