@@ -129,7 +129,7 @@
                                                     <td class="term" data-termid="{{ $sc->termid }}">
                                                         <span @if($sc->termname === 'First Term') style="color: green"
                                                             @elseif($sc->termname === 'Second Term' || $sc->termname === 'Third Term') style="color: blue"
-                                                            @else style="color: inherit" @endif>
+                                                            @else style="color: red" @endif>
                                                             {{ $sc->termname }}
                                                         </span>
                                                     </td>

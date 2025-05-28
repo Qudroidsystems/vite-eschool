@@ -11,14 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('thirdterm_broadsheets', function (Blueprint $table) {
+        Schema::create('schoolbroadsheet', function (Blueprint $table) {
             $table->id();
             $table->string('studentId')->nullable();
             $table->string('subjectclassid')->nullable();
             $table->string('staffid')->nullable();
-            $table->string('broadsheetId')->nullable();
-            $table->string('firsterm_broadsheetId')->nullable();
-            $table->string('secondterm_broadsheetId')->nullable();
             $table->string('termid')->nullable();
             $table->string('session')->nullable();
             $table->timestamps();
@@ -30,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('thirdterm_broadsheets');
+        Schema::dropIfExists('schoolbroadsheet');
     }
 };

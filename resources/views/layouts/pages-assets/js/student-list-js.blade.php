@@ -12,10 +12,11 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/choices.js/10.2.1/choices.min.js"></script>
 <!-- Axios -->
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
+<script src="{{ asset('theme/layouts/assets/js/pages/showage-list.init.js') }}"></script>
 
 <!-- User list init js (load after list.js and dependencies) -->
 <script src="{{ asset('theme/layouts/assets/js/pages/student-list.init.js') }}"></script>
+
 <!-- App js -->
 <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script>
 

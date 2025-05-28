@@ -4,23 +4,22 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class Broadsheet extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * @return void
      */
-    public function up()
+    public function up(): void
     {
-        //
-        Schema::create('broadsheet', function (Blueprint $table) {
+        Schema::create('schoolsecondterm', function (Blueprint $table) {
             $table->id();
+            $table->string('schoolbroadsheetId')->nullable();
             $table->string('studentId')->nullable();
             $table->string('subjectclassid')->nullable();
             $table->string('staffid')->nullable();
             $table->double('ca1',5, 2)->default('0');
             $table->double('ca2',5, 2)->default('0');
+            $table->double('ca3',5, 2)->default('0');
             $table->double('exam',5, 2)->default('0');
             $table->double('total',5, 2)->default('0');
             $table->string('grade')->nullable();
@@ -37,13 +36,10 @@ class Broadsheet extends Migration
     }
 
     /**
-     * Reverse the migration s.
-     *
-     * @return void
+     * Reverse the migrations.
      */
-    public function down()
+    public function down(): void
     {
-        //
-        Schema::dropIfExists('broadsheet');
+        Schema::dropIfExists('schoolsecondterm');
     }
-}
+};

@@ -239,6 +239,9 @@ use Spatie\Permission\Models\Permission;
                                                                                         elseif (strpos($v->name, "Remove user-role") !== false) {
                                                                                                 $word = "Remove user role";
                                                                                         }
+                                                                                        elseif (strpos($v->name, "Show ") !== false) {
+                                                                                                $word = "Show";
+                                                                                        }
                                 
                                                                                     ?>
                                                                                         <!--begin::Options-->

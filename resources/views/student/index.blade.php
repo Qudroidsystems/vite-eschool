@@ -1,5 +1,4 @@
 @extends('layouts.master')
-
 @section('content')
 <?php
 use Spatie\Permission\Models\Role;
@@ -120,10 +119,10 @@ use Spatie\Permission\Models\Role;
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
-                                        @can('student-delete')
+                                        @can('Delete student')
                                             <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
                                         @endcan
-                                        @can('student-create')
+                                        @can('Create student')
                                             <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addStudentModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Add Student</button>
                                         @endcan
                                     </div>
@@ -156,7 +155,7 @@ use Spatie\Permission\Models\Role;
                                                     <td class="name" data-name="{{ $student->firstname }} {{ $student->lastname }}">
                                                         <div class="d-flex align-items-center">
                                                             <div class="symbol symbol-50px me-3">
-                                                                <img src="{{ $student->picture ? asset('storage/' . $student->picture) : asset('theme/layouts/assets/media/avatars/blank.png') }}" alt="" />
+                                                                <img src="{{ $student->picture ? asset('storage/' . $student->picture) : asset('theme/layouts/assets/media/avatars/blank.png') }}" alt=""  class="avatar-xs"/>
                                                             </div>
                                                             <div>
                                                                 <h6 class="mb-0"><a href="{{ route('student.show', $student->id) }}" class="text-reset products">{{ $student->firstname }} {{ $student->lastname }}</a></h6>
@@ -170,17 +169,17 @@ use Spatie\Permission\Models\Role;
                                                     <td class="datereg">{{ $student->created_at->format('Y-m-d') }}</td>
                                                     <td>
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                            @can('student-show')
+                                                            @can('Show student')
                                                                 <li>
                                                                     <a href="{{ route('student.show', $student->id) }}" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a>
                                                                 </li>
                                                             @endcan
-                                                            @can('student-edit')
+                                                            @can('Update student')
                                                                 <li>
                                                                     <a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" data-bs-toggle="modal" data-bs-target="#editStudentModal" data-id="{{ $student->id }}"><i class="ph-pencil"></i></a>
                                                                 </li>
                                                             @endcan
-                                                            @can('student-delete')
+                                                            @can('Delete student')
                                                                 <li>
                                                                     <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-id="{{ $student->id }}"><i class="ph-trash"></i></a>
                                                                 </li>
@@ -229,26 +228,29 @@ use Spatie\Permission\Models\Role;
 
         <!-- Add Student Modal -->
         <div id="addStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-            <div class="modal-dialog modal-dialog-centered mw-650px">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 id="exampleModalLabel" class="modal-title">Add Student</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form class="tablelist-form" id="addStudentForm" enctype="multipart/form-data" autocomplete="off">
+                    <form class="tablelist-form" id="addStudentForm" enctype="multipart/form-data" autocomplete="off" method="POST" action="{{ route('student.store') }}">
                         @csrf
                         <div class="modal-body">
+                            <input type="hidden" name="registeredBy" value="{{ Auth::user()->id }}">
                             <div class="mb-3">
                                 <label for="avatar" class="form-label">Avatar</label>
                                 <input type="file" id="avatar" name="avatar" class="form-control" accept=".png,.jpg,.jpeg">
+                                <img id="addStudentAvatar" src="{{ asset('theme/layouts/assets/media/avatars/blank.png') }}" alt="Avatar Preview" style="max-width: 100px; margin-top: 10px; display: none;" />
+                                <div class="form-text">Allowed file types: png, jpg, jpeg. Max size: 2MB.</div>
                             </div>
                             <div class="mb-3">
-                                <label for="admissionNo" class="form-label">Admission No</label>
+                                <label for="admissionNo" class="form-label">Admission No <span class="text-danger">*</span></label>
                                 <input type="text" id="admissionNo" name="admissionNo" class="form-control" placeholder="Enter admission number" required>
                             </div>
                             <div class="mb-3">
-                                <label for="title" class="form-label">Title</label>
-                                <select id="title" name="title" class="form-control" required>
+                                <label for="tittle" class="form-label">Title <span class="text-danger">*</span></label>
+                                <select id="tittle" name="tittle" class="form-control" required>
                                     <option value="">Select Title</option>
                                     <option value="Mr">Mr</option>
                                     <option value="Mrs">Mrs</option>
@@ -256,39 +258,72 @@ use Spatie\Permission\Models\Role;
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="firstname" class="form-label">First Name</label>
-                                <input type="text" id="firstname" name="firstname" class="form-control" placeholder="Enter first name" required>
+                                <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <input type="text" id="firstname" name="firstname" class="form-control" placeholder="Enter first name" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="text" id="lastname" name="lastname" class="form-control" placeholder="Enter last name" required>
+                                    </div>
+                                </div>
                             </div>
                             <div class="mb-3">
-                                <label for="lastname" class="form-label">Last Name</label>
-                                <input type="text" id="lastname" name="lastname" class="form-control" placeholder="Enter last name" required>
+                                <label for="othername" class="form-label">Other Names</label>
+                                <input type="text" id="othername" name="othername" class="form-control" placeholder="Enter other names">
                             </div>
                             <div class="mb-3">
-                                <label for="gender" class="form-label">Gender</label>
-                                <select id="gender" name="gender" class="form-control" required>
-                                    <option value="">Select Gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                </select>
+                                <label class="form-label">Gender <span class="text-danger">*</span></label>
+                                <div class="d-flex align-items-center">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="gender" id="genderMale" value="Male" required>
+                                        <label class="form-check-label" for="genderMale">Male</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="gender" id="genderFemale" value="Female" required>
+                                        <label class="form-check-label" for="genderFemale">Female</label>
+                                    </div>
+                                </div>
                             </div>
                             <div class="mb-3">
-                                <label for="nationality" class="form-label">Nationality</label>
-                                <input type="text" id="nationality" name="nationality" class="form-control" placeholder="Enter nationality" required>
+                                <label for="home_address" class="form-label">Home Address 1 <span class="text-danger">*</span></label>
+                                <input type="text" id="home_address" name="home_address" class="form-control" placeholder="Enter home address" required>
                             </div>
                             <div class="mb-3">
-                                <label for="state" class="form-label">State</label>
+                                <label for="home_address2" class="form-label">Home Address 2 <span class="text-danger">*</span></label>
+                                <input type="text" id="home_address2" name="home_address2" class="form-control" placeholder="Enter home address 2" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="dateofbirth" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                                <input type="date" id="addDOB" name="dateofbirth" class="form-control" required onchange="showage(this.value)">
+                                <span id="addAge" class="text-muted"></span>
+                            </div>
+                            <div class="mb-3">
+                                <label for="age1" class="form-label">Age <span class="text-danger">*</span></label>
+                                <input type="text" id="age1" name="age1" class="form-control" placeholder="Enter age" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="placeofbirth" class="form-label">Place of Birth <span class="text-danger">*</span></label>
+                                <input type="text" id="placeofbirth" name="placeofbirth" class="form-control" placeholder="Enter place of birth" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="nationlity" class="form-label">Nationality <span class="text-danger">*</span></label>
+                                <input type="text" id="nationlity" name="nationlity" class="form-control" placeholder="Enter nationality" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="state" class="form-label">State of Origin <span class="text-danger">*</span></label>
                                 <select id="addState" name="state" class="form-control" required>
                                     <option value="">Select State</option>
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="local" class="form-label">Local Government</label>
+                                <label for="local" class="form-label">Local Government <span class="text-danger">*</span></label>
                                 <select id="addLocal" name="local" class="form-control" required>
                                     <option value="">Select Local Government</option>
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="religion" class="form-label">Religion</label>
+                                <label for="religion" class="form-label">Religion <span class="text-danger">*</span></label>
                                 <select id="religion" name="religion" class="form-control" required>
                                     <option value="">Select Religion</option>
                                     <option value="Christianity">Christianity</option>
@@ -297,36 +332,15 @@ use Spatie\Permission\Models\Role;
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="dateofbirth" class="form-label">Date of Birth</label>
-                                <input type="date" id="addDOB" name="dateofbirth" class="form-control" required onchange="showage(this.value)">
-                                <span id="addAge" class="text-muted"></span>
+                                <label for="last_school" class="form-label">Last School Attended <span class="text-danger">*</span></label>
+                                <input type="text" id="last_school" name="last_school" class="form-control" placeholder="Enter last school attended" required>
                             </div>
                             <div class="mb-3">
-                                <label for="bloodgroup" class="form-label">Blood Group</label>
-                                <select id="bloodgroup" name="bloodgroup" class="form-control">
-                                    <option value="">Select Blood Group</option>
-                                    <option value="A+">A+</option>
-                                    <option value="A-">A-</option>
-                                    <option value="B+">B+</option>
-                                    <option value="B-">B-</option>
-                                    <option value="AB+">AB+</option>
-                                    <option value="AB-">AB-</option>
-                                    <option value="O+">O+</option>
-                                    <option value="O-">O-</option>
-                                </select>
+                                <label for="last_class" class="form-label">Last Class <span class="text-danger">*</span></label>
+                                <input type="text" id="last_class" name="last_class" class="form-control" placeholder="Enter last class" required>
                             </div>
                             <div class="mb-3">
-                                <label for="genotype" class="form-label">Genotype</label>
-                                <select id="genotype" name="genotype" class="form-control">
-                                    <option value="">Select Genotype</option>
-                                    <option value="AA">AA</option>
-                                    <option value="AS">AS</option>
-                                    <option value="SS">SS</option>
-                                    <option value="AC">AC</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="schoolclassid" class="form-label">Class</label>
+                                <label for="schoolclassid" class="form-label">Class <span class="text-danger">*</span></label>
                                 <select id="schoolclassid" name="schoolclassid" class="form-control" required>
                                     <option value="">Select Class</option>
                                     @foreach ($schoolclass as $class)
@@ -335,7 +349,7 @@ use Spatie\Permission\Models\Role;
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="termid" class="form-label">Term</label>
+                                <label for="termid" class="form-label">Term <span class="text-danger">*</span></label>
                                 <select id="termid" name="termid" class="form-control" required>
                                     <option value="">Select Term</option>
                                     @foreach ($schoolterm as $term)
@@ -344,7 +358,7 @@ use Spatie\Permission\Models\Role;
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="sessionid" class="form-label">Session</label>
+                                <label for="sessionid" class="form-label">Session <span class="text-danger">*</span></label>
                                 <select id="sessionid" name="sessionid" class="form-control" required>
                                     <option value="">Select Session</option>
                                     @foreach ($schoolsession as $session)
@@ -353,12 +367,17 @@ use Spatie\Permission\Models\Role;
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="statusId" class="form-label">Student Status</label>
-                                <select id="statusId" name="statusId" class="form-control" required>
-                                    <option value="">Select Status</option>
-                                    <option value="1">Old Student</option>
-                                    <option value="2">New Student</option>
-                                </select>
+                                <label class="form-label">Student Status <span class="text-danger">*</span></label>
+                                <div class="d-flex align-items-center">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="statusId" id="statusOld" value="1" required>
+                                        <label class="form-check-label" for="statusOld">Old Student</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="statusId" id="statusNew" value="2" required>
+                                        <label class="form-check-label" for="statusNew">New Student</label>
+                                    </div>
+                                </div>
                             </div>
                             <div class="alert alert-danger d-none" id="alert-error-msg"></div>
                         </div>
@@ -373,29 +392,31 @@ use Spatie\Permission\Models\Role;
 
         <!-- Edit Student Modal -->
         <div id="editStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-            <div class="modal-dialog modal-dialog-centered mw-650px">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 id="exampleModalLabel" class="modal-title">Edit Student</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form class="tablelist-form" id="editStudentForm" enctype="multipart/form-data" autocomplete="off">
+                    <form class="tablelist-form" id="editStudentForm" enctype="multipart/form-data" autocomplete="off" method="POST" action="{{ route('student.update', ':id') }}">
                         @csrf
                         @method('PUT')
                         <div class="modal-body">
                             <input type="hidden" id="editStudentId" name="id">
+                            <input type="hidden" name="registeredBy" value="{{ Auth::user()->id }}">
                             <div class="mb-3">
                                 <label for="editAvatar" class="form-label">Avatar</label>
                                 <input type="file" id="editAvatar" name="avatar" class="form-control" accept=".png,.jpg,.jpeg">
-                                <img id="editStudentAvatar" src="" alt="Avatar" style="max-width: 100px; margin-top: 10px;" />
+                                <img id="editStudentAvatar" src="{{ asset('theme/layouts/assets/media/avatars/blank.png') }}" alt="Avatar Preview" style="max-width: 100px; margin-top: 10px;" />
+                                <div class="form-text">Allowed file types: png, jpg, jpeg. Max size: 2MB.</div>
                             </div>
                             <div class="mb-3">
-                                <label for="editAdmissionNo" class="form-label">Admission No</label>
+                                <label for="editAdmissionNo" class="form-label">Admission No <span class="text-danger">*</span></label>
                                 <input type="text" id="editAdmissionNo" name="admissionNo" class="form-control" placeholder="Enter admission number" required>
                             </div>
                             <div class="mb-3">
-                                <label for="editTitle" class="form-label">Title</label>
-                                <select id="editTitle" name="title" class="form-control" required>
+                                <label for="editTittle" class="form-label">Title <span class="text-danger">*</span></label>
+                                <select id="editTittle" name="tittle" class="form-control" required>
                                     <option value="">Select Title</option>
                                     <option value="Mr">Mr</option>
                                     <option value="Mrs">Mrs</option>
@@ -403,78 +424,95 @@ use Spatie\Permission\Models\Role;
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="editFirstname" class="form-label">First Name</label>
-                                <input type="text" id="editFirstname" name="firstname" class="form-control" placeholder="Enter first name" required>
+                                <label class="form-label">Full Name <span class="text-danger">*</span></label>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <input type="text" id="editFirstname" name="firstname" class="form-control" placeholder="Enter first name" required>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="text" id="editLastname" name="lastname" class="form-control" placeholder="Enter last name" required>
+                                    </div>
+                                </div>
                             </div>
                             <div class="mb-3">
-                                <label for="editLastname" class="form-label">Last Name</label>
-                                <input type="text" id="editLastname" name="lastname" class="form-control" placeholder="Enter last name" required>
+                                <label for="editOthername" class="form-label">Other Names</label>
+                                <input type="text" id="editOthername" name="othername" class="form-control" placeholder="Enter other names">
                             </div>
                             <div class="mb-3">
-                                <label for="editGender" class="form-label">Gender</label>
-                                <select id="editGender" name="gender" class="form-control" required>
-                                    <option value="">Select Gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                </select>
+                                <label class="form-label">Gender <span class="text-danger">*</span></label>
+                                <div class="d-flex align-items-center">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="gender" id="editGenderMale" value="Male" required>
+                                        <label class="form-check-label" for="editGenderMale">Male</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="gender" id="editGenderFemale" value="Female" required>
+                                        <label class="form-check-label" for="editGenderFemale">Female</label>
+                                    </div>
+                                </div>
                             </div>
                             <div class="mb-3">
-                                <label for="editNationality" class="form-label">Nationality</label>
-                                <input type="text" id="editNationality" name="nationality" class="form-control" placeholder="Enter nationality" required>
+                                <label for="editHomeAddress" class="form-label">Home Address 1 <span class="text-danger">*</span></label>
+                                <input type="text" id="editHomeAddress" name="home_address" class="form-control" placeholder="Enter home address" required>
                             </div>
                             <div class="mb-3">
-                                <label for="editState" class="form-label">State</label>
-                                <select id="editState" name="state" class="form-control" required>
-                                    <option value="">Select State</option>
-                                </select>
+                                <label for="editHomeAddress2" class="form-label">Home Address 2 <span class="text-danger">*</span></label>
+                                <input type="text" id="editHomeAddress2" name="home_address2" class="form-control" placeholder="Enter home address 2" required>
                             </div>
                             <div class="mb-3">
-                                <label for="editLocal" class="form-label">Local Government</label>
-                                <select id="editLocal" name="local" class="form-control" required>
-                                    <option value="">Select Local Government</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="editReligion" class="form-label">Religion</label>
-                                <select id="editReligion" name="religion" class="form-control" required>
-                                    <option value="">Select Religion</option>
-                                    <option value="Christianity">Christianity</option>
-                                    <option value="Islam">Islam</option>
-                                    <option value="Others">Others</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="editDOB" class="form-label">Date of Birth</label>
+                                <label for="editDOB" class="form-label">Date of Birth <span class="text-danger">*</span></label>
                                 <input type="date" id="editDOB" name="dateofbirth" class="form-control" required onchange="showage(this.value, 'editAge')">
                                 <span id="editAge" class="text-muted"></span>
                             </div>
+                           
                             <div class="mb-3">
-                                <label for="editBloodgroup" class="form-label">Blood Group</label>
-                                <select id="editBloodgroup" name="bloodgroup" class="form-control">
-                                    <option value="">Select Blood Group</option>
-                                    <option value="A+">A+</option>
-                                    <option value="A-">A-</option>
-                                    <option value="B+">B+</option>
-                                    <option value="B-">B-</option>
-                                    <option value="AB+">AB+</option>
-                                    <option value="AB-">AB-</option>
-                                    <option value="O+">O+</option>
-                                    <option value="O-">O-</option>
-                                </select>
+                                <label for="editAge" class="form-label">Age (Optional)</label>
+                                <input type="number" class="form-control" id="editAge" name="age" placeholder="Enter age" min="0">
                             </div>
                             <div class="mb-3">
-                                <label for="editGenotype" class="form-label">Genotype</label>
-                                <select id="editGenotype" name="genotype" class="form-control">
-                                    <option value="">Select Genotype</option>
-                                    <option value="AA">AA</option>
-                                    <option value="AS">AS</option>
-                                    <option value="SS">SS</option>
-                                    <option value="AC">AC</option>
-                                </select>
+                                <label for="editPlaceofbirth" class="form-label">Place of Birth <span class="text-danger">*</span></label>
+                                <input type="text" id="editPlaceofbirth" name="placeofbirth" class="form-control" placeholder="Enter place of birth" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editNationlity" class="form-label">Nationality <span class="text-danger">*</span></label>
+                                <input type="text" id="editNationlity" name="nationlity" class="form-control" placeholder="Enter nationality" required>
+                            </div>
+                            <div class="mb-3">
+                                
+                                <div class="mb-3">
+                                    <label for="editState" class="form-label">State of Origin</label>
+                                    <select id="editState" name="state" class="form-control">
+                                        <option value="">Select State</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editLocal" class="form-label">Local Government</label>
+                                    <select id="editLocal" name="local" class="form-control">
+                                        <option value="">Select Local Government</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="editReligion" class="form-label">Religion</label>
+                                    <select id="editReligion" name="religion" class="form-control">
+                                        <option value="">Select Religion</option>
+                                        <option value="Christianity">Christianity</option>
+                                        <option value="Islam">Islam</option>
+                                        <option value="Others">Others</option>
+                                    </select>
+                                </div>
+                              
+                            
+                            <div class="mb-3">
+                                <label for="editLastSchool" class="form-label">Last School Attended <span class="text-danger">*</span></label>
+                                <input type="text" id="editLastSchool" name="last_school" class="form-control" placeholder="Enter last school attended" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editLastClass" class="form-label">Last Class <span class="text-danger">*</span></label>
+                                <input type="text" id="editLastClass" name="last_class" class="form-control" placeholder="Enter last class" required>
                             </div>
                             <div class="mb-3">
                                 <label for="editSchoolclassid" class="form-label">Class</label>
-                                <select id="editSchoolclassid" name="schoolclassid" class="form-control" required>
+                                <select id="editSchoolclassid" name="schoolclassid" class="form-control">
                                     <option value="">Select Class</option>
                                     @foreach ($schoolclass as $class)
                                         <option value="{{ $class->id }}">{{ $class->schoolclass }} - {{ $class->arm }}</option>
@@ -483,7 +521,7 @@ use Spatie\Permission\Models\Role;
                             </div>
                             <div class="mb-3">
                                 <label for="editTermid" class="form-label">Term</label>
-                                <select id="editTermid" name="termid" class="form-control" required>
+                                <select id="editTermid" name="termid" class="form-control">
                                     <option value="">Select Term</option>
                                     @foreach ($schoolterm as $term)
                                         <option value="{{ $term->id }}">{{ $term->term }}</option>
@@ -492,7 +530,7 @@ use Spatie\Permission\Models\Role;
                             </div>
                             <div class="mb-3">
                                 <label for="editSessionid" class="form-label">Session</label>
-                                <select id="editSessionid" name="sessionid" class="form-control" required>
+                                <select id="editSessionid" name="sessionid" class="form-control">
                                     <option value="">Select Session</option>
                                     @foreach ($schoolsession as $session)
                                         <option value="{{ $session->id }}">{{ $session->session }}</option>
@@ -500,12 +538,17 @@ use Spatie\Permission\Models\Role;
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="editStatusId" class="form-label">Student Status</label>
-                                <select id="editStatusId" name="statusId" class="form-control" required>
-                                    <option value="">Select Status</option>
-                                    <option value="1">Old Student</option>
-                                    <option value="2">New Student</option>
-                                </select>
+                                <label class="form-label">Student Status <span class="text-danger">*</span></label>
+                                <div class="d-flex align-items-center">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="statusId" id="editStatusOld" value="1" required>
+                                        <label class="form-check-label" for="editStatusOld">Old Student</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="statusId" id="editStatusNew" value="2" required>
+                                        <label class="form-check-label" for="editStatusNew">New Student</label>
+                                    </div>
+                                </div>
                             </div>
                             <div class="alert alert-danger d-none" id="alert-error-msg"></div>
                         </div>
@@ -548,6 +591,7 @@ use Spatie\Permission\Models\Role;
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
+            // Students by Status Chart
             var ctx = document.getElementById("studentsByStatusChart").getContext("2d");
             new Chart(ctx, {
                 type: "bar",
@@ -585,6 +629,101 @@ use Spatie\Permission\Models\Role;
                     }
                 }
             });
+
+            // Image Preview for Add Student Modal
+            document.getElementById('avatar').addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                const preview = document.getElementById('addStudentAvatar');
+                if (file) {
+                    // Check file size (2MB = 2 * 1024 * 1024 bytes)
+                    if (file.size > 2 * 1024 * 1024) {
+                        Swal.fire({
+                            title: "Error!",
+                            text: "File size exceeds 2MB limit.",
+                            icon: "error",
+                            confirmButtonClass: "btn btn-info",
+                            buttonsStyling: false
+                        });
+                        event.target.value = ''; // Clear the input
+                        preview.style.display = 'none';
+                        return;
+                    }
+                    // Check file type
+                    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+                    if (!allowedTypes.includes(file.type)) {
+                        Swal.fire({
+                            title: "Error!",
+                            text: "Only PNG, JPG, and JPEG files are allowed.",
+                            icon: "error",
+                            confirmButtonClass: "btn btn-info",
+                            buttonsStyling: false
+                        });
+                        event.target.value = ''; // Clear the input
+                        preview.style.display = 'none';
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    preview.src = '{{ asset('theme/layouts/assets/media/avatars/blank.png') }}';
+                    preview.style.display = 'none';
+                }
+            });
+
+            // Image Preview for Edit Student Modal
+            document.getElementById('editAvatar').addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                const preview = document.getElementById('editStudentAvatar');
+                if (file) {
+                    // Check file size (2MB = 2 * 1024 * 1024 bytes)
+                    if (file.size > 2 * 1024 * 1024) {
+                        Swal.fire({
+                            title: "Error!",
+                            text: "File size exceeds 2MB limit.",
+                            icon: "error",
+                            confirmButtonClass: "btn btn-info",
+                            buttonsStyling: false
+                        });
+                        event.target.value = ''; // Clear the input
+                        preview.src = '{{ asset('theme/layouts/assets/media/avatars/blank.png') }}';
+                        return;
+                    }
+                    // Check file type
+                    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+                    if (!allowedTypes.includes(file.type)) {
+                        Swal.fire({
+                            title: "Error!",
+                            text: "Only PNG, JPG, and JPEG files are allowed.",
+                            icon: "error",
+                            confirmButtonClass: "btn btn-info",
+                            buttonsStyling: false
+                        });
+                        event.target.value = ''; // Clear the input
+                        preview.src = '{{ asset('theme/layouts/assets/media/avatars/blank.png') }}';
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    // Reset to the original avatar or blank if no new file is selected
+                    preview.src = preview.getAttribute('data-original-src') || '{{ asset('theme/layouts/assets/media/avatars/blank.png') }}';
+                }
+            });
+
+            // Store original avatar src when edit modal is opened
+            document.querySelectorAll('.edit-item-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    const avatarImg = document.getElementById('editStudentAvatar');
+                    avatarImg.setAttribute('data-original-src', avatarImg.src);
+                });
+            });
         });
 
         function showage(dob, targetId = 'addAge') {
@@ -597,6 +736,7 @@ use Spatie\Permission\Models\Role;
                 age--;
             }
             document.getElementById(targetId).textContent = `Age: ${age} years`;
+            document.getElementById(targetId.replace('Age', 'age1')).value = age;
         }
     </script>
 </div>
