@@ -115,7 +115,7 @@ class StudentController extends Controller
                 'home_address' => 'required|string|max:255',
                 'home_address2' => 'required|string|max:255',
                 'dateofbirth' => 'required|date|before:today',
-                'age1' => 'required|integer|min:1|max:100',
+                'age' => 'required|integer|min:1|max:100',
                 'placeofbirth' => 'required|string|max:255',
                 'nationality' => 'required|string|max:255',
                 'state' => ['required', 'string', 'max:255', function ($attribute, $value, $fail) use ($states) {
@@ -132,8 +132,6 @@ class StudentController extends Controller
                 'religion' => 'required|in:Christianity,Islam,Others',
                 'last_school' => 'required|string|max:255',
                 'last_class' => 'required|string|max:255',
-                'bloodgroup' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
-                'genotype' => 'nullable|in:AA,AS,SS,AC',
                 'schoolclassid' => 'required|exists:schoolclass,id',
                 'termid' => 'required|exists:schoolterm,id',
                 'sessionid' => 'required|exists:schoolsession,id',
@@ -152,7 +150,7 @@ class StudentController extends Controller
 
             $student = new Student();
             $student->admissionNo = $request->admissionNo;
-            $student->tittle = $request->title;
+            $student->title = $request->title;
             $student->firstname = $request->firstname;
             $student->lastname = $request->lastname;
             $student->othername = $request->othername;
@@ -160,16 +158,14 @@ class StudentController extends Controller
             $student->home_address = $request->home_address;
             $student->home_address2 = $request->home_address2;
             $student->dateofbirth = $request->dateofbirth;
-            $student->age = $request->age1;
+            $student->age = $request->age;
             $student->placeofbirth = $request->placeofbirth;
-            $student->nationlity = $request->nationality;
+            $student->nationality = $request->nationality;
             $student->state = $request->state;
             $student->local = $request->local;
             $student->religion = $request->religion;
             $student->last_school = $request->last_school;
             $student->last_class = $request->last_class;
-           // $student->bloodgroup = $request->bloodgroup ?: null;
-            //$student->genotype = $request->genotype ?: null;
             $student->statusId = $request->statusId;
             $student->registeredBy = auth()->user()->id;
             $student->save();
@@ -245,7 +241,7 @@ class StudentController extends Controller
                 ->select(
                     'studentRegistration.id',
                     'studentRegistration.admissionNo',
-                    'studentRegistration.tittle',
+                    'studentRegistration.title',
                     'studentRegistration.firstname',
                     'studentRegistration.lastname',
                     'studentRegistration.othername',
@@ -255,7 +251,7 @@ class StudentController extends Controller
                     'studentRegistration.dateofbirth',
                     'studentRegistration.age',
                     'studentRegistration.placeofbirth',
-                    'studentRegistration.nationlity',
+                    'studentRegistration.nationality',
                     'studentRegistration.state',
                     'studentRegistration.local',
                     'studentRegistration.religion',
@@ -269,86 +265,88 @@ class StudentController extends Controller
                 )
                 ->where('studentRegistration.id', $student)
                 ->first();
-    
+
             if (!$studentData) {
                 return response()->json(['success' => false, 'message' => 'Student not found'], 404);
             }
-    
+
             return response()->json(['success' => true, 'student' => $studentData]);
         } catch (\Exception $e) {
-            \Log::error('Error fetching student ID ' . $student . ': ' . $e->getMessage());
+            Log::error('Error fetching student ID ' . $student . ': ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Server error: ' . $e->getMessage()], 500);
         }
     }
-  
-    
+
     public function update(Request $request, $student)
     {
         try {
-            // Validate request, fields are optional
-            $validated = $request->validate([
-                'admissionNo' => 'required|string|max:255',
-                'tittle' => 'nullable|string|max:50',
+            $statesLgas = json_decode(file_get_contents(public_path('states_lgas.json')), true);
+            $states = array_column($statesLgas, 'state');
+            $lgas = collect($statesLgas)->pluck('lgas', 'state')->toArray();
+
+            $validator = Validator::make($request->all(), [
+                'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'admissionNo' => 'required|string|max:255|unique:studentRegistration,admissionNo,' . $student,
+                'title' => 'required|in:Mr,Mrs,Miss',
                 'firstname' => 'required|string|max:255',
                 'lastname' => 'required|string|max:255',
                 'othername' => 'nullable|string|max:255',
                 'gender' => 'required|in:Male,Female',
-                'home_address' => 'nullable|string|max:255',
-                'home_address2' => 'nullable|string|max:255',
-                'dateofbirth' => 'nullable|date',
-                'age' => 'nullable|integer|min:0',
-                'placeofbirth' => 'nullable|string|max:255',
-                'nationlity' => 'nullable|string|max:255',
-                'state' => 'nullable|string|max:255',
-                'local' => 'nullable|string|max:255',
-                'religion' => 'nullable|string|in:Christianity,Islam,Others,',
-                'last_school' => 'nullable|string|max:255',
-                'last_class' => 'nullable|string|max:255',
-                'statusId' => 'required|integer|in:0,1',
-                'schoolclassid' => 'nullable|integer|exists:schoolclass,id',
-                'termid' => 'nullable|integer|exists:schoolterm,id',
-                'sessionid' => 'nullable|integer|exists:schoolsession,id',
-                'picture' => 'nullable|image|max:2048',
+                'home_address' => 'required|string|max:255',
+                'home_address2' => 'required|string|max:255',
+                'dateofbirth' => 'required|date|before:today',
+                'age' => 'required|integer|min:1|max:100',
+                'placeofbirth' => 'required|string|max:255',
+                'nationality' => 'required|string|max:255',
+                'state' => ['required', 'string', 'max:255', function ($attribute, $value, $fail) use ($states) {
+                    if (!in_array($value, $states)) {
+                        $fail('The selected state is invalid.');
+                    }
+                }],
+                'local' => ['required', 'string', 'max:255', function ($attribute, $value, $fail) use ($request, $lgas) {
+                    $state = $request->input('state');
+                    if (!isset($lgas[$state]) || !in_array($value, $lgas[$state])) {
+                        $fail('The selected local government is invalid for the chosen state.');
+                    }
+                }],
+                'religion' => 'required|in:Christianity,Islam,Others',
+                'last_school' => 'required|string|max:255',
+                'last_class' => 'required|string|max:255',
+                'schoolclassid' => 'required|exists:schoolclass,id',
+                'termid' => 'required|exists:schoolterm,id',
+                'sessionid' => 'required|exists:schoolsession,id',
+                'statusId' => 'required|in:1,2'
             ]);
 
-            // Assign defaults for optional fields
-            $state = $validated['state'] ?? '';
-            $local = $validated['local'] && $validated['local'] !== '' ? $validated['local'] : 'Unknown';
-            $religion = $validated['religion'] && $validated['religion'] !== '' ? $validated['religion'] : 'Others';
-            $schoolclassid = $validated['schoolclassid'] ?? null;
-            $termid = $validated['termid'] ?? null;
-            $sessionid = $validated['sessionid'] ?? null;
-
-            // Calculate age if not provided and dateofbirth exists
-            $age = $validated['age'];
-            if (is_null($age) && !empty($validated['dateofbirth'])) {
-                $dob = Carbon::parse($validated['dateofbirth']);
-                $age = $dob->age;
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first(),
+                    'errors' => $validator->errors()
+                ], 422);
             }
 
-            // Start transaction
             DB::beginTransaction();
 
-            // Update studentRegistration
             $updateData = [
-                'admissionNo' => $validated['admissionNo'],
-                'tittle' => $validated['tittle'] ?? '',
-                'firstname' => $validated['firstname'],
-                'lastname' => $validated['lastname'],
-                'othername' => $validated['othername'] ?? '',
-                'gender' => $validated['gender'],
-                'home_address' => $validated['home_address'] ?? '',
-                'home_address2' => $validated['home_address2'] ?? '',
-                'dateofbirth' => $validated['dateofbirth'],
-                'age' => $age,
-                'placeofbirth' => $validated['placeofbirth'] ?? '',
-                'nationlity' => $validated['nationlity'] ?? '',
-                'state' => $state,
-                'local' => $local,
-                'religion' => $religion,
-                'last_school' => $validated['last_school'] ?? '',
-                'last_class' => $validated['last_class'] ?? '',
-                'statusId' => $validated['statusId'],
+                'admissionNo' => $request->admissionNo,
+                'title' => $request->title,
+                'firstname' => $request->firstname,
+                'lastname' => $request->lastname,
+                'othername' => $request->othername,
+                'gender' => $request->gender,
+                'home_address' => $request->home_address,
+                'home_address2' => $request->home_address2,
+                'dateofbirth' => $request->dateofbirth,
+                'age' => $request->age,
+                'placeofbirth' => $request->placeofbirth,
+                'nationality' => $request->nationality,
+                'state' => $request->state,
+                'local' => $request->local,
+                'religion' => $request->religion,
+                'last_school' => $request->last_school,
+                'last_class' => $request->last_class,
+                'statusId' => $request->statusId,
                 'updated_at' => now(),
             ];
 
@@ -356,23 +354,26 @@ class StudentController extends Controller
                 ->where('id', $student)
                 ->update($updateData);
 
-            // Update studentclass
             DB::table('studentclass')->updateOrInsert(
                 ['studentId' => $student],
                 [
-                    'schoolclassid' => $schoolclassid,
-                    'termid' => $termid,
-                    'sessionid' => $sessionid,
+                    'schoolclassid' => $request->schoolclassid,
+                    'termid' => $request->termid,
+                    'sessionid' => $request->sessionid,
                     'updated_at' => now(),
                 ]
             );
 
-            // Handle picture upload
-            if ($request->hasFile('picture')) {
-                $path = $request->file('picture')->store('student_pictures', 'public');
+            if ($request->hasFile('avatar')) {
+                $existingPicture = Studentpicture::where('studentid', $student)->first();
+                if ($existingPicture && $existingPicture->picture) {
+                    Storage::delete('public/' . $existingPicture->picture);
+                }
+                $filename = $student . '_' . $request->file('avatar')->getClientOriginalName();
+                $path = $request->file('avatar')->storeAs('public/images/studentavatar', $filename);
                 DB::table('studentpicture')->updateOrInsert(
                     ['studentid' => $student],
-                    ['picture' => $path, 'updated_at' => now()]
+                    ['picture' => str_replace('public/', '', $path), 'updated_at' => now()]
                 );
             }
 
@@ -392,6 +393,7 @@ class StudentController extends Controller
             ], 500);
         }
     }
+
     public function destroy($id): JsonResponse
     {
         Log::debug("Deleting student ID {$id}");
@@ -479,7 +481,7 @@ class StudentController extends Controller
 
     public function deletestudent(Request $request)
     {
-        $s = $request->input('id'); // Assuming ID is passed in the request
+        $s = $request->input('id');
         try {
             DB::beginTransaction();
 

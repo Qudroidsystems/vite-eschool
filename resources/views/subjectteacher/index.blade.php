@@ -127,7 +127,6 @@
                                                     <td class="subject" data-subjectid="{{ $sc->subjectid }}">{{ $sc->subjectname }}</td>
                                                     <td class="subjectcode">{{ $sc->subjectcode }}</td>
                                                     <td class="term" data-termid="{{ $sc->termid }}">
-                                                        
                                                         @php
                                                         $term = SubjectTeacher::where('staffid', $sc->userid)
                                                             ->where('subjectid', $sc->subjectid)
@@ -140,7 +139,6 @@
                                                         foreach($term as $t) {
                                                             $color = '';
                                                             $termLower = strtolower($t);
-                                                            
                                                             if(preg_match('/(first|1st|one)/', $termLower)) {
                                                                 $color = 'color: green;';
                                                             } elseif(preg_match('/(second|2nd|two)/', $termLower)) {
@@ -150,9 +148,8 @@
                                                             }
                                                             $coloredTerms[] = "<span style='$color'>$t</span>";
                                                         }
-                                                    @endphp
-                                                    
-                                                    {!! implode(', ', $coloredTerms) !!}
+                                                        @endphp
+                                                        {!! implode(', ', $coloredTerms) !!}
                                                     </td>
                                                     <td class="session" data-sessionid="{{ $sc->sessionid }}">{{ $sc->sessionname }}</td>
                                                     <td class="datereg">{{ $sc->updated_at->format('Y-m-d') }}</td>
@@ -246,7 +243,7 @@
                                     <label class="form-label">Term</label>
                                     <div class="checkbox-group">
                                         @foreach ($terms as $term)
-                                            <div class=" Censored form-check me-3">
+                                            <div class="form-check me-3">
                                                 <input class="form-check-input modal-checkbox" type="checkbox" name="termid[]" id="add-term-{{ $term->id }}" value="{{ $term->id }}">
                                                 <label class="form-check-label" for="add-term-{{ $term->id }}">
                                                     {{ $term->term }}
@@ -435,6 +432,4 @@
 }
 </style>
 @endsection
-
-
 @endsection

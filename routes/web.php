@@ -86,13 +86,6 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::resource('staff', StaffController::class);
 
-    // Route::resource('subjectteacher', SubjectTeacherController::class);
-    // Route::get('subjectteacher/{subjectteacher}/subjects', [SubjectTeacherController::class, 'getSubjects'])->name('subjectteacher.subjects');
-    // Route::get('/subjectteacherid/{subjectteacherid}', [SubjectTeacherController::class, 'deletesubjectteacher'])->name('subjectteacher.deletesubjectteacher');
-    // Route::post('subjectteacherid', [SubjectTeacherController::class, 'updatesubjectteacher'])->name('subjectteacher.updatesubjectteacher');
-    // Route::get('subjectteacher/{id}/subjects', [SubjectTeacherController::class, 'getSubjects'])->name('subjectteacher.subjects');
-
-
 
     Route::resource('subjectteacher', SubjectTeacherController::class)->except(['update']);
     Route::match(['put', 'post'], 'subjectteacher/{id}', [SubjectTeacherController::class, 'update'])->name('subjectteacher.update');

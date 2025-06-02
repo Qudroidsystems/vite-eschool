@@ -92,6 +92,14 @@
    @if (Route::is('student.*'))
         @include('layouts.pages-assets.css.student-list-css')
    @endif  
+
+   @if (Route::is('myclass.*'))
+       @include('layouts.pages-assets.css.myclass-list-css')
+   @endif 
+
+    @if (Route::is('mysubject.*'))
+         @include('layouts.pages-assets.css.mysubject-list-css')
+    @endif 
 </head>
 
 <body>
@@ -264,13 +272,18 @@
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarClasses">
                                 <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="apps-ecommerce-products.html" class="nav-link" data-key="t-products">My Class</a>
-                                    </li>
+                                    @can('View my-class')
+                                          <li class="nav-item">
+                                               <a href="{{ route('myclass.index') }}" class="nav-link" data-key="t-products">My Class</a>
+                                         </li>
+                                    @endcan
+                                  @can('View my-subject')
+                                          <li class="nav-item">
+                                              <a href="{{ route('mysubject.index') }}" class="nav-link" data-key="t-products">My Subject</a>
+                                        </li>
+                                  @endcan
 
-                                    <li class="nav-item">
-                                        <a href="apps-ecommerce-products.html" class="nav-link" data-key="t-products">My Subject</a>
-                                    </li>
+
                                     
                                 </ul>
                             </div>
@@ -859,27 +872,39 @@
                                    
                                     <img class="rounded-circle header-profile-user" src="{{ Storage::url('images/staffavatar/'.$image)}}" alt="{{ $userdata->name }}">
                                     {{-- <img src="{{ $student->picture ? asset('storage/' . $student->picture) : asset('theme/layouts/assets/media/avatars/blank.png') }}" alt=""  class="avatar-xs"/> --}}
+                                    @php
+                                    $userdata = Auth::user();
+                                @endphp
+                                
+                                @if ($userdata)
                                     <span class="text-start ms-xl-2">
-                                        <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text"> {{ $userdata->name }}</span>
+                                        <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">{{ $userdata->name }}</span>
                                         <span class="d-none d-xl-block ms-1 fs-sm user-name-sub-text">Founder</span>
                                     </span>
                                 </span>
-                            </button>
-                            <div class="dropdown-menu dropdown-menu-end">
-                                <!-- item-->
-                                <h6 class="dropdown-header">Welcome {{ $userdata->name }}!</h6>
-                                <a class="dropdown-item" href="{{ route('user.overview',Auth::user()->id)}}"><i class="mdi mdi-account-circle text-muted fs-lg align-middle me-1"></i> <span class="align-middle">Profile</span></a>
-                                {{-- <a class="dropdown-item" href="pages-faqs.html"><i class="mdi mdi-lifebuoy text-muted fs-lg align-middle me-1"></i> <span class="align-middle">Help</span></a> --}}
-                                <div class="dropdown-divider"></div>
-                                {{-- <a class="dropdown-item" href="pages-profile.html"><i class="mdi mdi-wallet text-muted fs-lg align-middle me-1"></i> <span class="align-middle">Balance : <b>$8451.36</b></span></a>
-                                <a class="dropdown-item" href="pages-profile-settings.html"><span class="badge bg-success-subtle text-success mt-1 float-end">New</span><i class="mdi mdi-cog-outline text-muted fs-lg align-middle me-1"></i> <span class="align-middle">Settings</span></a> --}}
-                                <a class="dropdown-item" href="auth-lockscreen.html"><i class="mdi mdi-lock text-muted fs-lg align-middle me-1"></i> <span class="align-middle">Lock screen</span></a>
+                                </button>
+                                <div class="dropdown-menu dropdown-menu-end">
+                                    <h6 class="dropdown-header">Welcome {{ $userdata->name }}!</h6>
+                                    <a class="dropdown-item" href="{{ route('user.overview', $userdata->id) }}">
+                                        <i class="mdi mdi-account-circle text-muted fs-lg align-middle me-1"></i> 
+                                        <span class="align-middle">Profile</span>
+                                    </a>
+                                    <div class="dropdown-divider"></div>
+                                    <a class="dropdown-item" href="auth-lockscreen.html">
+                                        <i class="mdi mdi-lock text-muted fs-lg align-middle me-1"></i> 
+                                        <span class="align-middle">Lock screen</span>
+                                    </a>
                                 
-                                <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                     <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); this.closest('form').submit();"><i class="mdi mdi-logout text-muted fs-lg align-middle me-1"></i> <span class="align-middle" data-key="t-logout">Logout</span></a>
-                               </form>
-                            </div>
+                                    <form method="POST" action="{{ route('logout') }}">
+                                        @csrf
+                                        <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); this.closest('form').submit();">
+                                            <i class="mdi mdi-logout text-muted fs-lg align-middle me-1"></i> 
+                                            <span class="align-middle" data-key="t-logout">Logout</span>
+                                        </a>
+                                    </form>
+                                </div>
+                                @endif
+                                
                         </div>
                     </div>
                 </div>
@@ -1733,6 +1758,15 @@
       @if (Route::is('student.*'))
              @include('layouts.pages-assets.js.student-list-js')
       @endif
+
+      @if (Route::is('myclass.*'))
+          @include('layouts.pages-assets.js.myclass-list-js')
+      @endif 
+
+      @if (Route::is('mysubject.*'))
+        @include('layouts.pages-assets.js.mysubject-list-js')
+      @endif 
+
       </body>
       
       </html>

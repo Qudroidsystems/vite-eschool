@@ -97,6 +97,8 @@ class SubjectTeacherController extends Controller
 
     public function store(Request $request)
     {
+        Log::info('Store SubjectTeacher Request Data:', $request->all());
+
         $validator = Validator::make($request->all(), [
             'staffid' => 'required|exists:users,id',
             'subjectids' => 'required|array|min:1',
@@ -120,9 +122,10 @@ class SubjectTeacherController extends Controller
         ]);
 
         if ($validator->fails()) {
+            Log::error('Store SubjectTeacher Validation Failed:', $validator->errors()->toArray());
             return response()->json([
                 'success' => false,
-                'message' => 'Please select a teacher, at least one subject, at least one term, and a session.',
+                'message' => $validator->errors()->first(),
                 'errors' => $validator->errors()
             ], 422);
         }
@@ -210,6 +213,8 @@ class SubjectTeacherController extends Controller
 
     public function update(Request $request, $id)
     {
+        Log::info('Update SubjectTeacher Request Data:', $request->all());
+
         $validator = Validator::make($request->all(), [
             'staffid' => 'required|exists:users,id',
             'subjectids' => 'required|array|min:1',
@@ -234,21 +239,22 @@ class SubjectTeacherController extends Controller
             'sessionid.exists' => 'Selected session does not exist.',
             'subjects_to_remove.*.exists' => 'One or more subjects to remove do not exist.',
         ]);
-    
+
         if ($validator->fails()) {
+            Log::error('Update SubjectTeacher Validation Failed:', $validator->errors()->toArray());
             return response()->json([
                 'success' => false,
-                'message' => 'Please select a teacher, at least one subject, at least one term, and a session.',
+                'message' => $validator->errors()->first(),
                 'errors' => $validator->errors()
             ], 422);
         }
-    
+
         $staffid = $request->input('staffid');
         $subjectids = $request->input('subjectids');
         $termids = $request->input('termid');
         $sessionid = $request->input('sessionid');
         $subjectsToRemove = $request->input('subjects_to_remove', []);
-    
+
         // Check for conflicts excluding the current record
         $existingConflicts = SubjectTeacher::where('staffid', $staffid)
             ->whereIn('subjectid', $subjectids)
@@ -257,7 +263,7 @@ class SubjectTeacherController extends Controller
             ->where('id', '!=', $id)
             ->pluck('subjectid')
             ->toArray();
-    
+
         if (!empty($existingConflicts)) {
             $existingSubjects = Subject::whereIn('id', $existingConflicts)->pluck('subject')->toArray();
             return response()->json([
@@ -265,7 +271,7 @@ class SubjectTeacherController extends Controller
                 'message' => 'The teacher is already assigned to: ' . implode(', ', $existingSubjects) . ' for one or more selected terms and session.'
             ], 422);
         }
-    
+
         // Remove subjects for specified terms if provided
         if (!empty($subjectsToRemove)) {
             SubjectTeacher::where('staffid', $staffid)
@@ -274,7 +280,7 @@ class SubjectTeacherController extends Controller
                 ->where('sessionid', $sessionid)
                 ->delete();
         }
-    
+
         $updatedRecords = [];
         foreach ($termids as $termid) {
             foreach ($subjectids as $subjectid) {
@@ -295,27 +301,25 @@ class SubjectTeacherController extends Controller
                 $updatedRecords[] = $subjectteacher;
             }
         }
-    
+
         // Update related records in Broadsheet and SubjectRegistrationStatus
         $sub = SubjectTeacher::whereIn('subjectteacher.id', array_column($updatedRecords, 'id'))
             ->leftJoin('subjectclass', 'subjectclass.subjectteacherid', '=', 'subjectteacher.id')
             ->leftJoin('broadsheet', 'broadsheet.subjectclassid', '=', 'subjectclass.id')
             ->get(['broadsheet.staffid as bstaffid', 'broadsheet.subjectclassid as subclass', 'broadsheet.termid as term', 'broadsheet.session_id as session']);
-    
+
         foreach ($sub as $value) {
-            // Update Broadsheet with the correct session_id column
             Broadsheet::where('subjectclassid', $value->subclass)
                 ->where('termid', $value->term)
-                ->where('session_id', $value->session) // Changed from sessionid to session_id
+                ->where('session_id', $value->session)
                 ->update(['staffid' => $staffid]);
-    
-            // Update SubjectRegistrationStatus with the correct session_id column
+
             SubjectRegistrationStatus::where('subjectclassid', $value->subclass)
                 ->where('termid', $value->term)
-                ->where('session_id', $value->session) // Changed from sessionid to session_id
+                ->where('session_id', $value->session)
                 ->update(['staffid' => $staffid]);
         }
-    
+
         return response()->json([
             'success' => true,
             'message' => 'Subject Teacher(s) updated successfully.',
@@ -325,6 +329,8 @@ class SubjectTeacherController extends Controller
 
     public function updatesubjectteacher(Request $request)
     {
+        Log::info('UpdateSubjectTeacher Request Data:', $request->all());
+
         $validator = Validator::make($request->all(), [
             'staffid' => 'required|exists:users,id',
             'subjectids' => 'required|array|min:1',
@@ -349,27 +355,28 @@ class SubjectTeacherController extends Controller
             'sessionid.exists' => 'Selected session does not exist.',
             'subjects_to_remove.*.exists' => 'One or more subjects to remove do not exist.',
         ]);
-    
+
         if ($validator->fails()) {
+            Log::error('UpdateSubjectTeacher Validation Failed:', $validator->errors()->toArray());
             return redirect()->back()->withErrors($validator)->withInput();
         }
-    
+
         $staffid = $request->input('staffid');
         $subjectids = $request->input('subjectids');
         $termids = $request->input('termid');
         $sessionid = $request->input('sessionid');
         $subjectsToRemove = $request->input('subjects_to_remove', []);
-    
+
         $existing = SubjectTeacher::where('staffid', $staffid)
             ->whereIn('subjectid', $subjectids)
             ->whereIn('termid', $termids)
             ->where('sessionid', $sessionid)
             ->exists();
-    
+
         if ($existing) {
             return redirect()->back()->with('danger', 'This teacher is already assigned to one or more selected subjects for one or more selected terms and session.');
         }
-    
+
         if (!empty($subjectsToRemove)) {
             SubjectTeacher::where('staffid', $staffid)
                 ->whereIn('subjectid', $subjectsToRemove)
@@ -377,7 +384,7 @@ class SubjectTeacherController extends Controller
                 ->where('sessionid', $sessionid)
                 ->delete();
         }
-    
+
         foreach ($termids as $termid) {
             foreach ($subjectids as $subjectid) {
                 SubjectTeacher::updateOrCreate(
@@ -396,7 +403,7 @@ class SubjectTeacherController extends Controller
                 );
             }
         }
-    
+
         return redirect()->route('subjectteacher.index')->with('success', 'Subject Teacher updated successfully.');
     }
 
@@ -425,10 +432,10 @@ class SubjectTeacherController extends Controller
         ]);
 
         if ($validator->fails()) {
-            Log::error('Delete Subject Teacher Validation Failed', ['errors' => $validator->errors()]);
+            Log::error('Delete SubjectTeacher Validation Failed:', $validator->errors()->toArray());
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid subject teacher ID.'
+                'message' => $validator->errors()->first()
             ], 422);
         }
 
@@ -449,28 +456,26 @@ class SubjectTeacherController extends Controller
         ], 200);
     }
 
-
     public function getSubjects($id)
     {
-        \Log::info('getSubjects called', ['id' => $id]);
+        Log::info('getSubjects called', ['id' => $id]);
 
         $subjectteacher = SubjectTeacher::where('id', $id)->first();
         if (!$subjectteacher) {
-            \Log::error('Subject Teacher not found', ['id' => $id]);
+            Log::error('Subject Teacher not found', ['id' => $id]);
             return response()->json([
                 'success' => false,
                 'message' => 'Subject Teacher not found.'
             ], 404);
         }
 
-        // Fetch subjects and terms for the same staff, subject, and session
         $subjectTeachers = SubjectTeacher::where('staffid', $subjectteacher->staffid)
             ->where('subjectid', $subjectteacher->subjectid)
             ->where('sessionid', $subjectteacher->sessionid)
             ->select('subjectid', 'termid')
             ->get();
 
-        \Log::info('Subject Teachers fetched', [
+        Log::info('Subject Teachers fetched', [
             'staffid' => $subjectteacher->staffid,
             'subjectid' => $subjectteacher->subjectid,
             'sessionid' => $subjectteacher->sessionid,
@@ -480,7 +485,7 @@ class SubjectTeacherController extends Controller
         $subjectIds = $subjectTeachers->pluck('subjectid')->unique()->toArray();
         $termIds = $subjectTeachers->pluck('termid')->unique()->toArray();
 
-        \Log::info('Subject and Term IDs', [
+        Log::info('Subject and Term IDs', [
             'subjectIds' => $subjectIds,
             'termIds' => $termIds
         ]);
@@ -493,5 +498,4 @@ class SubjectTeacherController extends Controller
             'subjectIds' => $subjectIds ?: []
         ], 200);
     }
-
 }

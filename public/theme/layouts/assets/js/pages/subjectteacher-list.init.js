@@ -333,6 +333,7 @@ function clearEditFields() {
     document.querySelectorAll('#editModal input[name="termid[]"]').forEach(cb => cb.checked = false);
     document.querySelectorAll('#editModal input[name="sessionid"]').forEach(cb => cb.checked = false);
 }
+
 // Delete multiple subject teachers
 function deleteMultiple() {
     console.log("Delete multiple triggered");
@@ -432,22 +433,47 @@ const addSubjectTeacherForm = document.getElementById("add-subjectteacher-form")
 if (addSubjectTeacherForm) {
     addSubjectTeacherForm.addEventListener("submit", function (e) {
         e.preventDefault();
-        console.log("Add form submitted");
+        console.log("Add form submitted at", new Date().toISOString());
         const errorMsg = document.getElementById("alert-error-msg");
+        const addBtn = document.getElementById("add-btn");
         if (errorMsg) errorMsg.classList.add("d-none");
+        if (addBtn) addBtn.disabled = true;
+
         const formData = new FormData(addSubjectTeacherForm);
         const staffid = formData.get('staffid');
-        const subjectids = formData.getAll('subjectid[]');
-        const termids = formData.getAll('termid[]');
+        const subjectids = formData.getAll('subjectid[]').map(Number);
+        const termids = formData.getAll('termid[]').map(Number);
         const sessionid = formData.get('sessionid');
-        if (!staffid || subjectids.length === 0 || termids.length === 0 || !sessionid) {
-            if (errorMsg) {
-                errorMsg.innerHTML = "Please select a teacher, at least one subject, at least one term, and a session";
-                errorMsg.classList.remove("d-none");
-            }
+
+        console.log("Form Data:", { staffid, subjectids, termids, sessionid });
+
+        // Client-side validation
+        if (!staffid) {
+            errorMsg.innerHTML = "Please select a teacher.";
+            errorMsg.classList.remove("d-none");
+            addBtn.disabled = false;
             return;
         }
-        console.log("Sending add request:", { staffid, subjectids, termids, sessionid });
+        if (subjectids.length === 0) {
+            errorMsg.innerHTML = "Please select at least one subject.";
+            errorMsg.classList.remove("d-none");
+            addBtn.disabled = false;
+            return;
+        }
+        if (termids.length === 0) {
+            errorMsg.innerHTML = "Please select at least one term.";
+            errorMsg.classList.remove("d-none");
+            addBtn.disabled = false;
+            return;
+        }
+        if (!sessionid) {
+            errorMsg.innerHTML = "Please select a session.";
+            errorMsg.classList.remove("d-none");
+            addBtn.disabled = false;
+            return;
+        }
+
+        console.log("Sending add request:", { staffid, subjectids, termid: termids, sessionid });
         axios.post('/subjectteacher', { staffid, subjectids, termid: termids, sessionid })
             .then(function (response) {
                 console.log("Add success:", response.data);
@@ -459,6 +485,7 @@ if (addSubjectTeacherForm) {
                     timer: 2000,
                     showCloseButton: true
                 });
+                addBtn.disabled = false;
                 window.location.reload();
             })
             .catch(function (error) {
@@ -467,12 +494,14 @@ if (addSubjectTeacherForm) {
                     errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error adding subject teacher";
                     errorMsg.classList.remove("d-none");
                 }
+                addBtn.disabled = false;
                 if (error.response?.data?.success && error.response?.data?.processed > 0) {
                     setTimeout(() => window.location.reload(), 2000);
                 }
             });
     });
 }
+
 // Edit subject teacher
 const editSubjectTeacherForm = document.getElementById("edit-subjectteacher-form");
 if (editSubjectTeacherForm) {
@@ -480,21 +509,52 @@ if (editSubjectTeacherForm) {
         e.preventDefault();
         console.log("Edit form submitted at", new Date().toISOString());
         const errorMsg = document.getElementById("edit-alert-error-msg");
+        const updateBtn = document.getElementById("update-btn");
         if (errorMsg) errorMsg.classList.add("d-none");
+        if (updateBtn) updateBtn.disabled = true;
+
         const formData = new FormData(editSubjectTeacherForm);
         const staffid = formData.get('staffid');
-        const subjectids = formData.getAll('subjectid[]');
-        const termids = formData.getAll('termid[]');
+        const subjectids = formData.getAll('subjectid[]').map(Number);
+        const termids = formData.getAll('termid[]').map(Number);
         const sessionid = formData.get('sessionid');
         const id = editIdField?.value;
-        if (!id || !staffid || subjectids.length === 0 || termids.length === 0 || !sessionid) {
-            if (errorMsg) {
-                errorMsg.innerHTML = "Please select a teacher, at least one subject, at least one term, and a session";
-                errorMsg.classList.remove("d-none");
-            }
+
+        console.log("Form Data:", { id, staffid, subjectids, termids, sessionid });
+
+        // Client-side validation
+        if (!id) {
+            errorMsg.innerHTML = "Invalid subject teacher ID.";
+            errorMsg.classList.remove("d-none");
+            updateBtn.disabled = false;
             return;
         }
-        console.log("Sending edit request:", { id, staffid, subjectids, termids, sessionid });
+        if (!staffid) {
+            errorMsg.innerHTML = "Please select a teacher.";
+            errorMsg.classList.remove("d-none");
+            updateBtn.disabled = false;
+            return;
+        }
+        if (subjectids.length === 0) {
+            errorMsg.innerHTML = "Please select at least one subject.";
+            errorMsg.classList.remove("d-none");
+            updateBtn.disabled = false;
+            return;
+        }
+        if (termids.length === 0) {
+            errorMsg.innerHTML = "Please select at least one term.";
+            errorMsg.classList.remove("d-none");
+            updateBtn.disabled = false;
+            return;
+        }
+        if (!sessionid) {
+            errorMsg.innerHTML = "Please select a session.";
+            errorMsg.classList.remove("d-none");
+            updateBtn.disabled = false;
+            return;
+        }
+
+        console.log("Sending edit request:", { id, staffid, subjectids, termid: termids, sessionid });
         axios.post(`/subjectteacher/${id}`, {
             _method: 'PUT',
             staffid,
@@ -513,6 +573,7 @@ if (editSubjectTeacherForm) {
                     timer: 2000,
                     showCloseButton: true
                 });
+                updateBtn.disabled = false;
                 window.location.reload();
             })
             .catch(function (error) {
@@ -521,6 +582,7 @@ if (editSubjectTeacherForm) {
                     errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error updating subject teacher";
                     errorMsg.classList.remove("d-none");
                 }
+                updateBtn.disabled = false;
                 if (error.response?.data?.success && error.response?.data?.processed > 0) {
                     setTimeout(() => window.location.reload(), 2000);
                 }
@@ -533,6 +595,7 @@ const addModal = document.getElementById("addSubjectTeacherModal");
 if (addModal) {
     addModal.addEventListener("show.bs.modal", function (e) {
         console.log("Add modal show event");
+        clearAddFields();
         const modalLabel = document.getElementById("exampleModalLabel");
         const addBtn = document.getElementById("add-btn");
         if (modalLabel) modalLabel.innerHTML = "Add Subject Teacher";

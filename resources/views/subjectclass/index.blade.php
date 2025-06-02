@@ -128,8 +128,9 @@
                                                     <td class="schoolarm">{{ $sc->schoolarm }}</td>
                                                     <td class="term" data-termid="{{ $sc->termid }}">
                                                         <span @if($sc->termname === 'First Term') style="color: green"
-                                                            @elseif($sc->termname === 'Second Term' || $sc->termname === 'Third Term') style="color: blue"
-                                                            @else style="color: red" @endif>
+                                                            @elseif($sc->termname === 'Second Term')style="color: blue"
+                                                             @elseif($sc->termname === 'Third Term') style="color: red"
+                                                            @else style="color: inherit" @endif>
                                                             {{ $sc->termname }}
                                                         </span>
                                                     </td>
@@ -222,7 +223,7 @@
                     </div>
                 </div>
 
-                <!-- Edit Subject Class Modal -->
+ 
                 <!-- Edit Subject Class Modal -->
                 <div id="editModal" class="modal fade" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true" data-bs-backdrop="static">
                     <div class="modal-dialog modal-dialog-centered modal-lg">

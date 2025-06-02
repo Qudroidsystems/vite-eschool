@@ -250,7 +250,7 @@ use Spatie\Permission\Models\Role;
                             </div>
                             <div class="mb-3">
                                 <label for="tittle" class="form-label">Title <span class="text-danger">*</span></label>
-                                <select id="tittle" name="tittle" class="form-control" required>
+                                <select id="title" name="title" class="form-control" required>
                                     <option value="">Select Title</option>
                                     <option value="Mr">Mr</option>
                                     <option value="Mrs">Mrs</option>
@@ -299,16 +299,16 @@ use Spatie\Permission\Models\Role;
                                 <span id="addAge" class="text-muted"></span>
                             </div>
                             <div class="mb-3">
-                                <label for="age1" class="form-label">Age <span class="text-danger">*</span></label>
-                                <input type="text" id="age1" name="age1" class="form-control" placeholder="Enter age" required>
+                                <label for="age1" class="form-label">Age</label>
+                                <input type="text" id="age1" name="age" class="form-control" placeholder="Enter age">
                             </div>
                             <div class="mb-3">
                                 <label for="placeofbirth" class="form-label">Place of Birth <span class="text-danger">*</span></label>
                                 <input type="text" id="placeofbirth" name="placeofbirth" class="form-control" placeholder="Enter place of birth" required>
                             </div>
                             <div class="mb-3">
-                                <label for="nationlity" class="form-label">Nationality <span class="text-danger">*</span></label>
-                                <input type="text" id="nationlity" name="nationlity" class="form-control" placeholder="Enter nationality" required>
+                                <label for="nationality" class="form-label">Nationality <span class="text-danger">*</span></label>
+                                <input type="text" id="nationality" name="nationality" class="form-control" placeholder="Enter nationality" required>
                             </div>
                             <div class="mb-3">
                                 <label for="state" class="form-label">State of Origin <span class="text-danger">*</span></label>
@@ -416,7 +416,7 @@ use Spatie\Permission\Models\Role;
                             </div>
                             <div class="mb-3">
                                 <label for="editTittle" class="form-label">Title <span class="text-danger">*</span></label>
-                                <select id="editTittle" name="tittle" class="form-control" required>
+                                <select id="editTittle" name="title" class="form-control" required>
                                     <option value="">Select Title</option>
                                     <option value="Mr">Mr</option>
                                     <option value="Mrs">Mrs</option>
@@ -474,8 +474,8 @@ use Spatie\Permission\Models\Role;
                                 <input type="text" id="editPlaceofbirth" name="placeofbirth" class="form-control" placeholder="Enter place of birth" required>
                             </div>
                             <div class="mb-3">
-                                <label for="editNationlity" class="form-label">Nationality <span class="text-danger">*</span></label>
-                                <input type="text" id="editNationlity" name="nationlity" class="form-control" placeholder="Enter nationality" required>
+                                <label for="editNationality" class="form-label">Nationality <span class="text-danger">*</span></label>
+                                <input type="text" id="editNationality" name="nationality" class="form-control" placeholder="Enter nationality" required>
                             </div>
                             <div class="mb-3">
                                 
