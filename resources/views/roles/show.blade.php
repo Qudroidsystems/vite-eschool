@@ -81,17 +81,18 @@ use Spatie\Permission\Models\Permission;
                             <div class="table-responsive">
                                 <table class="table align-middle mb-0">
                                     <tbody class="list">
+                                        <tr>
+                                            <td colspan="2">
+                                                <button type="button" class="btn btn-light btn-active-primary" data-bs-toggle="modal" data-bs-target="#editRoleModalgrid">Edit Role</button>
+                                            </td>
+                                        </tr>
                                         @foreach ($rolePermissions as $rm)
                                             <tr>
                                                 <td>---</td>
                                                 <td class="click text-center">{{ $rm->name }}</td>
                                             </tr>
                                         @endforeach
-                                        <tr>
-                                            <td colspan="2">
-                                                <button type="button" class="btn btn-light btn-active-primary" data-bs-toggle="modal" data-bs-target="#editRoleModalgrid">Edit Role</button>
-                                            </td>
-                                        </tr>
+                                       
                                     </tbody>
                                 </table>
                             </div>
