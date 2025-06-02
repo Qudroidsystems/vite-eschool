@@ -166,6 +166,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/studentinvoice/{studentid}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('schoolpayment.invoice');
     Route::get('/deletestudentpayment/{paymentid}/', [SchoolPaymentController::class, 'deletestudentpayment'])->name('schoolpayment.deletestudentpayment');
 
+    // Route::get('viewstudent', [ViewStudentController::class]);
     Route::get('/viewstudent/{id}/{termid}/{sessionid}', [ViewStudentController::class, 'show'])->name('viewstudent');
     Route::get('/subjectscoresheet/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'subjectscoresheet'])->name('subjectscoresheet');
 

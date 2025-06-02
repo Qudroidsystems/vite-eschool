@@ -100,6 +100,10 @@
     @if (Route::is('mysubject.*'))
          @include('layouts.pages-assets.css.mysubject-list-css')
     @endif 
+
+    @if (Route::is('viewstudent'))
+        @include('layouts.pages-assets.css.viewstudent-list-css')
+    @endif 
 </head>
 
 <body>
@@ -1755,6 +1759,7 @@
       @if (Route::is('schoolbilltermsession.*'))
             @include('layouts.pages-assets.js.schoolbilltermsession-list-js')
       @endif
+
       @if (Route::is('student.*'))
              @include('layouts.pages-assets.js.student-list-js')
       @endif
@@ -1765,6 +1770,10 @@
 
       @if (Route::is('mysubject.*'))
         @include('layouts.pages-assets.js.mysubject-list-js')
+      @endif 
+
+      @if (Route::is('viewstudent'))
+          @include('layouts.pages-assets.js.viewstudent-list-js')
       @endif 
 
       </body>
