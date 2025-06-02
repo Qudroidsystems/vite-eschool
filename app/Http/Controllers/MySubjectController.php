@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Subjectteacher;
+use App\Models\SubjectTeacher;
 use App\Models\Schoolterm;
 use App\Models\Schoolsession;
 use App\Models\Subject;
@@ -30,7 +30,7 @@ class MySubjectController extends Controller
         $current = "Current";
 
         // Query for current subjects
-        $query = Subjectteacher::where('subjectteacher.staffid', $user->id)
+        $query = SubjectTeacher::where('subjectteacher.staffid', $user->id)
             ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
             ->leftJoin('subjectclass', 'subjectclass.subjectteacherid', '=', 'subjectteacher.id')
             ->leftJoin('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
@@ -55,7 +55,7 @@ class MySubjectController extends Controller
         ])->orderBy('subject.subject')->paginate(5);
 
         // Query for subject history
-        $mysubjectshistory = Subjectteacher::query()
+        $mysubjectshistory = SubjectTeacher::query()
             ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
             ->leftJoin('subjectclass', 'subjectclass.subjectteacherid', '=', 'subjectteacher.id')
             ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
@@ -87,7 +87,7 @@ class MySubjectController extends Controller
             ->get();
 
         // Count unique subjects per session
-        $unique_subject_count = Subjectteacher::query()
+        $unique_subject_count = SubjectTeacher::query()
             ->join('schoolsession', 'subjectteacher.sessionid', '=', 'schoolsession.id')
             ->where('subjectteacher.staffid', $user->id)
             ->where('schoolsession.status', $current)
@@ -95,7 +95,7 @@ class MySubjectController extends Controller
             ->count();
 
         // Count subjects per term for chart
-        $term_counts = Subjectteacher::query()
+        $term_counts = SubjectTeacher::query()
             ->join('schoolterm', 'subjectteacher.termid', '=', 'schoolterm.id')
             ->join('schoolsession', 'subjectteacher.sessionid', '=', 'schoolsession.id')
             ->where('subjectteacher.staffid', $user->id)
