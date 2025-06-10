@@ -73,6 +73,7 @@ document.addEventListener('click', function (e) {
     const editBtn = e.target.closest('.edit-item-btn');
     const removeBtn = e.target.closest('.remove-item-btn');
     const paginationLink = e.target.closest('.pagination .page-link');
+    const removeActionsBtn = e.target.closest('#remove-actions');
     if (editBtn) {
         handleEditClick(e, editBtn);
     } else if (removeBtn) {
@@ -81,6 +82,8 @@ document.addEventListener('click', function (e) {
         e.preventDefault();
         const url = paginationLink.getAttribute('href');
         if (url) fetchPage(url);
+    } else if (removeActionsBtn) {
+        deleteMultipleRegistrations();
     }
 });
 
@@ -199,9 +202,60 @@ function handleRemoveClick(e, button) {
     }
 }
 
-// Delete multiple subjects
+// Delete multiple subject registrations
+function deleteMultipleRegistrations() {
+    console.log("Delete multiple registrations triggered");
+    const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+    if (checkboxes.length === 0) {
+        Swal.fire({
+            title: "Please select at least one student",
+            icon: "info",
+            showCloseButton: true
+        });
+        return;
+    }
+
+    const studentIds = [];
+    let subjectClassId, termId, sessionId, staffId;
+    checkboxes.forEach((checkbox) => {
+        const tr = checkbox.closest("tr");
+        const studentId = tr.querySelector(".student-id")?.getAttribute("data-student-id");
+        subjectClassId = tr.querySelector(".subjectclass-id")?.getAttribute("data-subjectclassid");
+        termId = tr.querySelector(".term-id")?.getAttribute("data-termid");
+        sessionId = tr.querySelector(".session-id")?.getAttribute("data-sessionid");
+        staffId = tr.querySelector(".staff-id")?.getAttribute("data-staffid") || null;
+        if (studentId) studentIds.push(parseInt(studentId));
+    });
+
+    console.log("Delete multiple data:", { studentIds, subjectClassId, termId, sessionId, staffId });
+
+    if (!studentIds.length || !subjectClassId || !termId || !sessionId) {
+        Swal.fire({
+            title: "Missing required data",
+            text: "Please ensure all selected rows have valid student, subject class, term, and session data.",
+            icon: "error",
+            showCloseButton: true
+        });
+        return;
+    }
+
+    Swal.fire({
+        title: "Are you sure?",
+        text: "You won't be able to revert this!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Yes, delete it!",
+        showCloseButton: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            window.removeRegisteredClasses(studentIds, subjectClassId, termId, sessionId, staffId);
+        }
+    });
+}
+
+// Delete multiple subjects (original function for subjects, not registrations)
 function deleteMultiple() {
-    console.log("Delete multiple triggered");
+    console.log("Delete multiple subjects triggered");
     const ids_array = [];
     const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
     checkboxes.forEach((checkbox) => {
@@ -322,7 +376,7 @@ if (addSubjectForm) {
                 console.log("Add success:", response.data);
                 Swal.fire({
                     icon: "success",
-                    title: response.data.message || "Subject added successfully!";
+                    title: response.data.message || "Subject added successfully!",
                     showConfirmButton: false,
                     timer: 2000
                 });
@@ -359,7 +413,7 @@ if (editSubjectForm) {
         const sessionid = formData.get('sessionid');
         const id = document.getElementById("edit-id-field").value;
 
-        console.log("Form Data:", { id, staffid, subjectid, schoolclassid, termid, sessionid termid});
+        console.log("Form Data:", { id, staffid, subjectid, schoolclassid, termid, sessionid });
 
         if (!id || !staffid || !subjectid || !schoolclassid || !termid || !sessionid) {
             errorMsg.textContent = "Please select all required fields.";
@@ -375,8 +429,7 @@ if (editSubjectForm) {
             schoolclassid,
             termid,
             sessionid,
-            termid,
-            _token: termid
+            _token: csrfToken
         })
             .then(function (response) {
                 console.log("Edit success:", response.data);
@@ -394,7 +447,7 @@ if (editSubjectForm) {
                 if (errorMsg) {
                     errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error updating subject";
                     errorMsg.classList.remove("d-none");
-                });
+                }
                 updateBtn.disabled = false;
             });
     });
@@ -416,11 +469,11 @@ if (addModal) {
 }
 
 const editModal = document.getElementById("editModal");
-if (editModalBtn) {
+if (editModal) {
     editModal.addEventListener("show.bs.modal", function () {
         console.log("Edit modal show");
         const errorMsg = document.getElementById("edit-alert-error");
-        if (errorMsg &&) errorMsg.classList.add("error-none");
+        if (errorMsg) errorMsg.classList.add("d-none");
     });
     editModal.addEventListener("hidden.bs.modal", function () {
         console.log("Edit modal hidden");
@@ -430,7 +483,7 @@ if (editModalBtn) {
         document.getElementById("edit-termid").value = '';
         document.getElementById("edit-sessionid").value = '';
         const errorMsg = document.getElementById("edit-alert-error");
-        if (errorMsg &&) errorMsg.classList.add("error-none");
+        if (errorMsg) errorMsg.classList.add("d-none");
     });
 }
 
@@ -454,3 +507,4 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // Expose global functions
 window.deleteMultiple = deleteMultiple;
+window.deleteMultipleRegistrations = deleteMultipleRegistrations;

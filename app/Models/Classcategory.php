@@ -18,4 +18,9 @@ class Classcategory extends Model
        'ca3score',
        'examscore',
     ];
+
+    public function schoolclasses()
+    {
+        return $this->hasMany(Schoolclass::class, 'classcategoryid');
+    }
 }

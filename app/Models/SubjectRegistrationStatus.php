@@ -13,11 +13,12 @@ class SubjectRegistrationStatus extends Model
 
     protected $fillable = [
         'studentid',
-        'studentclassid',
-        'subjectid',
+        'subjectclassid',
+        'staffid',
         'termid',
         'sessionid',
         'Status',
+        'broadsheetid',
 
     ];
 }

@@ -91,19 +91,6 @@ class PermissionTableSeeder extends Seeder
         //    'basicsettingsmanagement-link',
         //    'apps-link',
 
-        //    'class_operation-list',
-        //    'class_operation-Create',
-        //    'class_operation-edit',
-        //    'class_operation-Delete',
-
-        //    'myclass-list',
-        //    'mysubject-list',
-
-
-        //    'myresultroom-list',
-        //    'myresultroom-creat',
-        //    'myresultroom-edit',
-        //    'myresultroom-Delete',
 
         //    'parent-list',
         //    'parent-Create',

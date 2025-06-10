@@ -39,5 +39,23 @@ class Subjectclass extends Model
     {
         return $this->belongsTo(Subject::class, 'subjectid', 'id');
     }
+   
+    public function term()
+    {
+        return $this->belongsTo(Schoolterm::class, 'termid');
+    }
+
+    public function session()
+    {
+        return $this->belongsTo(Schoolsession::class, 'sessionid');
+    }
+
+    public function staff()
+    {
+        return $this->belongsTo(User::class, 'staffid');
+    }
+
+
+
 
 }

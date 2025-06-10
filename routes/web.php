@@ -139,17 +139,58 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/classcategoryid/{classcategoryid}', [ClasscategoryController::class, 'deleteclasscategory'])->name('classcategories.deleteclasscategory');
     Route::post('updateclasscategoryid', [ClasscategoryController::class, 'updateclasscategory'])->name('classcategories.updateclasscategory');
 
-    Route::resource('subjectoperation', SubjectOperationController::class);
+
     Route::resource('parent', ParentController::class);
     Route::resource('studentImageUpload', StudentImageUploadController::class);
     Route::resource('myclass', MyClassController::class);
     Route::resource('mysubject', MySubjectController::class);
 
-    Route::get('term_results', [MyresultroomController::class, 'term'])->name('myresultroom.term');
-
-    Route::resource('myresultroom', MyresultroomController::class);
+    Route::get('/myresultroom', [MyresultroomController::class, 'index'])->name('myresultroom.index');
+    Route::post('/myresultroom', [MyresultroomController::class, 'index']);
+    Route::post('/myresultroom/store', [MyresultroomController::class, 'store']);
+    Route::delete('/subjects/registered-classes', [MyresultroomController::class, 'delete']); // Adjust as needed
+    // Route::get('/subjectscoresheet/{schoolclassid}/{subjectclassid}/{userid}/{termid}/{session_id}', [MyScoreSheetController::class, 'index'])->name('subjectscoresheet.index');
+    // Route::get('/subjectscoresheet-mock/{schoolclassid}/{subjectclassid}/{userid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'index'])->name('subjectscoresheet-mock.index');
     Route::resource('studentresults', StudentResultsController::class);
-    Route::resource('subjectscoresheet', MyScoreSheetController::class);
+
+    // Terminal Scoresheet Routes
+    // Route::resource('subjectscoresheet', MyScoreSheetController::class);
+    Route::get('subjectscoresheet/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'subjectscoresheet'])->name('subjectscoresheet');
+    Route::get('subjectscoresheet/edit/{id}', [MyScoreSheetController::class, 'edit'])->name('subjectscoresheet.edit');
+    Route::put('subjectscoresheet/update/{id}', [MyScoreSheetController::class, 'update'])->name('subjectscoresheet.update');
+    Route::delete('subjectscoresheet/delete/{id}', [MyScoreSheetController::class, 'destroy'])->name('subjectscoresheet.destroy');
+    Route::get('subjectscoresheet/export', [MyScoreSheetController::class, 'export'])->name('subjectscoresheet.export');
+    Route::post('subjectscoresheet/import', [MyScoreSheetController::class, 'importsheet'])->name('subjectscoresheet.import');
+    Route::get('/subjectscoresheet/results', [MyScoreSheetController::class, 'results'])->name('subjectscoresheet.results');
+
+   // Mock Scoresheet Routes
+    Route::get('subjectscoresheet-mock/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'subjectscoresheetMock'])->name('subjectscoresheet-mock.index');
+    Route::get('subjectscoresheet-mock/export', [MyScoreSheetController::class, 'exportMock'])->name('subjectscoresheet-mock.export');
+    Route::post('subjectscoresheet-mock/import', [MyScoreSheetController::class, 'importMock'])->name('scoresheet-mock.import');
+    Route::get('subjectscoresheet-mock/{id}/edit', [MyScoreSheetController::class, 'editMock'])->name('subjectscoresheet-mock.edit');
+    Route::put('subjectscoresheet-mock/{id}', [MyScoreSheetController::class, 'updateMock'])->name('subjectscoresheet-mock.update');
+    Route::post('/scoresheet/destroy/mock', [MyScoreSheetController::class, 'destroyMock'])->name('scoresheet.destroy-mock');
+    Route::post('scoresheet-mock/update-score', [MyScoreSheetController::class, 'updateScoreMock'])->name('scoresheet-mock.update-score');
+
+        // Marks Sheet Download Routes
+    Route::get('/scoresheet/download-marks-sheet', [MyScoreSheetController::class, 'downloadMarksSheet'])
+    ->name('scoresheet.download-marks-sheet');
+    
+    Route::post('/subjectscoresheet/bulk-update', [MyScoreSheetController::class, 'bulkUpdateScores'])
+    ->name('subjectscoresheet.bulk-update');
+
+    // School Information Management Routes (Optional - for admin panel)
+
+    Route::get('/school-info', [SchoolInformationController::class, 'index'])->name('admin.school-info.index');
+    Route::post('/school-info', [SchoolInformationController::class, 'store'])->name('admin.school-info.store');
+    Route::put('/school-info/{id}', [SchoolInformationController::class, 'update'])->name('admin.school-info.update');
+
+
+
+    // Route::get('export', [MyScoreSheetController::class, 'export'])->name('subjectscoresheet.export');;
+    // Route::post('classsetting', [MyScoreSheetController::class, 'importsheet'])->name('import.post');
+    // Route::post('importsheet', [MyScoreSheetController::class, 'importsheet'])->name('import.post.sheet');
+    // Route::get('/importform/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'importform']);
 
     Route::resource('schoolbill', SchoolBillController::class);
     Route::get('/billid/{billid}', [SchoolBillController::class, 'deletebill'])->name('schoolbill.deletebill');
@@ -171,14 +212,28 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/subjectscoresheet/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'subjectscoresheet'])->name('subjectscoresheet');
 
     Route::resource('subjectoperation', SubjectOperationController::class);
-    Route::get('/subjectinfo/{id}/{schid}/{sessid}/{termid}', [SubjectOperationController::class, 'subjectinfo'])->name('subjectoperation.subjectinfo');
+    Route::get('/subjects', [SubjectOperationController::class, 'index'])->name('subjects.index');
+    Route::post('/subjects', [SubjectOperationController::class, 'store'])->name('subjects.store');
+    Route::post('/subjectregistration', [SubjectOperationController::class, 'store'])->name('subjects.store');
+    Route::get('/subjectoperation/subjectinfo/{id}/{schoolclassid}/{termid}/{sessionid}', [SubjectOperationController::class, 'subjectinfo'])->name('subjects.subjectinfo');
+    //Route::delete('/subjects/{id}', [SubjectOperationController::class, 'destroy'])->name('subjects.destroy');
+    Route::delete('/subjects/registered-classes', [SubjectOperationController::class, 'destroy'])->name('subjects.destroy');
+    Route::get('/subjects/registered-classes', [SubjectOperationController::class, 'getRegisteredClasses'])->name('subjects.registered-classes');
+
+
+
+
     Route::get('/viewresults/{id}/{schoolclassid}/{sessid}/{termid}', [StudentResultsController::class, 'viewresults']);
     Route::get('/studentpersonalityprofile/{id}/{schoolclassid}/{sessid}/{termid}', [StudentpersonalityprofileController::class, 'studentpersonalityprofile'])->name('myclass.studentpersonalityprofile');
+
+
     Route::post('save', [StudentpersonalityprofileController::class, 'save'])->name('save');
-    Route::get('export', [MyScoreSheetController::class, 'export']);
-    Route::post('classsetting', [MyScoreSheetController::class, 'importsheet'])->name('import.post');
-    Route::post('importsheet', [MyScoreSheetController::class, 'importsheet'])->name('import.post.sheet');
-    Route::get('/importform/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'importform']);
+
+    
+
+
+
+
 
     Route::get('image-upload', [StaffImageUploadController::class, 'imageUpload'])->name('image.upload');
     Route::post('image-upload', [StaffImageUploadController::class, 'imageUploadPost'])->name('image.upload.post');

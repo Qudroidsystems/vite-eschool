@@ -24,13 +24,14 @@
         .pagination-wrap .active .page-link { background-color: #007bff; color: white; }
         .pagination-wrap .disabled .page-link { pointer-events: none; opacity: 0.5; }
     </style>
+     
  
     @if (Route::is('dashboard'))
-          @include('layouts.pages-assets.css.users-list-css')
+                @include('layouts.pages-assets.css.users-list-css')
     @endif
 
     @if (Route::is('users.*'))
-          @include('layouts.pages-assets.css.users-list-css')
+                @include('layouts.pages-assets.css.users-list-css')
     @endif
 
     @if (Route::is('roles.*'))
@@ -73,6 +74,12 @@
        @include('layouts.pages-assets.css.subject-list-css')
    @endif
 
+   
+   @if (Route::is('subjects.*'))
+       @include('layouts.pages-assets.css.subject-list-css')
+   @endif
+
+
    @if (Route::is('subjectteacher.*'))
         @include('layouts.pages-assets.css.subjectteacher-list-css')
    @endif   
@@ -104,6 +111,55 @@
     @if (Route::is('viewstudent'))
         @include('layouts.pages-assets.css.viewstudent-list-css')
     @endif 
+
+
+    @if (Route::is('subjectoperation.*'))
+        @include('layouts.pages-assets.css.subjectoperation-list-css')
+    @endif 
+
+    @if (Route::is('subjects.subjectinfo'))
+        @include('layouts.pages-assets.css.subjectinfo-list-css')
+    @endif 
+
+    @if (Route::is('myresultroom.*'))
+        @include('layouts.pages-assets.css.myresultroom-list-css')
+    @endif
+
+    @if (Route::is('subjectscoresheet'))
+        @include('layouts.pages-assets.css.subjectscoresheet-list-css')
+    @endif
+
+    @if (Route::is('subjectscoresheet-mock.*'))
+           @include('layouts.pages-assets.css.subjectscoresheet-mock-list-css')
+    @endif
+
+    @if (Route::is('studentresults*'))
+        @include('layouts.pages-assets.css.studentresults-list-css')
+    @endif
+
+    @if (Route::is('schoolbill*'))
+        @include('layouts.pages-assets.css.schoolbill-list-css')
+    @endif
+
+    @if (Route::is('schoolpayment*'))
+        @include('layouts.pages-assets.css.schoolpayment-list-css')
+    @endif
+
+    @if (Route::is('analysis*'))
+        @include('layouts.pages-assets.css.analysis-list-css')
+    @endif
+
+    @if (Route::is('exams*'))
+        @include('layouts.pages-assets.css.exams-list-css')
+    @endif
+
+    @if (Route::is('questions*'))
+        @include('layouts.pages-assets.css.questions-list-css')
+    @endif
+
+    @if (Route::is('cbt*'))
+        @include('layouts.pages-assets.css.cbt-list-css')
+    @endif
 </head>
 
 <body>
@@ -268,6 +324,28 @@
                             </div>
                         </li>
 
+                        <li class="menu-title"><i class="ph-folder-open"></i> <span data-key="t-apps">SUBJECT REGISTRATION</span></li>
+                        
+                        <li class="nav-item">
+                            <a href="#sidebarsubjectoperaton" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarsubjectoperaton">
+                                <i class="ph-folder-open"></i> <span data-key="t-ecommerce">Subject Registration </span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarsubjectoperaton">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View my-class')
+                                          <li class="nav-item">
+                                               <a href="{{ route('subjectoperation.index') }}" class="nav-link" data-key="t-products">Student Subject Registration</a>
+                                         </li>
+                                    @endcan
+                                  @can('View my-subject')
+                                          <li class="nav-item">
+                                              <a href="{{ route('subjectoperation.index') }}" class="nav-link" data-key="t-products">My Subject</a>
+                                        </li>
+                                  @endcan                                  
+                                </ul>
+                            </div>
+                        </li>
+
                         <li class="menu-title"><i class="ph-folder-open"></i> <span data-key="t-apps">CLASSES & RECORDS</span></li>
                         
                         <li class="nav-item">
@@ -285,10 +363,7 @@
                                           <li class="nav-item">
                                               <a href="{{ route('mysubject.index') }}" class="nav-link" data-key="t-products">My Subject</a>
                                         </li>
-                                  @endcan
-
-
-                                    
+                                  @endcan                                  
                                 </ul>
                             </div>
                         </li>
@@ -299,10 +374,11 @@
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarRecords">
                                 <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="apps-ecommerce-products.html" class="nav-link" data-key="t-products">My Records</a>
-                                    </li>
-
+                                    @can('View myresult-room')
+                                         <li class="nav-item">
+                                              <a href="{{ route('myresultroom.index') }}" class="nav-link" data-key="t-products">Terminal Records</a>
+                                        </li>
+                                    @endcan
                                     <li class="nav-item">
                                         <a href="apps-ecommerce-products.html" class="nav-link" data-key="t-products">Student Reports</a>
                                     </li>
@@ -1744,6 +1820,10 @@
             @include('layouts.pages-assets.js.subject-list-js')
       @endif
 
+      @if (Route::is('subjects.*'))
+           @include('layouts.pages-assets.js.subject-list-js')
+      @endif
+
       @if (Route::is('subjectteacher.*'))
             @include('layouts.pages-assets.js.subjectteacher-list-js')
       @endif
@@ -1775,6 +1855,54 @@
       @if (Route::is('viewstudent'))
           @include('layouts.pages-assets.js.viewstudent-list-js')
       @endif 
+
+      @if (Route::is('subjectoperation.*'))
+          @include('layouts.pages-assets.js.subjectoperation-list-js')
+      @endif 
+
+      @if (Route::is('subjects.subjectinfo'))
+          @include('layouts.pages-assets.js.subjectinfo-list-js')
+      @endif 
+
+      @if (Route::is('myresultroom.*'))
+            @include('layouts.pages-assets.js.myresultroom-list-js')
+      @endif
+
+      @if (Route::is('subjectscoresheet'))
+            @include('layouts.pages-assets.js.subjectscoresheet-list-js')
+      @endif
+
+      @if (Route::is('subjectscoresheet-mock.*'))
+        @include('layouts.pages-assets.js.subjectscoresheet-mock-list-js')
+      @endif
+
+      @if (Route::is('studentresults*'))
+            @include('layouts.pages-assets.js.studentresults-list-js')
+      @endif
+
+      @if (Route::is('schoolbill*')) 
+            @include('layouts.pages-assets.js.schoolbill-list-js')
+      @endif
+
+      @if (Route::is('schoolpayment*'))
+            @include('layouts.pages-assets.js.schoolpayment-list-js')
+      @endif
+
+      @if (Route::is('analysis*'))
+           @include('layouts.pages-assets.js.analysis-list-js')
+      @endif
+
+      @if (Route::is('exams*'))
+            @include('layouts.pages-assets.js.exams-list-js')
+      @endif
+
+      @if (Route::is('questions*'))
+            @include('layouts.pages-assets.js.questions-list-js')
+      @endif
+
+      @if (Route::is('cbt*'))
+            @include('layouts.pages-assets.js.cbt-list-js')
+      @endif
 
       </body>
       

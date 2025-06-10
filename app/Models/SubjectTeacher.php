@@ -24,11 +24,6 @@ class SubjectTeacher extends Model
         return $this->belongsTo(SchoolSession::class, 'sessionid');
     }
 
- 
-    public function subject()
-    {
-        return $this->belongsTo(Subject::class, 'subjectid');
-    }
 
     public function schoolterm()
     {
@@ -37,6 +32,33 @@ class SubjectTeacher extends Model
 
 
     public function user()
+    {
+        return $this->belongsTo(User::class, 'staffid');
+    }
+
+    // Add this missing relationship
+    public function subjectclass()
+    {
+        return $this->hasOne(SubjectClass::class, 'subjectteacherid');
+    }
+
+    // Other existing relationships
+    public function subject()
+    {
+        return $this->belongsTo(Subject::class, 'subjectid');
+    }
+
+    public function term()
+    {
+        return $this->belongsTo(Schoolterm::class, 'termid');
+    }
+
+    public function session()
+    {
+        return $this->belongsTo(Schoolsession::class, 'sessionid');
+    }
+
+    public function staff()
     {
         return $this->belongsTo(User::class, 'staffid');
     }

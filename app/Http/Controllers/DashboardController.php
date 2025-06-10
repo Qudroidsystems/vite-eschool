@@ -17,7 +17,7 @@ class DashboardController extends Controller
     public function index(){
         
         //page title
-        $pagetitle = "Role Management";
+        $pagetitle = "Dashboard Management";
 
 
         return view('dashboards.dashboard')->with('pagetitle',$pagetitle);
