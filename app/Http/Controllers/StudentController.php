@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Imports\StudentsImport;
 use App\Models\Broadsheet;
-use App\Models\Parentregistration;
+use App\Models\ParentRegistration;
 use App\Models\PromotionStatus;
 use App\Models\Schoolclass;
 use App\Models\Schoolsession;
@@ -188,7 +188,7 @@ class StudentController extends Controller
             $promotion->classstatus = 'CURRENT';
             $promotion->save();
 
-            $parent = new Parentregistration();
+            $parent = new ParentRegistration();
             $parent->studentId = $studentId;
             $parent->save();
 
@@ -409,7 +409,7 @@ class StudentController extends Controller
 
             Studentclass::where('studentId', $id)->delete();
             PromotionStatus::where('studentId', $id)->delete();
-            Parentregistration::where('studentId', $id)->delete();
+            ParentRegistration::where('studentId', $id)->delete();
             Studentpicture::where('studentid', $id)->delete();
             Broadsheet::where('studentId', $id)->delete();
             SubjectRegistrationStatus::where('studentId', $id)->delete();
