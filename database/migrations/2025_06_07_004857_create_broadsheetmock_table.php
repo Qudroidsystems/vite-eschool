@@ -48,7 +48,7 @@ return new class extends Migration
             $table->string('remark')->nullable();
             $table->timestamps();
 
-            $table->foreign('broadsheet_records_mock id')->references('id')->on('broadsheet_records_mock')->onDelete('cascade');
+            $table->foreign('broadsheet_records_mock_id')->references('id')->on('broadsheet_records_mock')->onDelete('cascade');
             $table->foreign('term_id')->references('id')->on('schoolterm')->onDelete('cascade');
             $table->foreign('subjectclass_id')->references('id')->on('subjectclass')->onDelete('cascade');
         });
