@@ -8,7 +8,7 @@ class RenameTittleAndNationlityColumnsInStudentRegistrationTable extends Migrati
 {
     public function up()
     {
-        Schema::table('studentregistration', function (Blueprint $table) {
+        Schema::table('studentRegistration', function (Blueprint $table) {
             $table->renameColumn('tittle', 'title');
             $table->renameColumn('nationlity', 'nationality');
         });
