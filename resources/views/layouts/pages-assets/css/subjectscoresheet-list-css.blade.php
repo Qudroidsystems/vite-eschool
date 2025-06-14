@@ -141,7 +141,7 @@
        width: 11%;
        border-bottom-style: dotted;
        }
-     </style>
+</style>
 <!-- Sweet Alert css-->
 <link href="{{ asset('theme/layouts/assets/libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css">
 

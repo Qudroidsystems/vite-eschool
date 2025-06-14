@@ -19,6 +19,8 @@ class Broadsheets extends Model
         'ca3',
         'exam',
         'total',
+        'bf', // Added brought forward
+        'cum', // Added cumulative score
         'grade',
         'allsubjectstotalscores',
         'subjectpositionclass',
@@ -27,8 +29,6 @@ class Broadsheets extends Model
         'avg',
         'remark',
     ];
-
-    
 
     public function broadsheetRecord()
     {

@@ -241,35 +241,34 @@
     }
 </style>
 
-<!-- Scores Modal -->
-<div class="modal fade" id="scoresModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<!-- Import Mock Modal -->
+<div class="modal fade" id="importMockModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title fw-bold">Mock Scoresheet</h3>
+                <h2 class="fw-bold">Bulk Upload Mock Scores</h2>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="table-responsive">
-                    <table class="table align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th style="width: 50px;">#</th>
-                                <th class="text-nowrap">Admission No.</th>
-                                <th>Name</th>
-                                <th class="narrow-th">Exam</th>
-                                <th class="narrow-th">Total</th>
-                                <th class="narrow-th">Grade</th>
-                                <th class="narrow-th">Position</th>
-                                <th class="narrow-th">Remark</th>
-                            </tr>
-                        </thead>
-                        <tbody id="scoresBody"></tbody>
-                    </table>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            <div class="modal-body scroll-y mx-5 mx-xl-10 my-7">
+                <form action="{{ route('subjectscoresheet.import-mock') }}" method="POST" enctype="multipart/form-data" id="importMockForm">
+                    @csrf
+                    <input type="hidden" name="schoolclass_id" value="{{ session('schoolclass_id') }}">
+                    <input type="hidden" name="subjectclass_id" value="{{ session('subjectclass_id') }}">
+                    <input type="hidden" name="staff_id" value="{{ session('staff_id') }}">
+                    <input type="hidden" name="term_id" value="{{ session('term_id') }}">
+                    <input type="hidden" name="session_id" value="{{ session('session_id') }}">
+                    <div class="form-group mb-6">
+                        <label class="required fw-semibold fs-6 mb-2">Excel File</label>
+                        <input type="file" name="file" class="form-control form-control-sm mb-3" accept=".xlsx" required>
+                    </div>
+                    <div class="text-center pt-10">
+                        <button type="reset" class="btn btn-outline-secondary me-3" data-bs-dismiss="modal">Discard</button>
+                        <button type="submit" class="btn btn-primary" id="importMockSubmit">
+                            <span class="indicator-label">Submit</span>
+                            <span class="indicator-progress">Please wait... <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>

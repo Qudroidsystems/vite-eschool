@@ -160,20 +160,20 @@ Route::group(['middleware' => ['auth']], function () {
     Route::put('subjectscoresheet/update/{id}', [MyScoreSheetController::class, 'update'])->name('subjectscoresheet.update');
     Route::delete('subjectscoresheet/delete/{id}', [MyScoreSheetController::class, 'destroy'])->name('subjectscoresheet.destroy');
     Route::get('subjectscoresheet/export', [MyScoreSheetController::class, 'export'])->name('subjectscoresheet.export');
-    Route::post('subjectscoresheet/import', [MyScoreSheetController::class, 'importsheet'])->name('subjectscoresheet.import');
+    Route::post('subjectscoresheet/import', [MyScoreSheetController::class, 'import'])->name('subjectscoresheet.import');
     Route::get('/subjectscoresheet/results', [MyScoreSheetController::class, 'results'])->name('subjectscoresheet.results');
 
    // Mock Scoresheet Routes
     Route::get('subjectscoresheet-mock/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'subjectscoresheetMock'])->name('subjectscoresheet-mock.index');
     Route::get('subjectscoresheet-mock/export', [MyScoreSheetController::class, 'exportMock'])->name('subjectscoresheet-mock.export');
-    Route::post('subjectscoresheet-mock/import', [MyScoreSheetController::class, 'importMock'])->name('scoresheet-mock.import');
+    Route::post('subjectscoresheet-mock/import', [MyScoreSheetController::class, 'importMock'])->name('subjectscoresheet-mock.import');
     Route::get('subjectscoresheet-mock/{id}/edit', [MyScoreSheetController::class, 'editMock'])->name('subjectscoresheet-mock.edit');
     Route::put('subjectscoresheet-mock/{id}', [MyScoreSheetController::class, 'updateMock'])->name('subjectscoresheet-mock.update');
     Route::post('/scoresheet/destroy/mock', [MyScoreSheetController::class, 'destroyMock'])->name('scoresheet.destroy-mock');
     Route::post('scoresheet-mock/update-score', [MyScoreSheetController::class, 'updateScoreMock'])->name('scoresheet-mock.update-score');
 
         // Marks Sheet Download Routes
-    Route::get('/scoresheet/download-marks-sheet', [MyScoreSheetController::class, 'downloadMarksSheet'])
+    Route::get('/scoresheet/download-marks-sheet', [MyScoreSheetController::class, 'downloadMarkSheet'])
     ->name('scoresheet.download-marks-sheet');
     
     Route::post('/subjectscoresheet/bulk-update', [MyScoreSheetController::class, 'bulkUpdateScores'])

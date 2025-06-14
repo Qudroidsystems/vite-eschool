@@ -151,6 +151,8 @@
                                             <th>CA3</th>
                                             <th>Exam</th>
                                             <th>Total</th>
+                                            <th>BF</th>
+                                            <th>Cum</th>
                                             <th>Grade</th>
                                             <th>Position</th>
                                             <th>Action</th>
@@ -191,7 +193,13 @@
                                                     <input type="number" class="form-control form-control-sm score-input" data-field="exam" data-id="{{ $broadsheet->id }}" value="{{ $broadsheet->exam ?? '' }}" min="0" max="100" step="0.1" placeholder="0">
                                                 </td>
                                                 <td class="total-display text-center">
-                                                    <span class="badge bg-primary">{{ $broadsheet->total ?? 0 }}</span>
+                                                    <span class="badge bg-primary">{{ $broadsheet->total ? number_format($broadsheet->total, 1) : '0.0' }}</span>
+                                                </td>
+                                                <td class="bf-display text-center">
+                                                    <span class="badge bg-secondary">{{ $broadsheet->bf ? number_format($broadsheet->bf, 2) : '0.00' }}</span>
+                                                </td>
+                                                <td class="cum-display text-center">
+                                                    <span class="badge bg-info">{{ $broadsheet->cum ? number_format($broadsheet->cum, 2) : '0.00' }}</span>
                                                 </td>
                                                 <td class="grade-display text-center">
                                                     <span class="badge bg-secondary">{{ $broadsheet->grade ?? '-' }}</span>
@@ -207,7 +215,7 @@
                                             </tr>
                                         @empty
                                             <tr id="noDataRow">
-                                                <td colspan="12" class="text-center">No scores available.</td>
+                                                <td colspan="14" class="text-center">No scores available.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -230,6 +238,9 @@
                                                             <button type="button" class="btn btn-outline-secondary btn-sm" id="clearAllScores">
                                                                 <i class="ri-close-line me-1"></i> Clear All
                                                             </button>
+                                                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteSelectedScores()">
+                                                                <i class="ri-delete-bin-line me-1"></i> Delete Selected
+                                                            </button>
                                                         </div>
                                                     </div>
                                                     <div class="d-flex align-items-center">
@@ -246,7 +257,7 @@
                                     </div>
                                 </div>
                             
-                                <!-- Progress Indicator (hidden by default) -->
+                                <!-- Progress Indicator -->
                                 <div class="row mt-2" id="progressContainer" style="display: none;">
                                     <div class="col-12">
                                         <div class="card">
@@ -269,8 +280,6 @@
                                     </div>
                                 </div>
                             @endif
-                            
-                     
                         </div>
                     </div>
                 </div>
@@ -298,10 +307,7 @@
                                 </div>
                                 <div class="text-center pt-10">
                                     <button type="reset" class="btn btn-outline-secondary me-3" data-bs-dismiss="modal">Discard</button>
-                                    <button type="submit" class="btn btn-primary" id="importSubmit" {{ !session('schoolclass_id') || !session('subjectclass_id') || !session('staff_id') || !session('term_id') || !session('session_id') ? 'disabled' : '' }}>
-                                        <span class="indicator-label">Submit</span>
-                                        <span class="indicator-progress">Please wait... <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
-                                    </button>
+                                    <button type="submit" class="btn btn-primary" id="importSubmit">Upload</button>
                                 </div>
                             </form>
                         </div>
@@ -310,167 +316,29 @@
             </div>
 
             <!-- Scores Modal -->
-            <!-- Add CSS for smaller table headers and highlighting low scores -->
-
-<!-- Scores Modal -->
-<div class="modal fade" id="scoresModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title fw-bold">Scoresheets</h3>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-               
-                <div class="table-responsive">
-                    <table class="table align-middle" id="scoresTable">
-                        <thead class="table-light">
-                            <tr>
-                                <th>#</th>
-                                <th>Admission No.</th>
-                                <th>Name</th>
-                                <th>CA1</th>
-                                <th>CA2</th>
-                                <th>CA3</th>
-                                <th>
-                                    <div class="fraction">
-                                        <div class="numerator">a + b + c</div>
-                                        <div class="denominator">3</div>
-                                    </div>
-                                </th>
-                                <th>Exam</th>
-                                <th>
-                                    <div class="fraction">
-                                        <div class="numerator">Exam + Total CA</div>
-                                        <div class="denominator">2</div>
-                                    </div>
-                                </th>
-                                <th><span class="d-block">Cum</span> (f/g)/2</th>
-                                <th>Cum</th>
-                                <th>Grade</th>
-                                <th>Position</th>
-                            </tr>
-                        </thead>
-                        <tbody id="scoresBody"></tbody>
-                    </table>
+            <div class="modal fade" id="scoresModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 class="fw-bold">Scores Overview</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- Scores will be populated by JavaScript -->
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
-            </div>
-        </div>
-    </div>
-</div>
+
         </div>
     </div>
 </div>
 
-<!-- Pass broadsheets data to JavaScript -->
+<!-- JavaScript Dependencies -->
 <script>
-   <!-- Pass broadsheets data to JavaScript -->
-
-    // FIXED: Ensure broadsheets is always an array
-    try {
-        @if($broadsheets->isNotEmpty())
-            window.broadsheets = @json($broadsheets->values()->toArray());
-        @else
-            window.broadsheets = [];
-        @endif
-        
-        console.log('Broadsheets data:', window.broadsheets);
-        console.log('Is array:', Array.isArray(window.broadsheets));
-        console.log('Length:', window.broadsheets.length);
-        
-        // Double-check it's an array
-        if (!Array.isArray(window.broadsheets)) {
-            console.error('window.broadsheets is not an array:', window.broadsheets);
-            // Convert to array if possible
-            if (window.broadsheets && typeof window.broadsheets === 'object') {
-                window.broadsheets = Object.values(window.broadsheets);
-                console.log('Converted to array:', window.broadsheets);
-            } else {
-                window.broadsheets = [];
-                console.log('Initialized as empty array');
-            }
-        }
-    } catch (error) {
-        console.error('Error initializing broadsheets:', error);
-        window.broadsheets = [];
-    }
+    window.broadsheets = @json($broadsheets);
 </script>
-@endsection
-
-@section('scripts')
-   
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('[title]').forEach(el => new bootstrap.Tooltip(el));
-        });
-    </script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof jQuery === 'undefined') {
-                console.error('jQuery is not loaded');
-                return;
-            }
-            jQuery(document).ready(function($) {
-                $('#selectAllScores').on('click', function() {
-                    $('.score-checkbox').prop('checked', true);
-                    $('#checkAll').prop('checked', true);
-                });
-
-                $('#clearAllScores').on('click', function() {
-                    Swal.fire({
-                        title: 'Clear All Scores?',
-                        text: 'This will clear all score inputs. Are you sure?',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#d33',
-                        cancelButtonColor: '#3085d6',
-                        confirmButtonText: 'Yes, Clear All!',
-                        cancelButtonText: 'Cancel'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            $('.score-input').val('');
-                            updateAllRowTotals();
-                        }
-                    });
-                });
-
-                function updateAllRowTotals() {
-                    $('#scoresheetTableBody tr').each(function() {
-                        if (!$(this).is('#noDataRow')) {
-                            updateRowTotal($(this));
-                        }
-                    });
-                }
-
-                function updateRowTotal(row) {
-                    let total = 0;
-                    row.find('.score-input').each(function() {
-                        const value = parseFloat($(this).val()) || 0;
-                        total += value;
-                    });
-                    row.find('.total-display span').text(total.toFixed(1));
-                    const grade = calculateGrade(total);
-                    row.find('.grade-display span').text(grade);
-                }
-
-                function calculateGrade(total) {
-                    if (total >= 70) return 'A';
-                    if (total >= 60) return 'B';
-                    if (total >= 40) return 'C';
-                    if (total >= 30) return 'D';
-                    return 'F';
-                }
-edji
-                $('.score-input').on('input', function() {
-                    updateRowTotal($(this).closest('tr'));
-                });
-
-                updateAllRowTotals();
-            });
-        });
-    </script>
 @endsection

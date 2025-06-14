@@ -1,6 +1,6 @@
 console.log("subjectscoresheet.init.js loaded at", new Date().toISOString());
 
-// Dependency checks to ensure required libraries are loaded
+// Dependency checks
 try {
     if (typeof axios === 'undefined') throw new Error("Axios is not loaded");
     if (typeof Swal === 'undefined') throw new Error("SweetAlert2 is not loaded");
@@ -17,29 +17,26 @@ try {
     });
 }
 
-// Set CSRF token for Axios to prevent 403 errors
+// Set CSRF token for Axios
 const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
 axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
 if (!csrfToken) {
     console.warn("CSRF token not found. AJAX requests may fail.");
 }
 
-// FIX: Ensure window.broadsheets is always an array
+// Ensure window.broadsheets is an array
 function ensureBroadsheetsArray() {
     if (typeof window.broadsheets === 'undefined') {
         window.broadsheets = [];
         console.warn("window.broadsheets was undefined, initialized as empty array");
     } else if (!Array.isArray(window.broadsheets)) {
-        // Convert to array if it's not already an array
         if (window.broadsheets && typeof window.broadsheets === 'object') {
-            // If it's an object with numeric keys, convert to array
             const keys = Object.keys(window.broadsheets);
             if (keys.length > 0 && keys.every(key => !isNaN(key))) {
                 window.broadsheets = Object.values(window.broadsheets);
                 console.log("Converted window.broadsheets object to array");
             } else {
-                // If it's a single object, wrap it in an array
-                window.broadsheets = [window.broadsheets];
+                window.broadsheets = [window.broadsheets ? window.broadsheets : []];
                 console.log("Wrapped single broadsheet object in array");
             }
         } else {
@@ -50,7 +47,7 @@ function ensureBroadsheetsArray() {
     console.log("window.broadsheets is now an array with", window.broadsheets.length, "items");
 }
 
-// Debounce function to limit rapid search triggers
+// Debounce function
 function debounce(func, wait) {
     let timeout;
     return function (...args) {
@@ -59,7 +56,7 @@ function debounce(func, wait) {
     };
 }
 
-// Initialize List.js for table sorting and searching
+// Initialize List.js
 let scoresheetList = null;
 function initializeListJs() {
     const options = {
@@ -71,6 +68,8 @@ function initializeListJs() {
             'ca3',
             'exam',
             'total',
+            'bf',
+            'cum',
             'grade',
             'position'
         ],
@@ -85,14 +84,13 @@ function initializeListJs() {
     }
 }
 
-// Custom search function for List.js
+// Custom search function
 function customSearch(searchString) {
     if (!scoresheetList) return;
     if (!searchString) {
         scoresheetList.search();
         return;
     }
-
     scoresheetList.search(searchString, ['student_name', 'admission_no']);
 }
 
@@ -144,7 +142,7 @@ function initializeCheckboxes() {
     });
 }
 
-// Handle checkbox change to sync "Check All"
+// Handle checkbox change
 function handleCheckboxChange(e) {
     const checkAll = document.getElementById('checkAll');
     if (!checkAll) return;
@@ -167,7 +165,6 @@ function initializeScoreInputs() {
             }
         });
         
-        // Add blur event for validation
         input.addEventListener('blur', (e) => {
             const value = parseFloat(e.target.value);
             if (e.target.value && (isNaN(value) || value < 0 || value > 100)) {
@@ -184,16 +181,16 @@ function initializeScoreInputs() {
     });
 }
 
-// Calculate grade based on total
+// Calculate grade based on total score
 function calculateGrade(total) {
     if (total >= 70) return 'A';
     if (total >= 60) return 'B';
-    if (total >= 40) return 'C';
-    if (total >= 30) return 'D';
+    if (total >= 50) return 'C';
+    if (total >= 40) return 'D';
     return 'F';
 }
 
-// Update single row total - FIXED CALCULATION
+// Update single row total
 function updateRowTotal(row) {
     const scoreInputs = row.querySelectorAll('.score-input');
     let ca1 = 0, ca2 = 0, ca3 = 0, examValue = 0;
@@ -218,20 +215,27 @@ function updateRowTotal(row) {
         }
     });
     
-    // Calculate CA average (30% of total)
     const caAverage = (ca1 + ca2 + ca3) / 3;
-    const caScore = (caAverage * 30) / 100;
+    const total = (caAverage + examValue) / 2;
     
-    // Calculate exam score (70% of total)
-    const examScore = (examValue * 70) / 100;
-    
-    // Total score
-    const total = caScore + examScore;
-    
-    // Update display
+    const id = row.querySelector('.score-input').dataset.id;
+    const broadsheet = window.broadsheets.find(b => b.id == id);
+    const bf = broadsheet ? parseFloat(broadsheet.bf) || 0 : 0;
+    const cum = (bf + total) / 2;
+
     const totalDisplay = row.querySelector('.total-display span');
     if (totalDisplay) {
         totalDisplay.textContent = total.toFixed(1);
+    }
+
+    const bfDisplay = row.querySelector('.bf-display span');
+    if (bfDisplay) {
+        bfDisplay.textContent = bf.toFixed(2);
+    }
+
+    const cumDisplay = row.querySelector('.cum-display span');
+    if (cumDisplay) {
+        cumDisplay.textContent = cum.toFixed(2);
     }
 
     const grade = calculateGrade(total);
@@ -253,15 +257,37 @@ function updateAllRowTotals() {
 
 // Update row display with server data
 function updateRowDisplay(id, data) {
+    console.log("Updating row for ID:", id, "with data:", data);
     const row = document.querySelector(`input[data-id="${id}"]`)?.closest('tr');
     if (!row) {
         console.warn("Row not found for ID:", id);
         return;
     }
 
+    // Update input fields
+    ['ca1', 'ca2', 'ca3', 'exam'].forEach(field => {
+        const input = row.querySelector(`input[data-field="${field}"]`);
+        if (input && data[field] !== undefined) {
+            input.value = data[field] !== null ? data[field] : '';
+        }
+    });
+
     const totalDisplay = row.querySelector('.total-display span');
     if (totalDisplay && data.total !== undefined) {
         totalDisplay.textContent = parseFloat(data.total).toFixed(1);
+    }
+
+    const bfDisplay = row.querySelector('.bf-display span');
+    if (bfDisplay) {
+        const bfValue = data.bf !== null && data.bf !== undefined ? parseFloat(data.bf) : 0;
+        console.log("Setting bf for ID:", id, "to:", bfValue);
+        bfDisplay.textContent = bfValue.toFixed(2);
+    }
+
+    const cumDisplay = row.querySelector('.cum-display span');
+    if (cumDisplay) {
+        const cumValue = data.cum !== null && data.cum !== undefined ? parseFloat(data.cum) : 0;
+        cumDisplay.textContent = cumValue.toFixed(2);
     }
 
     const gradeDisplay = row.querySelector('.grade-display span');
@@ -270,9 +296,11 @@ function updateRowDisplay(id, data) {
     }
 
     const positionDisplay = row.querySelector('.position-display span');
-    if (positionDisplay && data.position !== undefined) {
-        positionDisplay.textContent = data.position || '-';
+    if (positionDisplay && data.subject_position_class !== undefined) {
+        positionDisplay.textContent = data.subject_position_class || '-';
     }
+
+    if (scoresheetList) scoresheetList.reIndex();
 }
 
 // Initialize bulk actions
@@ -324,7 +352,6 @@ function initializeBulkActions() {
         });
     }
 
-    // Keyboard shortcut for save
     document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.key === 's') {
             e.preventDefault();
@@ -334,199 +361,342 @@ function initializeBulkActions() {
     });
 }
 
-// FIXED: Bulk save all scores with proper array handling
+// Bulk save all scores
+// Improved bulk save with better error handling and progress tracking
 function bulkSaveAllScores() {
-    console.log("Starting bulkSaveAllScores");
+    console.log("Starting bulkSaveAllScores at", new Date().toISOString());
     
-    // Ensure broadsheets is an array
     ensureBroadsheetsArray();
     
     const scoreInputs = document.querySelectorAll('.score-input');
     const progressContainer = document.getElementById('progressContainer');
     const progressBar = progressContainer?.querySelector('.progress-bar');
 
-    if (scoreInputs.length === 0) {
+    if (!scoreInputs.length) {
         console.warn("No score inputs found");
         Swal.fire({
             icon: 'info',
-            title: 'No Scores Found',
-            text: 'No score inputs found to save.',
-            showConfirmButton: true
+            title: 'No Scores',
+            text: 'No scores to save.',
+            timer: 2000
         });
         return;
     }
 
-    console.log("Found", scoreInputs.length, "score inputs");
-
+    // Improved validation with visual feedback
     const scores = [];
     const scoreData = {};
-    let hasInvalidData = false;
+    const invalidInputs = [];
 
     scoreInputs.forEach(input => {
         const id = input.dataset.id;
         const field = input.dataset.field;
-        const value = input.value ? parseFloat(input.value) : null;
+        const value = input.value.trim();
+
+        // Clear previous validation state
+        input.classList.remove('is-invalid', 'is-valid');
 
         if (!id || !field) {
-            console.error("Invalid input attributes:", { id, field, value });
-            hasInvalidData = true;
+            console.error("Missing input attributes", { id, field, value });
+            input.classList.add('is-invalid');
+            invalidInputs.push({ input, error: 'Missing required attributes' });
             return;
         }
 
-        if (value !== null && (isNaN(value) || value < 0 || value > 100)) {
-            console.error("Invalid score value:", { id, field, value });
-            hasInvalidData = true;
+        const numValue = value === '' ? null : parseFloat(value);
+        if (numValue !== null && (isNaN(numValue) || numValue < 0 || numValue > 100)) {
+            console.error("Invalid score", { id, field, value: numValue });
+            input.classList.add('is-invalid');
+            invalidInputs.push({ input, error: 'Score must be between 0-100' });
             return;
         }
 
-        if (!scoreData[id]) {
-            scoreData[id] = { id: parseInt(id) };
+        // Mark valid inputs
+        if (value !== '') {
+            input.classList.add('is-valid');
         }
-        scoreData[id][field] = value;
+
+        if (!scoreData[id]) scoreData[id] = { id: parseInt(id) };
+        scoreData[id][field] = numValue;
     });
 
-    if (hasInvalidData) {
+    if (invalidInputs.length > 0) {
+        // Show detailed validation errors
+        const errorMessages = invalidInputs.map(item => 
+            `Row with ID ${item.input.dataset.id}, Field ${item.input.dataset.field}: ${item.error}`
+        ).join('\n');
+
         Swal.fire({
             icon: 'error',
-            title: 'Invalid Data',
-            text: 'Please correct invalid score values (0-100) before saving.',
+            title: 'Validation Errors',
+            html: `<div style="text-align: left; max-height: 200px; overflow-y: auto;">
+                     <strong>Please fix the following errors:</strong><br><br>
+                     ${errorMessages.replace(/\n/g, '<br>')}
+                   </div>`,
             showConfirmButton: true
         });
+
+        // Focus on first invalid input
+        invalidInputs[0].input.focus();
         return;
     }
 
-    // Convert scoreData object to array
-    Object.keys(scoreData).forEach(id => {
-        scores.push(scoreData[id]);
-    });
+    scores.push(...Object.values(scoreData));
 
-    if (scores.length === 0) {
-        console.warn("No valid scores to update");
+    if (!scores.length) {
+        console.warn("No valid scores to save");
         Swal.fire({
             icon: 'info',
             title: 'No Changes',
-            text: 'No valid scores to update.',
-            showConfirmButton: true
+            text: 'No scores to update.',
+            timer: 2000
         });
         return;
     }
 
-    console.log("Prepared scores for submission:", scores);
+    console.log("Submitting scores:", scores);
 
     // Show progress
-    if (progressContainer) {
-        progressContainer.style.display = 'block';
-        if (progressBar) progressBar.style.width = '0%';
-    }
+    if (progressContainer) progressContainer.style.display = 'block';
+    if (progressBar) progressBar.style.width = '20%';
 
     const bulkUpdateBtn = document.getElementById('bulkUpdateScores');
+    const originalBtnContent = bulkUpdateBtn?.innerHTML;
+    
     if (bulkUpdateBtn) {
         bulkUpdateBtn.disabled = true;
         bulkUpdateBtn.innerHTML = '<i class="ri-loader-4-line spin me-1"></i> Saving...';
     }
 
-    // Make the API call
-    axios.post('/subjectscoresheet/bulk-update', { scores })
-        .then(response => {
-            console.log("Bulk update successful:", response.data);
-            if (progressBar) progressBar.style.width = '100%';
-            
-            Swal.fire({
-                icon: 'success',
-                title: 'Success!',
-                text: response.data.message || `Successfully updated ${response.data.updated_count || scores.length} scores.`,
-                timer: 2000,
-                showConfirmButton: false
-            });
+    // Add timeout and retry logic
+    const saveRequest = axios.post('/subjectscoresheet/bulk-update', { scores }, {
+        headers: { 
+            'X-Requested-With': 'XMLHttpRequest',
+            'Content-Type': 'application/json'
+        },
+        timeout: 30000 // 30 second timeout
+    });
 
-            // FIXED: Update global broadsheets data with proper array handling
-            if (Array.isArray(window.broadsheets) && response.data.broadsheets) {
-                response.data.broadsheets.forEach(updatedBroadsheet => {
-                    const index = window.broadsheets.findIndex(b => b.id == updatedBroadsheet.id);
-                    if (index !== -1) {
-                        window.broadsheets[index] = updatedBroadsheet;
-                    }
-                });
-            }
+    Promise.race([
+        saveRequest,
+        new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Request timeout')), 35000)
+        )
+    ])
+    .then(response => {
+        console.log("Bulk update success:", response.data);
+        if (progressBar) progressBar.style.width = '100%';
 
-            // Update row displays
-            scores.forEach(score => {
-                if (response.data.broadsheets) {
-                    const updatedScore = response.data.broadsheets.find(b => b.id == score.id);
-                    if (updatedScore) {
-                        updateRowDisplay(score.id, updatedScore);
-                    }
+        // Clear validation classes on success
+        scoreInputs.forEach(input => {
+            input.classList.remove('is-invalid', 'is-valid');
+        });
+
+        const updatedCount = response.data.updated_count || scores.length;
+        Swal.fire({
+            icon: 'success',
+            title: 'Saved!',
+            html: `
+                <div class="text-center">
+                    <i class="ri-check-circle-fill text-success" style="font-size: 2rem;"></i>
+                    <p class="mt-2">Successfully updated <strong>${updatedCount}</strong> score${updatedCount !== 1 ? 's' : ''}.</p>
+                    <small class="text-muted">Last saved: ${new Date().toLocaleString()}</small>
+                </div>
+            `,
+            timer: 3000,
+            showConfirmButton: false
+        });
+
+        // Update local data and UI
+        if (response.data.broadsheets) {
+            response.data.broadsheets.forEach(broadsheet => {
+                const index = window.broadsheets.findIndex(b => b.id == broadsheet.id);
+                if (index !== -1) {
+                    window.broadsheets[index] = { ...window.broadsheets[index], ...broadsheet };
+                } else {
+                    window.broadsheets.push(broadsheet);
                 }
+                updateRowDisplay(broadsheet.id, broadsheet);
             });
-            
-            // Recalculate all totals
-            updateAllRowTotals();
-        })
-        .catch(error => {
-            console.error("Bulk update failed:", {
-                status: error.response?.status,
-                data: error.response?.data,
-                message: error.message
-            });
-            
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: error.response?.data?.message || 'Failed to update scores. Please try again.',
-                showConfirmButton: true
-            });
-        })
-        .finally(() => {
-            if (progressContainer) {
-                setTimeout(() => {
-                    progressContainer.style.display = 'none';
-                }, 1000);
-            }
-            if (bulkUpdateBtn) {
-                bulkUpdateBtn.disabled = false;
-                bulkUpdateBtn.innerHTML = '<i class="ri-save-line me-1"></i> Save All Scores';
+        }
+
+        updateAllRowTotals();
+        populateResultsModal();
+        if (scoresheetList) scoresheetList.reIndex();
+
+        // Auto-save success feedback
+        showTemporaryMessage('Changes saved successfully!', 'success');
+    })
+    .catch(error => {
+        console.error("Bulk update error:", {
+            status: error.response?.status,
+            data: error.response?.data,
+            message: error.message
+        });
+
+        let errorMessage = 'Failed to save scores.';
+        let errorDetails = '';
+
+        if (error.message === 'Request timeout') {
+            errorMessage = 'Request timed out. Please try again.';
+            errorDetails = 'The server took too long to respond. Your scores may have been saved partially.';
+        } else if (error.response?.status === 422) {
+            errorMessage = 'Validation failed on server.';
+            errorDetails = error.response.data.message || 'Please check your input data.';
+        } else if (error.response?.status >= 500) {
+            errorMessage = 'Server error occurred.';
+            errorDetails = 'Please try again later or contact support if the problem persists.';
+        } else if (!navigator.onLine) {
+            errorMessage = 'No internet connection.';
+            errorDetails = 'Please check your connection and try again.';
+        }
+
+        Swal.fire({
+            icon: 'error',
+            title: 'Save Failed',
+            html: `
+                <div class="text-left">
+                    <p><strong>${errorMessage}</strong></p>
+                    ${errorDetails ? `<p class="text-muted small">${errorDetails}</p>` : ''}
+                    <details class="mt-2">
+                        <summary class="text-muted small" style="cursor: pointer;">Technical Details</summary>
+                        <pre class="text-muted small mt-1" style="font-size: 0.8rem;">${JSON.stringify(error.response?.data || error.message, null, 2)}</pre>
+                    </details>
+                </div>
+            `,
+            showConfirmButton: true,
+            confirmButtonText: 'Retry',
+            showCancelButton: true,
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Retry the save operation
+                setTimeout(() => bulkSaveAllScores(), 1000);
             }
         });
+    })
+    .finally(() => {
+        // Cleanup UI state
+        if (progressContainer) {
+            setTimeout(() => {
+                progressContainer.style.display = 'none';
+                if (progressBar) progressBar.style.width = '0%';
+            }, 1000);
+        }
+        
+        if (bulkUpdateBtn) {
+            bulkUpdateBtn.disabled = false;
+            bulkUpdateBtn.innerHTML = originalBtnContent || '<i class="ri-save-line me-1"></i> Save All Scores';
+        }
+    });
+}
+
+// Helper function to show temporary messages
+function showTemporaryMessage(message, type = 'info') {
+    const alertClass = {
+        'success': 'alert-success',
+        'error': 'alert-danger',
+        'warning': 'alert-warning',
+        'info': 'alert-info'
+    };
+
+    const messageEl = document.createElement('div');
+    messageEl.className = `alert ${alertClass[type]} alert-dismissible fade show position-fixed`;
+    messageEl.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    messageEl.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    document.body.appendChild(messageEl);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (messageEl.parentNode) {
+            messageEl.parentNode.removeChild(messageEl);
+        }
+    }, 5000);
 }
 
 // Initialize import form
 function initializeImportForm() {
     const importForm = document.getElementById('importForm');
-    if (!importForm) return;
+    if (!importForm) {
+        console.warn("Import form not found");
+        return;
+    }
 
     importForm.addEventListener('submit', function (e) {
         e.preventDefault();
         const formData = new FormData(this);
         const importBtn = this.querySelector('button[type="submit"]');
-        
+
         if (importBtn) {
             importBtn.disabled = true;
             importBtn.innerHTML = '<i class="ri-loader-4-line spin me-1"></i> Importing...';
         }
 
         axios.post(this.action, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            }
+            headers: { 'Content-Type': 'multipart/form-data' }
         })
         .then(response => {
+            console.log("Import success:", response.data);
+            let message = response.data.message;
+            let html = '';
+
+            if (response.data.errors && response.data.errors.length > 0) {
+                message = 'Some rows failed to import:';
+                html = '<ul style="text-align: left; max-height: 200px; overflow-y: auto;">';
+                response.data.errors.forEach(err => {
+                    html += `<li>Row ${err.row}: ${err.attribute === '1' ? 'Admission No.' : err.attribute} - ${err.errors.join(', ')}</li>`;
+                });
+                html += '</ul>';
+            }
+
             Swal.fire({
-                icon: 'success',
-                title: 'Success!',
-                text: response.data.message,
-                timer: 2000,
-                showConfirmButton: false
+                icon: response.data.errors && response.data.errors.length > 0 ? 'warning' : 'success',
+                title: response.data.errors && response.data.errors.length > 0 ? 'Partial Import' : 'Imported!',
+                html: `${message}${html}`,
+                timer: response.data.errors ? undefined : 2000,
+                showConfirmButton: !!response.data.errors
             });
-            setTimeout(() => {
-                window.location.reload();
-            }, 2000);
+
+            if (response.data.broadsheets && response.data.broadsheets.length > 0) {
+                response.data.broadsheets.forEach(score => {
+                    const index = window.broadsheets.findIndex(b => b.id == score.id);
+                    if (index !== -1) {
+                        window.broadsheets[index] = score;
+                    } else {
+                        window.broadsheets.push(score);
+                    }
+                    updateRowDisplay(score.id, score);
+                });
+                updateAllRowTotals();
+                populateResultsModal();
+                if (scoresheetList) scoresheetList.reIndex();
+            }
         })
         .catch(error => {
-            console.error("Import error:", error);
+            console.error("Import error:", {
+                status: error.response?.status,
+                data: error.response?.data
+            });
+            let message = error.response?.data?.message || 'Import failed.';
+            let html = '';
+
+            if (error.response?.status === 422 && error.response?.data?.errors) {
+                message = 'Validation errors:';
+                html = '<ul style="text-align: left; max-height: 200px; overflow-y: auto;">';
+                error.response.data.errors.forEach(err => {
+                    html += `<li>Row ${err.row}: ${err.attribute === '1' ? 'Admission No.' : err.attribute} - ${err.errors.join(', ')}</li>`;
+                });
+                html += '</ul>';
+            }
+
             Swal.fire({
                 icon: 'error',
-                title: 'Error',
-                text: error.response?.data?.message || 'Failed to import scores',
+                title: 'Import Failed',
+                html: `${message}${html}`,
                 showConfirmButton: true
             });
         })
@@ -539,25 +709,24 @@ function initializeImportForm() {
     });
 }
 
-// FIXED: Populate results modal with better error handling
+// Populate results modal
 function populateResultsModal() {
     const modalBody = document.querySelector('#scoresModal .modal-body');
     if (!modalBody) return;
 
     modalBody.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></div>';
 
-    // Use current broadsheets data if available instead of making another API call
     if (Array.isArray(window.broadsheets) && window.broadsheets.length > 0) {
         generateResultsTable(modalBody, window.broadsheets);
         return;
     }
 
-    // Fallback to API call
     axios.get('/subjectscoresheet/results')
         .then(response => {
             if (response.data.html) {
                 modalBody.innerHTML = response.data.html;
             } else if (response.data.scores) {
+                window.broadsheets = response.data.scores;
                 generateResultsTable(modalBody, response.data.scores);
             } else {
                 modalBody.innerHTML = '<p class="text-center">No results available.</p>';
@@ -575,37 +744,32 @@ function populateResultsModal() {
         });
 }
 
-// Helper function to generate results table
+// Generate results table
 function generateResultsTable(container, scores) {
     let html = `
         <div class="table-responsive">
             <table class="table align-middle">
                 <thead class="table-light">
-                     <tr>
-                                <th>#</th>
-                                <th>Admission No.</th>
-                                <th>Name</th>
-                                <th>CA1</th>
-                                <th>CA2</th>
-                                <th>CA3</th>
-                                <th>
-                                    <div class="fraction">
-                                        <div class="numerator">a + b + c</div>
-                                        <div class="denominator">3</div>
-                                    </div>
-                                </th>
-                                <th>Exam</th>
-                                <th>
-                                    <div class="fraction">
-                                        <div class="numerator">Exam + Total CA</div>
-                                        <div class="denominator">2</div>
-                                    </div>
-                                </th>
-                                <th><span class="d-block">Cum</span> (f/g)/2</th>
-                                <th>Cum</th>
-                                <th>Grade</th>
-                                <th>Position</th>
-                            </tr>
+                    <tr>
+                        <th>#</th>
+                        <th>Access Number/ID</th>
+                        <th>Name</th>
+                        <th>CA1</th>
+                        <th>CA2</th>
+                        <th>CA3</th>
+                        <th>
+                            <div class="fraction">
+                                <div class="numerator">CA1 + CA2 + CA3</div>
+                                <div class="denominator">3</div>
+                            </div>
+                        </th>
+                        <th>Exam</th>
+                        <th>Total</th>
+                        <th>BF</th>
+                        <th>Cumulative</th>
+                        <th>Grade</th>
+                        <th>Position</th>
+                    </tr>
                 </thead>
                 <tbody>
     `;
@@ -623,28 +787,17 @@ function generateResultsTable(container, scores) {
             const ca2 = parseFloat(score.ca2) || 0;
             const ca3 = parseFloat(score.ca3) || 0;
             const exam = parseFloat(score.exam) || 0;
-
-            // Calculate CA average
             const caAverage = (ca1 + ca2 + ca3) / 3;
+            const total = (caAverage + exam) / 2;
+            const bf = parseFloat(score.bf) || 0;
+            const cum = parseFloat(score.cum) || (bf + total) / 2;
 
-            // Calculate weighted total (30% CA average + 70% exam)
-            const caWeighted = (caAverage * 30) / 100;
-            const examWeighted = (exam * 70) / 100;
-            const total = caWeighted + examWeighted;
-
-            // Calculate CA AVG / EXAM (ratio)
-            const caAvgExam = exam !== 0 ? (caAverage / exam).toFixed(2) : '-';
-
-            // B/F and Cum (assumed to be 0 and total if not provided)
-            const bf = score.bf || 0;
-            const cum = score.cum || total.toFixed(1);
-
-            // Determine CSS class for scores below 40
             const ca1Class = ca1 < 40 && ca1 !== 0 ? 'text-danger' : '';
             const ca2Class = ca2 < 40 && ca2 !== 0 ? 'text-danger' : '';
             const ca3Class = ca3 < 40 && ca3 !== 0 ? 'text-danger' : '';
             const examClass = exam < 40 && exam !== 0 ? 'text-danger' : '';
             const totalClass = total < 40 && total !== 0 ? 'text-danger' : '';
+            const cumClass = cum < 40 && cum !== 0 ? 'text-danger' : '';
 
             html += `
                 <tr>
@@ -656,9 +809,9 @@ function generateResultsTable(container, scores) {
                     <td class="${ca3Class}">${score.ca3 !== null && score.ca3 !== undefined ? score.ca3 : '-'}</td>
                     <td>${caAverage ? caAverage.toFixed(1) : '-'}</td>
                     <td class="${examClass}">${score.exam !== null && score.exam !== undefined ? score.exam : '-'}</td>
-                    <td>${caAvgExam}</td>
-                    <td>${bf}</td>
-                    <td class="${totalClass}">${cum}</td>
+                    <td class="${totalClass}">${total.toFixed(1)}</td>
+                    <td>${bf.toFixed(2)}</td>
+                    <td class="${cumClass}">${cum.toFixed(2)}</td>
                     <td>${score.grade || '-'}</td>
                     <td>${score.position || '-'}</td>
                 </tr>
@@ -669,8 +822,6 @@ function generateResultsTable(container, scores) {
     html += '</tbody></table></div>';
     container.innerHTML = html;
 }
-
-
 
 // Delete selected scores
 function deleteSelectedScores() {
@@ -719,9 +870,19 @@ function deleteSelectedScores() {
                         icon: "success",
                         timer: 2000
                     });
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 2000);
+                    // Refresh table data
+                    axios.get('/subjectscoresheet/results')
+                        .then(response => {
+                            if (response.data.scores) {
+                                window.broadsheets = response.data.scores;
+                                response.data.scores.forEach(score => {
+                                    updateRowDisplay(score.id, score);
+                                });
+                                updateAllRowTotals();
+                                populateResultsModal();
+                                if (scoresheetList) scoresheetList.reIndex();
+                            }
+                        });
                 })
                 .catch((error) => {
                     console.error("Bulk delete error:", error);
@@ -739,10 +900,8 @@ function deleteSelectedScores() {
 document.addEventListener("DOMContentLoaded", function () {
     console.log("DOMContentLoaded event fired");
     
-    // FIRST: Ensure broadsheets is properly initialized
     ensureBroadsheetsArray();
     
-    // Initialize all components
     initializeCheckAll();
     initializeCheckboxes();
     initializeListJs();
@@ -751,19 +910,17 @@ document.addEventListener("DOMContentLoaded", function () {
     initializeImportForm();
     initializeBulkActions();
 
-    // Initialize modals
     const scoresModal = document.getElementById('scoresModal');
     if (scoresModal) {
         scoresModal.addEventListener('show.bs.modal', populateResultsModal);
     }
 
-    // Initial calculation of all row totals
     updateAllRowTotals();
     
     console.log("All initialization complete");
 });
 
-// Expose functions globally for external access
+// Expose functions globally
 window.deleteSelectedScores = deleteSelectedScores;
 window.triggerSearch = triggerSearch;
 window.bulkSaveAllScores = bulkSaveAllScores;
