@@ -1,22 +1,23 @@
-    <!--begin::Global Javascript Bundle(mandatory for all pages)-->
-    <script src="{{ asset('html/assets/assets/plugins/global/plugins.bundle.js')}}"></script>
-    <script src="{{ asset('html/assets/assets/js/scripts.bundle.js')}}"></script>
-<!--end::Global Javascript Bundle-->
+<!-- JAVASCRIPT -->
+<script src="{{ asset('theme/layouts/assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+<script src="{{ asset('theme/layouts/assets/libs/simplebar/simplebar.min.js') }}"></script>
+<script src="{{ asset('theme/layouts/assets/js/plugins.js') }}"></script>
+<!-- list.js min js -->
+<script src="{{ asset('theme/layouts/assets/libs/list.js/list.min.js') }}"></script>
+<script src="{{ asset('theme/layouts/assets/libs/list.pagination.js/list.pagination.min.js') }}"></script>
+<!-- sweetalert2 js -->
+<script src="{{ asset('theme/layouts/assets/libs/sweetalert2/sweetalert2.min.js') }}"></script>
+<!-- dropzone js -->
+<script src="{{ asset('theme/layouts/assets/libs/dropzone/dropzone-min.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/choices.js/10.2.1/choices.min.js"></script>
+<!-- Axios -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
-<!--begin::Vendors Javascript(used for this page only)-->
-    <script src="{{ asset('html/assets/assets/plugins/custom/datatables/datatables.bundle.js')}}"></script>
-<!--end::Vendors Javascript-->
 
-<!--begin::Custom Javascript(used for this page only)-->
-    <script src="{{ asset('html/assets/assets/js/custom/apps/user-management/schoolpayment/list/add.js')}}"></script>
-    <script src="{{ asset('html/assets/assets/js/custom/apps/user-management/schoolpayment/view/view.js')}}"></script>
-    <script src="{{ asset('html/assets/assets/js/custom/apps/user-management/schoolpayment/view/update-schoolpayment.js')}}"></script>
-    <script src="{{ asset('html/assets/assets/js/widgets.bundle.js')}}"></script>
-    <script src="{{ asset('html/assets/assets/js/custom/widgets.js')}}"></script>
-    <script src="{{ asset('html/assets/assets/js/custom/apps/chat/chat.js')}}"></script>
-    <script src="{{ asset('html/assets/assets/js/custom/utilities/modals/upgrade-plan.js')}}"></script>
-    <script src="{{ asset('html/assets/assets/js/custom/utilities/modals/create-app.js')}}"></script>
-    <script src="{{ asset('html/assets/assets/js/custom/utilities/modals/users-search.js')}}"></script>
-    <script src="{{ asset('html/assets/assets/js/custom/utilities/modals/pay-schoolbill.js')}}"></script>
-<!--end::Custom Javascript-->
-<!--end::Javascript-->
+<!-- User list init js (load after list.js and dependencies) -->
+<script src="{{ asset('theme/layouts/assets/js/pages/schoolpayment-list.init.js') }}"></script>
+<!-- App js -->
+<script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script>
+
+{{-- <!-- Dashboard script (load last to minimize conflicts) -->
+<script src="{{ asset('theme/layouts/assets/js/pages/dashboard-real-estate.init.js') }}"></script> --}}
