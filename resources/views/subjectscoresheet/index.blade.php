@@ -336,6 +336,11 @@
 <!-- JavaScript Dependencies -->
 <script>
     window.broadsheets = @json($broadsheets);
-    window.term_id = {{ session('term_id') ?? 1 }};
+    //window.term_id = {{ session('term_id') ?? 1 }};
+    window.term_id = {{ session('term_id') }};
+    window.session_id = {{ session('session_id') }};
+    window.subjectclass_id = {{ session('subjectclass_id') }};
+    window.schoolclass_id = {{ session('schoolclass_id') }};
+    window.staff_id = {{ session('staff_id') }};
 </script>
 @endsection

@@ -153,6 +153,7 @@ class MyScoreSheetController extends Controller
         'broadsheets.remark',
     ])->sortBy('admissionno');
 
+  
     foreach ($results as $broadsheet) {
         // Calculate CA average and total
         $ca1 = $broadsheet->ca1 ?? 0;
@@ -174,17 +175,32 @@ class MyScoreSheetController extends Controller
         $newCum = $termId == 1 ? $newTotal : round(($newBf + $newTotal) / 2, 2);
 
         // Calculate grade and remark
-        $newGrade = $this->calculateGrade($newTotal);
+        $newGrade = $this->calculateGrade($newCum); // Changed from $newTotal to $newCum
         $newRemark = $this->getRemark($newGrade);
 
-        // Update broadsheet if calculations differ
-        if (
-            $broadsheet->bf != $newBf ||
-            $broadsheet->total != $newTotal ||
-            $broadsheet->cum != $newCum ||
-            $broadsheet->grade != $newGrade ||
-            $broadsheet->remark != $newRemark
-        ) {
+        // Only update if there's a significant difference
+        $significantChange = abs($broadsheet->bf - $newBf) > 0.01 ||
+                           abs($broadsheet->total - $newTotal) > 0.01 ||
+                           abs($broadsheet->cum - $newCum) > 0.01 ||
+                           $broadsheet->grade !== $newGrade ||
+                           $broadsheet->remark !== $newRemark;
+
+        if ($significantChange) {
+            Log::info("Updating broadsheet {$broadsheet->id} due to significant changes", [
+                'old_values' => [
+                    'bf' => $broadsheet->bf,
+                    'total' => $broadsheet->total,
+                    'cum' => $broadsheet->cum,
+                    'grade' => $broadsheet->grade
+                ],
+                'new_values' => [
+                    'bf' => $newBf,
+                    'total' => $newTotal,
+                    'cum' => $newCum,
+                    'grade' => $newGrade
+                ]
+            ]);
+
             $broadsheet->bf = $newBf;
             $broadsheet->total = $newTotal;
             $broadsheet->cum = $newCum;
@@ -505,6 +521,13 @@ class MyScoreSheetController extends Controller
 
     public function bulkUpdateScores(Request $request)
     {
+
+         Log::info('Starting bulk update scores', [
+        'scores_count' => count($request->input('scores', [])),
+        'term_id' => $request->input('term_id')
+         ]);
+
+
         $scores = $request->input('scores', []);
         $subjectclass_id = $request->input('subjectclass_id');
         $staff_id = $request->input('staff_id');
@@ -514,6 +537,7 @@ class MyScoreSheetController extends Controller
 
         DB::transaction(function () use ($scores, $subjectclass_id, $staff_id, $term_id, $session_id, $schoolclass_id) {
             foreach ($scores as $score) {
+
                 $broadsheet = Broadsheets::find($score['id']);
                 if (!$broadsheet) continue;
 
@@ -543,6 +567,23 @@ class MyScoreSheetController extends Controller
                 ]);
             }
 
+            Log::info('Processing score', [
+            'id' => $score['id'],
+            'before_update' => [
+                'ca1' => $broadsheet->ca1,
+                'ca2' => $broadsheet->ca2,
+                'ca3' => $broadsheet->ca3,
+                'exam' => $broadsheet->exam,
+                'cum' => $broadsheet->cum
+            ],
+            'after_update' => [
+                'ca1' => $ca1,
+                'ca2' => $ca2,
+                'ca3' => $ca3,
+                'exam' => $exam,
+                'cum' => $cum
+            ]
+        ]);
             // Update class metrics
             $metrics = Broadsheets::where('subjectclass_id', $subjectclass_id)
                 ->where('staff_id', $staff_id)

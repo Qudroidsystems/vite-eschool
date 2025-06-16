@@ -349,9 +349,11 @@ function initializeBulkActions() {
 }
 
 // Bulk save all scores
-// Improved bulk save with better error handling and progress tracking
+// Debug version of bulkSaveAllScores with detailed logging
 function bulkSaveAllScores() {
-    console.log("Starting bulkSaveAllScores at", new Date().toISOString());
+    console.log("=== DEBUG: Starting bulkSaveAllScores ===");
+    console.log("window.term_id:", window.term_id);
+    console.log("window.broadsheets:", window.broadsheets);
     
     ensureBroadsheetsArray();
     
@@ -370,15 +372,28 @@ function bulkSaveAllScores() {
         return;
     }
 
-    // Improved validation with visual feedback
+        // Add debug logging for session values
+    console.log("Session values:", {
+        term_id: window.term_id,
+        session_id: window.session_id,
+        subjectclass_id: window.subjectclass_id,
+        schoolclass_id: window.schoolclass_id,
+        staff_id: window.staff_id
+    });
+
+
+    // Collect all score data
     const scores = [];
     const scoreData = {};
     const invalidInputs = [];
 
+    console.log("=== DEBUG: Processing score inputs ===");
     scoreInputs.forEach(input => {
         const id = input.dataset.id;
         const field = input.dataset.field;
         const value = input.value.trim();
+
+        console.log(`Input - ID: ${id}, Field: ${field}, Value: ${value}`);
 
         // Clear previous validation state
         input.classList.remove('is-invalid', 'is-valid');
@@ -408,40 +423,60 @@ function bulkSaveAllScores() {
     });
 
     if (invalidInputs.length > 0) {
-        // Show detailed validation errors
-        const errorMessages = invalidInputs.map(item => 
-            `Row with ID ${item.input.dataset.id}, Field ${item.input.dataset.field}: ${item.error}`
-        ).join('\n');
-
-        Swal.fire({
-            icon: 'error',
-            title: 'Validation Errors',
-            html: `<div style="text-align: left; max-height: 200px; overflow-y: auto;">
-                     <strong>Please fix the following errors:</strong><br><br>
-                     ${errorMessages.replace(/\n/g, '<br>')}
-                   </div>`,
-            showConfirmButton: true
-        });
-
-        // Focus on first invalid input
-        invalidInputs[0].input.focus();
+        console.error("Validation failed:", invalidInputs);
         return;
     }
+
+    console.log("=== DEBUG: Raw score data collected ===");
+    console.log("scoreData:", scoreData);
+
+    // Calculate cum for each score entry
+    Object.values(scoreData).forEach(scoreEntry => {
+        console.log(`\n=== DEBUG: Processing score ID ${scoreEntry.id} ===`);
+        
+        const ca1 = parseFloat(scoreEntry.ca1) || 0;
+        const ca2 = parseFloat(scoreEntry.ca2) || 0;
+        const ca3 = parseFloat(scoreEntry.ca3) || 0;
+        const exam = parseFloat(scoreEntry.exam) || 0;
+        
+        console.log(`Raw scores - CA1: ${ca1}, CA2: ${ca2}, CA3: ${ca3}, Exam: ${exam}`);
+        
+        // Calculate CA average and total
+        const caAverage = (ca1 + ca2 + ca3) / 3;
+        const total = (caAverage + exam) / 2;
+        
+        console.log(`Calculated - CA Average: ${caAverage.toFixed(2)}, Total: ${total.toFixed(2)}`);
+        
+        // Get BF from existing data
+        const broadsheet = window.broadsheets.find(b => b.id == scoreEntry.id);
+        const bf = broadsheet ? parseFloat(broadsheet.bf) || 0 : 0;
+        
+        console.log(`BF from broadsheet: ${bf.toFixed(2)}`);
+        console.log(`Broadsheet data:`, broadsheet);
+        
+        // Calculate cum based on term
+        const cum = window.term_id === 1 ? total : (bf + total) / 2;
+        
+        console.log(`Cum calculation: term_id=${window.term_id}, formula=${window.term_id === 1 ? 'total' : '(bf + total) / 2'}`);
+        console.log(`Final cum: ${cum.toFixed(2)}`);
+        
+        // Add calculated values to the score entry
+        scoreEntry.total = parseFloat(total.toFixed(2));
+        scoreEntry.cum = parseFloat(cum.toFixed(2));
+        scoreEntry.bf = bf;
+        
+        console.log(`Final scoreEntry:`, scoreEntry);
+    });
 
     scores.push(...Object.values(scoreData));
 
     if (!scores.length) {
         console.warn("No valid scores to save");
-        Swal.fire({
-            icon: 'info',
-            title: 'No Changes',
-            text: 'No scores to update.',
-            timer: 2000
-        });
         return;
     }
 
-    console.log("Submitting scores:", scores);
+    console.log("=== DEBUG: Final scores to be sent ===");
+    console.log(JSON.stringify(scores, null, 2));
 
     // Show progress
     if (progressContainer) progressContainer.style.display = 'block';
@@ -452,26 +487,26 @@ function bulkSaveAllScores() {
     
     if (bulkUpdateBtn) {
         bulkUpdateBtn.disabled = true;
-        bulkUpdateBtn.innerHTML = '<i class="ri-loader-4-line spin me-1"></i> Saving...';
+        bulkUpdateBtn.innerHTML = '<i class="ri-loader-4-line sync-icon"></i> Saving...';
     }
 
-    // Add timeout and retry logic
-    const saveRequest = axios.post('/subjectscoresheet/bulk-update', { scores }, {
+    // Make the request
+    axios.post('/subjectscoresheet/bulk-update', {  scores,
+        term_id: window.term_id,
+        session_id: window.session_id,
+        subjectclass_id: window.subjectclass_id,
+        schoolclass_id: window.schoolclass_id,
+        staff_id: window.staff_id }, {
         headers: { 
             'X-Requested-With': 'XMLHttpRequest',
             'Content-Type': 'application/json'
         },
-        timeout: 30000 // 30 second timeout
-    });
-
-    Promise.race([
-        saveRequest,
-        new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Request timeout')), 35000)
-        )
-    ])
+        timeout: 30000
+    })
     .then(response => {
-        console.log("Bulk update success:", response.data);
+        console.log("=== DEBUG: Server response ===");
+        console.log("Response data:", response.data);
+        
         if (progressBar) progressBar.style.width = '100%';
 
         // Clear validation classes on success
@@ -480,6 +515,29 @@ function bulkSaveAllScores() {
         });
 
         const updatedCount = response.data.updated_count || scores.length;
+        
+        // Update local data
+        if (response.data.broadsheets) {
+            console.log("=== DEBUG: Updating local broadsheets ===");
+            response.data.broadsheets.forEach(broadsheet => {
+                console.log(`Server returned broadsheet ${broadsheet.id}:`, broadsheet);
+                
+                const index = window.broadsheets.findIndex(b => b.id == broadsheet.id);
+                if (index !== -1) {
+                    console.log(`Updating existing broadsheet at index ${index}`);
+                    console.log(`Before update:`, window.broadsheets[index]);
+                    window.broadsheets[index] = { ...window.broadsheets[index], ...broadsheet };
+                    console.log(`After update:`, window.broadsheets[index]);
+                } else {
+                    console.log(`Adding new broadsheet`);
+                    window.broadsheets.push(broadsheet);
+                }
+                
+                updateRowDisplay(broadsheet.id, broadsheet);
+            });
+        }
+
+        // Show success message
         Swal.fire({
             icon: 'success',
             title: 'Saved!',
@@ -494,72 +552,39 @@ function bulkSaveAllScores() {
             showConfirmButton: false
         });
 
-        // Update local data and UI
-        if (response.data.broadsheets) {
-            response.data.broadsheets.forEach(broadsheet => {
-                const index = window.broadsheets.findIndex(b => b.id == broadsheet.id);
-                if (index !== -1) {
-                    window.broadsheets[index] = { ...window.broadsheets[index], ...broadsheet };
-                } else {
-                    window.broadsheets.push(broadsheet);
-                }
-                updateRowDisplay(broadsheet.id, broadsheet);
-            });
-        }
-
         updateAllRowTotals();
         populateResultsModal();
         if (scoresheetList) scoresheetList.reIndex();
 
-        // Auto-save success feedback
         showTemporaryMessage('Changes saved successfully!', 'success');
+
+        // DEBUG: Log final state
+        console.log("=== DEBUG: Final window.broadsheets state ===");
+        console.log(window.broadsheets);
+        
+        // DEBUG: Check what's actually displayed in the table
+        console.log("=== DEBUG: Current table display values ===");
+        scores.forEach(score => {
+            const row = document.querySelector(`input[data-id="${score.id}"]`)?.closest('tr');
+            if (row) {
+                const cumDisplay = row.querySelector('.cum-display span');
+                console.log(`Row ${score.id} cum display:`, cumDisplay?.textContent);
+            }
+        });
     })
     .catch(error => {
-        console.error("Bulk update error:", {
+        console.error("=== DEBUG: Server error ===");
+        console.error("Error details:", {
             status: error.response?.status,
             data: error.response?.data,
             message: error.message
         });
 
-        let errorMessage = 'Failed to save scores.';
-        let errorDetails = '';
-
-        if (error.message === 'Request timeout') {
-            errorMessage = 'Request timed out. Please try again.';
-            errorDetails = 'The server took too long to respond. Your scores may have been saved partially.';
-        } else if (error.response?.status === 422) {
-            errorMessage = 'Validation failed on server.';
-            errorDetails = error.response.data.message || 'Please check your input data.';
-        } else if (error.response?.status >= 500) {
-            errorMessage = 'Server error occurred.';
-            errorDetails = 'Please try again later or contact support if the problem persists.';
-        } else if (!navigator.onLine) {
-            errorMessage = 'No internet connection.';
-            errorDetails = 'Please check your connection and try again.';
-        }
-
         Swal.fire({
             icon: 'error',
             title: 'Save Failed',
-            html: `
-                <div class="text-left">
-                    <p><strong>${errorMessage}</strong></p>
-                    ${errorDetails ? `<p class="text-muted small">${errorDetails}</p>` : ''}
-                    <details class="mt-2">
-                        <summary class="text-muted small" style="cursor: pointer;">Technical Details</summary>
-                        <pre class="text-muted small mt-1" style="font-size: 0.8rem;">${JSON.stringify(error.response?.data || error.message, null, 2)}</pre>
-                    </details>
-                </div>
-            `,
-            showConfirmButton: true,
-            confirmButtonText: 'Retry',
-            showCancelButton: true,
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Retry the save operation
-                setTimeout(() => bulkSaveAllScores(), 1000);
-            }
+            text: 'Check console for detailed error information',
+            showConfirmButton: true
         });
     })
     .finally(() => {
@@ -577,6 +602,87 @@ function bulkSaveAllScores() {
         }
     });
 }
+
+// Enhanced updateRowDisplay function with debugging
+function updateRowDisplay(id, data) {
+    console.log(`=== DEBUG: updateRowDisplay called for ID ${id} ===`);
+    console.log("Data received:", data);
+    
+    const row = document.querySelector(`input[data-id="${id}"]`)?.closest('tr');
+    if (!row) {
+        console.warn("Row not found for ID:", id);
+        return;
+    }
+
+    // Update input fields
+    ['ca1', 'ca2', 'ca3', 'exam'].forEach(field => {
+        const input = row.querySelector(`input[data-field="${field}"]`);
+        if (input && data[field] !== undefined) {
+            input.value = data[field] !== null ? data[field] : '';
+            console.log(`Updated ${field} input to:`, input.value);
+        }
+    });
+
+    // Update display fields
+    const totalDisplay = row.querySelector('.total-display span');
+    if (totalDisplay && data.total !== undefined) {
+        const totalValue = parseFloat(data.total).toFixed(1);
+        totalDisplay.textContent = totalValue;
+        console.log(`Updated total display to:`, totalValue);
+    }
+
+    const bfDisplay = row.querySelector('.bf-display span');
+    if (bfDisplay) {
+        const bfValue = data.bf !== null && data.bf !== undefined ? parseFloat(data.bf) : 0;
+        bfDisplay.textContent = bfValue.toFixed(2);
+        console.log(`Updated bf display to:`, bfValue.toFixed(2));
+    }
+
+    const cumDisplay = row.querySelector('.cum-display span');
+    if (cumDisplay) {
+        const cumValue = data.cum !== null && data.cum !== undefined ? parseFloat(data.cum) : 0;
+        cumDisplay.textContent = cumValue.toFixed(2);
+        console.log(`Updated cum display to:`, cumValue.toFixed(2));
+    }
+
+    const gradeDisplay = row.querySelector('.grade-display span');
+    if (gradeDisplay && data.grade !== undefined) {
+        gradeDisplay.textContent = data.grade || '-';
+        console.log(`Updated grade display to:`, data.grade || '-');
+    }
+
+    const positionDisplay = row.querySelector('.position-display span');
+    if (positionDisplay && data.subject_position_class !== undefined) {
+        positionDisplay.textContent = data.subject_position_class || '-';
+        console.log(`Updated position display to:`, data.subject_position_class || '-');
+    }
+
+    if (scoresheetList) scoresheetList.reIndex();
+}
+
+// Test function to check current state
+function debugCurrentState() {
+    console.log("=== DEBUG: Current State Check ===");
+    console.log("window.broadsheets:", window.broadsheets);
+    console.log("window.term_id:", window.term_id);
+    
+    const scoreInputs = document.querySelectorAll('.score-input');
+    console.log("Score inputs found:", scoreInputs.length);
+    
+    scoreInputs.forEach(input => {
+        console.log(`Input - ID: ${input.dataset.id}, Field: ${input.dataset.field}, Value: ${input.value}`);
+    });
+    
+    const cumDisplays = document.querySelectorAll('.cum-display span');
+    console.log("Cum displays found:", cumDisplays.length);
+    
+    cumDisplays.forEach((display, index) => {
+        const row = display.closest('tr');
+        const idInput = row?.querySelector('.score-input');
+        console.log(`Cum display ${index} - ID: ${idInput?.dataset.id}, Value: ${display.textContent}`);
+    });
+}
+
 
 // Helper function to show temporary messages
 function showTemporaryMessage(message, type = 'info') {
@@ -914,3 +1020,5 @@ window.bulkSaveAllScores = bulkSaveAllScores;
 window.updateAllRowTotals = updateAllRowTotals;
 window.updateRowTotal = updateRowTotal;
 window.ensureBroadsheetsArray = ensureBroadsheetsArray;
+// Expose debug function globally
+window.debugCurrentState = debugCurrentState;
