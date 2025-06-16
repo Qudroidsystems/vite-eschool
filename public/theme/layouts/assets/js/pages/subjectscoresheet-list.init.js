@@ -181,16 +181,15 @@ function initializeScoreInputs() {
     });
 }
 
-// Calculate grade based on total score
-function calculateGrade(total) {
-    if (total >= 70) return 'A';
-    if (total >= 60) return 'B';
-    if (total >= 50) return 'C';
-    if (total >= 40) return 'D';
+
+function calculateGrade(score) {
+    if (score >= 70) return 'A';
+    else if (score >= 60) return 'B';
+    else if (score >= 50) return 'C';
+    else if (score >= 40) return 'D';
     return 'F';
 }
 
-// Update single row total
 function updateRowTotal(row) {
     const scoreInputs = row.querySelectorAll('.score-input');
     let ca1 = 0, ca2 = 0, ca3 = 0, examValue = 0;
@@ -200,18 +199,10 @@ function updateRowTotal(row) {
         const field = input.dataset.field;
         
         switch(field) {
-            case 'ca1':
-                ca1 = value;
-                break;
-            case 'ca2':
-                ca2 = value;
-                break;
-            case 'ca3':
-                ca3 = value;
-                break;
-            case 'exam':
-                examValue = value;
-                break;
+            case 'ca1': ca1 = value; break;
+            case 'ca2': ca2 = value; break;
+            case 'ca3': ca3 = value; break;
+            case 'exam': examValue = value; break;
         }
     });
     
@@ -221,28 +212,24 @@ function updateRowTotal(row) {
     const id = row.querySelector('.score-input').dataset.id;
     const broadsheet = window.broadsheets.find(b => b.id == id);
     const bf = broadsheet ? parseFloat(broadsheet.bf) || 0 : 0;
-    const cum = (bf + total) / 2;
+    const cum = window.term_id === 1 ? total : (bf + total) / 2;
 
     const totalDisplay = row.querySelector('.total-display span');
-    if (totalDisplay) {
-        totalDisplay.textContent = total.toFixed(1);
-    }
+    if (totalDisplay) totalDisplay.textContent = total.toFixed(1);
 
     const bfDisplay = row.querySelector('.bf-display span');
-    if (bfDisplay) {
-        bfDisplay.textContent = bf.toFixed(2);
-    }
+    if (bfDisplay) bfDisplay.textContent = bf.toFixed(2);
 
     const cumDisplay = row.querySelector('.cum-display span');
-    if (cumDisplay) {
-        cumDisplay.textContent = cum.toFixed(2);
-    }
+    if (cumDisplay) cumDisplay.textContent = cum.toFixed(2);
 
-    const grade = calculateGrade(total);
+    const grade = calculateGrade(cum); // Grade based on cum
     const gradeDisplay = row.querySelector('.grade-display span');
-    if (gradeDisplay) {
-        gradeDisplay.textContent = grade;
-    }
+    if (gradeDisplay) gradeDisplay.textContent = grade;
+
+    const remark = { A: 'Excellent', B: 'Very Good', C: 'Good', D: 'Pass', F: 'Fail' }[grade] || 'Unknown';
+    const remarkDisplay = row.querySelector('.remark-display span');
+    if (remarkDisplay) remarkDisplay.textContent = remark;
 }
 
 // Update all row totals
@@ -752,7 +739,7 @@ function generateResultsTable(container, scores) {
                 <thead class="table-light">
                     <tr>
                         <th>#</th>
-                        <th>Access Number/ID</th>
+                        <th>Admission No</th>
                         <th>Name</th>
                         <th>CA1</th>
                         <th>CA2</th>

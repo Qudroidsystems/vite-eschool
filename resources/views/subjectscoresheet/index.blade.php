@@ -155,7 +155,7 @@
                                             <th>Cum</th>
                                             <th>Grade</th>
                                             <th>Position</th>
-                                            <th>Action</th>
+                                           
                                         </tr>
                                     </thead>
                                     <tbody id="scoresheetTableBody" class="list form-check-all">
@@ -207,11 +207,7 @@
                                                 <td class="position-display text-center">
                                                     <span class="badge bg-info">{{ $broadsheet->position ?? '-' }}</span>
                                                 </td>
-                                                <td>
-                                                    <a href="{{ route('subjectscoresheet.edit', $broadsheet->id) }}" class="btn btn-primary btn-sm" title="Edit Score">
-                                                        <i class="ri-edit-line me-1"></i> Edit
-                                                    </a>
-                                                </td>
+                                               
                                             </tr>
                                         @empty
                                             <tr id="noDataRow">
@@ -340,5 +336,6 @@
 <!-- JavaScript Dependencies -->
 <script>
     window.broadsheets = @json($broadsheets);
+    window.term_id = {{ session('term_id') ?? 1 }};
 </script>
 @endsection

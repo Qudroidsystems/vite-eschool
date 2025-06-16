@@ -26,6 +26,12 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
     {
         $this->data = $importData;
 
+        // Validate term_id
+        if (!in_array($this->data['term_id'], [1, 2, 3])) {
+            Log::error('ScoresheetImport: Invalid term_id', ['term_id' => $this->data['term_id']]);
+            throw new \Exception('Invalid term ID provided. Must be 1, 2, or 3.');
+        }
+
         Session::put('subjectclass_id', $this->data['subjectclass_id']);
         Session::put('staff_id', $this->data['staff_id']);
         Session::put('term_id', $this->data['term_id']);
@@ -35,214 +41,212 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
         Log::info('ScoresheetImport: Initialized', ['data' => $this->data]);
     }
 
- 
     public function model(array $row)
-{
-    try {
-        $subjectclass_id = $this->data['subjectclass_id'];
-        $staff_id = $this->data['staff_id'];
-        $term_id = $this->data['term_id'];
-        $session_id = $this->data['session_id'];
+    {
+        try {
+            $subjectclass_id = $this->data['subjectclass_id'];
+            $staff_id = $this->data['staff_id'];
+            $term_id = $this->data['term_id'];
+            $session_id = $this->data['session_id'];
 
-        $rowNumber = $row[0] ?? 'Unknown';
-        $admission_no = trim($row[1] ?? '');
+            $rowNumber = $row[0] ?? 'Unknown';
+            $admission_no = trim($row[1] ?? '');
 
-        Log::debug('ScoresheetImport: Processing row', [
-            'row_number' => $rowNumber,
-            'admission_no' => $admission_no,
-            'raw_admission_no' => $row[1],
-            'raw_row' => array_slice($row, 0, 15)
-        ]);
-
-        // Manual validation before processing
-        $validationErrors = $this->validateRow($row, $rowNumber);
-        if (!empty($validationErrors)) {
-            $this->failures[] = [
-                'row' => $rowNumber,
-                'attribute' => 'validation',
-                'errors' => $validationErrors,
-                'values' => array_slice($row, 0, 8)
-            ];
-            Log::warning('ScoresheetImport: Validation failed', [
-                'row' => $rowNumber,
-                'errors' => $validationErrors
-            ]);
-            return null;
-        }
-
-        if (empty($admission_no)) {
-            Log::info('ScoresheetImport: Skipping row with empty admission number', ['row_number' => $rowNumber]);
-            return null;
-        }
-
-        $ca1 = $this->parseScore($row[3] ?? null);
-        $ca2 = $this->parseScore($row[4] ?? null);
-        $ca3 = $this->parseScore($row[5] ?? null);
-        $exam = $this->parseScore($row[7] ?? null);
-
-        // Find the broadsheet record
-        $broadsheetData = DB::table('broadsheets')
-            ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-            ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
-            ->where('studentRegistration.admissionNO', $admission_no)
-            ->where('broadsheets.subjectclass_id', $subjectclass_id)
-            ->where('broadsheets.staff_id', $staff_id)
-            ->where('broadsheets.term_id', $term_id)
-            ->where('broadsheet_records.session_id', $session_id)
-            ->select(
-                'broadsheets.id as broadsheet_id',
-                'broadsheet_records.student_id',
-                'broadsheet_records.subject_id'
-            )
-            ->first();
-
-        if (!$broadsheetData) {
-            $this->failures[] = [
-                'row' => $rowNumber,
-                'attribute' => 'admission_no',
-                'errors' => ['Student not found with admission number: ' . $admission_no],
-                'values' => ['admission_no' => $admission_no]
-            ];
-            Log::warning('ScoresheetImport: No broadsheet found', [
+            Log::debug('ScoresheetImport: Processing row', [
+                'row_number' => $rowNumber,
                 'admission_no' => $admission_no,
-                'subjectclass_id' => $subjectclass_id,
-                'staff_id' => $staff_id,
-                'term_id' => $term_id,
-                'session_id' => $session_id,
-                'row_number' => $rowNumber
-            ]);
-            return null;
-        }
-
-        $ca_average = ($ca1 + $ca2 + $ca3) / 3;
-        $total = round(($ca_average + $exam) / 2, 1);
-        $bf = $this->getPreviousTermCum($broadsheetData->student_id, $broadsheetData->subject_id, $term_id, $session_id);
-        $cum = round(($bf + $total) / 2, 2);
-        $grade = $this->calculateGrade($total);
-        $remark = $this->getRemark($grade);
-
-        // Update the broadsheet directly
-        $updated = DB::table('broadsheets')
-            ->where('id', $broadsheetData->broadsheet_id)
-            ->update([
-                'ca1' => $ca1,
-                'ca2' => $ca2,
-                'ca3' => $ca3,
-                'exam' => $exam,
-                'total' => $total,
-                'bf' => $bf,
-                'cum' => $cum,
-                'grade' => $grade,
-                'remark' => $remark,
-                'updated_at' => now(),
+                'raw_admission_no' => $row[1],
+                'raw_row' => array_slice($row, 0, 15)
             ]);
 
-        if ($updated) {
-            // Get the updated broadsheet for response
-            $broadsheet = Broadsheets::with([
-                'broadsheetRecord.student',
-                'broadsheetRecord.subject'
-            ])->find($broadsheetData->broadsheet_id);
-
-            if ($broadsheet) {
-                $this->updatedBroadsheets[] = [
-                    'id' => $broadsheet->id,
-                    'admissionno' => $admission_no,
-                    'fname' => $broadsheet->broadsheetRecord->student->firstname ?? null,
-                    'lname' => $broadsheet->broadsheetRecord->student->lastname ?? null,
-                    'ca1' => $broadsheet->ca1,
-                    'ca2' => $broadsheet->ca2,
-                    'ca3' => $broadsheet->ca3,
-                    'exam' => $broadsheet->exam,
-                    'total' => $broadsheet->total,
-                    'bf' => $broadsheet->bf,
-                    'cum' => $broadsheet->cum,
-                    'grade' => $broadsheet->grade,
-                    'avg' => $broadsheet->avg,
-                    'position' => $broadsheet->subject_position_class,
-                    'remark' => $broadsheet->remark,
+            // Manual validation before processing
+            $validationErrors = $this->validateRow($row, $rowNumber);
+            if (!empty($validationErrors)) {
+                $this->failures[] = [
+                    'row' => $rowNumber,
+                    'attribute' => 'validation',
+                    'errors' => $validationErrors,
+                    'values' => array_slice($row, 0, 8)
                 ];
+                Log::warning('ScoresheetImport: Validation failed', [
+                    'row' => $rowNumber,
+                    'errors' => $validationErrors
+                ]);
+                return null;
             }
 
-            Log::info('ScoresheetImport: Updated broadsheet', [
-                'id' => $broadsheetData->broadsheet_id,
-                'admission_no' => $admission_no,
-                'scores' => compact('ca1', 'ca2', 'ca3', 'exam', 'total', 'bf', 'cum', 'grade', 'remark'),
-                'row_number' => $rowNumber
+            if (empty($admission_no)) {
+                Log::info('ScoresheetImport: Skipping row with empty admission number', ['row_number' => $rowNumber]);
+                return null;
+            }
+
+            $ca1 = $this->parseScore($row[3] ?? null);
+            $ca2 = $this->parseScore($row[4] ?? null);
+            $ca3 = $this->parseScore($row[5] ?? null);
+            $exam = $this->parseScore($row[7] ?? null);
+
+            // Find the broadsheet record
+            $broadsheetData = DB::table('broadsheets')
+                ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+                ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
+                ->where('studentRegistration.admissionNO', $admission_no)
+                ->where('broadsheets.subjectclass_id', $subjectclass_id)
+                ->where('broadsheets.staff_id', $staff_id)
+                ->where('broadsheets.term_id', $term_id)
+                ->where('broadsheet_records.session_id', $session_id)
+                ->select(
+                    'broadsheets.id as broadsheet_id',
+                    'broadsheet_records.student_id',
+                    'broadsheet_records.subject_id'
+                )
+                ->first();
+
+            if (!$broadsheetData) {
+                $this->failures[] = [
+                    'row' => $rowNumber,
+                    'attribute' => 'admission_no',
+                    'errors' => ['Student not found with admission number: ' . $admission_no],
+                    'values' => ['admission_no' => $admission_no]
+                ];
+                Log::warning('ScoresheetImport: No broadsheet found', [
+                    'admission_no' => $admission_no,
+                    'subjectclass_id' => $subjectclass_id,
+                    'staff_id' => $staff_id,
+                    'term_id' => $term_id,
+                    'session_id' => $session_id,
+                    'row_number' => $rowNumber
+                ]);
+                return null;
+            }
+
+            $ca_average = ($ca1 + $ca2 + $ca3) / 3;
+            $total = round(($ca_average + $exam) / 2, 1);
+            $bf = $this->getPreviousTermCum($broadsheetData->student_id, $broadsheetData->subject_id, $term_id, $session_id);
+            $cum = $term_id == 1 ? $total : round(($bf + $total) / 2, 2);
+            $grade = $this->calculateGrade($cum); // Grade based on cum
+            $remark = $this->getRemark($grade);
+
+            // Update the broadsheet directly
+            $updated = DB::table('broadsheets')
+                ->where('id', $broadsheetData->broadsheet_id)
+                ->update([
+                    'ca1' => $ca1,
+                    'ca2' => $ca2,
+                    'ca3' => $ca3,
+                    'exam' => $exam,
+                    'total' => $total,
+                    'bf' => $bf,
+                    'cum' => $cum,
+                    'grade' => $grade,
+                    'remark' => $remark,
+                    'updated_at' => now(),
+                ]);
+
+            if ($updated) {
+                // Get the updated broadsheet for response
+                $broadsheet = Broadsheets::with([
+                    'broadsheetRecord.student',
+                    'broadsheetRecord.subject'
+                ])->find($broadsheetData->broadsheet_id);
+
+                if ($broadsheet) {
+                    $this->updatedBroadsheets[] = [
+                        'id' => $broadsheet->id,
+                        'admissionno' => $admission_no,
+                        'fname' => $broadsheet->broadsheetRecord->student->firstname ?? null,
+                        'lname' => $broadsheet->broadsheetRecord->student->lastname ?? null,
+                        'ca1' => $broadsheet->ca1,
+                        'ca2' => $broadsheet->ca2,
+                        'ca3' => $broadsheet->ca3,
+                        'exam' => $broadsheet->exam,
+                        'total' => $broadsheet->total,
+                        'bf' => $broadsheet->bf,
+                        'cum' => $broadsheet->cum,
+                        'grade' => $broadsheet->grade,
+                        'avg' => $broadsheet->avg,
+                        'position' => $broadsheet->subject_position_class,
+                        'remark' => $broadsheet->remark,
+                    ];
+                }
+
+                Log::info('ScoresheetImport: Updated broadsheet', [
+                    'id' => $broadsheetData->broadsheet_id,
+                    'admission_no' => $admission_no,
+                    'scores' => compact('ca1', 'ca2', 'ca3', 'exam', 'total', 'bf', 'cum', 'grade', 'remark'),
+                    'row_number' => $rowNumber
+                ]);
+            } else {
+                Log::warning('ScoresheetImport: No changes applied to broadsheet', [
+                    'id' => $broadsheetData->broadsheet_id,
+                    'admission_no' => $admission_no,
+                    'row_number' => $rowNumber
+                ]);
+            }
+
+            return null;
+
+        } catch (\Exception $e) {
+            $this->failures[] = [
+                'row' => $rowNumber ?? 'Unknown',
+                'attribute' => 'general',
+                'errors' => ['Error processing row: ' . $e->getMessage()],
+                'values' => array_slice($row, 0, 8)
+            ];
+            Log::error('ScoresheetImport: Error processing row', [
+                'admission_no' => $admission_no ?? 'Unknown',
+                'row_number' => $rowNumber ?? 'Unknown',
+                'error' => $e->getMessage(),
+                'row' => array_slice($row, 0, 15)
             ]);
-        } else {
-            Log::warning('ScoresheetImport: No changes applied to broadsheet', [
-                'id' => $broadsheetData->broadsheet_id,
-                'admission_no' => $admission_no,
-                'row_number' => $rowNumber
-            ]);
-        }
-
-        return null;
-
-    } catch (\Exception $e) {
-        $this->failures[] = [
-            'row' => $rowNumber ?? 'Unknown',
-            'attribute' => 'general',
-            'errors' => ['Error processing row: ' . $e->getMessage()],
-            'values' => array_slice($row, 0, 8)
-        ];
-        Log::error('ScoresheetImport: Error processing row', [
-            'admission_no' => $admission_no ?? 'Unknown',
-            'row_number' => $rowNumber ?? 'Unknown',
-            'error' => $e->getMessage(),
-            'row' => array_slice($row, 0, 15)
-        ]);
-        return null;
-    }
-}
-
-protected function validateRow(array $row, $rowNumber)
-{
-    $errors = [];
-    $subjectclass_id = $this->data['subjectclass_id'];
-
-    // Validate admission number
-    $admission_no = trim($row[1] ?? '');
-    if (empty($admission_no)) {
-        $errors[] = 'The admission number field is required.';
-    }
-
-    // Validate CA1 score
-    $ca1 = $row[3] ?? null;
-    if ($ca1 !== '' && $ca1 !== null) {
-        if (!is_numeric($ca1) || $ca1 < 0 || $ca1 > $this->getMaxScore($subjectclass_id, 'ca1score')) {
-            $errors[] = "CA1 score must be between 0 and {$this->getMaxScore($subjectclass_id, 'ca1score')}.";
+            return null;
         }
     }
 
-    // Validate CA2 score
-    $ca2 = $row[4] ?? null;
-    if ($ca2 !== '' && $ca2 !== null) {
-        if (!is_numeric($ca2) || $ca2 < 0 || $ca2 > $this->getMaxScore($subjectclass_id, 'ca2score')) {
-            $errors[] = "CA2 score must be between 0 and {$this->getMaxScore($subjectclass_id, 'ca2score')}.";
+    protected function validateRow(array $row, $rowNumber)
+    {
+        $errors = [];
+        $subjectclass_id = $this->data['subjectclass_id'];
+
+        // Validate admission number
+        $admission_no = trim($row[1] ?? '');
+        if (empty($admission_no)) {
+            $errors[] = 'The admission number field is required.';
         }
-    }
 
-    // Validate CA3 score
-    $ca3 = $row[5] ?? null;
-    if ($ca3 !== '' && $ca3 !== null) {
-        if (!is_numeric($ca3) || $ca3 < 0 || $ca3 > $this->getMaxScore($subjectclass_id, 'ca3score')) {
-            $errors[] = "CA3 score must be between 0 and {$this->getMaxScore($subjectclass_id, 'ca3score')}.";
+        // Validate CA1 score
+        $ca1 = $row[3] ?? null;
+        if ($ca1 !== '' && $ca1 !== null) {
+            if (!is_numeric($ca1) || $ca1 < 0 || $ca1 > $this->getMaxScore($subjectclass_id, 'ca1score')) {
+                $errors[] = "CA1 score must be between 0 and {$this->getMaxScore($subjectclass_id, 'ca1score')}.";
+            }
         }
-    }
 
-    // Validate Exam score
-    $exam = $row[7] ?? null;
-    if ($exam !== '' && $exam !== null) {
-        if (!is_numeric($exam) || $exam < 0 || $exam > $this->getMaxScore($subjectclass_id, 'examscore')) {
-            $errors[] = "Exam score must be between 0 and {$this->getMaxScore($subjectclass_id, 'examscore')}.";
+        // Validate CA2 score
+        $ca2 = $row[4] ?? null;
+        if ($ca2 !== '' && $ca2 !== null) {
+            if (!is_numeric($ca2) || $ca2 < 0 || $ca2 > $this->getMaxScore($subjectclass_id, 'ca2score')) {
+                $errors[] = "CA2 score must be between 0 and {$this->getMaxScore($subjectclass_id, 'ca2score')}.";
+            }
         }
+
+        // Validate CA3 score
+        $ca3 = $row[5] ?? null;
+        if ($ca3 !== '' && $ca3 !== null) {
+            if (!is_numeric($ca3) || $ca3 < 0 || $ca3 > $this->getMaxScore($subjectclass_id, 'ca3score')) {
+                $errors[] = "CA3 score must be between 0 and {$this->getMaxScore($subjectclass_id, 'ca3score')}.";
+            }
+        }
+
+        // Validate Exam score
+        $exam = $row[7] ?? null;
+        if ($exam !== '' && $exam !== null) {
+            if (!is_numeric($exam) || $exam < 0 || $exam > $this->getMaxScore($subjectclass_id, 'examscore')) {
+                $errors[] = "Exam score must be between 0 and {$this->getMaxScore($subjectclass_id, 'examscore')}.";
+            }
+        }
+
+        return $errors;
     }
-
-    return $errors;
-}
-
 
     public function onFailure(Failure ...$failures)
     {
@@ -426,83 +430,103 @@ protected function validateRow(array $row, $rowNumber)
                 'failures' => count($this->failures)
             ]);
 
-            // Update class metrics
-            $classMin = Broadsheets::where('subjectclass_id', $subjectclass_id)
-                ->where('staff_id', $staff_id)
-                ->where('term_id', $term_id)
-                ->min('total');
+            DB::transaction(function () use ($subjectclass_id, $staff_id, $term_id, $session_id, $schoolclass_id) {
+                // Update class metrics based on cum
+                $metrics = Broadsheets::where('subjectclass_id', $subjectclass_id)
+                    ->where('staff_id', $staff_id)
+                    ->where('term_id', $term_id)
+                    ->selectRaw('MIN(cum) as min_cum, MAX(cum) as max_cum, AVG(cum) as avg_cum')
+                    ->first();
 
-            $classMax = Broadsheets::where('subjectclass_id', $subjectclass_id)
-                ->where('staff_id', $staff_id)
-                ->where('term_id', $term_id)
-                ->max('total');
+                $classMin = $metrics->min_cum ?? 0;
+                $classMax = $metrics->max_cum ?? 0;
+                $classAvg = $metrics->avg_cum ? round($metrics->avg_cum, 1) : 0;
 
-            $classAvg = $classMin && $classMax ? round(($classMin + $classMax) / 2, 1) : 0;
+                Broadsheets::where('subjectclass_id', $subjectclass_id)
+                    ->where('staff_id', $staff_id)
+                    ->where('term_id', $term_id)
+                    ->update([
+                        'cmin' => $classMin,
+                        'cmax' => $classMax,
+                        'avg' => $classAvg,
+                    ]);
 
-            Broadsheets::where('subjectclass_id', $subjectclass_id)
-                ->where('staff_id', $staff_id)
-                ->where('term_id', $term_id)
-                ->update([
-                    'cmin' => $classMin ?? 0,
-                    'cmax' => $classMax ?? 0,
-                    'avg' => $classAvg,
-                ]);
+                // Update subject positions based on cum
+                $classPos = Broadsheets::where('subjectclass_id', $subjectclass_id)
+                    ->where('staff_id', $staff_id)
+                    ->where('term_id', $term_id)
+                    ->orderBy('cum', 'DESC')
+                    ->get();
 
-            // Update subject positions
-            $rank = 0;
-            $lastScore = null;
-            $rows = 0;
+                $rank = 0;
+                $lastScore = null;
+                $rows = 0;
 
-            $classPos = Broadsheets::where('subjectclass_id', $subjectclass_id)
-                ->where('staff_id', $staff_id)
-                ->where('term_id', $term_id)
-                ->orderBy('total', 'DESC')
-                ->get();
+                foreach ($classPos as $row) {
+                    $rows++;
+                    if ($lastScore !== $row->cum) {
+                        $lastScore = $row->cum;
+                        $rank = $rows;
+                    }
+                    $position = match ($rank) {
+                        1 => 'st',
+                        2 => 'nd',
+                        3 => 'rd',
+                        default => 'th',
+                    };
+                    $rankPos = $rank . $position;
 
-            foreach ($classPos as $row) {
-                $rows++;
-                if ($lastScore !== $row->total) {
-                    $lastScore = $row->total;
-                    $rank = $rows;
+                    Broadsheets::where('id', $row->id)->update(['subject_position_class' => $rankPos]);
                 }
-                $position = match ($rank) {
-                    1 => 'st',
-                    2 => 'nd',
-                    3 => 'rd',
-                    default => 'th',
-                };
-                $rankPos = $rank . $position;
 
-                Broadsheets::where('id', $row->id)->update(['subject_position_class' => $rankPos]);
-            }
+                // Update subjectstotalscores in promotion_status
+                $students = \App\Models\PromotionStatus::where('schoolclassid', $schoolclass_id)
+                    ->where('termid', $term_id)
+                    ->where('sessionid', $session_id)
+                    ->pluck('studentid');
 
-            // Update class positions
-            $rank = 0;
-            $lastScore = null;
-            $rows = 0;
+                foreach ($students as $studentId) {
+                    $totalCum = Broadsheets::where('broadsheet_records.student_id', $studentId)
+                        ->where('broadsheets.term_id', $term_id)
+                        ->where('broadsheet_records.session_id', $session_id)
+                        ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+                        ->sum('broadsheets.cum');
 
-            $pos = \App\Models\PromotionStatus::where('schoolclassid', $schoolclass_id)
-                ->where('termid', $term_id)
-                ->where('sessionid', $session_id)
-                ->orderBy('subjectstotalscores', 'DESC')
-                ->get();
-
-            foreach ($pos as $row) {
-                $rows++;
-                if ($lastScore !== $row->subjectstotalscores) {
-                    $lastScore = $row->subjectstotalscores;
-                    $rank = $rows;
+                    \App\Models\PromotionStatus::where('studentid', $studentId)
+                        ->where('schoolclassid', $schoolclass_id)
+                        ->where('termid', $term_id)
+                        ->where('sessionid', $session_id)
+                        ->update(['subjectstotalscores' => round($totalCum, 2)]);
                 }
-                $position = match ($rank) {
-                    1 => 'st',
-                    2 => 'nd',
-                    3 => 'rd',
-                    default => 'th',
-                };
-                $rankPos = $rank . $position;
 
-                \App\Models\PromotionStatus::where('id', $row->id)->update(['position' => $rankPos]);
-            }
+                // Update class positions based on subjectstotalscores
+                $pos = \App\Models\PromotionStatus::where('schoolclassid', $schoolclass_id)
+                    ->where('termid', $term_id)
+                    ->where('sessionid', $session_id)
+                    ->orderBy('subjectstotalscores', 'DESC')
+                    ->get();
+
+                $rank = 0;
+                $lastScore = null;
+                $rows = 0;
+
+                foreach ($pos as $row) {
+                    $rows++;
+                    if ($lastScore !== $row->subjectstotalscores) {
+                        $lastScore = $row->subjectstotalscores;
+                        $rank = $rows;
+                    }
+                    $position = match ($rank) {
+                        1 => 'st',
+                        2 => 'nd',
+                        3 => 'rd',
+                        default => 'th',
+                    };
+                    $rankPos = $rank . $position;
+
+                    \App\Models\PromotionStatus::where('id', $row->id)->update(['position' => $rankPos]);
+                }
+            });
 
             Log::info('ScoresheetImport: afterImport completed', [
                 'updated_broadsheets' => count($this->updatedBroadsheets),
@@ -514,6 +538,7 @@ protected function validateRow(array $row, $rowNumber)
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
+            throw $e; // Re-throw to ensure the import fails if afterImport fails
         }
     }
 
