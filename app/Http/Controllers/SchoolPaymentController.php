@@ -214,8 +214,8 @@ class SchoolPaymentController extends Controller
                 'termid_id' => $request->term_id,
                 'session_id' => $request->session_id,
                 'generated_by' => Auth::user()->id,
-                'payment_date' => now(),
-                'received_by' => Auth::user()->name ?? 'System',
+                'updated_at' => now(),
+              
             ]);
 
             DB::commit();
