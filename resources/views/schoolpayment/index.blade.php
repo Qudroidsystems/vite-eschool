@@ -1,28 +1,16 @@
 @extends('layouts.master')
 
 @section('content')
+
+
+<!-- Main content container -->
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
-            <!-- Start page title -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0">School Bill Payments</h4>
-                        <div class="page-title-right">
-                            <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="javascript:void(0);">Student Management</a></li>
-                                <li class="breadcrumb-item active">School Bills for Students</li>
-                            </ol>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- End page title -->
-
+            <!-- Display validation errors -->
             @if ($errors->any())
                 <div class="alert alert-danger">
-                    <strong>Whoops!</strong> There were some problems with your input.<br><br>
+                    <strong>Error!</strong> There were some problems with your input.<br>
                     <ul>
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
@@ -31,117 +19,147 @@
                 </div>
             @endif
 
-            @if (session('status'))
+            <!-- Display success/status messages -->
+            @if (session('status') || session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('status') }}
+                    {{ session('status') ?: session('success') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
 
-            <div id="studentList">
+            <!-- Student Information Cards -->
+            @if ($student->isNotEmpty())
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="card">
                             <div class="card-body">
                                 <div class="row g-3">
-                                    <div class="col-xxl-3">
-                                        <div class="search-box">
-                                            <input type="text" class="form-control search" placeholder="Search students...">
-                                            <i class="ri-search-line search-icon"></i>
+                                    <div class="d-flex flex-wrap flex-stack mb-4">
+                                        <div class="d-flex flex-column flex-grow-1 pe-8">
+                                            <div class="d-flex flex-wrap">
+                                                <!-- Class Card -->
+                                                <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-building fs-3 text-success me-2"></i>
+                                                        <div class="fs-2 fw-bold text-success">{{ $student->first()->schoolclassid }}</div>
+                                                    </div>
+                                                    <div class="fw-semibold fs-6 text-gray-400">Class ID</div>
+                                                </div>
+                                                <!-- Term Card -->
+                                                <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-calendar fs-3 text-success me-2"></i>
+                                                        <div class="fs-2 fw-bold text-success">{{ $student->first()->termid }}</div>
+                                                    </div>
+                                                    <div class="fw-semibold fs-6 text-gray-400">Term ID</div>
+                                                </div>
+                                                <!-- Session Card -->
+                                                <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-calendar fs-3 text-success me-2"></i>
+                                                        <div class="fs-2 fw-bold text-success">{{ $student->first()->sessionid }}</div>
+                                                    </div>
+                                                    <div class="fw-semibold fs-6 text-gray-400">Session ID</div>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div class="col-xxl-3 col-sm-6">
-                                        <div>
-                                            <select class="form-control" id="idGender" data-choices data-choices-search-false>
-                                                <option value="all">Select Gender</option>
-                                                <option value="Male">Male</option>
-                                                <option value="Female">Female</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-xxl-1 col-sm-6">
-                                        <button type="button" class="btn btn-secondary w-100" onclick="filterData();"><i class="bi bi-funnel align-baseline me-1"></i> Filter</button>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+            @endif
 
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-header d-flex align-items-center">
-                                <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">Students <span class="badge bg-dark-subtle text-dark ms-1">{{ count($student) }}</span></h5>
+            <!-- Payments Table -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h5 class="card-title mb-0">
+                                    {{ $pagetitle }}
+                                    @if ($student->isNotEmpty())
+                                        <span class="badge bg-info-subtle text-info ms-2" id="studentCount">{{ $student->count() }}</span>
+                                    @endif
+                                </h5>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="searchInput" placeholder="Search by admission no or name..." style="min-width: 200px;" {{ $student->isEmpty() ? 'disabled' : '' }}>
+                                    <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                                        <i class="ri-close-line"></i>
+                                    </button>
                                 </div>
                             </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-centered align-middle table-nowrap mb-0" id="studentTable">
-                                        <thead class="table-light">
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-3">
+                                <a href="{{ url()->previous() }}" class="btn btn-primary">
+                                    <i class="ri-arrow-left-line"></i> Back
+                                </a>
+                            </div>
+
+                            <!-- No Data Alert -->
+                            <div class="alert alert-info text-center" id="noDataAlert" style="display: {{ $student->isEmpty() ? 'block' : 'none' }};">
+                                <i class="ri-information-line me-2"></i>
+                                No students available. Please check your filters or add students.
+                            </div>
+
+                            <!-- Payments Table -->
+                            <div class="table-responsive">
+                                <table class="table table-centered align-middle table-nowrap mb-0" id="paymentsTable">
+                                    <thead class="table-active">
+                                        <tr>
+                                            <th style="width: 50px;">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="checkAll">
+                                                    <label class="form-check-label" for="checkAll"></label>
+                                                </div>
+                                            </th>
+                                            <th style="width: 50px;" class="sort cursor-pointer" data-sort="sn">SN</th>
+                                            <th class="sort cursor-pointer" data-sort="admissionno">Admission No</th>
+                                            <th class="sort cursor-pointer" data-sort="name">Name</th>
+                                            <th class="sort cursor-pointer" data-sort="gender">Gender</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="paymentsTableBody" class="list form-check-all">
+                                        @php $i = 0; @endphp
+                                        @forelse ($student as $std)
                                             <tr>
-                                                <th>
+                                                <td>
                                                     <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" value="option" id="checkAll">
-                                                        <label class="form-check-label" for="checkAll"></label>
+                                                        <input class="form-check-input student-checkbox" type="checkbox" name="chk_child" data-id="{{ $std->id }}">
+                                                        <label class="form-check-label"></label>
                                                     </div>
-                                                </th>
-                                                <th class="sort cursor-pointer" data-sort="admission_no">Admission No</th>
-                                                <th class="sort cursor-pointer" data-sort="name">Name</th>
-                                                <th class="sort cursor-pointer" data-sort="gender">Gender</th>
-                                                <th>Action</th>
+                                                </td>
+                                                <td class="sn">{{ ++$i }}</td>
+                                                <td class="admissionno" data-admissionno="{{ $std->admissionNo ?? '-' }}">{{ $std->admissionNo ?? '-' }}</td>
+                                                <td class="name" data-name="{{ ($std->firstname ?? '') . ' ' . ($std->lastname ?? '') }}">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-sm me-2">
+                                                            <img src="{{ $std->picture ? Storage::url('images/studentavatar/' . $std->picture) : Storage::url('images/studentavatar/unnamed.png') }}" alt="{{ ($std->firstname ?? '') . ' ' . ($std->lastname ?? '') }}" class="rounded-circle w-100">
+                                                        </div>
+                                                        <div class="d-flex flex-column">
+                                                            {{ ($std->firstname ?? '') . ' ' . ($std->lastname ?? '') }}
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td class="gender" data-gender="{{ $std->gender ?? '-' }}">{{ $std->gender ?? '-' }}</td>
+                                                <td>
+                                                    <a href="{{ route('schoolpayment.termsession', $std->id) }}" class="btn btn-sm btn-info">
+                                                        <i class="ri-eye-line me-1"></i> View Payments
+                                                    </a>
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody class="list form-check-all">
-                                            @foreach ($student as $sc)
-                                                @if ($sc->cstatus == "CURRENT")
-                                                    <tr>
-                                                        <td>
-                                                            <div class="form-check">
-                                                                <input class="form-check-input" type="checkbox" name="chk_child">
-                                                                <label class="form-check-label"></label>
-                                                            </div>
-                                                        </td>
-                                                        <td class="admission_no">{{ $sc->admissionNo }}</td>
-                                                        <td class="name">
-                                                            <div class="d-flex align-items-center">
-                                                                <div class="flex-shrink-0">
-                                                                    <?php 
-                                                                    $image = $sc->picture ? $sc->picture : 'unnamed.png';
-                                                                    ?>
-                                                                    <img src="{{ Storage::url('images/studentavatar/'.$image) }}" 
-                                                                         alt="{{ $sc->firstname }}" 
-                                                                         class="avatar-xs rounded-circle">
-                                                                </div>
-                                                                <div class="flex-grow-1 ms-2">
-                                                                    {{ $sc->firstname }} {{ $sc->lastname }}
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                        <td class="gender">{{ $sc->gender }}</td>
-                                                        <td>
-                                                            <div class="dropdown">
-                                                                <button class="btn btn-soft-secondary btn-sm dropdown" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                                    <i class="ri-more-fill align-middle"></i>
-                                                                </button>
-                                                                <ul class="dropdown-menu dropdown-menu-end">
-                                                                    @can('subject_class-edit')
-                                                                    <li>
-                                                                        <a class="dropdown-item" href="{{ route('schoolpayment.termsession', $sc->id) }}">
-                                                                            <i class="ri-money-dollar-circle-line align-middle me-1"></i> Proceed to Payment
-                                                                        </a>
-                                                                    </li>
-                                                                    @endcan
-                                                                </ul>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                @endif
-                                            @endforeach
-                                        </tbody>
-                                    </table>
-                                </div>
+                                        @empty
+                                            <tr id="noDataRow">
+                                                <td colspan="6" class="text-center">No students available.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -150,4 +168,77 @@
         </div>
     </div>
 </div>
+
+<!-- JavaScript Dependencies -->
+<script>
+window.students = @json($student);
+
+document.addEventListener('DOMContentLoaded', function () {
+    const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+    const tableBody = document.getElementById('paymentsTableBody');
+    const noDataAlert = document.getElementById('noDataAlert');
+    const studentCount = document.getElementById('studentCount');
+    const checkAll = document.getElementById('checkAll');
+
+    // Debounce function to limit search execution
+    function debounce(func, wait) {
+        let timeout;
+        return function (...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
+    // Search functionality
+    const performSearch = debounce(function () {
+        const searchTerm = searchInput.value.trim().toLowerCase();
+        const rows = tableBody.querySelectorAll('tr:not(#noDataRow)');
+        let visibleRows = 0;
+
+        rows.forEach(row => {
+            const admissionNo = (row.querySelector('.admissionno')?.dataset.admissionno || '').toLowerCase();
+            const name = (row.querySelector('.name')?.dataset.name || '').toLowerCase();
+            const isMatch = admissionNo.includes(searchTerm) || name.includes(searchTerm);
+            row.style.display = isMatch ? '' : 'none';
+            if (isMatch) visibleRows++;
+        });
+
+        // Toggle no data alert
+        noDataAlert.style.display = visibleRows === 0 && rows.length > 0 ? 'block' : 'none';
+        // Update student count
+        if (studentCount) {
+            studentCount.textContent = visibleRows;
+        }
+        // Show/hide noDataRow
+        const noDataRow = document.getElementById('noDataRow');
+        if (noDataRow) {
+            noDataRow.style.display = rows.length === 0 ? '' : 'none';
+        }
+    }, 300);
+
+    // Attach search event listener
+    if (searchInput) {
+        searchInput.addEventListener('input', performSearch);
+    }
+
+    // Clear search
+    if (clearSearch) {
+        clearSearch.addEventListener('click', function () {
+            searchInput.value = '';
+            performSearch();
+        });
+    }
+
+    // Check all checkboxes
+    if (checkAll && tableBody) {
+        checkAll.addEventListener('change', function () {
+            const checkboxes = tableBody.querySelectorAll('.student-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+        });
+    }
+});
+</script>
 @endsection

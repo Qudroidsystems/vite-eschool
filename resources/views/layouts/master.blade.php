@@ -399,7 +399,7 @@
                             <div class="collapse menu-dropdown" id="sidebarStudentpayments">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
-                                        <a href="apps-ecommerce-products.html" class="nav-link" data-key="t-products">Student Bill</a>
+                                        <a href="{{ route('schoolpayment.index') }}" class="nav-link" data-key="t-products">Student Bill</a>
                                     </li>
                                     <li class="nav-item">
                                         <a href="apps-ecommerce-products-grid.html" class="nav-link" data-key="t-products-grid">Student Invoice</a>

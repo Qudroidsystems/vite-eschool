@@ -1,133 +1,120 @@
-console.log("schoolpayment.init.js loaded at", new Date().toISOString());
+// document.addEventListener('DOMContentLoaded', function () {
+//     // Debounce function to limit search execution
+//     function debounce(func, wait) {
+//         let timeout;
+//         return function (...args) {
+//             clearTimeout(timeout);
+//             timeout = setTimeout(() => func.apply(this, args), wait);
+//         };
+//     }
 
-// Dependency checks
-try {
-    if (typeof axios === 'undefined') throw new Error("Axios is not loaded");
-    if (typeof Swal === 'undefined') throw new Error("SweetAlert2 is not loaded");
-    if (typeof bootstrap === 'undefined') throw new Error("Bootstrap is not loaded");
-    if (typeof List === 'undefined') throw new Error("List.js is not loaded");
-    console.log("All dependencies loaded successfully");
-} catch (error) {
-    console.error("Dependency check failed:", error.message);
-    Swal.fire({
-        icon: "error",
-        title: "Dependency Error",
-        text: "Required libraries are missing. Check console for details.",
-        showConfirmButton: true
-    });
-}
+//     // Initialize search functionality
+//     function initializeSearch(tableId, searchInputId, clearSearchId, countId, noDataAlertId, searchFields) {
+//         const searchInput = document.getElementById(searchInputId);
+//         const clearSearch = document.getElementById(clearSearchId);
+//         const tableBody = document.getElementById(tableId + 'Body');
+//         const noDataAlert = document.getElementById(noDataAlertId);
+//         const countElement = document.getElementById(countId);
 
-// Set CSRF token for Axios
-const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
-axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
-if (!csrfToken) {
-    console.warn("CSRF token not found. AJAX requests may fail.");
-}
+//         if (!searchInput || !tableBody) return;
 
-// Initialize List.js
-let studentList = null;
-function initializeListJs() {
-    const table = document.getElementById('studentTable');
-    if (!table) {
-        console.error("List.js: #studentTable not found in DOM");
-        return;
-    }
-    const tbody = table.querySelector('tbody');
-    if (!tbody || tbody.children.length === 0) {
-        console.warn("List.js: No rows found in #studentTable tbody");
-        return;
-    }
-    try {
-        studentList = new List('studentList', {
-            valueNames: ['admission_no', 'name', 'gender'],
-            listClass: 'list'
-        });
-        console.log("List.js initialized successfully");
-    } catch (error) {
-        console.error("List.js initialization failed:", error);
-    }
-}
+//         const performSearch = debounce(function () {
+//             const searchTerm = searchInput.value.trim().toLowerCase();
+//             const rows = tableBody.querySelectorAll('tr:not(#noDataRow)');
+//             let visibleRows = 0;
 
-// Custom search function with debounce
-function debounce(func, wait) {
-    let timeout;
-    return function (...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), wait);
-    };
-}
+//             rows.forEach(row => {
+//                 let match = false;
+//                 searchFields.forEach(field => {
+//                     const cell = row.querySelector(`.${field}`);
+//                     if (cell && (cell.dataset[field] || '').toLowerCase().includes(searchTerm)) {
+//                         match = true;
+//                     }
+//                 });
+//                 row.style.display = match ? '' : 'none';
+//                 if (match) visibleRows++;
+//             });
 
-function customSearch(searchString) {
-    if (!studentList) return;
-    studentList.search(searchString, ['admission_no', 'name']);
-}
+//             noDataAlert.style.display = visibleRows === 0 && rows.length > 0 ? 'block' : 'none';
+//             if (countElement) countElement.textContent = visibleRows;
+//             const noDataRow = document.getElementById('noDataRow');
+//             if (noDataRow) noDataRow.style.display = rows.length === 0 ? '' : 'none';
+//         }, 300);
 
-const triggerSearch = debounce(() => {
-    const searchInput = document.querySelector('.search');
-    if (searchInput) customSearch(searchInput.value.trim());
-}, 300);
+//         searchInput.addEventListener('input', performSearch);
+//         clearSearch.addEventListener('click', function () {
+//             searchInput.value = '';
+//             performSearch();
+//         });
+//     }
 
-// Initialize search
-function initializeSearch() {
-    const searchInput = document.querySelector('.search');
-    if (searchInput) {
-        searchInput.addEventListener('input', triggerSearch);
-    }
-}
+//     // Initialize checkbox selection
+//     function initializeCheckboxes(tableId, checkAllId) {
+//         const checkAll = document.getElementById(checkAllId);
+//         const tableBody = document.getElementById(tableId + 'Body');
 
-// Initialize gender filter
-function initializeFilters() {
-    const genderSelect = document.getElementById('idGender');
-    if (genderSelect) {
-        genderSelect.addEventListener('change', filterData);
-    }
-}
+//         if (!checkAll || !tableBody) return;
 
-// Filter data based on selected criteria
-function filterData() {
-    if (!studentList) return;
+//         checkAll.addEventListener('change', function () {
+//             const checkboxes = tableBody.querySelectorAll('.form-check-input');
+//             checkboxes.forEach(checkbox => {
+//                 checkbox.checked = this.checked;
+//             });
+//         });
+//     }
 
-    const genderValue = document.getElementById('idGender')?.value;
-    
-    studentList.filter(item => {
-        const genderMatch = genderValue === 'all' || item.values().gender === genderValue;
-        return genderMatch;
-    });
-}
+//     // Initialize delete functionality
+//     function initializeDelete(tableId, deleteSelector) {
+//         const tableBody = document.getElementById(tableId + 'Body');
+//         if (!tableBody) return;
 
-// Initialize "Check All" functionality
-function initializeCheckAll() {
-    const checkAll = document.getElementById('checkAll');
-    if (checkAll) {
-        checkAll.addEventListener('change', function() {
-            document.querySelectorAll('tbody input[name="chk_child"]')
-                .forEach(checkbox => checkbox.checked = this.checked);
-        });
-    }
-}
+//         tableBody.addEventListener('click', function (e) {
+//             const deleteBtn = e.target.closest(deleteSelector);
+//             if (!deleteBtn) return;
 
-// Initialize individual checkboxes
-function initializeCheckboxes() {
-    document.querySelectorAll('tbody input[name="chk_child"]').forEach(checkbox => {
-        checkbox.addEventListener('change', () => {
-            const checkAll = document.getElementById('checkAll');
-            if (checkAll) {
-                checkAll.checked = Array.from(document.querySelectorAll('tbody input[name="chk_child"]'))
-                    .every(cb => cb.checked);
-            }
-        });
-    });
-}
+//             const url = deleteBtn.dataset.url;
+//             if (confirm('Are you sure you want to delete this payment?')) {
+//                 fetch(url, {
+//                     method: 'POST',
+//                     headers: {
+//                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+//                         'Content-Type': 'application/json',
+//                         'Accept': 'application/json'
+//                     },
+//                     body: JSON.stringify({})
+//                 })
+//                 .then(response => response.json())
+//                 .then(data => {
+//                     if (data.success) {
+//                         deleteBtn.closest('tr').remove();
+//                         alert(data.message);
+//                         const countElement = document.getElementById('paymentCount');
+//                         if (countElement) {
+//                             countElement.textContent = parseInt(countElement.textContent) - 1;
+//                         }
+//                         const tableRows = tableBody.querySelectorAll('tr:not(#noDataRow)');
+//                         document.getElementById('noDataAlert').style.display = tableRows.length === 0 ? 'block' : 'none';
+//                         const noDataRow = document.getElementById('noDataRow');
+//                         if (noDataRow) noDataRow.style.display = tableRows.length === 0 ? '' : 'none';
+//                         // Update Generate Invoice button
+//                         const invoiceBtn = document.querySelector('.btn-primary[href*="invoice"]');
+//                         if (invoiceBtn && tableRows.length === 0) {
+//                             invoiceBtn.outerHTML = '<button class="btn btn-primary me-2" disabled><i class="ri-download-line me-1"></i> Generate Invoice</button>';
+//                         }
+//                     } else {
+//                         alert(data.message);
+//                     }
+//                 })
+//                 .catch(error => {
+//                     console.error('Error:', error);
+//                     alert('An error occurred while deleting the payment.');
+//                 });
+//             }
+//         });
+//     }
 
-// Document ready handler
-document.addEventListener('DOMContentLoaded', () => {
-    initializeListJs();
-    initializeSearch();
-    initializeFilters();
-    initializeCheckAll();
-    initializeCheckboxes();
-});
-
-// Expose necessary functions globally
-window.filterData = filterData;
-window.triggerSearch = triggerSearch;
+//     // Initialize for studentpayment
+//     initializeSearch('paymentsTable', 'searchInput', 'clearSearch', 'paymentCount', 'noDataAlert', ['title', 'description']);
+//     initializeCheckboxes('paymentsTable', 'checkAll');
+//     initializeDelete('paymentsTable', '.delete-payment');
+// });
