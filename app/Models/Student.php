@@ -51,4 +51,9 @@ class Student extends Model
     {
         return $this->belongsTo(Schoolsession::class, 'session_id');
     }
+
+     public function studentClass()
+    {
+        return $this->hasOne(Studentclass::class, 'studentId', 'id');
+    }
 }

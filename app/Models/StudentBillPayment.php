@@ -21,5 +21,14 @@ class StudentBillPayment extends Model
         'session_id',
         'generated_by',
         'delete_status',
+        'invoiceNo',
     ];
+
+    /**
+     * Define the relationship with StudentBillPaymentRecord.
+     */
+    public function paymentRecords()
+    {
+        return $this->hasMany(StudentBillPaymentRecord::class, 'student_bill_payment_id', 'id');
+    }
 }

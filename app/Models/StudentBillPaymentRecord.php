@@ -15,12 +15,24 @@ class StudentBillPaymentRecord extends Model
         'student_bill_payment_id',
         'total_bill',
         'amount_paid',
+        'last_payment',
         'amount_owed',
         'complete_payment',
         'class_id',
         'termid_id',
         'session_id',
         'generated_by',
-        'last_payment',
+        'payment_date',
+        'received_by',
     ];
+
+    /**
+     * Define the relationship with StudentBillPayment.
+     */
+    public function studentBillPayment()
+    {
+        return $this->belongsTo(StudentBillPayment::class, 'student_bill_payment_id', 'id');
+    }
+
+    
 }

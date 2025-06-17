@@ -11,14 +11,15 @@ class SchoolInformation extends Model
 
     protected $table = 'school_information';
     
-    protected $fillable = [
+     protected $fillable = [
         'school_name',
         'school_address',
         'school_phone',
         'school_email',
         'school_logo',
         'school_motto',
-        'is_active'
+        'school_website', // Added
+        'is_active',
     ];
 
     protected $casts = [
@@ -40,5 +41,7 @@ class SchoolInformation extends Model
     {
         return $this->school_logo ? asset('storage/' . $this->school_logo) : null;
     }
+
+
 }
 ?>
