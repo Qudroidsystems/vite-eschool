@@ -1,270 +1,150 @@
 @extends('layouts.master')
+
 @section('content')
-
-            <!--begin::Main-->
-            <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
-                <!--begin::Content wrapper-->
-                <div class="d-flex flex-column flex-column-fluid">
-
-                <!--begin::Toolbar-->
-                <div id="kt_app_toolbar" class="app-toolbar  py-3 py-lg-6 ">
-
-                            <!--begin::Toolbar container-->
-                        <div id="kt_app_toolbar_container" class="app-container  container-xxl d-flex flex-stack ">
-
-                            <!--begin::Page title-->
-                            <div  class="page-title d-flex flex-column justify-content-center flex-wrap me-3 ">
-                                <!--begin::Title-->
-                                <h1 class="page-heading d-flex text-dark fw-bold fs-3 flex-column justify-content-center my-0">
-                               Analysis Book for Term and Session
-                                        </h1>
-                                <!--end::Title-->
-
-
-                                    <!--begin::Breadcrumb-->
-                                    <ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
-                                                        <!--begin::Item-->
-                                                        <li class="breadcrumb-item text-muted">
-                                                            <a href="{{ route('analysis.index') }}" class="text-muted text-hover-primary">School BIlls for Term and Sessions</a>
-                                                                        </li>
-                                                            <!--end::Item-->
-                                                                <!--begin::Item-->
-                                                <li class="breadcrumb-item">
-                                                    <span class="bullet bg-gray-400 w-5px h-2px"></span>
-                                                </li>
-                                                <!--end::Item-->
-
-                                                        <!--begin::Item-->
-                                                                <li class="breadcrumb-item text-muted">Analysis for Term and Session</li>
-                                                            <!--end::Item-->
-
-                                                </ul>
-                                    <!--end::Breadcrumb-->
-                                </div>
-                            <!--end::Page title-->
-                                @if ($errors->any())
-                                <div class="alert alert-danger">
-                                    <strong>Whoops!</strong> There were some problems with your input.<br><br>
-                                    <ul>
-                                        @foreach ($errors->all() as $error)
-                                            <li>{{ $error }}</li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                                @endif
-
-                                @if (\Session::has('status'))
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                {{ \Session::get('status') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                                @endif
-                                @if (\Session::has('success'))
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                {{ \Session::get('success') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                </div>
-                                @endif
-
-                            </div>
-                            <!--end::Toolbar container-->
-                        </div>
-                    <!--end::Toolbar-->
-
-
-
-        <!--end::Card title-->
-                    <div id="kt_app_content" class="app-content  flex-column-fluid " >
-                        <!--begin::Content container-->
-                        <div id="kt_app_content_container" class="app-container  container-xxl ">
-
-                   <!--begin::Toolbar-->
-                        <div class="d-flex flex-wrap flex-stack my-5">
-                            <!--begin::Heading-->
-                            <h2 class="fs-2 fw-semibold my-2" style="color: rgb(29, 37, 195)">
-                              ANALYSIS BOOK FOR CLASS {{ $schoolclass[0]->schoolclass }} {{ $schoolclass[0]->schoolarm }}, {{ $schoolterm[0]->schoolterm }} {{ $schoolsession[0]->schoolsession }} ACADEMIC SESSION
-
-                            </h2>
-                            <!--end::Heading-->
-
-                        </div>
-                    <!--end::Toolbar-->
-
-
-
-        <!--begin::Card-->
-    <div class="card">
-
-
-            @if (count($errors) > 0)
-            <div class="row animated fadeInUp">
-                @if (count($errors) > 0)
-            <div class="alert alert-warning fade in">
-            <a href="#" class="close" data-dismiss="alert">&times;</a>
-                <strong>Opps!</strong> Something went wrong, please check below errors.<br><br>
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-            @endif
-            </div>
-            @endif
-            <!--begin::Card body-->
-            <div class="card-body py-4">
-
-
-
-
-                          <!--begin::Card toolbar-->
-                          <div class="card-toolbar">
-                            <!--begin::Search-->
-                            <div class="d-flex align-items-center position-relative my-1"  data-kt-view-roles-table-toolbar="base">
-                                <i class="ki-duotone ki-magnifier fs-1 position-absolute ms-6"><span class="path1"></span><span class="path2"></span></i>
-                                  <input type="text" data-kt-roles-table-filter="search" class="form-control form-control-solid w-250px ps-15" placeholder="Search ..." />
-                            </div>
-                            <!--end::Search-->
-
-                            <!--begin::Group actions-->
-                            <div class="d-flex justify-content-end align-items-center d-none" data-kt-view-roles-table-toolbar="selected">
-                                <div class="fw-bold me-5">
-                                    <span class="me-2" data-kt-view-roles-table-select="selected_count"></span> Selected
-                                </div>
-
-                                <button type="button" class="btn btn-danger" data-kt-view-roles-table-select="delete_selected">
-                                    Delete Selected
-                                </button>
-                            </div>
-                            <!--end::Group actions-->
-                        </div>
-                        <!--end::Card toolbar-->
-</div>
-<!--end::Card header-->
-
-        @if (count($errors) > 0)
-                  <div class="row animated fadeInUp">
-        @if (count($errors) > 0)
-                     <div class="alert alert-warning fade in">
-                    <a href="#" class="close" data-dismiss="alert">&times;</a>
-                    <strong>Opps!</strong> Something went wrong, please check below errors.<br><br>
+<!-- Main content container -->
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- Display validation errors -->
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <strong>Error!</strong> There were some problems with your input.<br>
                     <ul>
-        @foreach ($errors->all() as $error)
-            <li>{{ $error }}</li>
-        @endforeach
-            </ul>
-            </div>
-        @endif
-                     </div>
-        @endif
-<!--begin::Card body-->
-<div class="card-body py-4">
-
-<!--begin::Table-->
-    <table class="table align-middle table-row-dashed fs-6 gy-5 mb-0 table " id="kt_roles_view_table">
-              <thead>
-                    <tr class="text-start  fw-bold fs-7 text-uppercase gs-0" >
-                        <th class="w-10px pe-2">
-                            <div class="form-check form-check-sm form-check-custom form-check-solid me-3">
-                                <input class="form-check-input" type="checkbox" data-kt-check="true" data-kt-check-target="#kt_roles_view_table .form-check-input" value="1" />
-                            </div>
-                        </th>
-                        <th class="min-w-125px">Student Name</th>
-                        <th class="min-w-125px">Admission Number</th>
-                        @foreach ($student_bill_info as $bill)
-                        <th class="min-w-125px">{{ $bill->title }}</th>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
                         @endforeach
-                    </tr>
+                    </ul>
+                </div>
+            @endif
 
-               </thead>
-                <tbody class="fw-semibold text-gray-600">
-                        @php
-                        $i = 0
-                        @endphp
-                        @foreach ($student as $stu)
-                            <tr>
-                                <td>
-                                    <div class="form-check form-check-sm form-check-custom form-check-solid">
-                                        <input class="form-check-input" type="checkbox" value="1" />
-                                    </div>
-                                </td>
+            <!-- Display success/status messages -->
+            @if (session('status') || session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('status') ?: session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
 
-                                {{-- Display student name --}}
-                                <td class="d-flex align-items-center">
-                                                <!--begin:: Avatar -->
+            <!-- Analysis Book Section -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <h5 class="card-title mb-0">
+                                    Analysis Book for Class {{ $schoolclass[0]->schoolclass }} {{ $schoolclass[0]->schoolarm }}, {{ $schoolterm[0]->schoolterm }} {{ $schoolsession[0]->schoolsession }} Academic Session
+                                </h5>
+                            </div>
+                            <div class="flex-shrink-0">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="searchInput" placeholder="Search by student name or admission number..." style="min-width: 200px;" {{ $student->isEmpty() ? 'disabled' : '' }}>
+                                    <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                                        <i class="ri-close-line"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-3">
+                                <a href="{{ route('analysis.index') }}" class="btn btn-primary">
+                                    <i class="ri-arrow-left-line"></i> Back to Analysis
+                                </a>
+                                <div>
+                                    @if ($student->isNotEmpty())
+                                        <a href="{{ route('analysis.exportPDF', ['class_id' => $schoolclass[0]->id ?? 0, 'termid_id' => $schoolterm[0]->id ?? 0, 'session_id' => $schoolsession[0]->id ?? 0, 'action' => 'download']) }}" class="btn btn-primary me-2">
+                                            <i class="ri-download-line me-1"></i> Download PDF
+                                        </a>
+                                    @else
+                                        <button class="btn btn-primary me-2" disabled title="No data available">
+                                            <i class="ri-download-line me-1"></i> Download PDF
+                                        </button>
+                                    @endif
+                                </div>
+                            </div>
+
+                            <!-- No Data Alert -->
+                            <div class="alert alert-info text-center" id="noDataAlert" style="display: {{ $student->isEmpty() ? 'block' : 'none' }};">
+                                <i class="ri-information-line me-2"></i>
+                                No student records available for the selected class, term, and session.
+                            </div>
+
+                            <!-- Analysis Table -->
+                            <div class="table-responsive">
+                                <table class="table table-centered align-middle table-nowrap mb-0" id="analysisTable">
+                                    <thead class="table-active">
+                                        <tr>
+                                            <th style="width: 50px;">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="checkAll">
+                                                    <label class="form-check-label" for="checkAll"></label>
+                                                </div>
+                                            </th>
+                                            <th style="width: 50px;" class="sort cursor-pointer" data-sort="sn">SN</th>
+                                            <th class="sort cursor-pointer" data-sort="student-name">Student Name</th>
+                                            <th class="sort cursor-pointer" data-sort="admission-no">Admission Number</th>
+                                            @foreach ($student_bill_info as $bill)
+                                                <th class="sort cursor-pointer" data-sort="bill-{{ $bill->schoolbillid }}">{{ $bill->title }}</th>
+                                            @endforeach
+                                        </tr>
+                                    </thead>
+                                    <tbody id="analysisTableBody" class="list form-check-all">
+                                        @php $i = 0; @endphp
+                                        @forelse ($student as $stu)
+                                            <tr>
+                                                <td>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input student-checkbox" type="checkbox" name="chk_child" data-id="{{ $stu->stid }}">
+                                                        <label class="form-check-label"></label>
+                                                    </div>
+                                                </td>
+                                                <td class="sn">{{ ++$i }}</td>
+                                                <td class="student-name" data-student-name="{{ $stu->firstname }} {{ $stu->lastname }}">
+                                                    <div class="d-flex align-items-center">
+                                                        <!-- Student Avatar -->
                                                         <div class="symbol symbol-circle symbol-50px overflow-hidden me-3">
-                                                            <a href="#">
-                                                                            <div class="symbol-label">
-                                                            <?php $image = "";?>
                                                             <?php
-                                                            if ($stu->picture  == NULL || !isset($stu->picture ) || $stu->picture =="" ){
-                                                                    $image =  'unnamed.png';
-                                                            }else {
-                                                                $image =   $stu->picture;
-                                                            }
+                                                                $image = $stu->picture ?? 'unnamed.png';
                                                             ?>
-                                                                        <img src="{{ Storage::url('images/studentavatar/'.$image)}}" alt="{{ $stu->staffname }}" class="w-100" />
-                                                                    </div>
-                                                                                        </a>
+                                                            <img src="{{ Storage::url('images/studentavatar/' . $image) }}" alt="{{ $stu->firstname }} {{ $stu->lastname }}" class="w-100" />
                                                         </div>
-                                                        <!--end::Avatar-->
-                                                        <!--begin::User details-->
+                                                        <!-- Student Name -->
                                                         <div class="d-flex flex-column">
-                                                            <a href="#" class="text-gray-800 text-hover-primary mb-1">{{ $stu->firstname }} {{ $stu->lastname }} </a>
-
+                                                            <a href="#" class="text-gray-800 text-hover-primary mb-1">{{ $stu->firstname }} {{ $stu->lastname }}</a>
                                                         </div>
-                                                        <!--begin::User details-->
-                                        </td>
-
-                                        <td>{{ $stu->admissionno }}</td>
-
-                                            {{-- Display each bill and payment details for the student --}}
-                                             @foreach ($student_bill_info as $bill)
-                                                        @php
-                                                            // Initialize variables to handle payments
-                                                            $paymentFound = false;
-                                                            $amountPaid = 0;
-                                                            $balance = 0;
-                                                        @endphp
-
-                                                    {{-- Check if the student made a payment for this specific bill --}}
+                                                    </div>
+                                                </td>
+                                                <td class="admission-no" data-admission-no="{{ $stu->admissionno }}">{{ $stu->admissionno }}</td>
+                                                @foreach ($student_bill_info as $bill)
+                                                    @php
+                                                        $paymentFound = false;
+                                                        $amountPaid = 0;
+                                                        $balance = $bill->amount ?? 0;
+                                                    @endphp
                                                     @foreach ($studentpaymentbillbook as $paymentBook)
                                                         @if (
-                                                            (int)$paymentBook->school_bill_id === (int)$bill->schoolbillid
-                                                            &&
+                                                            (int)$paymentBook->school_bill_id === (int)$bill->schoolbillid &&
                                                             (int)$paymentBook->student_id === (int)$stu->stid
-                                                            // &&
-                                                            // (int)$paymentBook->class_id === (int)$bill->class_id
-                                                            // &&
-                                                            // (int)$paymentBook->term_id === (int)$bill->termid_id
-                                                            //  &&
-                                                            // (int)$paymentBook->sessionl_id ===(int)$bill->session_id
-                                                            )
-                                                                    @php
-
-
-                                                                        $paymentFound = true;
-                                                                        $amountPaid = (int)$paymentBook->amount_paid;
-                                                                        $balance = $paymentBook->amount_owed;
-                                                                    @endphp
-                                                                @break
+                                                        )
+                                                            @php
+                                                                $paymentFound = true;
+                                                                $amountPaid = (int)$paymentBook->amount_paid;
+                                                                $balance = $paymentBook->amount_owed;
+                                                            @endphp
+                                                            @break
                                                         @endif
                                                     @endforeach
-
-                                                        {{-- Display amount paid or "Not Paid" --}}
+                                                    <td>
                                                         @if ($paymentFound)
-
-                                                            <td style="color: green">
+                                                            <span style="color: green">
                                                                 ₦ {{ number_format($amountPaid) }}
                                                                 <br>
                                                                 <small style="color: rgb(77, 22, 165)">Outstanding: ₦ {{ number_format($balance) }}</small>
-                                                            </td>
+                                                            </span>
                                                         @else
-                                                            <td style="color: rgb(235, 61, 27)">Not Paid</td>
+                                                            <span style="color: rgb(235, 61, 27)">Not Paid</span>
                                                         @endif
-
-                                                        @php
-                                                        // Accumulate totals for each bill column
+                                                    </td>
+                                                    @php
                                                         if (!isset($totalBill[$bill->schoolbillid])) {
                                                             $totalBill[$bill->schoolbillid] = 0;
                                                             $totalBillBalance[$bill->schoolbillid] = 0;
@@ -272,37 +152,114 @@
                                                         $totalBill[$bill->schoolbillid] += $amountPaid;
                                                         $totalBillBalance[$bill->schoolbillid] += $balance;
                                                     @endphp
-                                        @endforeach
-                            </tr>
-                        @endforeach
-                    </tbody>
-                    <tfoot>
-                        <tr class="text-start  fw-bold fs-20 text-uppercase gs-0" >
-                            <th class="min-w-125px"></th>
-                            <th class="min-w-125px"></th>
-
-                            <th class="min-w-125px"></th>
-                            @foreach ($student_bill_info as $bill)
-                                <th>₦ {{ number_format($totalBill[$bill->schoolbillid] ?? 0) }}
-                                    <br>
-                                    <small style="color: rgb(77, 22, 165)">Outstanding: ₦ {{ number_format($totalBillBalance[$bill->schoolbillid] ?? 0) }} </small>
-                                </th>
-                            @endforeach
-                        </tr>
-                    </tfoot>
-
-            </table>
-            <!--end::Table-->
-
+                                                @endforeach
+                                            </tr>
+                                        @empty
+                                            <tr id="noDataRow">
+                                                <td colspan="{{ 4 + $student_bill_info->count() }}" class="text-center">No student records available.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="fw-bold">
+                                            <td colspan="4">Totals</td>
+                                            @foreach ($student_bill_info as $bill)
+                                                <td>
+                                                    ₦ {{ number_format($totalBill[$bill->schoolbillid] ?? 0) }}
+                                                    <br>
+                                                    <small style="color: rgb(77, 22, 165)">Outstanding: ₦ {{ number_format($totalBillBalance[$bill->schoolbillid] ?? 0) }}</small>
+                                                </td>
+                                            @endforeach
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <!--end::Card body-->
-      </div>
-            <!--end::Card-->
+
+            <!-- Custom CSS -->
+            <style>
+                .card:hover {
+                    transform: translateY(-4px);
+                    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+                }
+                .table-active th {
+                    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+                    color: white;
+                }
+                .sort:hover {
+                    background-color: #e5e7eb;
+                    cursor: pointer;
+                }
+                .table-responsive {
+                    border-radius: 8px;
+                    overflow: hidden;
+                }
+                @media (max-width: 767px) {
+                    .card-body {
+                        padding: 1rem !important;
+                    }
+                }
+            </style>
+
+            <!-- JavaScript -->
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    console.log('DOM fully loaded, initializing scripts');
+
+                    // Search Functionality
+                    const searchInput = document.getElementById('searchInput');
+                    const clearSearch = document.getElementById('clearSearch');
+                    const tableBody = document.getElementById('analysisTableBody');
+                    const noDataAlert = document.getElementById('noDataAlert');
+
+                    if (searchInput && tableBody && noDataAlert) {
+                        searchInput.addEventListener('input', function() {
+                            const query = this.value.trim().toLowerCase();
+                            const rows = tableBody.querySelectorAll('tr:not(#noDataRow)');
+                            let hasVisibleRows = false;
+
+                            rows.forEach(row => {
+                                const studentName = (row.querySelector('.student-name')?.getAttribute('data-student-name') || '').toLowerCase();
+                                const admissionNo = (row.querySelector('.admission-no')?.getAttribute('data-admission-no') || '').toLowerCase();
+                                const isMatch = studentName.includes(query) || admissionNo.includes(query);
+                                row.style.display = isMatch ? '' : 'none';
+                                if (isMatch) hasVisibleRows = true;
+                            });
+
+                            noDataAlert.style.display = hasVisibleRows ? 'none' : 'block';
+                        });
+
+                        clearSearch.addEventListener('click', function() {
+                            searchInput.value = '';
+                            const rows = tableBody.querySelectorAll('tr:not(#noDataRow)');
+                            rows.forEach(row => row.style.display = '');
+                            noDataAlert.style.display = rows.length > 0 ? 'none' : 'block';
+                        });
+                    }
+
+                    // Checkbox Select All
+                    const checkAll = document.getElementById('checkAll');
+                    const checkboxes = document.querySelectorAll('.student-checkbox');
+
+                    if (checkAll) {
+                        checkAll.addEventListener('change', function() {
+                            checkboxes.forEach(checkbox => {
+                                checkbox.checked = this.checked;
+                            });
+                        });
+
+                        checkboxes.forEach(checkbox => {
+                            checkbox.addEventListener('change', function() {
+                                checkAll.checked = Array.from(checkboxes).every(c => c.checked);
+                            });
+                        });
+                    }
+                });
+            </script>
+        </div>
     </div>
-
-            <!--end::Content container-->
 </div>
-        <!--end::Content-->
-
-
 @endsection

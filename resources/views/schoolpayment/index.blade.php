@@ -1,12 +1,15 @@
 @extends('layouts.master')
 
 @section('content')
-
-
 <!-- Main content container -->
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
+            <!-- Debug Info -->
+            <div class="alert alert-info" style="display: none;">
+                Debug: {{ $student->count() }} students loaded.
+            </div>
+
             <!-- Display validation errors -->
             @if ($errors->any())
                 <div class="alert alert-danger">
@@ -28,7 +31,7 @@
             @endif
 
             <!-- Student Information Cards -->
-            @if ($student->isNotEmpty())
+            {{-- @if ($student->isNotEmpty())
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="card">
@@ -41,25 +44,25 @@
                                                 <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
                                                     <div class="d-flex align-items-center">
                                                         <i class="bi bi-building fs-3 text-success me-2"></i>
-                                                        <div class="fs-2 fw-bold text-success">{{ $student->first()->schoolclassid }}</div>
+                                                        <div class="fs-2 fw-bold text-success">{{ $student->first()->schoolclass ?? 'N/A' }}</div>
                                                     </div>
-                                                    <div class="fw-semibold fs-6 text-gray-400">Class ID</div>
+                                                    <div class="fw-semibold fs-6 text-gray-400">Class</div>
                                                 </div>
                                                 <!-- Term Card -->
                                                 <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
                                                     <div class="d-flex align-items-center">
                                                         <i class="bi bi-calendar fs-3 text-success me-2"></i>
-                                                        <div class="fs-2 fw-bold text-success">{{ $student->first()->termid }}</div>
+                                                        <div class="fs-2 fw-bold text-success">{{ $student->first()->term ?? 'N/A' }}</div>
                                                     </div>
-                                                    <div class="fw-semibold fs-6 text-gray-400">Term ID</div>
+                                                    <div class="fw-semibold fs-6 text-gray-400">Term</div>
                                                 </div>
                                                 <!-- Session Card -->
                                                 <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
                                                     <div class="d-flex align-items-center">
                                                         <i class="bi bi-calendar fs-3 text-success me-2"></i>
-                                                        <div class="fs-2 fw-bold text-success">{{ $student->first()->sessionid }}</div>
+                                                        <div class="fs-2 fw-bold text-success">{{ $student->first()->session ?? 'N/A' }}</div>
                                                     </div>
-                                                    <div class="fw-semibold fs-6 text-gray-400">Session ID</div>
+                                                    <div class="fw-semibold fs-6 text-gray-400">Session</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -69,7 +72,7 @@
                         </div>
                     </div>
                 </div>
-            @endif
+            @endif --}}
 
             <!-- Payments Table -->
             <div class="row">
@@ -180,6 +183,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const noDataAlert = document.getElementById('noDataAlert');
     const studentCount = document.getElementById('studentCount');
     const checkAll = document.getElementById('checkAll');
+
+    // Log initial students for debugging
+    console.log('Initial students:', window.students);
 
     // Debounce function to limit search execution
     function debounce(func, wait) {

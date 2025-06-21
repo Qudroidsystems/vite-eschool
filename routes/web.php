@@ -201,11 +201,39 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('schoolbilltermsessionbid', [SchoolBillTermSessionController::class, 'updateschoolbilltermsession'])->name('schoolbilltermsession.updateschoolbilltermsession');
     Route::get('/schoolbilltermsession/{id}/related', 'App\Http\Controllers\SchoolBillTermSessionController@getRelated')->name('schoolbilltermsession.related');
 
-    Route::resource('schoolpayment', SchoolPaymentController::class);
-    Route::get('/termsession/{studentid}', [SchoolPaymentController::class, 'termSession'])->name('schoolpayment.termsession');
-    Route::get('termsessionpayments', [SchoolPaymentController::class, 'termSessionPayments'])->name('schoolpayment.termsessionpayments');
-    Route::get('/studentinvoice/{studentid}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('schoolpayment.invoice');
-    Route::post('/deletestudentpayment/{paymentid}', [SchoolPaymentController::class, 'deletestudentpayment'])->name('schoolpayment.deletestudentpayment');
+
+    Route::get('/schoolpayment', [SchoolPaymentController::class, 'index'])->name('schoolpayment.index');
+    Route::get('/schoolpayment/term-session/{id}', [SchoolPaymentController::class, 'termSession'])->name('schoolpayment.termsession');
+    Route::get('termsessionpayments', [SchoolPaymentController::class, 'termsessionpayments'])->name('schoolpayment.termsessionpayments');
+    Route::get('/schoolpayment/term-session-payments', [SchoolPaymentController::class, 'termSessionPayments'])->name('schoolpayment.termsessionpayments');
+    Route::post('/schoolpayment/store', [SchoolPaymentController::class, 'store'])->name('schoolpayment.store');
+    Route::post('/schoolpayment/delete/{recordId}', [SchoolPaymentController::class, 'deletestudentpayment'])->name('schoolpayment.deletestudentpayment');
+    Route::get('/schoolpayment/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('schoolpayment.invoice');
+    Route::get('/schoolpayment/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('schoolpayment.statement');
+
+      //analysis...
+    Route::resource('analysis', AnalysisController::class);
+    Route::post('analysisClassTermSession', [AnalysisController::class, 'analysisClassTermSession'])->name('analysis.analysisClassTermSession');
+    Route::get('analysis/export-pdf/{class_id}/{termid_id}/{session_id}', 'App\Http\Controllers\AnalysisController@exportPDF')->name('analysis.exportPDF');
+    Route::get('/analysis/pdf/{class_id}/{termid_id}/{session_id}/{action?}', [AnalysisController::class, 'exportPDF'])
+    ->name('analysis.viewPDF')
+    ->where('action', 'view|download');
+    
+    // School-wide payment analysis routes
+    // Route::get('/school-wide-payment-analysis/{termid_id}/{session_id}/{action?}', 'App\Http\Controllers\AnalysisController@schoolWidePaymentAnalysis')
+    // ->name('school.wide.payment.analysis')
+    // ->where('action', 'view|download');
+
+    // School-wide payment analysis routes
+    Route::get('/school-wide-payment-analysis/{termid_id}/{session_id}/{action?}/{format?}', 
+    'App\Http\Controllers\AnalysisController@schoolWidePaymentAnalysis')
+    ->name('school.wide.payment.analysis')
+    ->where([
+        'action' => 'view|download',
+        'format' => 'pdf|word'
+    ]);
+    
+
 
     // Route::get('viewstudent', [ViewStudentController::class]);
     Route::get('/viewstudent/{id}/{termid}/{sessionid}', [ViewStudentController::class, 'show'])->name('viewstudent');

@@ -401,9 +401,9 @@
                                     <li class="nav-item">
                                         <a href="{{ route('schoolpayment.index') }}" class="nav-link" data-key="t-products">Student Bill</a>
                                     </li>
-                                    <li class="nav-item">
+                                    {{-- <li class="nav-item">
                                         <a href="apps-ecommerce-products-grid.html" class="nav-link" data-key="t-products-grid">Student Invoice</a>
-                                    </li>
+                                    </li> --}}
                                 </ul>
                             </div>
                         </li>
@@ -414,11 +414,11 @@
                             <div class="collapse menu-dropdown" id="sidebarAnalysis">
                                 <ul class="nav nav-sm flex-column">
                                     <li class="nav-item">
-                                        <a href="apps-ecommerce-products.html" class="nav-link" data-key="t-products">School Wide Analysis</a>
+                                        <a href="{{ route('analysis.index') }}" class="nav-link" data-key="t-products">School payment  Analysis</a>
                                     </li>
-                                    <li class="nav-item">
-                                        <a href="apps-ecommerce-products-grid.html" class="nav-link" data-key="t-products-grid">Specific Analysis</a>
-                                    </li>
+                                    {{-- <li class="nav-item">
+                                        <a href="{{ route('analysis.index') }}" class="nav-link" data-key="t-products-grid">Specific Analysis</a>
+                                    </li> --}}
                                 </ul>
                             </div>
                         </li>

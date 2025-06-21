@@ -1,6 +1,13 @@
-@extends('layouts.master')
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
 
-@section('content')
 <style>
     :root {
         --tb-primary: #009ef7;
@@ -228,26 +235,6 @@
     }
 </style>
 
-<div class="main-content">
-    <div class="page-content">
-        <div class="container-fluid">
-            @if ($errors->any())
-                <div class="alert alert-danger">
-                    <strong>Error!</strong> There were some problems with your input.<br>
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            @if (session('status') || session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('status') ?: session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
 
             <div class="row justify-content-center">
                 <div class="col-xxl-9 col-lg-10 col-md-12">
@@ -467,7 +454,7 @@
                     }
                 });
             </script>
-        </div>
-    </div>
-</div>
-@endsection
+       
+    
+</body>
+</html>

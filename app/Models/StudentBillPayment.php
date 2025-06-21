@@ -14,20 +14,31 @@ class StudentBillPayment extends Model
     protected $fillable = [
         'student_id',
         'school_bill_id',
-        'status',
-        'payment_method',
         'class_id',
         'termid_id',
         'session_id',
+        'payment_method',
+        'status',
         'generated_by',
         'delete_status',
-        'invoiceNo',
+        'created_at',
+        'updated_at',
     ];
 
     /**
      * Define the relationship with StudentBillPaymentRecord.
      */
-    public function paymentRecords()
+    public function schoolBill()
+    {
+        return $this->belongsTo(SchoolBillModel::class, 'school_bill_id', 'id');
+    }
+
+    public function generatedBy()
+    {
+        return $this->belongsTo(User::class, 'generated_by', 'id');
+    }
+
+    public function studentBillPaymentRecords()
     {
         return $this->hasMany(StudentBillPaymentRecord::class, 'student_bill_payment_id', 'id');
     }

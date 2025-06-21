@@ -13,17 +13,17 @@ class StudentBillPaymentRecord extends Model
 
     protected $fillable = [
         'student_bill_payment_id',
-        'total_bill',
-        'amount_paid',
-        'last_payment',
-        'amount_owed',
-        'complete_payment',
         'class_id',
         'termid_id',
         'session_id',
+        'amount_paid',
+        'last_payment',
+        'amount_owed',
+        'total_bill',
+        'complete_payment',
         'generated_by',
-        'payment_date',
-        'received_by',
+        'created_at',
+        'updated_at',
     ];
 
     /**
@@ -33,6 +33,4 @@ class StudentBillPaymentRecord extends Model
     {
         return $this->belongsTo(StudentBillPayment::class, 'student_bill_payment_id', 'id');
     }
-
-    
 }
