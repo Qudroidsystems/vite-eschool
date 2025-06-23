@@ -1,4 +1,4 @@
-console.log("classcategory.init.js is loaded and executing!");
+console.log("classcategory.init.js is loaded and executing at", new Date().toISOString());
 
 // Verify dependencies
 try {
@@ -34,82 +34,115 @@ function debounce(func, wait) {
 let addIdField, addCategoryField, addCa1ScoreField, addCa2ScoreField, addCa3ScoreField, addExamScoreField, addTotalScoreField, addSubmitButton;
 let editIdField, editCategoryField, editCa1ScoreField, editCa2ScoreField, editCa3ScoreField, editExamScoreField, editTotalScoreField, editSubmitButton;
 
-// Initialize form fields after DOM is loaded
-function initializeFormFields() {
-    addIdField = document.getElementById("add-id-field");
-    addCategoryField = document.getElementById("category");
-    addCa1ScoreField = document.getElementById("ca1score");
-    addCa2ScoreField = document.getElementById("ca2score");
-    addCa3ScoreField = document.getElementById("ca3score");
-    addExamScoreField = document.getElementById("examscore");
-    addTotalScoreField = document.getElementById("total_score");
-    addSubmitButton = document.getElementById("add-btn");
-    editIdField = document.getElementById("edit-id-field");
-    editCategoryField = document.getElementById("edit-category");
-    editCa1ScoreField = document.getElementById("edit-ca1score");
-    editCa2ScoreField = document.getElementById("edit-ca2score");
-    editCa3ScoreField = document.getElementById("edit-ca3score");
-    editExamScoreField = document.getElementById("edit-examscore");
-    editTotalScoreField = document.getElementById("edit-total_score");
-    editSubmitButton = document.getElementById("update-btn");
+// Initialize form fields with retry mechanism
+function initializeFormFields(attempt = 1, maxAttempts = 3) {
+    try {
+        addIdField = document.getElementById("add-id-field");
+        addCategoryField = document.getElementById("category");
+        addCa1ScoreField = document.getElementById("ca1score");
+        addCa2ScoreField = document.getElementById("ca2score");
+        addCa3ScoreField = document.getElementById("ca3score");
+        addExamScoreField = document.getElementById("examscore");
+        addTotalScoreField = document.getElementById("total_score");
+        addSubmitButton = document.getElementById("add-btn");
+        editIdField = document.getElementById("edit-id-field");
+        editCategoryField = document.getElementById("edit-category");
+        editCa1ScoreField = document.getElementById("edit-ca1score");
+        editCa2ScoreField = document.getElementById("edit-ca2score");
+        editCa3ScoreField = document.getElementById("edit-ca3score");
+        editExamScoreField = document.getElementById("edit-examscore");
+        editTotalScoreField = document.getElementById("edit-total_score");
+        editSubmitButton = document.getElementById("update-btn");
 
-    console.log("Form fields initialized:", {
-        addIdField: !!addIdField,
-        addCategoryField: !!addCategoryField,
-        addCa1ScoreField: !!addCa1ScoreField,
-        addCa2ScoreField: !!addCa2ScoreField,
-        addCa3ScoreField: !!addCa3ScoreField,
-        addExamScoreField: !!addExamScoreField,
-        addTotalScoreField: !!addTotalScoreField,
-        addSubmitButton: !!addSubmitButton,
-        editIdField: !!editIdField,
-        editCategoryField: !!editCategoryField,
-        editCa1ScoreField: !!editCa1ScoreField,
-        editCa2ScoreField: !!editCa2ScoreField,
-        editCa3ScoreField: !!editCa3ScoreField,
-        editExamScoreField: !!editExamScoreField,
-        editTotalScoreField: !!editTotalScoreField,
-        editSubmitButton: !!editSubmitButton
-    });
+        const fieldsFound = {
+            addIdField: !!addIdField,
+            addCategoryField: !!addCategoryField,
+            addCa1ScoreField: !!addCa1ScoreField,
+            addCa2ScoreField: !!addCa2ScoreField,
+            addCa3ScoreField: !!addCa3ScoreField,
+            addExamScoreField: !!addExamScoreField,
+            addTotalScoreField: !!addTotalScoreField,
+            addSubmitButton: !!addSubmitButton,
+            editIdField: !!editIdField,
+            editCategoryField: !!editCategoryField,
+            editCa1ScoreField: !!editCa1ScoreField,
+            editCa2ScoreField: !!editCa2ScoreField,
+            editCa3ScoreField: !!editCa3ScoreField,
+            editExamScoreField: !!editExamScoreField,
+            editTotalScoreField: !!editTotalScoreField,
+            editSubmitButton: !!editSubmitButton
+        };
+        console.log(`Form fields initialized (attempt ${attempt}):`, fieldsFound);
+
+        // Force enable buttons
+        if (addSubmitButton) {
+            addSubmitButton.disabled = false;
+            console.log("Add button forced enabled");
+        }
+        if (editSubmitButton) {
+            editSubmitButton.disabled = false;
+            console.log("Edit button forced enabled");
+        }
+
+        if (Object.values(fieldsFound).some(found => !found) && attempt < maxAttempts) {
+            console.warn(`Some fields not found, retrying in 500ms (attempt ${attempt + 1})`);
+            setTimeout(() => initializeFormFields(attempt + 1, maxAttempts), 500);
+            return;
+        }
+
+        if (Object.values(fieldsFound).some(found => !found)) {
+            console.error("Failed to initialize all form fields after max attempts");
+        } else {
+            initializeEventListeners();
+        }
+    } catch (error) {
+        console.error("Error initializing form fields:", error);
+    }
 }
 
 // Calculate total score for Add Modal
 function calculateAddTotalScore() {
-    if (!addCa1ScoreField || !addCa2ScoreField || !addCa3ScoreField || !addExamScoreField) {
-        console.error("Add modal score fields not found");
-        return;
-    }
-    const ca1 = parseFloat(addCa1ScoreField.value) || 0;
-    const ca2 = parseFloat(addCa2ScoreField.value) || 0;
-    const ca3 = parseFloat(addCa3ScoreField.value) || 0;
-    const exam = parseFloat(addExamScoreField.value) || 0;
-    const total = ca1 + ca2 + ca3 + exam;
-    console.log("Add Scores:", { ca1, ca2, ca3, exam, total });
-    if (addTotalScoreField) addTotalScoreField.value = total.toFixed(2);
-    if (addSubmitButton) {
-        const isValidTotal = Math.abs(total - 400) < Number.EPSILON;
-        console.log("Add Submit Button Enabled:", isValidTotal);
-        addSubmitButton.disabled = !isValidTotal;
+    try {
+        if (!addCa1ScoreField || !addCa2ScoreField || !addCa3ScoreField || !addExamScoreField) {
+            console.error("Add modal score fields not found");
+            return;
+        }
+        const ca1 = parseFloat(addCa1ScoreField.value) || 0;
+        const ca2 = parseFloat(addCa2ScoreField.value) || 0;
+        const ca3 = parseFloat(addCa3ScoreField.value) || 0;
+        const exam = parseFloat(addExamScoreField.value) || 0;
+        const total = ca1 + ca2 + ca3 + exam;
+        console.log("Add Scores:", { ca1, ca2, ca3, exam, total: total.toFixed(2) });
+        if (addTotalScoreField) addTotalScoreField.value = total.toFixed(2);
+        if (addSubmitButton) {
+            addSubmitButton.disabled = false;
+            console.log("Add button re-enabled in calculateAddTotalScore");
+        }
+    } catch (error) {
+        console.error("Error in calculateAddTotalScore:", error);
     }
 }
 
 // Calculate total score for Edit Modal
 function calculateEditTotalScore() {
-    if (!editCa1ScoreField || !editCa2ScoreField || !editCa3ScoreField || !editExamScoreField) {
-        console.error("Edit modal score fields not found");
-        return;
-    }
-    const ca1 = parseFloat(editCa1ScoreField.value) || 0;
-    const ca2 = parseFloat(editCa2ScoreField.value) || 0;
-    const ca3 = parseFloat(editCa3ScoreField.value) || 0;
-    const exam = parseFloat(editExamScoreField.value) || 0;
-    const total = ca1 + ca2 + ca3 + exam;
-    console.log("Edit Scores:", { ca1, ca2, ca3, exam, total });
-    if (editTotalScoreField) editTotalScoreField.value = total.toFixed(2);
-    if (editSubmitButton) {
-        const isValidTotal = Math.abs(total - 400) < Number.EPSILON;
-        console.log("Edit Submit Button Enabled:", isValidTotal);
-        editSubmitButton.disabled = !isValidTotal;
+    try {
+        if (!editCa1ScoreField || !editCa2ScoreField || !editCa3ScoreField || !editExamScoreField) {
+            console.error("Edit modal score fields not found");
+            return;
+        }
+        const ca1 = parseFloat(editCa1ScoreField.value) || 0;
+        const ca2 = parseFloat(editCa2ScoreField.value) || 0;
+        const ca3 = parseFloat(editCa3ScoreField.value) || 0;
+        const exam = parseFloat(editExamScoreField.value) || 0;
+        const total = ca1 + ca2 + ca3 + exam;
+        console.log("Edit Scores:", { ca1, ca2, ca3, exam, total: total.toFixed(2) });
+        if (editTotalScoreField) editTotalScoreField.value = total.toFixed(2);
+        if (editSubmitButton) {
+            editSubmitButton.disabled = false;
+            console.log("Edit button re-enabled in calculateEditTotalScore");
+        }
+    } catch (error) {
+        console.error("Error in calculateEditTotalScore:", error);
     }
 }
 
@@ -217,9 +250,10 @@ function handleEditClick(e) {
     if (editCa2ScoreField) editCa2ScoreField.value = tr.querySelector(".ca2score").innerText;
     if (editCa3ScoreField) editCa3ScoreField.value = tr.querySelector(".ca3score").innerText;
     if (editExamScoreField) editExamScoreField.value = tr.querySelector(".examscore").innerText;
-    calculateEditTotalScore(); // Calculate total when modal is populated
+    calculateEditTotalScore();
     try {
         const modal = new bootstrap.Modal(document.getElementById("editModal"));
+        console.log("Edit modal opened for item:", itemId);
         modal.show();
     } catch (error) {
         console.error("Error opening edit modal:", error);
@@ -235,7 +269,6 @@ function clearAddFields() {
     if (addCa3ScoreField) addCa3ScoreField.value = "";
     if (addExamScoreField) addExamScoreField.value = "";
     if (addTotalScoreField) addTotalScoreField.value = "";
-    if (addSubmitButton) addSubmitButton.disabled = true;
 }
 
 function clearEditFields() {
@@ -246,7 +279,6 @@ function clearEditFields() {
     if (editCa3ScoreField) editCa3ScoreField.value = "";
     if (editExamScoreField) editExamScoreField.value = "";
     if (editTotalScoreField) editTotalScoreField.value = "";
-    if (editSubmitButton) editSubmitButton.disabled = true;
 }
 
 // Delete multiple categories
@@ -484,12 +516,18 @@ function initializeModals() {
     const addModal = document.getElementById("addCategoryModal");
     if (addModal) {
         addModal.addEventListener("show.bs.modal", function (e) {
+            console.log("Add modal opening");
             if (e.relatedTarget.classList.contains("add-btn")) {
                 const modalLabel = document.getElementById("exampleModalLabel");
                 const addBtn = document.getElementById("add-btn");
                 if (modalLabel) modalLabel.innerHTML = "Add Class Category";
-                if (addBtn) addBtn.innerHTML = "Add Category";
+                if (addBtn) {
+                    addBtn.innerHTML = "Add Category";
+                    addBtn.disabled = false;
+                    console.log("Add button forced enabled on modal open");
+                }
             }
+            calculateAddTotalScore();
         });
         addModal.addEventListener("hidden.bs.modal", function () {
             clearAddFields();
@@ -500,10 +538,16 @@ function initializeModals() {
     const editModal = document.getElementById("editModal");
     if (editModal) {
         editModal.addEventListener("show.bs.modal", function () {
+            console.log("Edit modal opening");
             const modalLabel = document.getElementById("editModalLabel");
             const updateBtn = document.getElementById("update-btn");
             if (modalLabel) modalLabel.innerHTML = "Edit Class Category";
-            if (updateBtn) updateBtn.innerHTML = "Update";
+            if (updateBtn) {
+                updateBtn.innerHTML = "Update";
+                updateBtn.disabled = false;
+                console.log("Edit button forced enabled on modal open");
+            }
+            calculateEditTotalScore();
         });
         editModal.addEventListener("hidden.bs.modal", function () {
             clearEditFields();
@@ -514,46 +558,54 @@ function initializeModals() {
 
 // Initialize event listeners
 function initializeEventListeners() {
-    // Add event listeners for Add Modal score inputs
-    [addCa1ScoreField, addCa2ScoreField, addCa3ScoreField, addExamScoreField].forEach(field => {
-        if (field) {
-            field.addEventListener('input', () => {
-                console.log(`Input changed for ${field.id}: ${field.value}`);
-                calculateAddTotalScore();
-            });
-        }
-    });
+    try {
+        // Add event listeners for Add Modal score inputs
+        [addCa1ScoreField, addCa2ScoreField, addCa3ScoreField, addExamScoreField].forEach(field => {
+            if (field) {
+                field.addEventListener('input', () => {
+                    console.log(`Input changed for ${field.id}: ${field.value}`);
+                    calculateAddTotalScore();
+                });
+            } else {
+                console.warn(`Field not found for add modal: ${field}`);
+            }
+        });
 
-    // Add event listeners for Edit Modal score inputs
-    [editCa1ScoreField, editCa2ScoreField, editCa3ScoreField, editExamScoreField].forEach(field => {
-        if (field) {
-            field.addEventListener('input', () => {
-                console.log(`Input changed for ${field.id}: ${field.value}`);
-                calculateEditTotalScore();
-            });
-        }
-    });
+        // Add event listeners for Edit Modal score inputs
+        [editCa1ScoreField, editCa2ScoreField, editCa3ScoreField, editExamScoreField].forEach(field => {
+            if (field) {
+                field.addEventListener('input', () => {
+                    console.log(`Input changed for ${field.id}: ${field.value}`);
+                    calculateEditTotalScore();
+                });
+            } else {
+                console.warn(`Field not found for edit modal: ${field}`);
+            }
+        });
 
-    // Event delegation for edit and remove buttons
-    document.addEventListener('click', function (e) {
-        if (e.target.closest('.edit-item-btn')) {
-            handleEditClick(e);
-        } else if (e.target.closest('.remove-item-btn')) {
-            handleRemoveClick(e);
-        }
-    });
+        // Event delegation for edit and remove buttons
+        document.addEventListener('click', function (e) {
+            if (e.target.closest('.edit-item-btn')) {
+                handleEditClick(e);
+            } else if (e.target.closest('.remove-item-btn')) {
+                handleRemoveClick(e);
+            }
+        });
 
-    const searchInput = document.querySelector(".search-box input.search");
-    if (searchInput) {
-        searchInput.addEventListener("input", debounce(function () {
-            console.log("Search input changed:", searchInput.value);
-            filterData();
-        }, 300));
-    } else {
-        console.error("Search input not found!");
+        const searchInput = document.querySelector(".search-box input.search");
+        if (searchInput) {
+            searchInput.addEventListener("input", debounce(function () {
+                console.log("Search input changed:", searchInput.value);
+                filterData();
+            }, 300));
+        } else {
+            console.error("Search input not found!");
+        }
+
+        console.log("Event listeners initialized");
+    } catch (error) {
+        console.error("Error initializing event listeners:", error);
     }
-
-    console.log("Event listeners initialized");
 }
 
 // Initialize everything after DOM is loaded
@@ -566,7 +618,6 @@ document.addEventListener("DOMContentLoaded", function () {
     initializeAddCategoryForm();
     initializeEditCategoryForm();
     initializeModals();
-    initializeEventListeners();
 });
 
 // Expose functions to global scope
