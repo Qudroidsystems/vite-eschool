@@ -176,7 +176,7 @@
                                 <div class="mb-3">
                                     <label for="total_score" class="form-label">Total Score</label>
                                     <input type="number" name="total_score" id="total_score" class="form-control" readonly>
-                                    <small class="form-text text-muted">Total must be exactly 100</small>
+                                    <small class="form-text text-muted">Total must be exactly 400</small>
                                 </div>
                                 <div class="alert alert-danger d-none" id="alert-error-msg"></div>
                             </div>
@@ -223,7 +223,7 @@
                                 <div class="mb-3">
                                     <label for="edit-total_score" class="form-label">Total Score</label>
                                     <input type="number" name="total_score" id="edit-total_score" class="form-control" readonly>
-                                    <small class="form-text text-muted">Total must be exactly 100</small>
+                                    <small class="form-text text-muted">Total must be exactly 400</small>
                                 </div>
                                 <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
                             </div>

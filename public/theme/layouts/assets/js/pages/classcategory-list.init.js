@@ -71,7 +71,7 @@ function calculateAddTotalScore() {
     const exam = parseFloat(addExamScoreField.value) || 0;
     const total = ca1 + ca2 + ca3 + exam;
     if (addTotalScoreField) addTotalScoreField.value = total;
-    if (addSubmitButton) addSubmitButton.disabled = total !== 100;
+    if (addSubmitButton) addSubmitButton.disabled = total !== 400;
 }
 
 // Calculate total score for Edit Modal
@@ -82,7 +82,7 @@ function calculateEditTotalScore() {
     const exam = parseFloat(editExamScoreField.value) || 0;
     const total = ca1 + ca2 + ca3 + exam;
     if (editTotalScoreField) editTotalScoreField.value = total;
-    if (editSubmitButton) editSubmitButton.disabled = total !== 100;
+    if (editSubmitButton) editSubmitButton.disabled = total !== 400;
 }
 
 // Add event listeners for Add Modal score inputs
