@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Imports\StudentsImport;
 use App\Models\Broadsheet;
+use App\Models\BroadsheetRecord;
+use App\Models\BroadsheetRecordMock;
+use App\Models\Broadsheets;
+use App\Models\BroadsheetsMock;
 use App\Models\ParentRegistration;
 use App\Models\PromotionStatus;
 use App\Models\Schoolclass;
@@ -22,6 +26,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
@@ -36,33 +41,49 @@ class StudentController extends Controller
         $this->middleware("permission:Create student", ["only" => ["create", "store"]]);
         $this->middleware("permission:Update student", ["only" => ["edit", "update"]]);
         $this->middleware("permission:Delete student", ["only" => ["destroy", "deletestudent"]]);
-        $this->middleware("permission:student-bulk-upload", ["only" => ["bulkupload"]]);
-        $this->middleware("permission:student-bulk-uploadsave", ["only" => ["bulkuploadsave"]]);
+        $this->middleware("permission:Create student-bulk-upload", ["only" => ["bulkupload"]]);
+        $this->middleware("permission:Create student-bulk-uploadsave", ["only" => ["bulkuploadsave"]]);
+    }
+
+ public function data(Request $request): JsonResponse
+    {
+        try {
+            $students = Student::leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+                ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
+                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->select([
+                    'studentRegistration.id',
+                    'studentRegistration.admissionNo',
+                    'studentRegistration.firstname',
+                    'studentRegistration.lastname',
+                    'studentRegistration.gender',
+                    'studentRegistration.statusId',
+                    'studentRegistration.created_at',
+                    'studentpicture.picture',
+                    'schoolclass.schoolclass',
+                    'schoolarm.arm',
+                    'studentclass.schoolclassid'
+                ])
+                ->latest()
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'students' => $students
+            ], 200);
+        } catch (\Exception $e) {
+            Log::error("Error fetching students: {$e->getMessage()}\nStack trace: {$e->getTraceAsString()}");
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch students: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function index(Request $request)
     {
         $pagetitle = "Student Management";
-
-        $data = Student::leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
-            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->select([
-                'studentRegistration.id',
-                'studentRegistration.admissionNo',
-                'studentRegistration.firstname',
-                'studentRegistration.lastname',
-                'studentRegistration.gender',
-                'studentRegistration.statusId',
-                'studentRegistration.created_at',
-                'studentpicture.picture',
-                'schoolclass.schoolclass',
-                'schoolarm.arm',
-                'studentclass.schoolclassid'
-            ])
-            ->latest()
-            ->paginate(10);
 
         $schoolclass = Schoolclass::all();
         $schoolterm = Schoolterm::all();
@@ -77,10 +98,8 @@ class StudentController extends Controller
             'New Student' => $status_counts['New Student'] ?? 0
         ];
 
-        return view('student.index', compact('data', 'schoolclass', 'schoolterm', 'schoolsession', 'status_counts', 'pagetitle'))
-            ->with('i', ($request->input('page', 1) - 1) * 10);
+        return view('student.index', compact('schoolclass', 'schoolterm', 'schoolsession', 'status_counts', 'pagetitle'));
     }
-
     public function create()
     {
         $schoolclass = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
@@ -178,6 +197,8 @@ class StudentController extends Controller
             $studentClass->termid = $request->termid;
             $studentClass->sessionid = $request->sessionid;
             $studentClass->save();
+
+            
 
             $promotion = new PromotionStatus();
             $promotion->studentId = $studentId;
@@ -411,7 +432,7 @@ class StudentController extends Controller
             PromotionStatus::where('studentId', $id)->delete();
             ParentRegistration::where('studentId', $id)->delete();
             Studentpicture::where('studentid', $id)->delete();
-            Broadsheet::where('studentId', $id)->delete();
+            Broadsheets::where('studentId', $id)->delete();
             SubjectRegistrationStatus::where('studentId', $id)->delete();
             Studenthouse::where('studentid', $id)->delete();
             Studentpersonalityprofile::where('studentid', $id)->delete();
@@ -517,51 +538,117 @@ class StudentController extends Controller
         }
     }
 
-    public function deletestudentbatch(Request $request)
+      public function deletestudentbatch(Request $request): JsonResponse
     {
+        $batchId = $request->input('studentbatchid');
+        Log::debug("Attempting to delete batch ID {$batchId}");
+
         try {
-            $batchId = $request->input('studentbatchid');
-            $batch = StudentBatchModel::where('id', $batchId)->pluck('id')->first();
-            if (!$batch) {
-                throw new \Exception('Batch not found');
+            // Validate the studentbatchid
+            if (!$batchId) {
+                throw new \Exception('Batch ID is missing in request');
             }
 
-            $studentIds = Student::where('batchid', $batch)->pluck('id');
+            // Verify table existence
+            if (!Schema::hasTable('student_batch_upload')) {
+                throw new \Exception('student_batch_upload table does not exist');
+            }
+
+            // Verify studentRegistration table and batchid column
+            if (!Schema::hasTable('studentRegistration')) {
+                throw new \Exception('studentRegistration table does not exist');
+            }
+            if (!Schema::hasColumn('studentRegistration', 'batchid')) {
+                throw new \Exception('batchid column missing in studentRegistration table');
+            }
+
+            // Find the batch
+            Log::debug("Querying StudentBatchModel for ID {$batchId}");
+            $batch = StudentBatchModel::findOrFail($batchId);
+            Log::debug("Batch found: ID {$batch->id}, Title {$batch->title}");
 
             DB::beginTransaction();
 
-            foreach ($studentIds as $s) {
-                $picture = Studentpicture::where('studentid', $s)->first();
-                if ($picture && $picture->picture) {
-                    Storage::delete('public/' . $picture->picture);
+            // Get student IDs associated with the batch
+            Log::debug("Querying students for batch ID {$batch->id}");
+            $studentIds = Student::where('batchid', $batch->id)->pluck('id');
+            Log::debug("Found " . count($studentIds) . " students for batch ID {$batchId}: " . $studentIds->implode(','));
+
+            // If no students are found, log and proceed
+            if ($studentIds->isEmpty()) {
+                Log::warning("No students found for batch ID {$batchId}. Deleting batch only.");
+            } else {
+                // Delete related records for each student
+                foreach ($studentIds as $studentId) {
+                    Log::debug("Deleting related records for student ID {$studentId}");
+
+                    // Delete student picture and associated file
+                    $picture = Studentpicture::where('studentid', $studentId)->first();
+                    if ($picture && $picture->picture) {
+                        Storage::delete('public/' . $picture->picture);
+                        Log::debug("Deleted picture for student ID {$studentId}");
+                    }
+
+                    // Delete broadsheet-related records
+                    $broadsheetRecords = BroadsheetRecord::where('student_id', $studentId)->get();
+                    foreach ($broadsheetRecords as $record) {
+                        Broadsheets::where('broadsheet_record_id', $record->id)->delete();
+                        $record->delete();
+                        Log::debug("Deleted broadsheet record ID {$record->id} for student ID {$studentId}");
+                    }
+
+                    $broadsheetMockRecords = BroadsheetRecordMock::where('student_id', $studentId)->get();
+                    foreach ($broadsheetMockRecords as $record) {
+                        BroadsheetsMock::where('broadsheet_records_mock_id', $record->id)->delete();
+                        $record->delete();
+                        Log::debug("Deleted broadsheet mock record ID {$record->id} for student ID {$studentId}");
+                    }
+
+                    // Delete other related records
+                    Studentclass::where('studentId', $studentId)->delete();
+                    PromotionStatus::where('studentId', $studentId)->delete();
+                    ParentRegistration::where('studentId', $studentId)->delete();
+                    Studentpicture::where('studentid', $studentId)->delete();
+                    SubjectRegistrationStatus::where('studentId', $studentId)->delete();
+                    Studenthouse::where('studentid', $studentId)->delete();
+                    Studentpersonalityprofile::where('studentid', $studentId)->delete();
+                    Log::debug("Deleted other related records for student ID {$studentId}");
                 }
 
-                Studentclass::where('studentId', $s)->delete();
-                PromotionStatus::where('studentId', $s)->delete();
-                Parentregistration::where('studentId', $s)->delete();
-                Studentpicture::where('studentid', $s)->delete();
-                Broadsheet::where('studentId', $s)->delete();
-                SubjectRegistrationStatus::where('studentId', $s)->delete();
-                Studenthouse::where('studentid', $s)->delete();
-                Studentpersonalityprofile::where('studentid', $s)->delete();
+                // Delete students associated with the batch
+                Log::debug("Deleting students for batch ID {$batchId}");
+                Student::where('batchid', $batch->id)->delete();
+                Log::debug("Deleted students for batch ID {$batchId}");
             }
 
-            Student::where('batchid', $batch)->delete();
-            StudentBatchModel::where('id', $batchId)->delete();
+            // Delete the batch itself
+            Log::debug("Deleting batch ID {$batchId}");
+            $batch->delete();
+            Log::debug("Deleted batch ID {$batchId}");
 
             DB::commit();
+
+            Log::info("Batch ID {$batchId} and associated students (if any) deleted successfully");
 
             return response()->json([
                 'success' => true,
                 'message' => 'Batch Upload has been removed'
-            ]);
-        } catch (\Exception $e) {
+            ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             DB::rollBack();
-            Log::error("Error deleting batch ID {$batchId}: {$e->getMessage()}");
+            Log::error("Batch ID {$batchId} not found in student_batch_upload: {$e->getMessage()}");
             return response()->json([
                 'success' => false,
-                'message' => 'Batch Upload not found or could not be deleted'
-            ]);
+                'message' => 'Batch not found'
+            ], 404);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error deleting batch ID {$batchId}: {$e->getMessage()}\nStack trace: {$e->getTraceAsString()}");
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete batch: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -581,6 +668,8 @@ class StudentController extends Controller
 
     public function batchindex()
     {
+         $pagetitle = "Student Batch Management";
+
         $batch = StudentBatchModel::leftJoin('schoolclass', 'schoolclass.id', '=', 'student_batch_upload.schoolclassid')
             ->leftJoin('schoolsession', 'schoolsession.id', '=', 'student_batch_upload.session')
             ->leftJoin('schoolterm', 'schoolterm.id', '=', 'student_batch_upload.termid')
@@ -597,11 +686,18 @@ class StudentController extends Controller
                 'student_batch_upload.updated_at as upload_date',
             ]);
 
-        return view('student.batchindex')->with('batch', $batch);
+        $schoolclass = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->get(['schoolclass.id as id', 'schoolclass.schoolclass as schoolclass', 'schoolarm.arm as arm'])
+            ->sortBy('sdesc');
+        $schoolterm = Schoolterm::all();
+        $schoolsession = Schoolsession::all();
+
+        return view('student.batchindex', compact('batch', 'schoolclass', 'schoolterm', 'schoolsession','pagetitle'));
     }
 
     public function bulkuploadsave(Request $request)
     {
+       
         $validator = Validator::make($request->all(), [
             'filesheet' => 'required|mimes:xlsx,csv,xls',
             'title' => 'required',

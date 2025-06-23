@@ -115,7 +115,7 @@ use Spatie\Permission\Models\Role;
                         <div class="card">
                             <div class="card-header d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">Students <span class="badge bg-dark-subtle text-dark ms-1">{{ $data->total() }}</span></h5>
+                                    <h5 class="card-title mb-0">Students <span class="badge bg-dark-subtle text-dark ms-1" id="totalStudents">0</span></h5>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
@@ -130,7 +130,7 @@ use Spatie\Permission\Models\Role;
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
-                                    <table class="table table-centered align-middle table-nowrap mb-0" id="studentList">
+                                    <table class="table table-centered align-middle table-nowrap mb-0" id="studentTable">
                                         <thead class="table-active">
                                             <tr>
                                                 <th><div class="form-check"><input class="form-check-input" type="checkbox" value="option" id="checkAll"><label class="form-check-label" for="checkAll"></label></div></th>
@@ -143,77 +143,24 @@ use Spatie\Permission\Models\Role;
                                                 <th>Action</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="list form-check-all">
-                                            @forelse ($data as $student)
-                                                <tr>
-                                                    <td class="id" data-id="{{ $student->id }}">
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox" name="chk_child">
-                                                            <label class="form-check-label"></label>
-                                                        </div>
-                                                    </td>
-                                                    <td class="name" data-name="{{ $student->firstname }} {{ $student->lastname }}">
-                                                        <div class="d-flex align-items-center">
-                                                            <div class="symbol symbol-50px me-3">
-                                                                <img src="{{ $student->picture ? asset('storage/' . $student->picture) : asset('theme/layouts/assets/media/avatars/blank.png') }}" alt=""  class="avatar-xs"/>
-                                                            </div>
-                                                            <div>
-                                                                <h6 class="mb-0"><a href="{{ route('student.show', $student->id) }}" class="text-reset products">{{ $student->firstname }} {{ $student->lastname }}</a></h6>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td class="admissionNo" data-admissionNo="{{ $student->admissionNo }}">{{ $student->admissionNo }}</td>
-                                                    <td class="class" data-class="{{ $student->schoolclassid }}">{{ $student->schoolclass }} - {{ $student->arm }}</td>
-                                                    <td class="status" data-status="{{ $student->statusId }}">{{ $student->statusId == 1 ? 'Old Student' : 'New Student' }}</td>
-                                                    <td class="gender" data-gender="{{ $student->gender }}">{{ $student->gender }}</td>
-                                                    <td class="datereg">{{ $student->created_at->format('Y-m-d') }}</td>
-                                                    <td>
-                                                        <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                            @can('Show student')
-                                                                <li>
-                                                                    <a href="{{ route('student.show', $student->id) }}" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a>
-                                                                </li>
-                                                            @endcan
-                                                            @can('Update student')
-                                                                <li>
-                                                                    <a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" data-bs-toggle="modal" data-bs-target="#editStudentModal" data-id="{{ $student->id }}"><i class="ph-pencil"></i></a>
-                                                                </li>
-                                                            @endcan
-                                                            @can('Delete student')
-                                                                <li>
-                                                                    <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-id="{{ $student->id }}"><i class="ph-trash"></i></a>
-                                                                </li>
-                                                            @endcan
-                                                        </ul>
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="8" class="noresult" style="display: block;">No results found</td>
-                                                </tr>
-                                            @endforelse
+                                        <tbody class="list form-check-all" id="studentTableBody">
+                                            <!-- Student rows will be populated by JavaScript -->
                                         </tbody>
                                     </table>
                                 </div>
                                 <div class="row mt-3 align-items-center" id="pagination-element">
                                     <div class="col-sm">
                                         <div class="text-muted text-center text-sm-start">
-                                            Showing <span class="fw-semibold">{{ $data->count() }}</span> of <span class="fw-semibold">{{ $data->total() }}</span> Results
+                                            Showing <span class="fw-semibold" id="showingCount">0</span> of <span class="fw-semibold" id="totalCount">0</span> Results
                                         </div>
                                     </div>
                                     <div class="col-sm-auto mt-3 mt-sm-0">
                                         <div class="pagination-wrap hstack gap-2 justify-content-center">
-                                            <a class="page-item pagination-prev {{ $data->onFirstPage() ? 'disabled' : '' }}" href="{{ $data->previousPageUrl() }}">
+                                            <a class="page-item pagination-prev disabled" href="javascript:void(0);" id="prevPage">
                                                 <i class="mdi mdi-chevron-left align-middle"></i>
                                             </a>
-                                            <ul class="pagination listjs-pagination mb-0">
-                                                @foreach ($data->links()->elements[0] as $page => $url)
-                                                    <li class="page-item {{ $data->currentPage() == $page ? 'active' : '' }}">
-                                                        <a class="page-link" href="{{ $url }}">{{ $page }}</a>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                            <a class="page-item pagination-next {{ $data->hasMorePages() ? '' : 'disabled' }}" href="{{ $data->nextPageUrl() }}">
+                                            <ul class="pagination listjs-pagination mb-0" id="paginationLinks"></ul>
+                                            <a class="page-item pagination-next" href="javascript:void(0);" id="nextPage">
                                                 <i class="mdi mdi-chevron-right align-middle"></i>
                                             </a>
                                         </div>
@@ -300,7 +247,7 @@ use Spatie\Permission\Models\Role;
                             </div>
                             <div class="mb-3">
                                 <label for="age1" class="form-label">Age</label>
-                                <input type="text" id="age1" name="age" class="form-control" placeholder="Enter age">
+                                <input type="text" id="age1" name="age" class="form-control" placeholder="Age will be calculated" readonly>
                             </div>
                             <div class="mb-3">
                                 <label for="placeofbirth" class="form-label">Place of Birth <span class="text-danger">*</span></label>
@@ -336,11 +283,10 @@ use Spatie\Permission\Models\Role;
                                 <input type="text" id="last_school" name="last_school" class="form-control" placeholder="Enter last school attended" required>
                             </div>
                             <div class="mb-3">
-                                <label for="last_class" class="form-label">Last Class <span class="text-danger">*</span></label>
-                                <input type="text" id="last_class" name="last_class" class="form-control" placeholder="Enter last class" required>
+                                अपलोड करें
                             </div>
                             <div class="mb-3">
-                                <label for="schoolclassid" class="form-label">Class <span class="text-danger">*</span></label>
+                                <label for="schoolclassid" class="form-label">Class <span></label>
                                 <select id="schoolclassid" name="schoolclassid" class="form-control" required>
                                     <option value="">Select Class</option>
                                     @foreach ($schoolclass as $class)
@@ -398,9 +344,9 @@ use Spatie\Permission\Models\Role;
                         <h5 id="exampleModalLabel" class="modal-title">Edit Student</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form class="tablelist-form" id="editStudentForm" enctype="multipart/form-data" autocomplete="off" method="POST" action="{{ route('student.update', ':id') }}">
+                    <form class="tablelist-form" id="editStudentForm" enctype="multipart/form-data" autocomplete="true" method="POST" action="{{ route('student.update', ':id') }}">
                         @csrf
-                        @method('PUT')
+                        @method('PATCH')
                         <div class="modal-body">
                             <input type="hidden" id="editStudentId" name="id">
                             <input type="hidden" name="registeredBy" value="{{ Auth::user()->id }}">
@@ -464,10 +410,9 @@ use Spatie\Permission\Models\Role;
                                 <input type="date" id="editDOB" name="dateofbirth" class="form-control" required onchange="showage(this.value, 'editAge')">
                                 <span id="editAge" class="text-muted"></span>
                             </div>
-                           
                             <div class="mb-3">
-                                <label for="editAge" class="form-label">Age (Optional)</label>
-                                <input type="number" class="form-control" id="editAge" name="age" placeholder="Enter age" min="0">
+                                <label for="editAge" class="form-label">Age</label>
+                                <input type="text" id="editAge" name="age" class="form-control" placeholder="Age will be calculated" readonly>
                             </div>
                             <div class="mb-3">
                                 <label for="editPlaceofbirth" class="form-label">Place of Birth <span class="text-danger">*</span></label>
@@ -478,30 +423,26 @@ use Spatie\Permission\Models\Role;
                                 <input type="text" id="editNationality" name="nationality" class="form-control" placeholder="Enter nationality" required>
                             </div>
                             <div class="mb-3">
-                                
-                                <div class="mb-3">
-                                    <label for="editState" class="form-label">State of Origin</label>
-                                    <select id="editState" name="state" class="form-control">
-                                        <option value="">Select State</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="editLocal" class="form-label">Local Government</label>
-                                    <select id="editLocal" name="local" class="form-control">
-                                        <option value="">Select Local Government</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="editReligion" class="form-label">Religion</label>
-                                    <select id="editReligion" name="religion" class="form-control">
-                                        <option value="">Select Religion</option>
-                                        <option value="Christianity">Christianity</option>
-                                        <option value="Islam">Islam</option>
-                                        <option value="Others">Others</option>
-                                    </select>
-                                </div>
-                              
-                            
+                                <label for="editState" class="form-label">State of Origin <span class="text-danger">*</span></label>
+                                <select id="editState" name="state" class="form-control" required>
+                                    <option value="">Select State</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editLocal" class="form-label">Local Government <span class="text-danger">*</span></label>
+                                <select id="editLocal" name="local" class="form-control" required>
+                                    <option value="">Select Local Government</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="editReligion" class="form-label">Religion <span class="text-danger">*</span></label>
+                                <select id="editReligion" name="religion" class="form-control" required>
+                                    <option value="">Select Religion</option>
+                                    <option value="Christianity">Christianity</option>
+                                    <option value="Islam">Islam</option>
+                                    <option value="Others">Others</option>
+                                </select>
+                            </div>
                             <div class="mb-3">
                                 <label for="editLastSchool" class="form-label">Last School Attended <span class="text-danger">*</span></label>
                                 <input type="text" id="editLastSchool" name="last_school" class="form-control" placeholder="Enter last school attended" required>
@@ -511,8 +452,8 @@ use Spatie\Permission\Models\Role;
                                 <input type="text" id="editLastClass" name="last_class" class="form-control" placeholder="Enter last class" required>
                             </div>
                             <div class="mb-3">
-                                <label for="editSchoolclassid" class="form-label">Class</label>
-                                <select id="editSchoolclassid" name="schoolclassid" class="form-control">
+                                <label for="editSchoolclassid" class="form-label">Class <span class="text-danger">*</span></label>
+                                <select id="editSchoolclassid" name="schoolclassid" class="form-control" required>
                                     <option value="">Select Class</option>
                                     @foreach ($schoolclass as $class)
                                         <option value="{{ $class->id }}">{{ $class->schoolclass }} - {{ $class->arm }}</option>
@@ -520,8 +461,8 @@ use Spatie\Permission\Models\Role;
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="editTermid" class="form-label">Term</label>
-                                <select id="editTermid" name="termid" class="form-control">
+                                <label for="editTermid" class="form-label">Term <span class="text-danger">*</span></label>
+                                <select id="editTermid" name="termid" class="form-control" required>
                                     <option value="">Select Term</option>
                                     @foreach ($schoolterm as $term)
                                         <option value="{{ $term->id }}">{{ $term->term }}</option>
@@ -529,8 +470,8 @@ use Spatie\Permission\Models\Role;
                                 </select>
                             </div>
                             <div class="mb-3">
-                                <label for="editSessionid" class="form-label">Session</label>
-                                <select id="editSessionid" name="sessionid" class="form-control">
+                                <label for="editSessionid" class="form-label">Session <span class="text-danger">*</span></label>
+                                <select id="editSessionid" name="sessionid" class="form-control" required>
                                     <option value="">Select Session</option>
                                     @foreach ($schoolsession as $session)
                                         <option value="{{ $session->id }}">{{ $session->session }}</option>
@@ -588,9 +529,35 @@ use Spatie\Permission\Models\Role;
         </div>
     </div>
     <!-- End Page-content -->
+
+    <!-- Include external scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/list.js@2.3.1/dist/list.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{ asset('js/init.js') }}"></script>
+
     <script>
+        // Define permissions for JavaScript
+        window.appPermissions = {
+            canShowStudent: {{ Auth::user()->hasPermissionTo('Show student') ? 'true' : 'false' }},
+            canUpdateStudent: {{ Auth::user()->hasPermissionTo('Update student') ? 'true' : 'false' }},
+            canDeleteStudent: {{ Auth::user()->hasPermissionTo('Delete student') ? 'true' : 'false' }}
+        };
+
         document.addEventListener("DOMContentLoaded", function () {
+            // Debug Axios and CSRF token
+            if (typeof axios === 'undefined') {
+                console.error('Axios is not loaded');
+                alert('Axios library is missing. Please check the script inclusion.');
+                return;
+            }
+            if (!document.querySelector('meta[name="csrf-token"]')) {
+                console.error('CSRF token meta tag is missing');
+                alert('CSRF token is missing. Please ensure the CSRF meta tag is included in the layout.');
+                return;
+            }
+
             // Students by Status Chart
             var ctx = document.getElementById("studentsByStatusChart").getContext("2d");
             new Chart(ctx, {
@@ -630,114 +597,35 @@ use Spatie\Permission\Models\Role;
                 }
             });
 
-            // Image Preview for Add Student Modal
-            document.getElementById('avatar').addEventListener('change', function(event) {
-                const file = event.target.files[0];
-                const preview = document.getElementById('addStudentAvatar');
-                if (file) {
-                    // Check file size (2MB = 2 * 1024 * 1024 bytes)
-                    if (file.size > 2 * 1024 * 1024) {
-                        Swal.fire({
-                            title: "Error!",
-                            text: "File size exceeds 2MB limit.",
-                            icon: "error",
-                            confirmButtonClass: "btn btn-info",
-                            buttonsStyling: false
-                        });
-                        event.target.value = ''; // Clear the input
-                        preview.style.display = 'none';
-                        return;
-                    }
-                    // Check file type
-                    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
-                    if (!allowedTypes.includes(file.type)) {
-                        Swal.fire({
-                            title: "Error!",
-                            text: "Only PNG, JPG, and JPEG files are allowed.",
-                            icon: "error",
-                            confirmButtonClass: "btn btn-info",
-                            buttonsStyling: false
-                        });
-                        event.target.value = ''; // Clear the input
-                        preview.style.display = 'none';
-                        return;
-                    }
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        preview.src = e.target.result;
-                        preview.style.display = 'block';
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    preview.src = '{{ asset('theme/layouts/assets/media/avatars/blank.png') }}';
-                    preview.style.display = 'none';
-                }
-            });
-
-            // Image Preview for Edit Student Modal
-            document.getElementById('editAvatar').addEventListener('change', function(event) {
-                const file = event.target.files[0];
-                const preview = document.getElementById('editStudentAvatar');
-                if (file) {
-                    // Check file size (2MB = 2 * 1024 * 1024 bytes)
-                    if (file.size > 2 * 1024 * 1024) {
-                        Swal.fire({
-                            title: "Error!",
-                            text: "File size exceeds 2MB limit.",
-                            icon: "error",
-                            confirmButtonClass: "btn btn-info",
-                            buttonsStyling: false
-                        });
-                        event.target.value = ''; // Clear the input
-                        preview.src = '{{ asset('theme/layouts/assets/media/avatars/blank.png') }}';
-                        return;
-                    }
-                    // Check file type
-                    const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
-                    if (!allowedTypes.includes(file.type)) {
-                        Swal.fire({
-                            title: "Error!",
-                            text: "Only PNG, JPG, and JPEG files are allowed.",
-                            icon: "error",
-                            confirmButtonClass: "btn btn-info",
-                            buttonsStyling: false
-                        });
-                        event.target.value = ''; // Clear the input
-                        preview.src = '{{ asset('theme/layouts/assets/media/avatars/blank.png') }}';
-                        return;
-                    }
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        preview.src = e.target.result;
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    // Reset to the original avatar or blank if no new file is selected
-                    preview.src = preview.getAttribute('data-original-src') || '{{ asset('theme/layouts/assets/media/avatars/blank.png') }}';
-                }
-            });
-
-            // Store original avatar src when edit modal is opened
-            document.querySelectorAll('.edit-item-btn').forEach(button => {
-                button.addEventListener('click', function() {
-                    const avatarImg = document.getElementById('editStudentAvatar');
-                    avatarImg.setAttribute('data-original-src', avatarImg.src);
+            // Initialize Choices.js for select elements
+            if (typeof Choices !== 'undefined') {
+                document.querySelectorAll('[data-choices]').forEach(element => {
+                    new Choices(element, {
+                        searchEnabled: element.dataset.choicesSearchFalse !== undefined,
+                        removeItemButton: element.dataset.choicesRemoveitem !== undefined
+                    });
                 });
-            });
-        });
-
-        function showage(dob, targetId = 'addAge') {
-            if (!dob) return;
-            const birthDate = new Date(dob);
-            const today = new Date();
-            let age = today.getFullYear() - birthDate.getFullYear();
-            const monthDiff = today.getMonth() - birthDate.getMonth();
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                age--;
+            } else {
+                console.warn('Choices.js is not loaded. Select elements will function as standard dropdowns.');
             }
-            document.getElementById(targetId).textContent = `Age: ${age} years`;
-            document.getElementById(targetId.replace('Age', 'age1')).value = age;
-        }
+
+            // Debug the /students/data endpoint
+            axios.get('/students/data')
+                .then(response => {
+                    console.log('Students data response:', response.data);
+                })
+                .catch(error => {
+                    console.error('Error fetching /students/data:', {
+                        status: error.response?.status,
+                        data: error.response?.data,
+                        message: error.message
+                    });
+                    alert('Failed to fetch students. Check the console for details.');
+                });
+
+            // Initialize student list
+            initializeStudentList();
+        });
     </script>
 </div>
 @endsection

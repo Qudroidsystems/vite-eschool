@@ -90,7 +90,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
 
         //populating student biodata
         $studentbiodata->admissionNo = $admissionno;
-        $studentbiodata->tittle = '';
+        $studentbiodata->title = '';
         $studentbiodata->firstname = $firstname;
         $studentbiodata->lastname = $surname;
         $studentbiodata->othername = $othername ?? 'Nill';
@@ -101,7 +101,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
         $studentbiodata->age = $age;
         $studentbiodata->placeofbirth = $placeofbirth;
         $studentbiodata->religion = $religion;
-        $studentbiodata->nationlity = $nationality;
+        $studentbiodata->nationality = $nationality;
         $studentbiodata->state = $state;
         $studentbiodata->local = "$local";
         $studentbiodata->last_school = $lastschool ?? 'Nill';
@@ -135,29 +135,13 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
         $picture->studentid = $studentId;
         $picture->save();
 
-        //registering school class and arm for the student
-        $studentclass->studentId = $studentId;
-        $studentclass->schoolclassid = $schoolclassid;
-        $studentclass->termid = '1';
-        $studentclass->sessionid = $sessionid;
-        $studentclass->save();
-
-
-        //second term
-        $studentclass2 = new Studentclass();
-        $studentclass2->studentId = $studentId;
-        $studentclass2->schoolclassid = $request->schoolclassid;
-        $studentclass2->termid = '2';
-        $studentclass2->sessionid = $request->sessionid;
-        $studentclass2->save();
-
-        //third term
-        $studentclass3 = new Studentclass();
-        $studentclass3->studentId = $studentId;
-        $studentclass3->schoolclassid = $request->schoolclassid;
-        $studentclass3->termid = '3';
-        $studentclass3->sessionid = $request->sessionid;
-        $studentclass3->save();
+      
+        $studentClass = new Studentclass();
+        $studentClass->studentId = $studentId;
+        $studentClass->schoolclassid = $schoolclassid;
+        $studentClass->termid = $termid;
+        $studentClass->sessionid = $sessionid;
+        $studentClass->save();
 
         //for class history...
         $promotion->studentId = $studentId;

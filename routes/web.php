@@ -123,14 +123,16 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('schoolclass/{schoolclass}/arms', [SchoolClassController::class, 'getArms'])->name('schoolclass.getarms');
     Route::put('/schoolclass/{id}', [SchoolClassController::class, 'update'])->name('schoolclass.update');
 
-    Route::resource('student', StudentController::class);
+    Route::resource('student', StudentController::class)->except(['destroy']); // Exclude destroy to avoid conflict
+    Route::get('/students/data', [App\Http\Controllers\StudentController::class, 'data'])->name('student.data');
+    Route::delete('/student/{id}/destroy', [StudentController::class, 'destroy'])->name('student.destroy');
     Route::get('/studentid/{studentid}', [StudentController::class, 'deletestudent'])->name('student.deletestudent');
     Route::get('/studentoverview/{id}', [StudentController::class, 'overview'])->name('student.overview');
     Route::get('/studentsettings/{id}', [StudentController::class, 'setting'])->name('student.settings');
     Route::get('/studentbulkupload', [StudentController::class, 'bulkupload'])->name('student.bulkupload');
     Route::post('/studentbulkuploadsave', [StudentController::class, 'bulkuploadsave'])->name('student.bulkuploadsave');
-    Route::get('/batchindex', [StudentController::class, 'batchindex'])->name('student.batchindex');
-    Route::get('/studentbatchid/{studentbatchid}', [StudentController::class, 'deletestudentbatch'])->name('student.deletestudentbatch');
+    Route::get('/batchindex', [StudentController::class, 'batchindex'])->name('studentbatchindex');
+    Route::delete('/student/deletestudentbatch', [StudentController::class, 'deletestudentbatch'])->name('student.deletestudentbatch');
     Route::post('/students/destroy-multiple', [StudentController::class, 'destroyMultiple'])->name('students.destroy-multiple');
 
     Route::resource('classoperation', ClassOperationController::class);
@@ -163,14 +165,18 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('subjectscoresheet/import', [MyScoreSheetController::class, 'import'])->name('subjectscoresheet.import');
     Route::get('/subjectscoresheet/results', [MyScoreSheetController::class, 'results'])->name('subjectscoresheet.results');
 
-   // Mock Scoresheet Routes
-    Route::get('subjectscoresheet-mock/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'subjectscoresheetMock'])->name('subjectscoresheet-mock.index');
-    Route::get('subjectscoresheet-mock/export', [MyScoreSheetController::class, 'exportMock'])->name('subjectscoresheet-mock.export');
-    Route::post('subjectscoresheet-mock/import', [MyScoreSheetController::class, 'importMock'])->name('subjectscoresheet-mock.import');
-    Route::get('subjectscoresheet-mock/{id}/edit', [MyScoreSheetController::class, 'editMock'])->name('subjectscoresheet-mock.edit');
-    Route::put('subjectscoresheet-mock/{id}', [MyScoreSheetController::class, 'updateMock'])->name('subjectscoresheet-mock.update');
-    Route::post('/scoresheet/destroy/mock', [MyScoreSheetController::class, 'destroyMock'])->name('scoresheet.destroy-mock');
-    Route::post('scoresheet-mock/update-score', [MyScoreSheetController::class, 'updateScoreMock'])->name('scoresheet-mock.update-score');
+   
+    // Mock Scoresheet Routes
+    Route::get('subjectscoresheet-mock', [MyScoreSheetController::class, 'mockIndex'])->name('subjectscoresheet-mock.index');
+    Route::get('subjectscoresheet-mock/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'mockSubjectscoresheet'])->name('subjectscoresheet-mock.show');
+    Route::get('subjectscoresheet-mock/export', [MyScoreSheetController::class, 'mockExport'])->name('subjectscoresheet-mock.export');
+    Route::post('subjectscoresheet-mock/import', [MyScoreSheetController::class, 'mockImport'])->name('subjectscoresheet-mock.import');
+    Route::get('subjectscoresheet-mock/{id}/edit', [MyScoreSheetController::class, 'mockEdit'])->name('subjectscoresheet-mock.edit');
+    Route::put('subjectscoresheet-mock/{id}', [MyScoreSheetController::class, 'mockUpdate'])->name('subjectscoresheet-mock.update');
+    Route::post('scoresheet-mock/destroy', [MyScoreSheetController::class, 'mockDestroy'])->name('scoresheet-mock.destroy');
+    Route::post('scoresheet-mock/bulk-update', [MyScoreSheetController::class, 'mockBulkUpdateScores'])->name('scoresheet-mock.bulk-update');
+    Route::get('subjectscoresheet-mock/results', [MyScoreSheetController::class, 'mockResults'])->name('subjectscoresheet-mock.results');
+    Route::get('subjectscoresheet-mock/download-marksheet', [MyScoreSheetController::class, 'mockDownloadMarkSheet'])->name('subjectscoresheet-mock.download-marksheet');
 
         // Marks Sheet Download Routes
     Route::get('/scoresheet/download-marks-sheet', [MyScoreSheetController::class, 'downloadMarkSheet'])
@@ -185,12 +191,6 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/school-info', [SchoolInformationController::class, 'store'])->name('admin.school-info.store');
     Route::put('/school-info/{id}', [SchoolInformationController::class, 'update'])->name('admin.school-info.update');
 
-
-
-    // Route::get('export', [MyScoreSheetController::class, 'export'])->name('subjectscoresheet.export');;
-    // Route::post('classsetting', [MyScoreSheetController::class, 'importsheet'])->name('import.post');
-    // Route::post('importsheet', [MyScoreSheetController::class, 'importsheet'])->name('import.post.sheet');
-    // Route::get('/importform/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'importform']);
 
     Route::resource('schoolbill', SchoolBillController::class);
     Route::get('/billid/{billid}', [SchoolBillController::class, 'deletebill'])->name('schoolbill.deletebill');
@@ -215,23 +215,11 @@ Route::group(['middleware' => ['auth']], function () {
     Route::resource('analysis', AnalysisController::class);
     Route::post('analysisClassTermSession', [AnalysisController::class, 'analysisClassTermSession'])->name('analysis.analysisClassTermSession');
     Route::get('analysis/export-pdf/{class_id}/{termid_id}/{session_id}', 'App\Http\Controllers\AnalysisController@exportPDF')->name('analysis.exportPDF');
-    Route::get('/analysis/pdf/{class_id}/{termid_id}/{session_id}/{action?}', [AnalysisController::class, 'exportPDF'])
-    ->name('analysis.viewPDF')
-    ->where('action', 'view|download');
+    Route::get('/analysis/pdf/{class_id}/{termid_id}/{session_id}/{action?}', [AnalysisController::class, 'exportPDF'])->name('analysis.viewPDF')->where('action', 'view|download');
     
-    // School-wide payment analysis routes
-    // Route::get('/school-wide-payment-analysis/{termid_id}/{session_id}/{action?}', 'App\Http\Controllers\AnalysisController@schoolWidePaymentAnalysis')
-    // ->name('school.wide.payment.analysis')
-    // ->where('action', 'view|download');
 
     // School-wide payment analysis routes
-    Route::get('/school-wide-payment-analysis/{termid_id}/{session_id}/{action?}/{format?}', 
-    'App\Http\Controllers\AnalysisController@schoolWidePaymentAnalysis')
-    ->name('school.wide.payment.analysis')
-    ->where([
-        'action' => 'view|download',
-        'format' => 'pdf|word'
-    ]);
+    Route::get('/school-wide-payment-analysis/{termid_id}/{session_id}/{action?}/{format?}','App\Http\Controllers\AnalysisController@schoolWidePaymentAnalysis')->name('school.wide.payment.analysis')->where(['action' => 'view|download','format' => 'pdf|word' ]);
     
 
 

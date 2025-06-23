@@ -85,63 +85,6 @@ class PermissionTableSeeder extends Seeder
            'Update subject-class',
            'Delete subject-class',
 
-
-        //    'usermanagement-link',
-        //    'staffmanagement-link',
-        //    'basicsettingsmanagement-link',
-        //    'apps-link',
-
-
-        //    'parent-list',
-        //    'parent-Create',
-        //    'parent-edit',
-        //    'parent-Delete',
-
-     
-
-          
-
-        
-
-        //    'staff-list',
-        //    'staff-Create',
-        //    'staff-edit',
-        //    'staff-Delete',
-
-        //    'student-list',
-        //    'student-Create',
-        //    'student-edit',
-        //    'student-Delete',
-        //    'student_edit-edit',
-        //    'student_Delete-Delete',
-
-        //    'student_bulk-upload',
-        //    'student_bulk-uploadsave',
-
-        //    'studentresults-list',
-
-
-        //    'subject_operation-list',
-        //    'subject_operation-Create',
-        //    'subject_operation-edit',
-        //    'subject_operation-Delete',
-
-          
-
-        //    'View_student-list',
-
-        //    'academic_operations-list',
-
-        //    'student_picture-upload',
-
-   
-
-       
-
-        //    'studenthouse-Create',
-        //    'classsettings-Create',
-        //    'classsettings-Delete',
-
         ];
 
         foreach ($permissions as $permission) {

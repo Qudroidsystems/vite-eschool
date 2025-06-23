@@ -196,7 +196,7 @@
                                                                 @endif
                                                                 @if ($subject->broadsheet_mock_exists)
                                                                     <li>
-                                                                        <a href="{{ route('subjectscoresheet-mock.index', [$subject->schoolclassid, $subject->subjectclassid, $subject->userid, $subject->termid, $subject->session_id]) }}"
+                                                                        <a href="{{ route('subjectscoresheet-mock.show', [$subject->schoolclassid, $subject->subjectclassid, $subject->userid, $subject->termid, $subject->session_id]) }}"
                                                                            class="btn btn-warning btn-icon btn-sm" title="View Mock Record">
                                                                             <i class="ph-clipboard"></i>
                                                                         </a>

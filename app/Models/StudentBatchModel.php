@@ -10,15 +10,18 @@ class StudentBatchModel extends Model
     use HasFactory;
 
     protected $table = "student_batch_upload";
-
+    protected $primaryKey = 'id';
 
     protected $fillable = [
         'title',
         'studentid',
         'schoolclassid',
         'termid',
-        'sessionid',
+        'session',
         'status',
     ];
+
+    
+
 
 }

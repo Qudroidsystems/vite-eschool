@@ -1,6 +1,3 @@
-
-
-// Ensure Axios is available
 function ensureAxios() {
     if (typeof axios === 'undefined') {
         console.error('Error: Axios is not defined');
@@ -29,7 +26,6 @@ function ensureAxios() {
     return true;
 }
 
-// Populate States
 function populateStates(stateSelectId, lgaSelectId) {
     const stateSelect = document.getElementById(stateSelectId);
     stateSelect.innerHTML = '<option value="">Select State</option>';
@@ -64,7 +60,6 @@ function populateStates(stateSelectId, lgaSelectId) {
             stateSelect.appendChild(option);
         });
 
-        // Event listener for state change to populate LGAs
         stateSelect.addEventListener('change', function () {
             populateLGAs(this.value, lgaSelectId);
         });
@@ -79,7 +74,6 @@ function populateStates(stateSelectId, lgaSelectId) {
             confirmButtonClass: "btn btn-primary",
             buttonsStyling: true
         });
-        // Fallback: Add a manual input option
         const option = document.createElement('option');
         option.value = "Other";
         option.textContent = "Other (Enter manually)";
@@ -87,7 +81,6 @@ function populateStates(stateSelectId, lgaSelectId) {
     });
 }
 
-// Populate LGAs based on selected state
 function populateLGAs(state, lgaSelectId) {
     const lgaSelect = document.getElementById(lgaSelectId);
     lgaSelect.innerHTML = '<option value="">Select Local Government</option>';
@@ -141,7 +134,6 @@ function populateLGAs(state, lgaSelectId) {
             confirmButtonClass: "btn btn-primary",
             buttonsStyling: true
         });
-        // Fallback: Add a manual input option
         const option = document.createElement('option');
         option.value = "Other";
         option.textContent = "Other (Enter manually)";
@@ -149,23 +141,148 @@ function populateLGAs(state, lgaSelectId) {
     });
 }
 
-// Initialize List.js for table sorting and searching
 let studentList;
+let allStudents = [];
+const itemsPerPage = 10;
+
 function initializeList() {
+    if (typeof List === 'undefined') {
+        console.error('List.js is not loaded');
+        Swal.fire({
+            title: "Error!",
+            text: "List.js library is missing",
+            icon: "error",
+            confirmButtonClass: "btn btn-primary",
+            buttonsStyling: true
+        });
+        return;
+    }
     const options = {
         valueNames: ['name', 'admissionNo', 'class', 'status', 'gender', 'datereg'],
-        page: 10,
+        page: itemsPerPage,
         pagination: true
     };
     studentList = new List('studentList', options);
     studentList.on('updated', function () {
-        document.querySelector('.noresult').style.display = studentList.visibleItems.length === 0 ? 'block' : 'none';
-        document.querySelector('.fw-semibold').textContent = studentList.visibleItems.length;
+        updatePagination();
+        document.querySelector('.noresult') ? 
+            document.querySelector('.noresult').style.display = studentList.visibleItems.length === 0 ? 'block' : 'none' : 
+            console.warn('No .noresult element found');
+        document.querySelector('#showingCount').textContent = studentList.visibleItems.length;
+        document.querySelector('#totalCount').textContent = studentList.items.length;
+        document.querySelector('#totalStudents').textContent = studentList.items.length;
     });
 }
 
-// Filter Data
+function fetchStudents() {
+    if (!ensureAxios()) return;
+    console.log('Fetching students from /students/data');
+    axios.get('/students/data')
+        .then((response) => {
+            console.log('Students data received:', response.data);
+            if (!response.data.success) {
+                throw new Error(response.data.message || 'Failed to fetch students');
+            }
+            allStudents = response.data.students || [];
+            document.querySelector('#totalStudents').textContent = allStudents.length;
+            document.querySelector('#totalCount').textContent = allStudents.length;
+            renderStudents(allStudents);
+            initializeList();
+            filterData();
+        })
+        .catch((error) => {
+            console.error('Error fetching students:', {
+                message: error.message,
+                status: error.response?.status,
+                data: error.response?.data,
+                url: '/students/data'
+            });
+            Swal.fire({
+                title: "Error!",
+                text: error.response?.data?.message || error.message || "Failed to load students. Check console for details.",
+                icon: "error",
+                confirmButtonClass: "btn btn-primary",
+                buttonsStyling: true
+            });
+            // Render empty table as fallback
+            renderStudents([]);
+        });
+}
+
+function renderStudents(students) {
+    const tbody = document.getElementById('studentTableBody');
+    tbody.innerHTML = '';
+    students.forEach(student => {
+        const row = document.createElement('tr');
+        const actionButtons = [];
+        if (window.appPermissions.canShowStudent) {
+            actionButtons.push(`<li><a href="/student/${student.id || ''}" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a></li>`);
+        }
+        if (window.appPermissions.canUpdateStudent) {
+            actionButtons.push(`<li><a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" data-bs-toggle="modal" data-bs-target="#editStudentModal" data-id="${student.id || ''}"><i class="ph-pencil"></i></a></li>`);
+        }
+        if (window.appPermissions.canDeleteStudent) {
+            actionButtons.push(`<li><a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-id="${student.id || ''}"><i class="ph-trash"></i></a></li>`);
+        }
+        row.innerHTML = `
+            <td class="id" data-id="${student.id || ''}">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" name="chk_child">
+                    <label class="form-check-label"></label>
+                </div>
+            </td>
+            <td class="name" data-name="${student.firstname || ''} ${student.lastname || ''}">
+                <div class="d-flex align-items-center">
+                    <div class="symbol symbol-50px me-3">
+                        <img src="${student.picture ? '/storage/' + student.picture : '/theme/layouts/assets/media/avatars/blank.png'}" alt="" class="avatar-xs"/>
+                    </div>
+                    <div>
+                        <h6 class="mb-0"><a href="/student/${student.id || ''}" class="text-reset products">${student.firstname || ''} ${student.lastname || ''}</a></h6>
+                    </div>
+                </div>
+            </td>
+            <td class="admissionNo" data-admissionNo="${student.admissionNo || ''}">${student.admissionNo || ''}</td>
+            <td class="class" data-class="${student.schoolclassid || ''}">${student.schoolclass || ''} - ${student.arm || ''}</td>
+            <td class="status" data-status="${student.statusId || ''}">${student.statusId == 1 ? 'Old Student' : student.statusId == 2 ? 'New Student' : ''}</td>
+            <td class="gender" data-gender="${student.gender || ''}">${student.gender || ''}</td>
+            <td class="datereg">${student.created_at ? new Date(student.created_at).toISOString().split('T')[0] : ''}</td>
+            <td>
+                <ul class="d-flex gap-2 list-unstyled mb-0">
+                    ${actionButtons.join('')}
+                </ul>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+    initializeCheckboxes();
+}
+
+function updatePagination() {
+    if (!studentList) return;
+    const totalItems = studentList.items.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const currentPage = studentList.page ? Math.ceil(studentList.i / itemsPerPage) : 1;
+    const paginationLinks = document.getElementById('paginationLinks');
+    paginationLinks.innerHTML = '';
+
+    for (let i = 1; i <= totalPages; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="javascript:void(0);">${i}</a>`;
+        li.addEventListener('click', () => {
+            studentList.show((i - 1) * itemsPerPage + 1, itemsPerPage);
+        });
+        paginationLinks.appendChild(li);
+    }
+
+    document.getElementById('prevPage').classList.toggle('disabled', currentPage === 1);
+    document.getElementById('nextPage').classList.toggle('disabled', currentPage === totalPages);
+    document.getElementById('prevPage').onclick = currentPage > 1 ? () => studentList.show((currentPage - 2) * itemsPerPage + 1, itemsPerPage) : null;
+    document.getElementById('nextPage').onclick = currentPage < totalPages ? () => studentList.show(currentPage * itemsPerPage + 1, itemsPerPage) : null;
+}
+
 function filterData() {
+    if (!studentList) return;
     const search = document.querySelector('.search').value.toLowerCase();
     const classId = document.getElementById('idClass').value;
     const statusId = document.getElementById('idStatus').value;
@@ -187,7 +304,6 @@ function filterData() {
     });
 }
 
-// Delete Multiple Students
 function deleteMultiple() {
     const ids = Array.from(document.querySelectorAll('input[name="chk_child"]:checked'))
         .map(checkbox => checkbox.closest('tr').querySelector('.id').dataset.id);
@@ -242,31 +358,7 @@ function deleteMultiple() {
     });
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    // Initialize List.js
-    initializeList();
-
-    // Initialize Choices.js for select elements
-    if (typeof Choices !== 'undefined') {
-        document.querySelectorAll('[data-choices]').forEach(element => {
-            new Choices(element, {
-                searchEnabled: element.dataset.choicesSearchFalse !== undefined,
-                removeItemButton: element.dataset.choicesRemoveitem !== undefined
-            });
-        });
-    }
-
-    // Populate state and LGA dropdowns
-    populateStates('addState', 'addLocal');
-    populateStates('editState', 'editLocal');
-
-    // Filter event listeners
-    document.querySelector('.search').addEventListener('input', filterData);
-    document.getElementById('idClass').addEventListener('change', filterData);
-    document.getElementById('idStatus').addEventListener('change', filterData);
-    document.getElementById('idGender').addEventListener('change', filterData);
-
-    // Check all checkbox
+function initializeCheckboxes() {
     document.getElementById('checkAll').addEventListener('change', function () {
         document.querySelectorAll('input[name="chk_child"]').forEach(checkbox => {
             checkbox.checked = this.checked;
@@ -274,7 +366,6 @@ document.addEventListener("DOMContentLoaded", function () {
         document.getElementById('remove-actions').classList.toggle('d-none', !this.checked);
     });
 
-    // Individual checkboxes
     document.querySelectorAll('input[name="chk_child"]').forEach(checkbox => {
         checkbox.addEventListener('change', function () {
             const allChecked = document.querySelectorAll('input[name="chk_child"]').length ===
@@ -284,217 +375,39 @@ document.addEventListener("DOMContentLoaded", function () {
                 document.querySelectorAll('input[name="chk_child"]:checked').length === 0);
         });
     });
+}
 
-    // Add Student Form Submission
-    document.getElementById('addStudentForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        if (!ensureAxios()) return;
+function showage(dob, targetId = 'addAge') {
+    if (!dob) return;
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    document.getElementById(targetId).textContent = `Age: ${age} years`;
+    // Auto-populate the age field for Add Student form
+    if (targetId === 'addAge') {
+        document.getElementById('age1').value = age;
+    } else {
+        document.getElementById('editAge').value = age;
+    }
+}
 
-        const formData = new FormData(this);
-        axios.post(this.action, formData).then((response) => {
-            Swal.fire({
-                title: "Success!",
-                text: "Student added successfully",
-                icon: "success",
-                confirmButtonClass: "btn btn-primary",
-                buttonsStyling: true
-            }).then(() => {
-                window.location.reload();
-            });
-        }).catch((error) => {
-            console.error('Error adding student:', error);
-            Swal.fire({
-                title: "Error!",
-                text: error.response?.data?.message || "Failed to add student",
-                icon: "error",
-                confirmButtonClass: "btn btn-primary",
-                buttonsStyling: true
-            });
-        });
-    });
+function initializeStudentList() {
+    // Populate state and LGA dropdowns
+    populateStates('addState', 'addLocal');
+    populateStates('editState', 'editLocal');
 
-    // Edit Student Modal Population - Fixed version
-    document.querySelectorAll(".edit-item-btn").forEach((button) => {
-        button.addEventListener("click", function () {
-            const id = this.getAttribute("data-id");
-            console.log("Edit button clicked for student ID:", id);
-            if (!ensureAxios()) return;
+    // Fetch students and initialize table
+    fetchStudents();
 
-            axios.get(`/student/${id}/edit`).then((response) => {
-                console.log("Student data received:", response.data);
-                const student = response.data.student;
-                if (!student) {
-                    throw new Error("Student data is empty");
-                }
-
-                // Populate basic fields
-                const fields = [
-                    { id: "editStudentId", value: student.id },
-                    { id: "editAdmissionNo", value: student.admissionNo },
-                    { id: "editTittle", value: student.title },
-                    { id: "editFirstname", value: student.firstname },
-                    { id: "editLastname", value: student.lastname },
-                    { id: "editOthername", value: student.othername || '' },
-                    { id: "editHomeAddress", value: student.home_address },
-                    { id: "editHomeAddress2", value: student.home_address2 },
-                    { id: "editDOB", value: student.dateofbirth },
-                    { id: "editPlaceofbirth", value: student.placeofbirth },
-                    { id: "editNationality", value: student.nationality || '' },
-                    { id: "editReligion", value: student.religion || '' },
-                    { id: "editLastSchool", value: student.last_school },
-                    { id: "editLastClass", value: student.last_class },
-                    { id: "editSchoolclassid", value: student.schoolclassid },
-                    { id: "editTermid", value: student.termid },
-                    { id: "editSessionid", value: student.sessionid }
-                ];
-
-                fields.forEach(({ id, value }) => {
-                    const element = document.getElementById(id);
-                    if (element) {
-                        element.value = value || '';
-                    } else {
-                        console.warn(`Element with ID '${id}' not found`);
-                    }
-                });
-
-                // Handle gender radio buttons
-                const genderRadios = document.querySelectorAll('input[name="gender"]');
-                genderRadios.forEach(radio => {
-                    radio.checked = (radio.value === student.gender);
-                });
-                console.log(`Set gender to: ${student.gender}`);
-
-                // Handle age
-                if (student.dateofbirth) {
-                    showage(student.dateofbirth, 'editAge');
-                } else if (student.age) {
-                    document.getElementById('editAge').value = student.age;
-                }
-
-                // Handle student status radio buttons
-                const statusRadios = document.querySelectorAll('input[name="statusId"]');
-                statusRadios.forEach(radio => {
-                    radio.checked = (parseInt(radio.value) === parseInt(student.statusId));
-                });
-                console.log(`Set status to: ${student.statusId}`);
-
-                // Handle avatar
-                const avatarElement = document.getElementById("editStudentAvatar");
-                if (avatarElement) {
-                    avatarElement.src = student.picture ? `/storage/${student.picture}` : '/theme/layouts/assets/media/avatars/blank.png';
-                    avatarElement.setAttribute('data-original-src', student.picture ? `/storage/${student.picture}` : '/theme/layouts/assets/media/avatars/blank.png');
-                }
-
-                // Handle state and LGA
-                const stateSelect = document.getElementById("editState");
-                const lgaSelect = document.getElementById("editLocal");
-                
-                if (student.state && stateSelect) {
-                    // Set state value
-                    stateSelect.value = student.state;
-                    
-                    // Populate LGAs after a small delay to ensure state is set
-                    setTimeout(() => {
-                        populateLGAs(student.state, 'editLocal');
-                        
-                        // Set LGA value after LGAs are populated (another small delay)
-                        setTimeout(() => {
-                            if (lgaSelect) {
-                                lgaSelect.value = student.local || '';
-                            }
-                        }, 200);
-                    }, 100);
-                }
-
-                // Update form action
-                const form = document.getElementById('editStudentForm');
-                if (form) {
-                    form.action = `/student/${id}`;
-                }
-
-            }).catch((error) => {
-                console.error("Error fetching student:", error);
-                Swal.fire({
-                    title: "Error!",
-                    text: error.response?.data?.message || "Failed to load student data",
-                    icon: "error",
-                    confirmButtonClass: "btn btn-primary",
-                    buttonsStyling: false
-                });
-            });
-        });
-    });
-
-    // Edit Student Form Submission
-    document.getElementById('editStudentForm').addEventListener('submit', function (e) {
-        e.preventDefault();
-        if (!ensureAxios()) return;
-
-        const id = document.getElementById('editStudentId').value;
-        const formData = new FormData(this);
-        axios.post(this.action, formData, {
-            headers: { 'X-HTTP-Method-Override': 'PATCH' }
-        }).then((response) => {
-            Swal.fire({
-                title: "Success!",
-                text: "Student updated successfully",
-                icon: "success",
-                confirmButtonClass: "btn btn-primary",
-                buttonsStyling: true
-            }).then(() => {
-                window.location.reload();
-            });
-        }).catch((error) => {
-            console.error('Error updating student:', error);
-            Swal.fire({
-                title: "Error!",
-                text: error.response?.data?.message || "Failed to update student",
-                icon: "error",
-                confirmButtonClass: "btn btn-primary",
-                buttonsStyling: true
-            });
-        });
-    });
-
-    // Delete Single Student
-    document.querySelectorAll('.remove-item-btn').forEach(button => {
-        button.addEventListener('click', function () {
-            const id = this.getAttribute('data-id');
-            Swal.fire({
-                title: "Are you sure?",
-                text: "You won't be able to revert this!",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonClass: "btn btn-primary",
-                cancelButtonClass: "btn btn-light",
-                buttonsStyling: true
-            }).then((result) => {
-                if (result.isConfirmed && ensureAxios()) {
-                    axios.delete(`/student/${id}`).then(() => {
-                        const row = this.closest('tr');
-                        if (row) row.remove();
-                        studentList.reIndex();
-                        Swal.fire({
-                            title: "Deleted!",
-                            text: "Student has been deleted",
-                            icon: "success",
-                            confirmButtonClass: "btn btn-primary",
-                            buttonsStyling: true
-                        });
-                    }).catch((error) => {
-                        console.error('Error deleting student:', error);
-                        Swal.fire({
-                            title: "Error!",
-                            text: error.response?.data?.message || "Failed to delete student",
-                            icon: "error",
-                            confirmButtonClass: "btn btn-primary",
-                            buttonsStyling: true
-                        });
-                    });
-                }
-            });
-        });
-    });
+    // Filter event listeners
+    document.querySelector('.search').addEventListener('input', filterData);
+    document.getElementById('idClass').addEventListener('change', filterData);
+    document.getElementById('idStatus').addEventListener('change', filterData);
+    document.getElementById('idGender').addEventListener('change', filterData);
 
     // Image Preview for Add Student Modal
     document.getElementById('avatar').addEventListener('change', function(event) {
@@ -577,4 +490,218 @@ document.addEventListener("DOMContentLoaded", function () {
             preview.src = preview.getAttribute('data-original-src') || '/theme/layouts/assets/media/avatars/blank.png';
         }
     });
-});
+
+    // Edit Student Button Click
+    document.getElementById('studentTableBody').addEventListener('click', function(e) {
+        if (e.target.closest('.edit-item-btn')) {
+            const button = e.target.closest('.edit-item-btn');
+            const avatarImg = document.getElementById('editStudentAvatar');
+            avatarImg.setAttribute('data-original-src', avatarImg.src);
+            const id = button.getAttribute("data-id");
+            console.log("Edit button clicked for student ID:", id);
+            if (!ensureAxios()) return;
+
+            axios.get(`/student/${id}/edit`).then((response) => {
+                console.log("Student data received:", response.data);
+                const student = response.data.student;
+                if (!student) {
+                    throw new Error("Student data is empty");
+                }
+
+                const fields = [
+                    { id: "editStudentId", value: student.id },
+                    { id: "editAdmissionNo", value: student.admissionNo },
+                    { id: "editTittle", value: student.title || '' },
+                    { id: "editFirstname", value: student.firstname },
+                    { id: "editLastname", value: student.lastname },
+                    { id: "editOthername", value: student.othername || '' },
+                    { id: "editHomeAddress", value: student.home_address },
+                    { id: "editHomeAddress2", value: student.home_address2 },
+                    { id: "editDOB", value: student.dateofbirth },
+                    { id: "editPlaceofbirth", value: student.placeofbirth },
+                    { id: "editNationality", value: student.nationality || '' },
+                    { id: "editReligion", value: student.religion || '' },
+                    { id: "editLastSchool", value: student.last_school },
+                    { id: "editLastClass", value: student.last_class },
+                    { id: "editSchoolclassid", value: student.schoolclassid || '' },
+                    { id: "editTermid", value: student.termid || '' },
+                    { id: "editSessionid", value: student.sessionid || '' },
+                    { id: "editAge", value: student.age || '' }
+                ];
+
+                fields.forEach(({ id, value }) => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.value = value || '';
+                    } else {
+                        console.warn(`Element with ID '${id}' not found`);
+                    }
+                });
+
+                // Set gender radio buttons
+                const genderRadios = document.querySelectorAll('input[name="gender"]');
+                genderRadios.forEach(radio => {
+                    radio.checked = (radio.value === student.gender);
+                });
+                console.log(`Set gender to: ${student.gender}`);
+
+                // Set status radio buttons
+                const statusRadios = document.querySelectorAll('input[name="statusId"]');
+                statusRadios.forEach(radio => {
+                    radio.checked = (parseInt(radio.value) === parseInt(student.statusId));
+                });
+                console.log(`Set status to: ${student.statusId}`);
+
+                // Set avatar
+                const avatarElement = document.getElementById("editStudentAvatar");
+                if (avatarElement) {
+                    avatarElement.src = student.picture ? `/storage/${student.picture}` : '/theme/layouts/assets/media/avatars/blank.png';
+                    avatarElement.setAttribute('data-original-src', student.picture ? `/storage/${student.picture}` : '/theme/layouts/assets/media/avatars/blank.png');
+                }
+
+                // Set state and LGA
+                const stateSelect = document.getElementById("editState");
+                const lgaSelect = document.getElementById("editLocal");
+                if (student.state && stateSelect) {
+                    stateSelect.value = student.state;
+                    setTimeout(() => {
+                        populateLGAs(student.state, 'editLocal');
+                        setTimeout(() => {
+                            if (lgaSelect) {
+                                lgaSelect.value = student.local || '';
+                            }
+                        }, 200);
+                    }, 100);
+                } else if (lgaSelect) {
+                    lgaSelect.innerHTML = '<option value="">Select Local Government</option>';
+                }
+
+                // Calculate and display age if DOB is present
+                if (student.dateofbirth) {
+                    showage(student.dateofbirth, 'editAge');
+                }
+
+                // Set form action
+                const form = document.getElementById('editStudentForm');
+                if (form) {
+                    form.action = `/student/${id}`;
+                }
+            }).catch((error) => {
+                console.error("Error fetching student:", {
+                    message: error.message,
+                    status: error.response?.status,
+                    data: error.response?.data
+                });
+                Swal.fire({
+                    title: "Error!",
+                    text: error.response?.data?.message || "Failed to load student data. Check console for details.",
+                    icon: "error",
+                    confirmButtonClass: "btn btn-primary",
+                    buttonsStyling: false
+                });
+            });
+        }
+    });
+
+    // Add Student Form Submission
+    document.getElementById('addStudentForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!ensureAxios()) return;
+
+        const formData = new FormData(this);
+        axios.post(this.action, formData).then((response) => {
+            Swal.fire({
+                title: "Success!",
+                text: "Student added successfully",
+                icon: "success",
+                confirmButtonClass: "btn btn-primary",
+                buttonsStyling: true
+            }).then(() => {
+                fetchStudents();
+                document.getElementById('addStudentModal').querySelector('.btn-close').click();
+            });
+        }).catch((error) => {
+            console.error('Error adding student:', error);
+            Swal.fire({
+                title: "Error!",
+                text: error.response?.data?.message || "Failed to add student",
+                icon: "error",
+                confirmButtonClass: "btn btn-primary",
+                buttonsStyling: true
+            });
+        });
+    });
+
+    // Edit Student Form Submission
+    document.getElementById('editStudentForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        if (!ensureAxios()) return;
+
+        const id = document.getElementById('editStudentId').value;
+        const formData = new FormData(this);
+        axios.post(this.action, formData, {
+            headers: { 'X-HTTP-Method-Override': 'PATCH' }
+        }).then((response) => {
+            Swal.fire({
+                title: "Success!",
+                text: "Student updated successfully",
+                icon: "success",
+                confirmButtonClass: "btn btn-primary",
+                buttonsStyling: true
+            }).then(() => {
+                fetchStudents();
+                document.getElementById('editStudentModal').querySelector('.btn-close').click();
+            });
+        }).catch((error) => {
+            console.error('Error updating student:', error);
+            Swal.fire({
+                title: "Error!",
+                text: error.response?.data?.message || "Failed to update student",
+                icon: "error",
+                confirmButtonClass: "btn btn-primary",
+                buttonsStyling: true
+            });
+        });
+    });
+
+    // Delete Single Student
+    document.getElementById('studentTableBody').addEventListener('click', function(e) {
+        if (e.target.closest('.remove-item-btn')) {
+            const button = e.target.closest('.remove-item-btn');
+            const id = button.getAttribute('data-id');
+            Swal.fire({
+                title: "Are you sure?",
+                text: "You won't be able to revert this!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonClass: "btn btn-primary",
+                cancelButtonClass: "btn btn-light",
+                buttonsStyling: true
+            }).then((result) => {
+                if (result.isConfirmed && ensureAxios()) {
+                    axios.delete(`/student/${id}`).then(() => {
+                        const row = button.closest('tr');
+                        if (row) row.remove();
+                        studentList.reIndex();
+                        Swal.fire({
+                            title: "Deleted!",
+                            text: "Student has been deleted",
+                            icon: "success",
+                            confirmButtonClass: "btn btn-primary",
+                            buttonsStyling: true
+                        });
+                    }).catch((error) => {
+                        console.error('Error deleting student:', error);
+                        Swal.fire({
+                            title: "Error!",
+                            text: error.response?.data?.message || "Failed to delete student",
+                            icon: "error",
+                            confirmButtonClass: "btn btn-primary",
+                            buttonsStyling: true
+                        });
+                    });
+                }
+            });
+        }
+    });
+}

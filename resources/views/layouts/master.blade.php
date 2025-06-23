@@ -100,6 +100,10 @@
         @include('layouts.pages-assets.css.student-list-css')
    @endif  
 
+    @if (Route::is('studentbatchindex'))
+        @include('layouts.pages-assets.css.student-list-css')
+   @endif
+
    @if (Route::is('myclass.*'))
        @include('layouts.pages-assets.css.myclass-list-css')
    @endif 
@@ -299,9 +303,9 @@
                                                <a href="{{ route('student.index') }}" class="nav-link" data-key="t-products">All Students</a>
                                          </li>
                                     @endcan
-                                   @can('student-bulk-upload')
+                                   @can('Create student-bulk-upload')
                                        <li class="nav-item">
-                                              <a href="{{ route('student.batchindex') }}" class="nav-link" data-key="t-products-grid">Batch Student Registration</a>
+                                              <a href="{{ route('studentbatchindex') }}" class="nav-link" data-key="t-products-grid">Batch Student Registration</a>
                                        </li>
                                    @endcan
                                     
@@ -1842,6 +1846,10 @@
 
       @if (Route::is('student.*'))
              @include('layouts.pages-assets.js.student-list-js')
+      @endif
+
+      @if (Route::is('studentbatchindex'))
+             @include('layouts.pages-assets.js.studentbatch-list-js')
       @endif
 
       @if (Route::is('myclass.*'))

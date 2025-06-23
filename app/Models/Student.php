@@ -34,6 +34,7 @@ class Student extends Model
         'last_class',
         'registeredBy',
         'statusId',
+        'batchid',
 
     ];
 

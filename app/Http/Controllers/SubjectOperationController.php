@@ -137,7 +137,7 @@ class SubjectOperationController extends Controller
                 'studentclass.sessionid',
                 'schoolclass.schoolclass as class_name',
                 'schoolarm.arm as arm_name'
-            ])->paginate(10)->appends($request->query());
+            ])->paginate(100)->appends($request->query());
 
             if (config('app.debug')) {
                 Log::info('Students fetched', [

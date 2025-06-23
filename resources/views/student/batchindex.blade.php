@@ -1,235 +1,413 @@
 @extends('layouts.master')
+
 @section('content')
+<style>
+    #batch-loader {
+        backdrop-filter: blur(2px);
+        font-size: 1.1rem;
+        color: #333;
+    }
+    #batch-loader .spinner-border {
+        width: 2rem;
+        height: 2rem;
+    }
+    #deleteRecordModal .spinner-border {
+        width: 1.5rem;
+        height: 1.5rem;
+    }
+</style>
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <!-- Start page title -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Batch Uploads</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="javascript:void(0);">Student Management</a></li>
+                                <li class="breadcrumb-item active">Batch Uploads</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- End page title -->
 
-            <!--begin::Main-->
-            <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
-                <!--begin::Content wrapper-->
-                <div class="d-flex flex-column flex-column-fluid">
+            <!-- Batch Status Chart -->
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Batch Upload Status</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="batchStatusChart" height="100"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                <!--begin::Toolbar-->
-                <div id="kt_app_toolbar" class="app-toolbar  py-3 py-lg-6 ">
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <strong>Whoops!</strong> There were some problems with your input.<br><br>
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
-                            <!--begin::Toolbar container-->
-                        <div id="kt_app_toolbar_container" class="app-container  container-xxl d-flex flex-stack ">
+            @if (session('status'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('status') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
+            @if (session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
 
-                            <!--begin::Page title-->
-                            <div  class="page-title d-flex flex-column justify-content-center flex-wrap me-3 ">
-                                <!--begin::Title-->
-                                <h1 class="page-heading d-flex text-dark fw-bold fs-3 flex-column justify-content-center my-0">
-                                Student Management
-                                        </h1>
-                                <!--end::Title-->
-
-
-                                    <!--begin::Breadcrumb-->
-                                    <ul class="breadcrumb breadcrumb-separatorless fw-semibold fs-7 my-0 pt-1">
-                                                        <!--begin::Item-->
-                                                        <li class="breadcrumb-item text-muted">
-                                                            <a href="{{ route('student.index') }}" class="text-muted text-hover-primary">Student Management </a>
-                                                                        </li>
-                                                            <!--end::Item-->
-                                                                <!--begin::Item-->
-                                                <li class="breadcrumb-item">
-                                                    <span class="bullet bg-gray-400 w-5px h-2px"></span>
-                                                </li>
-                                                <!--end::Item-->
-
-                                                        <!--begin::Item-->
-                                                                <li class="breadcrumb-item text-muted">Student Management</li>
-                                                            <!--end::Item-->
-
-                                                </ul>
-                                    <!--end::Breadcrumb-->
+            <div id="batchList">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-xxl-4">
+                                        <div class="search-box">
+                                            <input type="text" class="form-control search" placeholder="Search batches">
+                                            <i class="ri-search-line search-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col-xxl-3 col-sm-6">
+                                        <select class="form-control" id="idStatus" data-choices data-choices-search-false>
+                                            <option value="all">Select Status</option>
+                                            <option value="Success">Success</option>
+                                            <option value="Failed">Failed</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-3 col-sm-6">
+                                        <select class="form-control" id="idClass" data-choices data-choices-search-false>
+                                            <option value="all">Select Class</option>
+                                            @foreach ($batch->pluck('schoolclass')->unique() as $class)
+                                                <option value="{{ $class }}">{{ $class }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-2 col-sm-6">
+                                        <button type="button" class="btn btn-secondary w-100" onclick="filterData();"><i class="bi bi-funnel align-baseline me-1"></i> Filters</button>
+                                    </div>
                                 </div>
-                            <!--end::Page title-->
-                                @if ($errors->any())
-                                <div class="alert alert-danger">
-                                    <strong>Whoops!</strong> There were some problems with your input.<br><br>
-                                    <ul>
-                                        @foreach ($errors->all() as $error)
-                                            <li>{{ $error }}</li>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-header d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h5 class="card-title mb-0">Batch Uploads <span class="badge bg-dark-subtle text-dark ms-1">{{ $batch->count() }}</span></h5>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <div class="d-flex flex-wrap align-items-start gap-2">
+                                        @can('Create student-bulk-upload')
+                                            <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
+                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addBatchModal"><i class="bi bi-plus-circle align-baseline me-1"></i> New Batch Upload</button>
+                                        @endcan
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-centered align-middle table-nowrap mb-0" id="batchListTable">
+                                        <thead class="table-active">
+                                            <tr>
+                                                <th><div class="form-check"><input class="form-check-input" type="checkbox" value="option" id="checkAll"><label class="form-check-label" for="checkAll"></label></div></th>
+                                                <th class="sort cursor-pointer" data-sort="sn">SN</th>
+                                                <th class="sort cursor-pointer" data-sort="title">Batch Title</th>
+                                                <th class="sort cursor-pointer" data-sort="schoolclass">School Class</th>
+                                                <th class="sort cursor-pointer" data-sort="arm">School Arm</th>
+                                                <th class="sort cursor-pointer" data-sort="term">Term</th>
+                                                <th class="sort cursor-pointer" data-sort="session">Session</th>
+                                                <th class="sort cursor-pointer" data-sort="status">Status</th>
+                                                <th class="sort cursor-pointer" data-sort="upload_date">Upload Date</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="list form-check-all">
+                                            @php $i = 0 @endphp
+                                            @forelse ($batch as $sc)
+                                                <tr>
+                                                    <td class="id" data-id="{{ $sc->id }}">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="chk_child">
+                                                            <label class="form-check-label"></label>
+                                                        </div>
+                                                    </td>
+                                                    <td class="sn">{{ ++$i }}</td>
+                                                    <td class="title">{{ $sc->title }}</td>
+                                                    <td class="schoolclass">{{ $sc->schoolclass }}</td>
+                                                    <td class="arm">{{ $sc->arm }}</td>
+                                                    <td class="term">{{ $sc->term }}</td>
+                                                    <td class="session">{{ $sc->session }}</td>
+                                                    <td class="status" data-status="{{ $sc->status }}">
+                                                        <span class="badge bg-{{ $sc->status == 'Success' ? 'success' : 'danger' }}">{{ $sc->status }}</span>
+                                                    </td>
+                                                    <td class="upload_date">{{ Carbon\Carbon::parse($sc->upload_date)->format('Y-m-d') }}</td>
+                                                    <td>
+                                                        <ul class="d-flex gap-2 list-unstyled mb-0">
+                                                            @can('Create student-bulk-upload')
+                                                                
+                                                                <li>
+                                                                    <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-id="{{ $sc->id }}"><i class="ph-trash"></i></a>
+                                                                </li>
+                                                            @endcan
+                                                        </ul>
+                                                    </td>
+                                                </tr>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="10" class="noresult" style="display: block;">No results found</td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="row mt-3 align-items-center" id="pagination-element">
+                                    <div class="col-sm">
+                                        <div class="text-muted text-center text-sm-start">
+                                            Showing <span class="fw-semibold">{{ $batch->count() }}</span> of <span class="fw-semibold">{{ $batch->count() }}</span> Results
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add Batch Modal -->
+            <div id="addBatchModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 id="addModalLabel" class="modal-title">Add Batch Upload</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form class="tablelist-form" autocomplete="off" id="add-batch-form" action="{{ route('student.bulkuploadsave') }}" method="POST" enctype="multipart/form-data">
+                            @csrf
+                            <div class="modal-body position-relative">
+                                <!-- Loader Overlay -->
+                                <div id="batch-loader" class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255, 255, 255, 0.8); z-index: 1000;">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <span class="ms-2">Processing Batch...</span>
+                                </div>
+                                <!-- Form Fields -->
+                                <div class="mb-3">
+                                    <label for="title" class="form-label">Batch Title</label>
+                                    <input type="text" id="title" name="title" class="form-control" placeholder="Enter batch title" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="schoolclassid" class="form-label">School Class & Arm</label>
+                                    <select id="schoolclassid" name="schoolclassid" class="form-control" data-choices data-choices-search-true required>
+                                        <option value="">Select Class</option>
+                                        @foreach ($schoolclass as $sc)
+                                            <option value="{{ $sc->id }}">{{ $sc->schoolclass }} - {{ $sc->arm }}</option>
                                         @endforeach
-                                    </ul>
+                                    </select>
                                 </div>
-                                @endif
-
-                                @if (\Session::has('status'))
-                                <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                                {{ \Session::get('status') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                <div class="mb-3">
+                                    <label for="termid" class="form-label">Term</label>
+                                    <select id="termid" name="termid" class="form-control" data-choices data-choices-search-true required>
+                                        <option value="">Select Term</option>
+                                        @foreach ($schoolterm as $sc)
+                                            <option value="{{ $sc->id }}">{{ $sc->term }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                                @endif
-                                @if (\Session::has('success'))
-                                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                {{ \Session::get('success') }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                <div class="mb-3">
+                                    <label for="sessionid" class="form-label">Session</label>
+                                    <select id="sessionid" name="sessionid" class="form-control" data-choices data-choices-search-true required>
+                                        <option value="">Select Session</option>
+                                        @foreach ($schoolsession as $sc)
+                                            <option value="{{ $sc->id }}">{{ $sc->session }}</option>
+                                        @endforeach
+                                    </select>
                                 </div>
-                                @endif
-
+                                <div class="mb-3">
+                                    <label for="filesheet" class="form-label">Upload File</label>
+                                    <input type="file" id="filesheet" name="filesheet" class="form-control" accept=".xlsx,.xls,.csv" required>
+                                </div>
+                                <div class="alert alert-danger d-none" id="alert-error-msg"></div>
                             </div>
-                            <!--end::Toolbar container-->
-                        </div>
-                    <!--end::Toolbar-->
-
-
-                    <div id="kt_app_content" class="app-content  flex-column-fluid " >
-                        <!--begin::Content container-->
-                        <div id="kt_app_content_container" class="app-container ">
-
-                   <!--begin::Toolbar-->
-                        <div class="d-flex flex-wrap flex-stack my-5">
-                            <!--begin::Heading-->
-                            <h2 class="fs-2 fw-semibold my-2">
-                                Student Bath Upload Management
-                                <span class="fs-6 text-gray-400 ms-1">Database</span>
-                            </h2>
-                            <!--end::Heading-->
-
-
-                        </div>
-                    <!--end::Toolbar-->
-
-
-
-        <!--begin::Card-->
-    <div class="card">
-            <!--begin::Card header-->
-            <div class="card-header border-0 pt-6">
-
-                  <!--begin::Card toolbar-->
-                    <div class="card-toolbar">
-                              <!--begin::Toolbar-->
-                                    <div class="d-flex justify-content-end" data-kt-user-table-toolbar="base">
-                                                <!--begin::Add user-->
-                                                <a href="{{ route('student.bulkupload') }}" type="button" class="btn btn-primary">
-                                                    <i class="ki-duotone ki-plus fs-2"></i>     New Batch Upload
-                                                </a>
-                                                <!--end::Add user-->
-                                    </div>
-
-
-
-
-
-                                    </div>
-                                    <!--end::Card toolbar-->
-                                            <!--begin::Card toolbar-->
-                                            <div class="card-toolbar">
-                                                <!--begin::Search-->
-                                                <div class="d-flex align-items-center position-relative my-1"  data-kt-view-roles-table-toolbar="base">
-                                                    <i class="ki-duotone ki-magnifier fs-1 position-absolute ms-6"><span class="path1"></span><span class="path2"></span></i>                <input type="text" data-kt-roles-table-filter="search" class="form-control form-control-solid w-250px ps-15" placeholder="Search ..." />
-                                                </div>
-                                                <!--end::Search-->
-
-                                                <!--begin::Group actions-->
-                                                <div class="d-flex justify-content-end align-items-center d-none" data-kt-view-roles-table-toolbar="selected">
-                                                    <div class="fw-bold me-5">
-                                                        <span class="me-2" data-kt-view-roles-table-select="selected_count"></span> Selected
-                                                    </div>
-
-                                                    <button type="button" class="btn btn-danger" data-kt-view-roles-table-select="delete_selected">
-                                                        Delete Selected
-                                                    </button>
-                                                </div>
-                                                <!--end::Group actions-->
-                                            </div>
-                                            <!--end::Card toolbar-->
-            </div>
-            <!--end::Card header-->
-
-            @if (count($errors) > 0)
-            <div class="row animated fadeInUp">
-                @if (count($errors) > 0)
-            <div class="alert alert-warning fade in">
-            <a href="#" class="close" data-dismiss="alert">&times;</a>
-                <strong>Opps!</strong> Something went wrong, please check below errors.<br><br>
-                <ul>
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-            @endif
-            </div>
-            @endif
-            <!--begin::Card body-->
-            <div class="card-body py-4">
-
-             <!--begin::Table-->
-        <table class="table align-middle table-row-dashed fs-6 gy-5 mb-0" id="kt_roles_view_table">
-            <thead>
-                <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
-                    <th class="w-10px pe-2">
-                        <div class="form-check form-check-sm form-check-custom form-check-solid me-3">
-                            <input class="form-check-input" type="checkbox" data-kt-check="true" data-kt-check-target="#kt_roles_view_table .form-check-input" value="1" />
-                        </div>
-                    </th>
-                    <th class="min-w-125px">SN</th>
-                    <th class="min-w-125px">Batch Title</th>
-                    <th class="min-w-125px">School Class</th>
-                    <th class="min-w-125px">Batch Status</th>
-                    <th class="min-w-125px">School Arm</th>
-                    <th class="min-w-125px">Term</th>
-                    <th class="min-w-125px">Session</th>
-                    <th class="min-w-100px">Upload Date</th>
-                    <th class="min-w-100px">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="fw-semibold text-gray-600">
-                @php
-                 $i = 0
-               @endphp
-               @foreach ($batch as $sc)
-
-                    <tr>
-                        <td>
-                            <div class="form-check form-check-sm form-check-custom form-check-solid">
-                                <input class="form-check-input" type="checkbox" value="1" />
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary" id="add-btn">Add Batch</button>
                             </div>
-                        </td>
-                        <td>  <input type="hidden" id="tid"  value="{{ $sc->id }}" />{{ ++$i }}</td>
-                        <td >{{ $sc->title }}</td>
-                        <td >{{ $sc->schoolclass }}</td>
-                        <td style="color: {{ ($sc->status =="Success") ? "green": "red" }}">{{ $sc->status }}</td>
-                        <td >{{ $sc->arm }} </td>
-                        <td >{{ $sc->term }} </td>
-                        <td >{{ $sc->session }}</td>
-                        <td >{{ $sc->upload_date }} </td>
-                        <td >
-                            <a href="#" class="btn btn-light btn-active-light-primary btn-flex btn-center btn-sm" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
-                                Actions
-                                <i class="ki-duotone ki-down fs-5 ms-1"></i>                    </a>
-                            <!--begin::Menu-->
-                                <div class="menu menu-sub menu-sub-dropdown menu-column menu-rounded menu-gray-600 menu-state-bg-light-primary fw-semibold fs-7 w-125px py-4" data-kt-menu="true">
-                                    @can('student-delete')
-                                    <div class="menu-item px-3" >
-                                        <a
-                                        href="javascript:void(0)"
-                                        id="show-user"
-                                        data-kt-roles-table-filter="delete_row"
-                                        data-url="{{ route('student.deletestudentbatch', ['studentbatchid'=>$sc->id]) }}"
-                                        class="btn btn-danger btn-sm">Delete</a>
-                                    </div>
-                                    <!--end::Menu item-->
-                                    @endcan
-
-                                </div>
-                                    <!--end::Menu-->
-                        </td>
-                    </tr>
-                    @endforeach
-             </tbody>
-        </table>
-        <!--end::Table-->
+                        </form>
+                    </div>
+                </div>
             </div>
-            <!--end::Card body-->
-      </div>
-            <!--end::Card-->
+
+            <!-- Delete Batch Modal -->
+            <div id="deleteRecordModal" class="modal fade zoomIn" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="btn-close" id="deleteRecord-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-md-5">
+                            <div class="text-center">
+                                <div class="text-danger">
+                                    <i class="bi bi-trash display-4"></i>
+                                </div>
+                                <div class="mt-4">
+                                    <h3 class="mb-2">Are you sure?</h3>
+                                    <p class="text-muted fs-lg mx-3 mb-0">Are you sure you want to remove this batch?</p>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
+                                <button type="button" class="btn w-sm btn-light btn-hover" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn w-sm btn-danger btn-hover" id="delete-record">
+                                    <span id="delete-btn-text">Yes, Delete It!</span>
+                                    <span id="delete-btn-loader" class="d-none">
+                                        <span class="spinner-border spinner-border-sm me-1" role="status"></span>Deleting...
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+<script>
+    let currentDeleteId = null;
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const deleteButtons = document.querySelectorAll('.remove-item-btn');
+        const deleteRecordModal = document.getElementById('deleteRecordModal');
+        const deleteBtn = document.getElementById('delete-record');
+        const deleteBtnText = document.getElementById('delete-btn-text');
+        const deleteBtnLoader = document.getElementById('delete-btn-loader');
+
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                currentDeleteId = this.getAttribute('data-id');
+                console.log("Delete button clicked for batch ID:", currentDeleteId);
+                if (deleteRecordModal) {
+                    const modal = new bootstrap.Modal(deleteRecordModal);
+                    modal.show();
+                }
+            });
+        });
+
+        if (deleteBtn) {
+            deleteBtn.addEventListener('click', handleDeleteConfirmation);
+        }
+
+        function handleDeleteConfirmation() {
+            if (!currentDeleteId) {
+                console.error("No batch ID set for deletion");
+                Swal.fire({
+                    position: 'center',
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No batch selected for deletion',
+                    showConfirmButton: true
+                });
+                return;
+            }
+
+            if (!axios) {
+                console.error("Axios is not available");
+                Swal.fire({
+                    position: 'center',
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Axios library not loaded',
+                    showConfirmButton: true
+                });
+                return;
+            }
+
+            deleteBtnText.classList.add('d-none');
+            deleteBtnLoader.classList.remove('d-none');
+            deleteBtn.disabled = true;
+
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+            if (!csrfToken) {
+                console.error("CSRF token not found");
+                Swal.fire({
+                    position: 'center',
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'CSRF token missing',
+                    showConfirmButton: true
+                });
+                deleteBtnText.classList.remove('d-none');
+                deleteBtnLoader.classList.add('d-none');
+                deleteBtn.disabled = false;
+                return;
+            }
+
+            console.log("Sending DELETE request for batch ID:", currentDeleteId);
+            axios.delete(`/student/deletestudentbatch?studentbatchid=${currentDeleteId}`, {
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(function (response) {
+                console.log("Delete response:", response.data);
+                const deleteModal = document.getElementById('deleteRecordModal');
+                const modal = bootstrap.Modal.getInstance(deleteModal);
+                if (modal) modal.hide();
+
+                Swal.fire({
+                    position: 'center',
+                    icon: 'success',
+                    title: 'Success',
+                    text: response.data.message || 'Batch deleted successfully!',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    window.location.reload();
+                });
+            })
+            .catch(function (error) {
+                console.error("Delete error:", error.response ? error.response.data : error.message);
+                deleteBtnText.classList.remove('d-none');
+                deleteBtnLoader.classList.add('d-none');
+                deleteBtn.disabled = false;
+
+                const deleteModal = document.getElementById('deleteRecordModal');
+                const modal = bootstrap.Modal.getInstance(deleteModal);
+                if (modal) modal.hide();
+
+                const errorMessage = error.response?.data?.message || 'Error deleting batch';
+                Swal.fire({
+                    position: 'center',
+                    icon: error.response?.status === 404 ? 'warning' : 'error',
+                    title: error.response?.status === 404 ? 'Batch Not Found' : 'Error',
+                    text: errorMessage,
+                    showConfirmButton: true
+                });
+            });
+        }
+    });
+</script>      
     </div>
-
-            <!--end::Content container-->
 </div>
-        <!--end::Content-->
-
-
 @endsection

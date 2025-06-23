@@ -52,7 +52,6 @@
                                                         <div class="fs-2 fw-bold text-success">{{ $broadsheets->first()->subject_code ?? '-' }}</div>
                                                     </div>
                                                     <div class="fw-semibold fs-6 text-gray-400">Subject Code</div>
-                                                   
                                                 </div>
                                                 <!-- Class Card -->
                                                 <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
@@ -118,9 +117,6 @@
                                         <button class="btn btn-secondary me-2" data-bs-toggle="modal" data-bs-target="#scoresModal">
                                             <i class="bi bi-table me-1"></i> View Scores
                                         </button>
-                                        <button class="btn btn-danger me-2" onclick="deleteSelectedScores()">
-                                            <i class="ri-delete-bin-line me-1"></i> Delete Selected
-                                        </button>
                                     @endif
                                 </div>
                             </div>
@@ -145,8 +141,11 @@
                                             <th style="width: 50px;" class="sort cursor-pointer" data-sort="sn">SN</th>
                                             <th class="sort cursor-pointer" data-sort="admissionno">Admission No</th>
                                             <th class="sort cursor-pointer" data-sort="name">Name</th>
-                                            <th>Exam</th>
-                                            <th>Action</th>
+                                            <th class="narrow-th">Exam</th>
+                                            <th class="narrow-th">Total</th>
+                                            <th class="narrow-th">Grade</th>
+                                            <th class="narrow-th">Position</th>
+                                            <th class="narrow-th">Remark</th>
                                         </tr>
                                     </thead>
                                     <tbody id="scoresheetTableBody" class="list form-check-all">
@@ -155,7 +154,7 @@
                                             <tr>
                                                 <td>
                                                     <div class="form-check">
-                                                        <input class="form-check score-checkbox" type="checkbox" name="chk_child" data-id="{{ $broadsheet->id }}">
+                                                        <input class="form-check-input score-checkbox" type="checkbox" name="chk_child" data-id="{{ $broadsheet->id }}">
                                                         <label class="form-check-label"></label>
                                                     </div>
                                                 </td>
@@ -164,7 +163,7 @@
                                                 <td class="name" data-name="{{ ($broadsheet->fname ?? '') . ' ' . ($broadsheet->lname ?? '') }}">
                                                     <div class="d-flex align-items-center">
                                                         <div class="avatar-sm me-2">
-                                                            <img src="{{ $broadsheet->picture ? Storage::url('images/studentavatar/' . $broadsheet->picture) : Storage::url('images/studentavatar/avatar.jpg') }}" alt="{{ ($broadsheet->fname ?? '') . ' ' . ($broadsheet->lname ?? '') }}" class="rounded-circle w-100">
+                                                            <img src="{{ $broadsheet->picture ? Storage::url('images/studentavatar/' . $broadsheet->picture) : Storage::url('images/studentavatar/avatar.jpg') }}" alt="{{ ($broadsheet->fname ?? '') . ' ' . ($broadsheet->lname ?? '') }}" class="rounded-circle w-100" loading="lazy">
                                                         </div>
                                                         <div class="d-flex flex-column">
                                                             {{ ($broadsheet->fname ?? '') . ' ' . ($broadsheet->lname ?? '') }}
@@ -172,13 +171,19 @@
                                                     </div>
                                                 </td>
                                                 <td class="exam">
-                                                    <input type="number" class="form-control form-control-sm score-input" data-field="exam" data-id="{{ $broadsheet->id }}" value="{{ $broadsheet->exam ?? '' }}" min="0" step="0.1">
+                                                    <input type="number" class="form-control form-control-sm score-input" data-field="exam" data-id="{{ $broadsheet->id }}" value="{{ $broadsheet->exam ?? '' }}" min="0" max="100" step="0.1" placeholder="0">
                                                 </td>
-                                         
-                                                <td>
-                                                    <a href="{{ route('subjectscoresheet-mock.edit', $broadsheet->id) }}" class="btn btn-primary btn-sm" title="Edit Score">
-                                                        <i class="ri-edit-line me-1"></i> Edit
-                                                    </a>
+                                                <td class="total-display text-center">
+                                                    <span class="badge bg-primary {{ ($broadsheet->total ?? 0) < 40 && ($broadsheet->total ?? 0) != 0 ? 'text-danger' : '' }}">{{ $broadsheet->total ? number_format($broadsheet->total, 1) : '0.0' }}</span>
+                                                </td>
+                                                <td class="grade-display text-center">
+                                                    <span class="badge bg-secondary">{{ $broadsheet->grade ?? '-' }}</span>
+                                                </td>
+                                                <td class="position-display text-center">
+                                                    <span class="badge bg-info">{{ $broadsheet->subjectpositionclass ?? '-' }}</span>
+                                                </td>
+                                                <td class="remark-display text-center">
+                                                    <span class="badge bg-secondary">{{ $broadsheet->remark ?? '-' }}</span>
                                                 </td>
                                             </tr>
                                         @empty
@@ -189,6 +194,65 @@
                                     </tbody>
                                 </table>
                             </div>
+
+                            <!-- Enhanced Control Panel -->
+                            @if ($broadsheets->isNotEmpty())
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="d-flex justify-content-between align-items-center">
+                                                    <div class="d-flex align-items-center">
+                                                        <h6 class="card-title mb-0 me-3">Bulk Actions:</h6>
+                                                        <div class="btn-group me-2" role="group">
+                                                            <button type="button" class="btn btn-outline-primary btn-sm" id="selectAllScores">
+                                                                <i class="ri-check-double-line me-1"></i> Select All
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-secondary btn-sm" id="clearAllScores">
+                                                                <i class="ri-close-line me-1"></i> Clear All
+                                                            </button>
+                                                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteSelectedScores()">
+                                                                <i class="ri-delete-bin-line me-1"></i> Delete Selected
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div class="d-flex align-items-center">
+                                                        <small class="text-muted me-3">
+                                                            <i class="ri-information-line"></i> Press Ctrl+S to save quickly
+                                                        </small>
+                                                        <button class="btn btn-success" id="bulkUpdateScores">
+                                                            <i class="ri-save-line me-1"></i> Save All Scores
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Progress Indicator -->
+                                <div class="row mt-2" id="progressContainer" style="display: none;">
+                                    <div class="col-12">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="me-3">
+                                                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                                            <span class="visually-hidden">Loading...</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <h6 class="mb-1">Updating Scores...</h6>
+                                                        <div class="progress" style="height: 6px;">
+                                                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -203,7 +267,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body scroll-y mx-5 mx-xl-10 my-7">
-                            <form action="{{ route('scoresheet-mock.import') }}" method="POST" enctype="multipart/form-data" id="importForm">
+                            <form action="{{ route('subjectscoresheet-mock.import') }}" method="POST" enctype="multipart/form-data" id="importForm">
                                 @csrf
                                 <input type="hidden" name="schoolclass_id" value="{{ session('schoolclass_id') }}">
                                 <input type="hidden" name="subjectclass_id" value="{{ session('subjectclass_id') }}">
@@ -216,7 +280,7 @@
                                 </div>
                                 <div class="text-center pt-10">
                                     <button type="reset" class="btn btn-outline-secondary me-3" data-bs-dismiss="modal">Discard</button>
-                                    <button type="submit" class="btn btn-primary" id="importSubmit" {{ !session('schoolclass_id') || !session('subjectclass_id') || !session('staff_id') || !session('term_id') || !session('session_id') ? 'disabled' : '' }}>
+                                    <button type="submit" class="btn btn-primary" id="importSubmit">
                                         <span class="indicator-label">Submit</span>
                                         <span class="indicator-progress">Please wait... <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
                                     </button>
@@ -228,10 +292,48 @@
             </div>
 
             <!-- Scores Modal -->
-           <!-- Add CSS for smaller table headers and highlighting low scores -->
+            <div class="modal fade" id="scoresModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2 class="fw-bold">Mock Scores Overview</h2>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="table-responsive">
+                                <table class="table align-middle table-nowrap">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col">#</th>
+                                            <th scope="col">Admission No</th>
+                                            <th scope="col">Name</th>
+                                            <th scope="col">Exam</th>
+                                            <th scope="col">Total</th>
+                                            <th scope="col">Grade</th>
+                                            <th scope="col">Position</th>
+                                            <th scope="col">Remark</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="scoresBody">
+                                        <!-- Populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS for table headers and highlighting -->
 <style>
     .narrow-th {
-        width: 80px; /* Adjust width as needed */
+        width: 80px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -241,47 +343,14 @@
     }
 </style>
 
-<!-- Import Mock Modal -->
-<div class="modal fade" id="importMockModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="fw-bold">Bulk Upload Mock Scores</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body scroll-y mx-5 mx-xl-10 my-7">
-                <form action="{{ route('subjectscoresheet.import-mock') }}" method="POST" enctype="multipart/form-data" id="importMockForm">
-                    @csrf
-                    <input type="hidden" name="schoolclass_id" value="{{ session('schoolclass_id') }}">
-                    <input type="hidden" name="subjectclass_id" value="{{ session('subjectclass_id') }}">
-                    <input type="hidden" name="staff_id" value="{{ session('staff_id') }}">
-                    <input type="hidden" name="term_id" value="{{ session('term_id') }}">
-                    <input type="hidden" name="session_id" value="{{ session('session_id') }}">
-                    <div class="form-group mb-6">
-                        <label class="required fw-semibold fs-6 mb-2">Excel File</label>
-                        <input type="file" name="file" class="form-control form-control-sm mb-3" accept=".xlsx" required>
-                    </div>
-                    <div class="text-center pt-10">
-                        <button type="reset" class="btn btn-outline-secondary me-3" data-bs-dismiss="modal">Discard</button>
-                        <button type="submit" class="btn btn-primary" id="importMockSubmit">
-                            <span class="indicator-label">Submit</span>
-                            <span class="indicator-progress">Please wait... <span class="spinner-border spinner-border-sm align-middle ms-2"></span></span>
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-        </div>
-    </div>
-</div>
-
-<!-- Pass broadsheets data to JavaScript -->
+<!-- Pass data to JavaScript -->
 <script>
     window.broadsheets = @json($broadsheets);
+    window.term_id = {{ session('term_id') ?? 0 }};
+    window.session_id = {{ session('session_id') ?? 0 }};
+    window.subjectclass_id = {{ session('subjectclass_id') ?? 0 }};
+    window.schoolclass_id = {{ session('schoolclass_id') ?? 0 }};
+    window.staff_id = {{ session('staff_id') ?? 0 }};
     console.log('Broadsheet data:', window.broadsheets);
 </script>
 @endsection
-
