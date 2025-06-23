@@ -60,7 +60,7 @@ function initializeFormFields(attempt = 1, maxAttempts = 3) {
             addCa1ScoreField: !!addCa1ScoreField,
             addCa2ScoreField: !!addCa2ScoreField,
             addCa3ScoreField: !!addCa3ScoreField,
-            addExamScoreField: !!addExamScoreField,
+            addExamScoreField: !!addCa3ScoreField,
             addTotalScoreField: !!addTotalScoreField,
             addSubmitButton: !!addSubmitButton,
             editIdField: !!editIdField,
@@ -68,21 +68,11 @@ function initializeFormFields(attempt = 1, maxAttempts = 3) {
             editCa1ScoreField: !!editCa1ScoreField,
             editCa2ScoreField: !!editCa2ScoreField,
             editCa3ScoreField: !!editCa3ScoreField,
-            editExamScoreField: !!editExamScoreField,
+            editExamScoreField: !!editCa3ScoreField,
             editTotalScoreField: !!editTotalScoreField,
             editSubmitButton: !!editSubmitButton
         };
         console.log(`Form fields initialized (attempt ${attempt}):`, fieldsFound);
-
-        // Force enable buttons
-        if (addSubmitButton) {
-            addSubmitButton.disabled = false;
-            console.log("Add button forced enabled");
-        }
-        if (editSubmitButton) {
-            editSubmitButton.disabled = false;
-            console.log("Edit button forced enabled");
-        }
 
         if (Object.values(fieldsFound).some(found => !found) && attempt < maxAttempts) {
             console.warn(`Some fields not found, retrying in 500ms (attempt ${attempt + 1})`);
@@ -115,8 +105,9 @@ function calculateAddTotalScore() {
         console.log("Add Scores:", { ca1, ca2, ca3, exam, total: total.toFixed(2) });
         if (addTotalScoreField) addTotalScoreField.value = total.toFixed(2);
         if (addSubmitButton) {
-            addSubmitButton.disabled = false;
-            console.log("Add button re-enabled in calculateAddTotalScore");
+            const isValidTotal = Math.abs(total - 400) < Number.EPSILON;
+            console.log("Add Submit Button Enabled:", isValidTotal);
+            addSubmitButton.disabled = !isValidTotal;
         }
     } catch (error) {
         console.error("Error in calculateAddTotalScore:", error);
@@ -138,8 +129,9 @@ function calculateEditTotalScore() {
         console.log("Edit Scores:", { ca1, ca2, ca3, exam, total: total.toFixed(2) });
         if (editTotalScoreField) editTotalScoreField.value = total.toFixed(2);
         if (editSubmitButton) {
-            editSubmitButton.disabled = false;
-            console.log("Edit button re-enabled in calculateEditTotalScore");
+            const isValidTotal = Math.abs(total - 400) < Number.EPSILON;
+            console.log("Edit Submit Button Enabled:", isValidTotal);
+            editSubmitButton.disabled = !isValidTotal;
         }
     } catch (error) {
         console.error("Error in calculateEditTotalScore:", error);
@@ -269,6 +261,7 @@ function clearAddFields() {
     if (addCa3ScoreField) addCa3ScoreField.value = "";
     if (addExamScoreField) addExamScoreField.value = "";
     if (addTotalScoreField) addTotalScoreField.value = "";
+    if (addSubmitButton) addSubmitButton.disabled = true;
 }
 
 function clearEditFields() {
@@ -279,6 +272,7 @@ function clearEditFields() {
     if (editCa3ScoreField) editCa3ScoreField.value = "";
     if (editExamScoreField) editExamScoreField.value = "";
     if (editTotalScoreField) editTotalScoreField.value = "";
+    if (editSubmitButton) editSubmitButton.disabled = true;
 }
 
 // Delete multiple categories
@@ -521,13 +515,9 @@ function initializeModals() {
                 const modalLabel = document.getElementById("exampleModalLabel");
                 const addBtn = document.getElementById("add-btn");
                 if (modalLabel) modalLabel.innerHTML = "Add Class Category";
-                if (addBtn) {
-                    addBtn.innerHTML = "Add Category";
-                    addBtn.disabled = false;
-                    console.log("Add button forced enabled on modal open");
-                }
+                if (addBtn) addBtn.innerHTML = "Add Category";
             }
-            calculateAddTotalScore();
+            calculateAddTotalScore(); // Recalculate on modal open
         });
         addModal.addEventListener("hidden.bs.modal", function () {
             clearAddFields();
@@ -542,12 +532,8 @@ function initializeModals() {
             const modalLabel = document.getElementById("editModalLabel");
             const updateBtn = document.getElementById("update-btn");
             if (modalLabel) modalLabel.innerHTML = "Edit Class Category";
-            if (updateBtn) {
-                updateBtn.innerHTML = "Update";
-                updateBtn.disabled = false;
-                console.log("Edit button forced enabled on modal open");
-            }
-            calculateEditTotalScore();
+            if (updateBtn) updateBtn.innerHTML = "Update";
+            calculateEditTotalScore(); // Recalculate on modal open
         });
         editModal.addEventListener("hidden.bs.modal", function () {
             clearEditFields();
