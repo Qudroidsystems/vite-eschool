@@ -24,6 +24,7 @@ class StudentBillPaymentRecord extends Model
         'generated_by',
         'created_at',
         'updated_at',
+        'invoiceNo'
     ];
 
     /**

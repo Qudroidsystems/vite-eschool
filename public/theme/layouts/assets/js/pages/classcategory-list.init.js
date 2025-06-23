@@ -332,9 +332,9 @@ if (addCategoryForm) {
             return;
         }
 
-        if (totalScore !== 100) {
+        if (totalScore !== 400) {
             if (errorMsg) {
-                errorMsg.innerHTML = "The sum of CA1, CA2, CA3, and Exam scores must be exactly 100";
+                errorMsg.innerHTML = "The sum of CA1, CA2, CA3, and Exam scores must be exactly 400";
                 errorMsg.classList.remove("d-none");
             }
             return;
@@ -394,9 +394,9 @@ if (editCategoryForm) {
             return;
         }
 
-        if (totalScore !== 100) {
+        if (totalScore !== 400) {
             if (errorMsg) {
-                errorMsg.innerHTML = "The sum of CA1, CA2, CA3, and Exam scores must be exactly 100";
+                errorMsg.innerHTML = "The sum of CA1, CA2, CA3, and Exam scores must be exactly 400";
                 errorMsg.classList.remove("d-none");
             }
             return;

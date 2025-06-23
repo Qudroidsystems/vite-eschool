@@ -275,7 +275,7 @@
                                 <div class="row g-3">
                                     <div class="col-lg col-6">
                                         <p class="text-muted mb-2 text-uppercase">Invoice No</p>
-                                        <h5 class="fs-md mb-0">#TBS<span id="invoice-no">{{ $invoiceNumber }}</span></h5>
+                                        <h5 class="fs-md mb-0">#<span id="invoice-no">{{ $invoiceNumber }}</span></h5>
                                     </div>
                                     <div class="col-lg col-6">
                                         <p class="text-muted mb-2 text-uppercase">Date</p>

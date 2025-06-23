@@ -46,7 +46,7 @@
                             <!-- Form -->
                             <form id="termSessionForm" action="{{ route('schoolpayment.termsessionpayments') }}" method="GET">
                                 @csrf
-                                <input type="text" name="studentId" value="{{ $id }}">
+                                <input type="hidden" name="studentId" value="{{ $id }}">
 
                                 <div class="row g-3">
                                     <div class="col-md-6">

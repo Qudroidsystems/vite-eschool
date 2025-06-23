@@ -465,6 +465,7 @@ class SchoolPaymentController extends Controller
         }
     }
 
+    
     /**
      * Generate and display/download an invoice.
      */
@@ -506,6 +507,9 @@ class SchoolPaymentController extends Controller
             return redirect()->route('schoolpayment.index')->with('error', 'Student not found or not enrolled.');
         }
 
+        // Generate invoice number
+        $invoiceNumber = 'INV-' . str_pad($studentId, 4, '0', STR_PAD_LEFT) . '-' . date('Ymd');
+
         // Fetch payment records (support both new and historical payments)
         $deleteStatus = $request->input('historical', false) ? '0' : '1';
         $payments = StudentBillPayment::where('student_bill_payment.student_id', $studentId)
@@ -527,10 +531,11 @@ class SchoolPaymentController extends Controller
                 'student_bill_payment_record.amount_owed as balance',
                 'student_bill_payment_record.total_bill as total_bill',
                 'student_bill_payment_record.complete_payment as complete_payment',
+                'student_bill_payment_record.invoiceNo as invoiceNo',
                 DB::raw('COALESCE(users.name, "Unknown") as receivedBy'),
             ])
             ->get()
-            ->map(function ($payment) use ($studentId, $schoolclassid, $termid, $sessionid) {
+            ->map(function ($payment) use ($studentId, $schoolclassid, $termid, $sessionid, $invoiceNumber) {
                 // Calculate total previous paid amount
                 $previousPaid = StudentBillPaymentRecord::where('student_bill_payment_id', $payment->paymentid)
                     ->where('student_bill_payment_record.created_at', '<', $payment->payment_date ?? Carbon::now())
@@ -538,6 +543,13 @@ class SchoolPaymentController extends Controller
 
                 // Calculate total amount paid
                 $totalPaid = $previousPaid + ($payment->todayPaid ?? 0);
+
+                // Update or set invoice number in StudentBillPaymentRecord
+                if ($payment->todayPaid > 0 && !$payment->invoiceNo) {
+                    StudentBillPaymentRecord::where('student_bill_payment_id', $payment->paymentid)
+                        ->where('created_at', $payment->payment_date)
+                        ->update(['invoiceNo' => $invoiceNumber]);
+                }
 
                 return (object) [
                     'title' => $payment->title,
@@ -551,6 +563,7 @@ class SchoolPaymentController extends Controller
                     'receivedBy' => $payment->receivedBy ?? 'Unknown',
                     'paymentDate' => $payment->payment_date,
                     'complete_payment' => $payment->complete_payment,
+                    'invoiceNo' => $payment->invoiceNo ?? $invoiceNumber,
                 ];
             });
 
@@ -569,9 +582,6 @@ class SchoolPaymentController extends Controller
             'school_address' => 'Your School Address Here',
             'school_phone' => 'Your Phone Number',
         ];
-
-        // Generate invoice number
-        $invoiceNumber = 'INV-' . str_pad($studentId, 4, '0', STR_PAD_LEFT) . '-' . date('Ymd');
 
         // Fetch term and session
         $schoolterm = Schoolterm::find($termid)->term ?? 'N/A';
@@ -612,12 +622,13 @@ class SchoolPaymentController extends Controller
 
         // Handle PDF download or view rendering
         if ($request->has('download_pdf')) {
-            $pdf = PDF::loadView('schoolpayment.studentinvoice', $data);
+            $pdf = PDF::loadView('schoolpayment.studentinvoicepdf', $data);
             return $pdf->download('invoice_' . ($student->admissionNo ?? 'student') . '_' . $termid . '_' . $sessionid . '.pdf');
         }
 
         return view('schoolpayment.studentinvoice', $data);
     }
+
 
     /**
      * Generate and download a payment statement for all student payments.
