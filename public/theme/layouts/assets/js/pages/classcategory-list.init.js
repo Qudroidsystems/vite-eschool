@@ -13,7 +13,7 @@ try {
 
 // Set Axios CSRF token globally
 try {
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
     if (!csrfToken) throw new Error("CSRF token meta tag not found");
     axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
     console.log("CSRF token set successfully");
@@ -22,7 +22,7 @@ try {
 }
 
 // Debounce function for search input
-function debounce(func, wait) {
+function debounceInput(func, wait) {
     let timeout;
     return function (...args) {
         clearTimeout(timeout);
@@ -60,7 +60,7 @@ function initializeFormFields(attempt = 1, maxAttempts = 3) {
             addCa1ScoreField: !!addCa1ScoreField,
             addCa2ScoreField: !!addCa2ScoreField,
             addCa3ScoreField: !!addCa3ScoreField,
-            addExamScoreField: !!addCa3ScoreField,
+            addExamScoreField: !!addExamScoreField,
             addTotalScoreField: !!addTotalScoreField,
             addSubmitButton: !!addSubmitButton,
             editIdField: !!editIdField,
@@ -68,7 +68,7 @@ function initializeFormFields(attempt = 1, maxAttempts = 3) {
             editCa1ScoreField: !!editCa1ScoreField,
             editCa2ScoreField: !!editCa2ScoreField,
             editCa3ScoreField: !!editCa3ScoreField,
-            editExamScoreField: !!editCa3ScoreField,
+            editExamScoreField: !!editExamScoreField,
             editTotalScoreField: !!editTotalScoreField,
             editSubmitButton: !!editSubmitButton
         };
@@ -93,8 +93,8 @@ function initializeFormFields(attempt = 1, maxAttempts = 3) {
 // Calculate total score for Add Modal
 function calculateAddTotalScore() {
     try {
-        if (!addCa1ScoreField || !addCa2ScoreField || !addCa3ScoreField || !addExamScoreField) {
-            console.error("Add modal score fields not found");
+        if (!addCa1ScoreField || !addCa2ScoreField || !addCa3ScoreField || !addExamScoreField || !addSubmitButton) {
+            console.error("Add modal score fields or submit button not found");
             return;
         }
         const ca1 = parseFloat(addCa1ScoreField.value) || 0;
@@ -104,11 +104,8 @@ function calculateAddTotalScore() {
         const total = ca1 + ca2 + ca3 + exam;
         console.log("Add Scores:", { ca1, ca2, ca3, exam, total: total.toFixed(2) });
         if (addTotalScoreField) addTotalScoreField.value = total.toFixed(2);
-        if (addSubmitButton) {
-            const isValidTotal = Math.abs(total - 400) < Number.EPSILON;
-            console.log("Add Submit Button Enabled:", isValidTotal);
-            addSubmitButton.disabled = !isValidTotal;
-        }
+        addSubmitButton.disabled = Math.abs(total - 400) > Number.EPSILON;
+        console.log("Add button disabled:", addSubmitButton.disabled);
     } catch (error) {
         console.error("Error in calculateAddTotalScore:", error);
     }
@@ -117,8 +114,8 @@ function calculateAddTotalScore() {
 // Calculate total score for Edit Modal
 function calculateEditTotalScore() {
     try {
-        if (!editCa1ScoreField || !editCa2ScoreField || !editCa3ScoreField || !editExamScoreField) {
-            console.error("Edit modal score fields not found");
+        if (!editCa1ScoreField || !editCa2ScoreField || !editCa3ScoreField || !editExamScoreField || !editSubmitButton) {
+            console.error("Edit modal score fields or submit button not found");
             return;
         }
         const ca1 = parseFloat(editCa1ScoreField.value) || 0;
@@ -128,11 +125,8 @@ function calculateEditTotalScore() {
         const total = ca1 + ca2 + ca3 + exam;
         console.log("Edit Scores:", { ca1, ca2, ca3, exam, total: total.toFixed(2) });
         if (editTotalScoreField) editTotalScoreField.value = total.toFixed(2);
-        if (editSubmitButton) {
-            const isValidTotal = Math.abs(total - 400) < Number.EPSILON;
-            console.log("Edit Submit Button Enabled:", isValidTotal);
-            editSubmitButton.disabled = !isValidTotal;
-        }
+        editSubmitButton.disabled = Math.abs(total - 400) > Number.EPSILON;
+        console.log("Edit button disabled:", editSubmitButton.disabled);
     } catch (error) {
         console.error("Error in calculateEditTotalScore:", error);
     }
@@ -261,7 +255,6 @@ function clearAddFields() {
     if (addCa3ScoreField) addCa3ScoreField.value = "";
     if (addExamScoreField) addExamScoreField.value = "";
     if (addTotalScoreField) addTotalScoreField.value = "";
-    if (addSubmitButton) addSubmitButton.disabled = true;
 }
 
 function clearEditFields() {
@@ -272,7 +265,6 @@ function clearEditFields() {
     if (editCa3ScoreField) editCa3ScoreField.value = "";
     if (editExamScoreField) editExamScoreField.value = "";
     if (editTotalScoreField) editTotalScoreField.value = "";
-    if (editSubmitButton) editSubmitButton.disabled = true;
 }
 
 // Delete multiple categories
@@ -517,7 +509,7 @@ function initializeModals() {
                 if (modalLabel) modalLabel.innerHTML = "Add Class Category";
                 if (addBtn) addBtn.innerHTML = "Add Category";
             }
-            calculateAddTotalScore(); // Recalculate on modal open
+            calculateAddTotalScore();
         });
         addModal.addEventListener("hidden.bs.modal", function () {
             clearAddFields();
@@ -533,7 +525,7 @@ function initializeModals() {
             const updateBtn = document.getElementById("update-btn");
             if (modalLabel) modalLabel.innerHTML = "Edit Class Category";
             if (updateBtn) updateBtn.innerHTML = "Update";
-            calculateEditTotalScore(); // Recalculate on modal open
+            calculateEditTotalScore();
         });
         editModal.addEventListener("hidden.bs.modal", function () {
             clearEditFields();
@@ -580,7 +572,7 @@ function initializeEventListeners() {
 
         const searchInput = document.querySelector(".search-box input.search");
         if (searchInput) {
-            searchInput.addEventListener("input", debounce(function () {
+            searchInput.addEventListener("input", debounceInput(function () {
                 console.log("Search input changed:", searchInput.value);
                 filterData();
             }, 300));

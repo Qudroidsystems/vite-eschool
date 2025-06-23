@@ -182,7 +182,7 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="add-btn">Add Category</button>
+                                <button type="submit" class="btn btn-primary" id="add-btn" disabled>Add Category</button>
                             </div>
                         </form>
                     </div>
@@ -229,7 +229,7 @@
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
+                                <button type="submit" class="btn btn-primary" id="update-btn" disabled>Update</button>
                             </div>
                         </form>
                     </div>
@@ -255,11 +255,11 @@
         <!-- End Page-content -->
 
         <!-- Scripts -->
-        {{-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
         <script src="{{ asset('theme/layouts/assets/js/list.min.js') }}"></script>
         <script src="{{ asset('theme/layouts/assets/js/sweetalert2.min.js') }}"></script>
-        <script src="{{ asset('js/classcategory.init.js') }}?v={{ time() }}"></script> --}}
+        <script src="{{ asset('js/classcategory.init.js') }}?v={{ time() }}"></script>
     </div>
 </div>
 @endsection
