@@ -302,3 +302,4 @@
         <script src="{{ asset('js/classcategory.init.js') }}?v={{ time() }}"></script> --}}
     </div>
 </div
+@endsection
