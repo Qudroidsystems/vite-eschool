@@ -665,43 +665,45 @@ function initializeStudentList() {
     });
 
     // Delete Single Student
-    document.getElementById('studentTableBody').addEventListener('click', function(e) {
-        if (e.target.closest('.remove-item-btn')) {
-            const button = e.target.closest('.remove-item-btn');
-            const id = button.getAttribute('data-id');
-            Swal.fire({
-                title: "Are you sure?",
-                text: "You won't be able to revert this!",
-                icon: "warning",
-                showCancelButton: true,
-                confirmButtonClass: "btn btn-primary",
-                cancelButtonClass: "btn btn-light",
-                buttonsStyling: true
-            }).then((result) => {
-                if (result.isConfirmed && ensureAxios()) {
-                    axios.delete(`/student/${id}`).then(() => {
-                        const row = button.closest('tr');
-                        if (row) row.remove();
-                        studentList.reIndex();
-                        Swal.fire({
-                            title: "Deleted!",
-                            text: "Student has been deleted",
-                            icon: "success",
-                            confirmButtonClass: "btn btn-primary",
-                            buttonsStyling: true
-                        });
-                    }).catch((error) => {
-                        console.error('Error deleting student:', error);
-                        Swal.fire({
-                            title: "Error!",
-                            text: error.response?.data?.message || "Failed to delete student",
-                            icon: "error",
-                            confirmButtonClass: "btn btn-primary",
-                            buttonsStyling: true
-                        });
+ 
+    // Delete Single Student
+document.getElementById('studentTableBody').addEventListener('click', function(e) {
+    if (e.target.closest('.remove-item-btn')) {
+        const button = e.target.closest('.remove-item-btn');
+        const id = button.getAttribute('data-id');
+        Swal.fire({
+            title: "Are you sure?",
+            text: "You won't be able to revert this!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonClass: "btn btn-primary",
+            cancelButtonClass: "btn btn-light",
+            buttonsStyling: true
+        }).then((result) => {
+            if (result.isConfirmed && ensureAxios()) {
+                axios.delete(`/student/${id}/destroy`).then(() => { // Updated URL
+                    const row = button.closest('tr');
+                    if (row) row.remove();
+                    studentList.reIndex();
+                    Swal.fire({
+                        title: "Deleted!",
+                        text: "Student has been deleted",
+                        icon: "success",
+                        confirmButtonClass: "btn btn-primary",
+                        buttonsStyling: true
                     });
-                }
-            });
-        }
-    });
+                }).catch((error) => {
+                    console.error('Error deleting student:', error);
+                    Swal.fire({
+                        title: "Error!",
+                        text: error.response?.data?.message || "Failed to delete student",
+                        icon: "error",
+                        confirmButtonClass: "btn btn-primary",
+                        buttonsStyling: true
+                    });
+                });
+            }
+        });
+    }
+});
 }

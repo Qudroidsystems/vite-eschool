@@ -15,6 +15,8 @@ use App\Models\Schoolsession;
 use App\Models\Schoolterm;
 use App\Models\Student;
 use App\Models\StudentBatchModel;
+use App\Models\StudentBillPayment;
+use App\Models\StudentBillPaymentBook;
 use App\Models\Studentclass;
 use App\Models\Studenthouse;
 use App\Models\Studentpersonalityprofile;
@@ -100,6 +102,65 @@ class StudentController extends Controller
 
         return view('student.index', compact('schoolclass', 'schoolterm', 'schoolsession', 'status_counts', 'pagetitle'));
     }
+
+ 
+    public function show($id)
+    {
+        try {
+            $student = Student::where('studentRegistration.id', $id)
+                ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+                ->leftJoin('parentRegistration', 'parentRegistration.id', '=', 'studentRegistration.id')
+                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
+                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
+                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
+                ->leftJoin('studenthouse', 'studenthouse.studentId', '=', 'studentRegistration.id')
+                ->leftJoin('schoolhouse', 'schoolhouse.id', '=', 'studenthouse.schoolhouseid')
+                ->leftJoin('studentpersonalityprofile', 'studentpersonalityprofile.studentId', '=', 'studentRegistration.id')
+                ->where('schoolsession.status', 'Current')
+                ->select([
+                    'studentRegistration.id as id',
+                    'studentRegistration.admissionNo as student_id', // Changed from admissionNo to match template
+                    'studentRegistration.firstname as first_name',  // Changed to match template
+                    'studentRegistration.lastname as last_name',    // Changed to match template
+                    'studentRegistration.middle_name as middle_name',
+                    'studentRegistration.gender as gender',
+                    'studentRegistration.date_of_birth as date_of_birth',
+                    'studentRegistration.blood_group as blood_group',
+                    'studentRegistration.admission_date as admission_date',
+                    'studentRegistration.home_address as address',  // Changed to match template
+                    'studentRegistration.status as status',
+                    'parentRegistration.father_phone as phoneNumber', // Changed to match template
+                    'parentRegistration.firstName as parent_firstName',
+                    'parentRegistration.lastName as parent_lastName',
+                    'parentRegistration.email as parent_email',
+                    'parentRegistration.address as parent_address',
+                    'studentpicture.picture as picture',           // Changed to match template
+                    'schoolclass.schoolclass as schoolclass',
+                    'schoolarm.arm as arm',
+                    'schoolterm.term as term',
+                    'schoolsession.session as session',
+                    'schoolhouse.schoolhouse as schoolhouse',
+                    'studentpersonalityprofile.traits as traits',
+                    'studentpersonalityprofile.strengths as strengths',
+                    'studentpersonalityprofile.weaknesses as weaknesses',
+                    'studentpersonalityprofile.comments as comments',
+                ])
+                ->firstOrFail();
+
+            $billPayments = StudentBillPayment::where('student_id', $id)
+                ->with(['schoolBill', 'studentBillPaymentRecords'])
+                ->get();
+            $billPaymentBooks = StudentBillPaymentBook::where('student_id', $id)->get();
+
+            // Pass only $student, $billPayments, and $billPaymentBooks to the view
+            return view('students.show', compact('student', 'billPayments', 'billPaymentBooks'));
+        } catch (\Exception $e) {
+            return redirect()->route('student.index')->with('error', 'Student not found.');
+        }
+    }
+
     public function create()
     {
         $schoolclass = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
@@ -432,7 +493,14 @@ class StudentController extends Controller
             PromotionStatus::where('studentId', $id)->delete();
             ParentRegistration::where('studentId', $id)->delete();
             Studentpicture::where('studentid', $id)->delete();
-            Broadsheets::where('studentId', $id)->delete();
+             // Delete broadsheet-related records
+            $broadsheetRecords = BroadsheetRecord::where('student_id', $id)->get();
+            foreach ($broadsheetRecords as $record) {
+                Broadsheets::where('broadsheet_record_id', $id)->delete();
+                $record->delete();
+                Log::debug("Deleted broadsheet record ID {$record->id} for student ID {$id}");
+            }
+
             SubjectRegistrationStatus::where('studentId', $id)->delete();
             Studenthouse::where('studentid', $id)->delete();
             Studentpersonalityprofile::where('studentid', $id)->delete();
