@@ -540,7 +540,7 @@ use Spatie\Permission\Models\Role;
     <script>
         // Define permissions for JavaScript
         window.appPermissions = {
-            canShowStudent: {{ Auth::user()->hasPermissionTo('Show student') ? 'true' : 'false' }},
+            canShowStudent: {{ Auth::user()->hasPermissionTo('View student') ? 'true' : 'false' }},
             canUpdateStudent: {{ Auth::user()->hasPermissionTo('Update student') ? 'true' : 'false' }},
             canDeleteStudent: {{ Auth::user()->hasPermissionTo('Delete student') ? 'true' : 'false' }}
         };
