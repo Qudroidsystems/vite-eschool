@@ -152,7 +152,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
 
             // Populate student picture
             $picture->studentid = $studentId;
-            $picture->picture = 'N/A'; // Assuming image_path is a field
+            $picture->picture = 'N/A'; 
             $picture->save();
 
             // Populate student class
@@ -175,7 +175,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             $studenthouse->studentid = $studentId;
             $studenthouse->termid = $termid;
             $studenthouse->sessionid = $sessionid;
-            $studenthouse->house = 'N/A'; // Assuming house is a field
+            $studenthouse->schoolhouse = 'N/A';  
             $studenthouse->save();
 
             // Populate student personality profile
@@ -183,7 +183,6 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             $studentpersonalityprofile->schoolclassid = $schoolclassid;
             $studentpersonalityprofile->termid = $termid;
             $studentpersonalityprofile->sessionid = $sessionid;
-            $studentpersonalityprofile->profile_data = 'N/A'; // Assuming profile_data is a field
             $studentpersonalityprofile->save();
 
             $this->id++; // Increment row counter
