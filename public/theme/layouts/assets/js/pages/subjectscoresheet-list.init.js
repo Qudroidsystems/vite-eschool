@@ -65,9 +65,8 @@ let scoresheetList = null;
 function initializeListJs() {
     const options = {
         valueNames: isMock
-            ? ['student_name', 'admission_no', 'exam', 'total', 'grade', 'position']
-            : ['student_name', 'admission_no', 'ca1', 'ca2', 'ca3', 'exam', 'total', 'bf', 'cum', 'grade', 'position'],
-        listClass: 'scoresheet-list'
+            ? ['name-text', 'admissionno', 'exam', 'total', 'grade', 'position']
+            : ['name-text', 'admissionno', 'ca1', 'ca2', 'ca3', 'exam', 'total', 'bf', 'cum', 'grade', 'position']
     };
 
     try {
@@ -75,23 +74,42 @@ function initializeListJs() {
         console.log("List.js initialized successfully for", isMock ? "mock" : "regular", "exams");
     } catch (error) {
         console.error("List.js initialization failed:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Initialization Error',
+            text: 'List.js failed to initialize. Check console for details.',
+            showConfirmButton: true
+        });
     }
 }
 
 // Custom search function
 function customSearch(searchString) {
-    if (!scoresheetList) return;
+    if (!scoresheetList) {
+        console.warn("scoresheetList is not initialized");
+        return;
+    }
+    console.log("Searching for:", searchString);
     if (!searchString) {
+        console.log("Clearing search");
         scoresheetList.search();
         return;
     }
-    scoresheetList.search(searchString, ['student_name', 'admission_no']);
+    const lowerSearch = searchString.toLowerCase();
+    scoresheetList.filter(item => {
+        const name = item.values()['name-text']?.toLowerCase() || '';
+        const admissionno = item.values()['admissionno']?.toLowerCase() || '';
+        const matches = name.includes(lowerSearch) || admissionno.includes(lowerSearch);
+        console.log(`Item: ${name}, ${admissionno} - Matches: ${matches}`);
+        return matches;
+    });
 }
 
 // Trigger search with debounce
 const triggerSearch = debounce(() => {
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
+        console.log("Triggering search with value:", searchInput.value.trim());
         customSearch(searchInput.value.trim());
     }
 }, 300);
@@ -102,12 +120,16 @@ function initializeSearch() {
     const clearSearch = document.getElementById('clearSearch');
     
     if (searchInput) {
+        console.log("Search input found, attaching event listener");
         searchInput.addEventListener('input', triggerSearch);
+    } else {
+        console.warn("Search input not found");
     }
     
     if (clearSearch) {
         clearSearch.addEventListener('click', () => {
             if (searchInput) {
+                console.log("Clearing search input");
                 searchInput.value = '';
                 triggerSearch();
             }
@@ -1035,6 +1057,7 @@ function deleteSelectedScores() {
 
 document.addEventListener("DOMContentLoaded", function () {
     console.log("DOMContentLoaded event fired");
+    console.log("Initial broadsheets:", window.broadsheets);
     
     ensureBroadsheetsArray();
     
