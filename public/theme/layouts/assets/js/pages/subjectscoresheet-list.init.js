@@ -40,7 +40,7 @@ function ensureBroadsheetsArray() {
                 window.broadsheets = Object.values(window.broadsheets);
                 console.log("Converted window.broadsheets object to array");
             } else {
-                window.broadsheets = [window.broadsheets ? window.broadsheets : []];
+                window.broadsheets = [window.broadsheets ? window.broadsheets : {}];
                 console.log("Wrapped single broadsheet object in array");
             }
         } else {
@@ -49,6 +49,36 @@ function ensureBroadsheetsArray() {
         }
     }
     console.log("window.broadsheets is now an array with", window.broadsheets.length, "items");
+    // Validate broadsheets data
+    window.broadsheets.forEach((b, i) => {
+        if (!b.admissionno && (!b.fname || !b.lname)) {
+            console.warn(`Broadsheet at index ${i} is missing admissionno or name:`, b);
+        } else if (!b.fname && !b.lname) {
+            console.warn(`Broadsheet at index ${i} is missing fname and lname:`, b);
+        }
+    });
+}
+
+// Populate missing name-text elements
+function populateNameTextElements() {
+    const rows = document.querySelectorAll('#scoresheetTableBody tr:not(#noDataRow)');
+    rows.forEach((row, index) => {
+        const admissionno = row.querySelector('.admissionno')?.textContent?.trim() || '';
+        const nameElement = row.querySelector('.name-text');
+        if (!nameElement || !nameElement.textContent.trim()) {
+            const broadsheet = window.broadsheets.find(b => b.admissionno == admissionno);
+            const fullName = broadsheet ? `${broadsheet.fname || ''} ${broadsheet.lname || ''}`.trim() : 'Unknown';
+            if (fullName && nameElement) {
+                nameElement.textContent = fullName;
+                console.log(`Populated name-text for row ${index} (admissionno: ${admissionno}) with: ${fullName}`);
+            } else {
+                console.warn(`Could not populate name-text for row ${index} (admissionno: ${admissionno}). No name data found.`);
+                if (nameElement) {
+                    nameElement.textContent = 'Unknown';
+                }
+            }
+        }
+    });
 }
 
 // Debounce function
@@ -64,14 +94,37 @@ function debounce(func, wait) {
 let scoresheetList = null;
 function initializeListJs() {
     const options = {
-        valueNames: isMock
-            ? ['name-text', 'admissionno', 'exam', 'total', 'grade', 'position']
-            : ['name-text', 'admissionno', 'ca1', 'ca2', 'ca3', 'exam', 'total', 'bf', 'cum', 'grade', 'position']
+        valueNames: ['name-text', 'admissionno', 'ca1', 'ca2', 'ca3', 'exam', 'total', 'bf', 'cum', 'grade', 'position']
     };
 
     try {
+        // Populate name-text before initializing List.js
+        populateNameTextElements();
         scoresheetList = new List('scoresheetTable', options);
-        console.log("List.js initialized successfully for", isMock ? "mock" : "regular", "exams");
+        console.log("List.js initialized successfully for regular exams");
+        console.log("Initial List.js items:", scoresheetList.items.length);
+        // Debug DOM elements
+        const nameElements = document.querySelectorAll('#scoresheetTable .name-text');
+        const admissionElements = document.querySelectorAll('#scoresheetTable .admissionno');
+        console.log(`Found ${nameElements.length} name-text elements, ${admissionElements.length} admissionno elements`);
+        nameElements.forEach((el, i) => {
+            console.log(`Name element ${i}: ${el.textContent || 'EMPTY'}`);
+            if (!el.textContent.trim()) {
+                console.warn(`Name element ${i} is empty`);
+            }
+        });
+        admissionElements.forEach((el, i) => {
+            console.log(`Admission element ${i}: ${el.textContent || 'EMPTY'}`);
+        });
+        if (nameElements.length === 0 || admissionElements.length === 0) {
+            console.warn("Missing name-text or admissionno elements in table. Search may not work.");
+            Swal.fire({
+                icon: 'warning',
+                title: 'Table Setup Issue',
+                text: 'Missing name or admission number elements. Search may not work correctly.',
+                showConfirmButton: true
+            });
+        }
     } catch (error) {
         console.error("List.js initialization failed:", error);
         Swal.fire({
@@ -87,22 +140,80 @@ function initializeListJs() {
 function customSearch(searchString) {
     if (!scoresheetList) {
         console.warn("scoresheetList is not initialized");
+        Swal.fire({
+            icon: 'warning',
+            title: 'Search Unavailable',
+            text: 'Table search is not initialized. Please refresh the page.',
+            timer: 2000,
+            showConfirmButton: false
+        });
         return;
     }
+
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.classList.add('search-loading');
+    }
+
     console.log("Searching for:", searchString);
     if (!searchString) {
-        console.log("Clearing search");
-        scoresheetList.search();
+        console.log("Clearing search filter");
+        scoresheetList.filter();
+        if (scoresheetList.items.length === 0) {
+            console.warn("No items in List.js after clearing filter. Re-indexing...");
+            scoresheetList.reIndex();
+            console.log("After re-indexing, items:", scoresheetList.items.length);
+        }
+        if (searchInput) {
+            searchInput.classList.remove('search-loading');
+            searchInput.focus();
+        }
         return;
     }
-    const lowerSearch = searchString.toLowerCase();
+
+    const lowerSearch = searchString.toLowerCase().trim();
+    let matchedItems = 0;
     scoresheetList.filter(item => {
-        const name = item.values()['name-text']?.toLowerCase() || '';
         const admissionno = item.values()['admissionno']?.toLowerCase() || '';
+        let name = item.values()['name-text']?.toLowerCase() || '';
+        if (!name) {
+            const row = item.elm;
+            const nameElement = row.querySelector('.name-text');
+            name = nameElement?.textContent?.toLowerCase() || '';
+            console.log(`DOM name-text for admissionno ${admissionno}: ${name}`);
+            if (!name) {
+                const dataName = row.querySelector('.name')?.dataset.name?.toLowerCase() || '';
+                name = dataName;
+                console.log(`Fallback: Using data-name for admissionno ${admissionno}: ${name}`);
+            }
+            if (!name) {
+                const broadsheet = window.broadsheets.find(b => b.admissionno == admissionno);
+                name = broadsheet ? `${broadsheet.fname || ''} ${broadsheet.lname || ''}`.trim().toLowerCase() : '';
+                console.log(`Fallback: Constructed name from broadsheets for admissionno ${admissionno}: ${name}`);
+            }
+        }
         const matches = name.includes(lowerSearch) || admissionno.includes(lowerSearch);
-        console.log(`Item: ${name}, ${admissionno} - Matches: ${matches}`);
+        if (matches) {
+            matchedItems++;
+            console.log(`Match found - Name: ${name}, Admission: ${admissionno}`);
+        } else {
+            console.log(`No match - Name: ${name}, Admission: ${admissionno}`);
+        }
         return matches;
     });
+    console.log(`Total matched items: ${matchedItems}`);
+    if (matchedItems === 0) {
+        console.warn("No matches found. Checking DOM and data...");
+        const nameElements = document.querySelectorAll('#scoresheetTable .name-text');
+        nameElements.forEach((el, i) => {
+            console.log(`Name element ${i}: ${el.textContent || 'EMPTY'}`);
+        });
+        console.log("window.broadsheets names:", window.broadsheets.map(b => `${b.fname || ''} ${b.lname || ''}`.trim()));
+    }
+
+    if (searchInput) {
+        searchInput.classList.remove('search-loading');
+    }
 }
 
 // Trigger search with debounce
@@ -111,8 +222,10 @@ const triggerSearch = debounce(() => {
     if (searchInput) {
         console.log("Triggering search with value:", searchInput.value.trim());
         customSearch(searchInput.value.trim());
+    } else {
+        console.warn("Search input not found during triggerSearch");
     }
-}, 300);
+}, 100);
 
 // Initialize search input
 function initializeSearch() {
@@ -122,18 +235,38 @@ function initializeSearch() {
     if (searchInput) {
         console.log("Search input found, attaching event listener");
         searchInput.addEventListener('input', triggerSearch);
+        // Enable input if data exists
+        if (window.broadsheets.length > 0 && searchInput.disabled) {
+            searchInput.disabled = false;
+            console.log("Enabled search input as data is present");
+        }
+        // Add keyup event to handle manual clearing
+        searchInput.addEventListener('keyup', (e) => {
+            if (e.target.value === '') {
+                console.log("Search input manually cleared via keyup");
+                triggerSearch();
+            }
+        });
     } else {
-        console.warn("Search input not found");
+        console.error("Search input not found. Search functionality will not work.");
+        Swal.fire({
+            icon: 'error',
+            title: 'Search Input Missing',
+            text: 'The search input element was not found. Please check the page structure.',
+            showConfirmButton: true
+        });
     }
     
     if (clearSearch) {
         clearSearch.addEventListener('click', () => {
             if (searchInput) {
-                console.log("Clearing search input");
+                console.log("Clearing search input via clear button");
                 searchInput.value = '';
                 triggerSearch();
             }
         });
+    } else {
+        console.warn("Clear search button not found");
     }
 }
 
@@ -171,17 +304,9 @@ function handleCheckboxChange(e) {
 // Initialize score input fields
 function initializeScoreInputs() {
     const scoreInputs = document.querySelectorAll('.score-input');
-    console.log("Found", scoreInputs.length, "score inputs for", isMock ? "mock" : "regular", "exams");
+    console.log("Found", scoreInputs.length, "score inputs for regular exams");
     
     scoreInputs.forEach(input => {
-        const field = input.dataset.field;
-        // Disable CA inputs for mock exams
-        if (isMock && ['ca1', 'ca2', 'ca3'].includes(field)) {
-            input.disabled = true;
-            input.classList.add('disabled');
-            return;
-        }
-
         input.addEventListener('input', (e) => {
             const row = input.closest('tr');
             if (row) {
@@ -215,74 +340,37 @@ function calculateGrade(score) {
 
 function updateRowTotal(row) {
     const scoreInputs = row.querySelectorAll('.score-input');
-    
-    if (isMock) {
-        // Mock exams: only exam score matters
-        let examValue = 0;
-        scoreInputs.forEach(input => {
-            if (input.dataset.field === 'exam') {
-                examValue = parseFloat(input.value) || 0;
-            }
-        });
+    let ca1 = 0, ca2 = 0, ca3 = 0, examValue = 0;
+    scoreInputs.forEach(input => {
+        const value = parseFloat(input.value) || 0;
+        const field = input.dataset.field;
+        switch (field) {
+            case 'ca1': ca1 = value; break;
+            case 'ca2': ca2 = value; break;
+            case 'ca3': ca3 = value; break;
+            case 'exam': examValue = value; break;
+        }
+    });
 
-        const total = examValue;
-        const grade = calculateGrade(total);
-        const remark = { A: 'Excellent', B: 'Very Good', C: 'Good', D: 'Pass', F: 'Fail' }[grade] || 'Unknown';
+    const caAverage = (ca1 + ca2 + ca3) / 3;
+    const total = (caAverage + examValue) / 2;
+    const id = row.querySelector('.score-input').dataset.id;
+    const broadsheet = window.broadsheets.find(b => b.id == id);
+    const bf = broadsheet ? parseFloat(broadsheet.bf) || 0 : 0;
+    const cum = window.term_id === 1 ? total : (bf + total) / 2;
+    const grade = calculateGrade(cum);
 
-        const totalDisplay = row.querySelector('.total-display span');
-        if (totalDisplay) totalDisplay.textContent = total.toFixed(1);
+    const totalDisplay = row.querySelector('.total-display span');
+    if (totalDisplay) totalDisplay.textContent = total.toFixed(1);
 
-        const gradeDisplay = row.querySelector('.grade-display span');
-        if (gradeDisplay) gradeDisplay.textContent = grade;
+    const bfDisplay = row.querySelector('.bf-display span');
+    if (bfDisplay) bfDisplay.textContent = bf.toFixed(2);
 
-        const remarkDisplay = row.querySelector('.remark-display span');
-        if (remarkDisplay) remarkDisplay.textContent = remark;
+    const cumDisplay = row.querySelector('.cum-display span');
+    if (cumDisplay) cumDisplay.textContent = cum.toFixed(2);
 
-        // Hide or skip bf and cum for mock exams
-        const bfDisplay = row.querySelector('.bf-display span');
-        if (bfDisplay) bfDisplay.textContent = '-';
-
-        const cumDisplay = row.querySelector('.cum-display span');
-        if (cumDisplay) cumDisplay.textContent = '-';
-    } else {
-        // Regular exams: calculate based on CA and exam
-        let ca1 = 0, ca2 = 0, ca3 = 0, examValue = 0;
-        scoreInputs.forEach(input => {
-            const value = parseFloat(input.value) || 0;
-            const field = input.dataset.field;
-            switch (field) {
-                case 'ca1': ca1 = value; break;
-                case 'ca2': ca2 = value; break;
-                case 'ca3': ca3 = value; break;
-                case 'exam': examValue = value; break;
-            }
-        });
-
-        const caAverage = (ca1 + ca2 + ca3) / 3;
-        const total = (caAverage + examValue) / 2;
-
-        const id = row.querySelector('.score-input').dataset.id;
-        const broadsheet = window.broadsheets.find(b => b.id == id);
-        const bf = broadsheet ? parseFloat(broadsheet.bf) || 0 : 0;
-        const cum = window.term_id === 1 ? total : (bf + total) / 2;
-
-        const totalDisplay = row.querySelector('.total-display span');
-        if (totalDisplay) totalDisplay.textContent = total.toFixed(1);
-
-        const bfDisplay = row.querySelector('.bf-display span');
-        if (bfDisplay) bfDisplay.textContent = bf.toFixed(2);
-
-        const cumDisplay = row.querySelector('.cum-display span');
-        if (cumDisplay) cumDisplay.textContent = cum.toFixed(2);
-
-        const grade = calculateGrade(cum); // Grade based on cum
-        const gradeDisplay = row.querySelector('.grade-display span');
-        if (gradeDisplay) gradeDisplay.textContent = grade;
-
-        const remark = { A: 'Excellent', B: 'Very Good', C: 'Good', D: 'Pass', F: 'Fail' }[grade] || 'Unknown';
-        const remarkDisplay = row.querySelector('.remark-display span');
-        if (remarkDisplay) remarkDisplay.textContent = remark;
-    }
+    const gradeDisplay = row.querySelector('.grade-display span');
+    if (gradeDisplay) gradeDisplay.textContent = grade;
 }
 
 function updateAllRowTotals() {
@@ -292,10 +380,15 @@ function updateAllRowTotals() {
             updateRowTotal(row);
         }
     });
+    if (scoresheetList) {
+        populateNameTextElements();
+        scoresheetList.reIndex();
+        console.log("Re-indexed List.js after updating all row totals. Items:", scoresheetList.items.length);
+    }
 }
 
 function updateRowDisplay(id, data) {
-    console.log(`=== DEBUG: updateRowDisplay called for ID ${id} (${isMock ? 'mock' : 'regular'} exams) ===`);
+    console.log(`=== DEBUG: updateRowDisplay called for ID ${id} ===`);
     console.log("Data received:", data);
     
     const row = document.querySelector(`input[data-id="${id}"]`)?.closest('tr');
@@ -304,84 +397,61 @@ function updateRowDisplay(id, data) {
         return;
     }
 
-    if (isMock) {
-        // Mock exams: update exam, total, grade, position
-        const examInput = row.querySelector('input[data-field="exam"]');
-        if (examInput && data.exam !== undefined) {
-            examInput.value = data.exam !== null ? data.exam : '';
-            console.log(`Updated exam input to:`, examInput.value);
+    ['ca1', 'ca2', 'ca3', 'exam'].forEach(field => {
+        const input = row.querySelector(`input[data-field="${field}"]`);
+        if (input && data[field] !== undefined) {
+            input.value = data[field] !== null ? data[field] : '';
+            console.log(`Updated ${field} input to:`, input.value);
         }
+    });
 
-        const totalDisplay = row.querySelector('.total-display span');
-        if (totalDisplay && data.total !== undefined) {
-            const totalValue = parseFloat(data.total).toFixed(1);
-            totalDisplay.textContent = totalValue;
-            console.log(`Updated total display to:`, totalValue);
-        }
-
-        const gradeDisplay = row.querySelector('.grade-display span');
-        if (gradeDisplay && data.grade !== undefined) {
-            gradeDisplay.textContent = data.grade || '-';
-            console.log(`Updated grade display to:`, data.grade || '-');
-        }
-
-        const positionDisplay = row.querySelector('.position-display span');
-        if (positionDisplay && data.subjectpositionclass !== undefined) {
-            positionDisplay.textContent = data.subjectpositionclass || '-';
-            console.log(`Updated position display to:`, data.subjectpositionclass || '- (based on total)');
-        }
-
-        // Clear bf and cum displays
-        const bfDisplay = row.querySelector('.bf-display span');
-        if (bfDisplay) bfDisplay.textContent = '-';
-
-        const cumDisplay = row.querySelector('.cum-display span');
-        if (cumDisplay) cumDisplay.textContent = '-';
-    } else {
-        // Regular exams: update all fields
-        ['ca1', 'ca2', 'ca3', 'exam'].forEach(field => {
-            const input = row.querySelector(`input[data-field="${field}"]`);
-            if (input && data[field] !== undefined) {
-                input.value = data[field] !== null ? data[field] : '';
-                console.log(`Updated ${field} input to:`, input.value);
-            }
-        });
-
-        const totalDisplay = row.querySelector('.total-display span');
-        if (totalDisplay && data.total !== undefined) {
-            const totalValue = parseFloat(data.total).toFixed(1);
-            totalDisplay.textContent = totalValue;
-            console.log(`Updated total display to:`, totalValue);
-        }
-
-        const bfDisplay = row.querySelector('.bf-display span');
-        if (bfDisplay) {
-            const bfValue = data.bf !== null && data.bf !== undefined ? parseFloat(data.bf) : 0;
-            bfDisplay.textContent = bfValue.toFixed(2);
-            console.log(`Updated bf display to:`, bfValue.toFixed(2));
-        }
-
-        const cumDisplay = row.querySelector('.cum-display span');
-        if (cumDisplay) {
-            const cumValue = data.cum !== null && data.cum !== undefined ? parseFloat(data.cum) : 0;
-            cumDisplay.textContent = cumValue.toFixed(2);
-            console.log(`Updated cum display to:`, cumValue.toFixed(2));
-        }
-
-        const gradeDisplay = row.querySelector('.grade-display span');
-        if (gradeDisplay && data.grade !== undefined) {
-            gradeDisplay.textContent = data.grade || '-';
-            console.log(`Updated grade display to:`, data.grade || '-');
-        }
-
-        const positionDisplay = row.querySelector('.position-display span');
-        if (positionDisplay && data.subject_position_class !== undefined) {
-            positionDisplay.textContent = data.subject_position_class || '-';
-            console.log(`Updated position display to:`, data.subject_position_class || '- (based on cum)');
-        }
+    const totalDisplay = row.querySelector('.total-display span');
+    if (totalDisplay && data.total !== undefined) {
+        const totalValue = parseFloat(data.total).toFixed(1);
+        totalDisplay.textContent = totalValue;
+        console.log(`Updated total display to:`, totalValue);
     }
 
-    if (scoresheetList) scoresheetList.reIndex();
+    const bfDisplay = row.querySelector('.bf-display span');
+    if (bfDisplay && data.bf !== undefined) {
+        const bfValue = data.bf !== null ? parseFloat(data.bf).toFixed(2) : '0.00';
+        bfDisplay.textContent = bfValue;
+        console.log(`Updated bf display to:`, bfValue);
+    }
+
+    const cumDisplay = row.querySelector('.cum-display span');
+    if (cumDisplay && data.cum !== undefined) {
+        const cumValue = data.cum !== null ? parseFloat(data.cum).toFixed(2) : '0.00';
+        cumDisplay.textContent = cumValue;
+        console.log(`Updated cum display to:`, cumValue);
+    }
+
+    const gradeDisplay = row.querySelector('.grade-display span');
+    if (gradeDisplay && data.grade !== undefined) {
+        gradeDisplay.textContent = data.grade || '-';
+        console.log(`Updated grade display to:`, data.grade || '-');
+    }
+
+    const positionDisplay = row.querySelector('.position-display span');
+    if (positionDisplay && data.position !== undefined) {
+        positionDisplay.textContent = data.position || '-';
+        console.log(`Updated position display to:`, data.position || '-');
+    }
+
+    // Update name-text in DOM
+    const nameElement = row.querySelector('.name-text');
+    if (nameElement && data.fname && data.lname) {
+        const fullName = `${data.fname} ${data.lname}`.trim();
+        nameElement.textContent = fullName;
+        console.log(`Updated name-text for ID ${id} to: ${fullName}`);
+    } else if (nameElement) {
+        console.warn(`Could not update name-text for ID ${id}. Missing fname or lname in data:`, data);
+    }
+
+    if (scoresheetList) {
+        scoresheetList.reIndex();
+        console.log("Re-indexed List.js after updating row. Items:", scoresheetList.items.length);
+    }
 }
 
 function initializeBulkActions() {
@@ -424,9 +494,7 @@ function initializeBulkActions() {
             }).then((result) => {
                 if (result.isConfirmed) {
                     document.querySelectorAll('.score-input').forEach(input => {
-                        if (!isMock || input.dataset.field === 'exam') {
-                            input.value = '';
-                        }
+                        input.value = '';
                     });
                     updateAllRowTotals();
                 }
@@ -444,7 +512,7 @@ function initializeBulkActions() {
 }
 
 function bulkSaveAllScores() {
-    console.log(`=== DEBUG: Starting bulkSaveAllScores (${isMock ? 'mock' : 'regular'} exams) ===`);
+    console.log(`=== DEBUG: Starting bulkSaveAllScores ===`);
     console.log("window.term_id:", window.term_id);
     console.log("window.broadsheets:", window.broadsheets);
     
@@ -485,7 +553,6 @@ function bulkSaveAllScores() {
 
         console.log(`Input - ID: ${id}, Field: ${field}, Value: ${value}`);
 
-        // Skip disabled inputs (e.g., CA fields for mock exams)
         if (input.disabled) return;
 
         input.classList.remove('is-invalid', 'is-valid');
@@ -515,66 +582,64 @@ function bulkSaveAllScores() {
 
     if (invalidInputs.length > 0) {
         console.error("Validation failed:", invalidInputs);
+        Swal.fire({
+            icon: 'error',
+            title: 'Validation Failed',
+            text: 'Some scores are invalid. Please check inputs and try again.',
+            showConfirmButton: true
+        });
         return;
     }
 
     console.log("=== DEBUG: Raw score data collected ===");
     console.log("scoreData:", scoreData);
 
-    if (isMock) {
-        // Mock exams: only include id and exam
-        Object.values(scoreData).forEach(scoreEntry => {
-            console.log(`\n=== DEBUG: Processing mock score ID ${scoreEntry.id} ===`);
-            const exam = parseFloat(scoreEntry.exam) || 0;
-            console.log(`Exam score: ${exam}`);
-            scores.push({
-                id: scoreEntry.id,
-                exam: exam
-            });
-        });
-    } else {
-        // Regular exams: include all fields and calculate cum
-        Object.values(scoreData).forEach(scoreEntry => {
-            console.log(`\n=== DEBUG: Processing score ID ${scoreEntry.id} ===`);
-            
-            const ca1 = parseFloat(scoreEntry.ca1) || 0;
-            const ca2 = parseFloat(scoreEntry.ca2) || 0;
-            const ca3 = parseFloat(scoreEntry.ca3) || 0;
-            const exam = parseFloat(scoreEntry.exam) || 0;
-            
-            console.log(`Raw scores - CA1: ${ca1}, CA2: ${ca2}, CA3: ${ca3}, Exam: ${exam}`);
-            
-            const caAverage = (ca1 + ca2 + ca3) / 3;
-            const total = (caAverage + exam) / 2;
-            
-            console.log(`Calculated - CA Average: ${caAverage.toFixed(2)}, Total: ${total.toFixed(2)}`);
-            
-            const broadsheet = window.broadsheets.find(b => b.id == scoreEntry.id);
-            const bf = broadsheet ? parseFloat(broadsheet.bf) || 0 : 0;
-            
-            console.log(`BF from broadsheet: ${bf.toFixed(2)}`);
-            console.log(`Broadsheet data:`, broadsheet);
-            
-            const cum = window.term_id === 1 ? total : (bf + total) / 2;
-            
-            console.log(`Cum calculation: term_id=${window.term_id}, formula=${window.term_id === 1 ? 'total' : '(bf + total) / 2'}`);
-            console.log(`Final cum: ${cum.toFixed(2)}`);
-            
-            scoreEntry.ca1 = ca1;
-            scoreEntry.ca2 = ca2;
-            scoreEntry.ca3 = ca3;
-            scoreEntry.exam = exam;
-            scoreEntry.total = parseFloat(total.toFixed(2));
-            scoreEntry.bf = bf;
-            scoreEntry.cum = parseFloat(cum.toFixed(2));
-            
-            console.log(`Final scoreEntry:`, scoreEntry);
-            scores.push(scoreEntry);
-        });
-    }
+    Object.values(scoreData).forEach(scoreEntry => {
+        console.log(`\n=== DEBUG: Processing score ID ${scoreEntry.id} ===`);
+        
+        const ca1 = parseFloat(scoreEntry.ca1) || 0;
+        const ca2 = parseFloat(scoreEntry.ca2) || 0;
+        const ca3 = parseFloat(scoreEntry.ca3) || 0;
+        const exam = parseFloat(scoreEntry.exam) || 0;
+        
+        console.log(`Raw scores - CA1: ${ca1}, CA2: ${ca2}, CA3: ${ca3}, Exam: ${exam}`);
+        
+        const caAverage = (ca1 + ca2 + ca3) / 3;
+        const total = (caAverage + exam) / 2;
+        
+        console.log(`Calculated - CA Average: ${caAverage.toFixed(2)}, Total: ${total.toFixed(2)}`);
+        
+        const broadsheet = window.broadsheets.find(b => b.id == scoreEntry.id);
+        const bf = broadsheet ? parseFloat(broadsheet.bf) || 0 : 0;
+        
+        console.log(`BF from broadsheet: ${bf.toFixed(2)}`);
+        console.log(`Broadsheet data:`, broadsheet);
+        
+        const cum = window.term_id === 1 ? total : (bf + total) / 2;
+        
+        console.log(`Cum calculation: term_id=${window.term_id}, formula=${window.term_id === 1 ? 'total' : '(bf + total) / 2'}`);
+        console.log(`Final cum: ${cum.toFixed(2)}`);
+        
+        scoreEntry.ca1 = ca1;
+        scoreEntry.ca2 = ca2;
+        scoreEntry.ca3 = ca3;
+        scoreEntry.exam = exam;
+        scoreEntry.total = parseFloat(total.toFixed(2));
+        scoreEntry.bf = bf;
+        scoreEntry.cum = parseFloat(cum.toFixed(2));
+        
+        console.log(`Final scoreEntry:`, scoreEntry);
+        scores.push(scoreEntry);
+    });
 
     if (!scores.length) {
         console.warn("No valid scores to save");
+        Swal.fire({
+            icon: 'info',
+            title: 'No Scores',
+            text: 'No valid scores to save.',
+            timer: 2000
+        });
         return;
     }
 
@@ -592,8 +657,7 @@ function bulkSaveAllScores() {
         bulkUpdateBtn.innerHTML = '<i class="ri-loader-4-line sync-icon"></i> Saving...';
     }
 
-    const endpoint = isMock ? '/subjectscoresheet/bulk-update-mock' : '/subjectscoresheet/bulk-update';
-    axios.post(endpoint, {
+    axios.post('/subjectscoresheet/bulk-update', {
         scores,
         term_id: window.term_id,
         session_id: window.session_id,
@@ -655,8 +719,6 @@ function bulkSaveAllScores() {
 
         updateAllRowTotals();
         populateResultsModal();
-        if (scoresheetList) scoresheetList.reIndex();
-
         showTemporaryMessage('Changes saved successfully!', 'success');
 
         console.log("=== DEBUG: Final window.broadsheets state ===");
@@ -666,9 +728,8 @@ function bulkSaveAllScores() {
         scores.forEach(score => {
             const row = document.querySelector(`input[data-id="${score.id}"]`)?.closest('tr');
             if (row) {
-                const displayField = isMock ? '.total-display span' : '.cum-display span';
-                const display = row.querySelector(displayField);
-                console.log(`Row ${score.id} ${isMock ? 'total' : 'cum'} display:`, display?.textContent);
+                const display = row.querySelector('.cum-display span');
+                console.log(`Row ${score.id} cum display:`, display?.textContent);
             }
         });
     })
@@ -703,7 +764,7 @@ function bulkSaveAllScores() {
 }
 
 function debugCurrentState() {
-    console.log(`=== DEBUG: Current State Check (${isMock ? 'mock' : 'regular'} exams) ===`);
+    console.log("=== DEBUG: Current State Check ===");
     console.log("window.broadsheets:", window.broadsheets);
     console.log("window.term_id:", window.term_id);
     
@@ -714,15 +775,20 @@ function debugCurrentState() {
         console.log(`Input - ID: ${input.dataset.id}, Field: ${input.dataset.field}, Value: ${input.value}, Disabled: ${input.disabled}`);
     });
     
-    const displayField = isMock ? '.total-display span' : '.cum-display span';
-    const displays = document.querySelectorAll(displayField);
-    console.log(`${isMock ? 'Total' : 'Cum'} displays found:`, displays.length);
+    const displays = document.querySelectorAll('.cum-display span');
+    console.log("Cum displays found:", displays.length);
     
     displays.forEach((display, index) => {
         const row = display.closest('tr');
         const idInput = row?.querySelector('.score-input');
-        console.log(`${isMock ? 'Total' : 'Cum'} display ${index} - ID: ${idInput?.dataset.id}, Value: ${display.textContent}`);
+        console.log(`Cum display ${index} - ID: ${idInput?.dataset.id}, Value: ${display.textContent}`);
     });
+
+    const nameElements = document.querySelectorAll('#scoresheetTable .name-text');
+    const admissionElements = document.querySelectorAll('#scoresheetTable .admissionno');
+    console.log(`Name elements: ${nameElements.length}, Admission elements: ${admissionElements.length}`);
+    nameElements.forEach((el, i) => console.log(`Name element ${i}: ${el.textContent || 'EMPTY'}`));
+    admissionElements.forEach((el, i) => console.log(`Admission element ${i}: ${el.textContent || 'EMPTY'}`));
 }
 
 function showTemporaryMessage(message, type = 'info') {
@@ -767,12 +833,11 @@ function initializeImportForm() {
             importBtn.innerHTML = '<i class="ri-loader-4-line spin me-1"></i> Importing...';
         }
 
-        const endpoint = isMock ? '/subjectscoresheet/import-mock' : '/subjectscoresheet/import';
-        axios.post(endpoint, formData, {
+        axios.post('/subjectscoresheet/import', formData, {
             headers: { 'Content-Type': 'multipart/form-data' }
         })
         .then(response => {
-            console.log(`Import success (${isMock ? 'mock' : 'regular'} exams):`, response.data);
+            console.log("Import success:", response.data);
             let message = response.data.message;
             let html = '';
 
@@ -805,11 +870,15 @@ function initializeImportForm() {
                 });
                 updateAllRowTotals();
                 populateResultsModal();
-                if (scoresheetList) scoresheetList.reIndex();
+            }
+            // Re-enable search input if data was added
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput && window.broadsheets.length > 0) {
+                searchInput.disabled = false;
             }
         })
         .catch(error => {
-            console.error(`Import error (${isMock ? 'mock' : 'regular'} exams):`, {
+            console.error("Import error:", {
                 status: error.response?.status,
                 data: error.response?.data
             });
@@ -835,7 +904,7 @@ function initializeImportForm() {
         .finally(() => {
             if (importBtn) {
                 importBtn.disabled = false;
-                importBtn.innerHTML = '<i class="ri-upload-line me-1"></i> Import';
+                importBtn.innerHTML = 'Upload';
             }
         });
     });
@@ -852,20 +921,24 @@ function populateResultsModal() {
         return;
     }
 
-    const endpoint = isMock ? '/subjectscoresheet/results-mock' : '/subjectscoresheet/results';
-    axios.get(endpoint)
+    axios.get('/subjectscoresheet/results')
         .then(response => {
             if (response.data.html) {
                 modalBody.innerHTML = response.data.html;
             } else if (response.data.scores) {
                 window.broadsheets = response.data.scores;
                 generateResultsTable(modalBody, response.data.scores);
+                // Re-enable search input if data was loaded
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput && window.broadsheets.length > 0) {
+                    searchInput.disabled = false;
+                }
             } else {
                 modalBody.innerHTML = '<p class="text-center">No results available.</p>';
             }
         })
         .catch(error => {
-            console.error(`Error loading results (${isMock ? 'mock' : 'regular'} exams):`, error);
+            console.error("Error loading results:", error);
             modalBody.innerHTML = `
                 <div class="alert alert-warning text-center">
                     <i class="ri-alert-line me-2"></i>
@@ -877,7 +950,7 @@ function populateResultsModal() {
 }
 
 function generateResultsTable(container, scores) {
-    console.log(`=== DEBUG: Generating results table (${isMock ? 'mock' : 'regular'} exams) ===`);
+    console.log("=== DEBUG: Generating results table ===");
     let html = `
         <div class="table-responsive">
             <table class="table align-middle">
@@ -886,28 +959,21 @@ function generateResultsTable(container, scores) {
                         <th>#</th>
                         <th>Admission No</th>
                         <th>Name</th>
-                        ${isMock ? `
-                            <th>Exam</th>
-                            <th>Total</th>
-                            <th>Grade</th>
-                            <th>Position</th>
-                        ` : `
-                            <th>CA1</th>
-                            <th>CA2</th>
-                            <th>CA3</th>
-                            <th>
-                                <div class="fraction">
-                                    <div class="numerator">CA1 + CA2 + CA3</div>
-                                    <div class="denominator">3</div>
-                                </div>
-                            </th>
-                            <th>Exam</th>
-                            <th>Total</th>
-                            <th>BF</th>
-                            <th>Cumulative</th>
-                            <th>Grade</th>
-                            <th>Position</th>
-                        `}
+                        <th>CA1</th>
+                        <th>CA2</th>
+                        <th>CA3</th>
+                        <th>
+                            <div class="fraction">
+                                <div class="numerator">CA1 + CA2 + CA3</div>
+                                <div class="denominator">3</div>
+                            </div>
+                        </th>
+                        <th>Exam</th>
+                        <th>Total</th>
+                        <th>BF</th>
+                        <th>Cumulative</th>
+                        <th>Grade</th>
+                        <th>Position</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -916,65 +982,45 @@ function generateResultsTable(container, scores) {
     if (!scores || !Array.isArray(scores) || scores.length === 0) {
         html += `
             <tr>
-                <td colspan="${isMock ? 7 : 13}" class="text-center">No scores available.</td>
+                <td colspan="13" class="text-center">No scores available.</td>
             </tr>
         `;
     } else {
         scores.forEach((score, index) => {
-            const name = score.name || `${score.fname || ''} ${score.lname || ''}`.trim();
-            
-            if (isMock) {
-                const exam = parseFloat(score.exam) || 0;
-                const total = parseFloat(score.total) || exam;
-                const examClass = exam < 40 && exam !== 0 ? 'text-danger' : '';
-                const totalClass = total < 40 && total !== 0 ? 'text-danger' : '';
+            const name = `${score.fname || ''} ${score.lname || ''}`.trim();
+            const ca1 = parseFloat(score.ca1) || 0;
+            const ca2 = parseFloat(score.ca2) || 0;
+            const ca3 = parseFloat(score.ca3) || 0;
+            const exam = parseFloat(score.exam) || 0;
+            const caAverage = (ca1 + ca2 + ca3) / 3;
+            const total = (caAverage + exam) / 2;
+            const bf = parseFloat(score.bf) || 0;
+            const cum = parseFloat(score.cum) || (window.term_id === 1 ? total : (bf + total) / 2);
 
-                html += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${score.admissionno || '-'}</td>
-                        <td>${name || '-'}</td>
-                        <td class="${examClass}">${score.exam !== null && score.exam !== undefined ? score.exam : '-'}</td>
-                        <td class="${totalClass}">${total.toFixed(1)}</td>
-                        <td>${score.grade || '-'}</td>
-                        <td>${score.subjectpositionclass || '-'}</td>
-                    </tr>
-                `;
-            } else {
-                const ca1 = parseFloat(score.ca1) || 0;
-                const ca2 = parseFloat(score.ca2) || 0;
-                const ca3 = parseFloat(score.ca3) || 0;
-                const exam = parseFloat(score.exam) || 0;
-                const caAverage = (ca1 + ca2 + ca3) / 3;
-                const total = (caAverage + exam) / 2;
-                const bf = parseFloat(score.bf) || 0;
-                const cum = parseFloat(score.cum) || (window.term_id === 1 ? total : (bf + total) / 2);
+            const ca1Class = ca1 < 40 && ca1 !== 0 ? 'text-danger' : '';
+            const ca2Class = ca2 < 40 && ca2 !== 0 ? 'text-danger' : '';
+            const ca3Class = ca3 < 40 && ca3 !== 0 ? 'text-danger' : '';
+            const examClass = exam < 40 && exam !== 0 ? 'text-danger' : '';
+            const totalClass = total < 40 && total !== 0 ? 'text-danger' : '';
+            const cumClass = cum < 40 && cum !== 0 ? 'text-danger' : '';
 
-                const ca1Class = ca1 < 40 && ca1 !== 0 ? 'text-danger' : '';
-                const ca2Class = ca2 < 40 && ca2 !== 0 ? 'text-danger' : '';
-                const ca3Class = ca3 < 40 && ca3 !== 0 ? 'text-danger' : '';
-                const examClass = exam < 40 && exam !== 0 ? 'text-danger' : '';
-                const totalClass = total < 40 && total !== 0 ? 'text-danger' : '';
-                const cumClass = cum < 40 && cum !== 0 ? 'text-danger' : '';
-
-                html += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${score.admissionno || '-'}</td>
-                        <td>${name || '-'}</td>
-                        <td class="${ca1Class}">${score.ca1 !== null && score.ca1 !== undefined ? score.ca1 : '-'}</td>
-                        <td class="${ca2Class}">${score.ca2 !== null && score.ca2 !== undefined ? score.ca2 : '-'}</td>
-                        <td class="${ca3Class}">${score.ca3 !== null && score.ca3 !== undefined ? score.ca3 : '-'}</td>
-                        <td>${caAverage ? caAverage.toFixed(1) : '-'}</td>
-                        <td class="${examClass}">${score.exam !== null && score.exam !== undefined ? score.exam : '-'}</td>
-                        <td class="${totalClass}">${total.toFixed(1)}</td>
-                        <td>${bf.toFixed(2)}</td>
-                        <td class="${cumClass}">${cum.toFixed(2)}</td>
-                        <td>${score.grade || '-'}</td>
-                        <td>${score.subject_position_class || '-'}</td>
-                    </tr>
-                `;
-            }
+            html += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${score.admissionno || '-'}</td>
+                    <td>${name || '-'}</td>
+                    <td class="${ca1Class}">${score.ca1 !== null && score.ca1 !== undefined ? score.ca1 : '-'}</td>
+                    <td class="${ca2Class}">${score.ca2 !== null && score.ca2 !== undefined ? score.ca2 : '-'}</td>
+                    <td class="${ca3Class}">${score.ca3 !== null && score.ca3 !== undefined ? score.ca3 : '-'}</td>
+                    <td>${caAverage ? caAverage.toFixed(1) : '-'}</td>
+                    <td class="${examClass}">${score.exam !== null && score.exam !== undefined ? score.exam : '-'}</td>
+                    <td class="${totalClass}">${total.toFixed(1)}</td>
+                    <td>${bf.toFixed(2)}</td>
+                    <td class="${cumClass}">${cum.toFixed(2)}</td>
+                    <td>${score.grade || '-'}</td>
+                    <td>${score.position || '-'}</td>
+                </tr>
+            `;
         });
     }
 
@@ -983,7 +1029,7 @@ function generateResultsTable(container, scores) {
 }
 
 function deleteSelectedScores() {
-    console.log(`Delete selected scores triggered (${isMock ? 'mock' : 'regular'} exams)`);
+    console.log("Delete selected scores triggered");
     const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
     
     if (checkboxes.length === 0) {
@@ -1020,8 +1066,7 @@ function deleteSelectedScores() {
         showCloseButton: true
     }).then((result) => {
         if (result.isConfirmed) {
-            const endpoint = isMock ? '/subjectscoresheet/destroy-mock' : '/subjectscoresheet/destroy';
-            Promise.all(scores.map(id => axios.post(endpoint, { id })))
+            Promise.all(scores.map(id => axios.post('/subjectscoresheet/destroy', { id })))
                 .then(() => {
                     Swal.fire({
                         title: "Deleted!",
@@ -1029,8 +1074,7 @@ function deleteSelectedScores() {
                         icon: "success",
                         timer: 2000
                     });
-                    const resultsEndpoint = isMock ? '/subjectscoresheet/results-mock' : '/subjectscoresheet/results';
-                    axios.get(resultsEndpoint)
+                    axios.get('/subjectscoresheet/results')
                         .then(response => {
                             if (response.data.scores) {
                                 window.broadsheets = response.data.scores;
@@ -1039,12 +1083,19 @@ function deleteSelectedScores() {
                                 });
                                 updateAllRowTotals();
                                 populateResultsModal();
-                                if (scoresheetList) scoresheetList.reIndex();
                             }
+                        })
+                        .catch((error) => {
+                            console.error("Error fetching results after delete:", error);
+                            Swal.fire({
+                                title: "Error!",
+                                text: "Failed to refresh data after deletion",
+                                icon: "error"
+                            });
                         });
                 })
                 .catch((error) => {
-                    console.error(`Bulk delete error (${isMock ? 'mock' : 'regular'} exams):`, error);
+                    console.error("Bulk delete error:", error);
                     Swal.fire({
                         title: "Error!",
                         text: error.response?.data?.message || "Failed to delete scores",
@@ -1056,7 +1107,7 @@ function deleteSelectedScores() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
-    console.log("DOMContentLoaded event fired");
+    console.log("DOMContentLoaded event fired at", new Date().toISOString());
     console.log("Initial broadsheets:", window.broadsheets);
     
     ensureBroadsheetsArray();
@@ -1076,7 +1127,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     updateAllRowTotals();
     
-    console.log("All initialization complete for", isMock ? "mock" : "regular", "exams");
+    console.log("All initialization complete for regular exams");
+    // Debug initial state
+    debugCurrentState();
 });
 
 window.deleteSelectedScores = deleteSelectedScores;
