@@ -206,7 +206,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             '0' => 'required', // admissionno
             '1' => 'required', // surname
             '2' => 'required', // firstname
-            '4' => 'in:Male,Female|nullable', // gender
+           // '4' => 'in:Male,Female|nullable', // gender
             '7' => 'numeric|nullable', // age
             '15' => function ($attribute, $value, $onFailure) {
                 if ($value != $this->_sclassid) {
