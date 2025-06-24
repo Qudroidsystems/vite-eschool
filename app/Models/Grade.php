@@ -5,40 +5,33 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Classcategory extends Model
+class Grade extends Model
 {
     use HasFactory;
-    protected $table = "classcategories";
-
+    
+    protected $table = 'grades';
+    
     protected $fillable = [
-        'category',
-        'ca1score',
-        'ca2score',
-        'ca3score',
-        'examscore',
-        'is_senior', // Add this new field
+        'classcategory_id',
+        'total_score',
+        'grade',
+        'is_senior',
     ];
 
-    protected $casts = [
-        'is_senior' => 'boolean',
-    ];
-
-    public function schoolclasses()
+    /**
+     * Relationship with Classcategory
+     */
+    public function classcategory()
     {
-        return $this->hasMany(Schoolclass::class, 'classcategoryid');
-    }
-
-    public function grades()
-    {
-        return $this->hasMany(Grade::class, 'classcategory_id');
+        return $this->belongsTo(Classcategory::class, 'classcategory_id');
     }
 
     /**
      * Calculate grade based on total score and class type
      */
-    public function calculateGrade($totalScore)
+    public function calculateGrade($totalScore, $isSenior = false)
     {
-        if ($this->is_senior) {
+        if ($isSenior) {
             return $this->calculateSeniorGrade($totalScore);
         }
         return $this->calculateJuniorGrade($totalScore);
@@ -86,14 +79,6 @@ class Classcategory extends Model
         } else {
             return 'F9';
         }
-    }
-
-    /**
-     * Get the grade type label
-     */
-    public function getGradeTypeAttribute()
-    {
-        return $this->is_senior ? 'Senior' : 'Junior';
     }
 
     /**

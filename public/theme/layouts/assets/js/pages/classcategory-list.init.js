@@ -1,24 +1,58 @@
 console.log("classcategory.init.js is loaded and executing at", new Date().toISOString());
 
-// Verify dependencies
-try {
-    if (typeof axios === 'undefined') throw new Error("Axios is not loaded");
-    if (typeof Swal === 'undefined') throw new Error("SweetAlert2 is not loaded");
-    if (typeof bootstrap === 'undefined') throw new Error("Bootstrap is not loaded");
-    if (typeof List === 'undefined') throw new Error("List.js is not loaded");
-    console.log("All dependencies loaded successfully");
-} catch (error) {
-    console.error("Dependency check failed:", error);
+// Dependency check with retry
+function checkDependencies(attempt = 1, maxAttempts = 5) {
+    try {
+        const dependencies = {
+            axios: typeof axios !== 'undefined',
+            Swal: typeof Swal !== 'undefined',
+            bootstrap: typeof bootstrap !== 'undefined',
+            List: typeof List !== 'undefined'
+        };
+
+        const missingDeps = Object.keys(dependencies).filter(key => !dependencies[key]);
+        if (missingDeps.length > 0) {
+            console.warn(`Missing dependencies (attempt ${attempt}):`, missingDeps);
+            if (attempt < maxAttempts) {
+                console.log(`Retrying dependency check in 1000ms (attempt ${attempt + 1}/${maxAttempts})`);
+                setTimeout(() => checkDependencies(attempt + 1, maxAttempts), 1000);
+                return false;
+            } else {
+                console.error(`Failed to load dependencies after ${maxAttempts} attempts:`, missingDeps);
+                Swal.fire({
+                    icon: "error",
+                    title: "Dependency Error",
+                    text: `Failed to load required scripts: ${missingDeps.join(", ")}. Please refresh the page.`,
+                    confirmButtonClass: "btn btn-primary"
+                });
+                return false;
+            }
+        }
+
+        console.log("All dependencies loaded successfully:", dependencies);
+        return true;
+    } catch (error) {
+        console.error("Error checking dependencies:", error);
+        return false;
+    }
 }
 
-// Set Axios CSRF token globally
-try {
-    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
-    if (!csrfToken) throw new Error("CSRF token meta tag not found");
-    axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
-    console.log("CSRF token set successfully");
-} catch (error) {
-    console.error("CSRF token setup failed:", error);
+// Set Axios CSRF token
+function setCsrfToken() {
+    try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        if (!csrfToken) throw new Error("CSRF token meta tag not found");
+        axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
+        console.log("CSRF token set successfully");
+    } catch (error) {
+        console.error("CSRF token setup failed:", error);
+        Swal.fire({
+            icon: "error",
+            title: "CSRF Token Error",
+            text: "Failed to set CSRF token. Please refresh the page.",
+            confirmButtonClass: "btn btn-primary"
+        });
+    }
 }
 
 // Debounce function for search input
@@ -34,8 +68,8 @@ function debounceInput(func, wait) {
 let addIdField, addCategoryField, addCa1ScoreField, addCa2ScoreField, addCa3ScoreField, addExamScoreField, addTotalScoreField, addSubmitButton;
 let editIdField, editCategoryField, editCa1ScoreField, editCa2ScoreField, editCa3ScoreField, editExamScoreField, editTotalScoreField, editSubmitButton;
 
-// Initialize form fields with retry mechanism
-function initializeFormFields(attempt = 1, maxAttempts = 3) {
+// Initialize form fields with retry
+function initializeFormFields(attempt = 1, maxAttempts = 5) {
     try {
         addIdField = document.getElementById("add-id-field");
         addCategoryField = document.getElementById("category");
@@ -72,40 +106,72 @@ function initializeFormFields(attempt = 1, maxAttempts = 3) {
             editTotalScoreField: !!editTotalScoreField,
             editSubmitButton: !!editSubmitButton
         };
-        console.log(`Form fields initialized (attempt ${attempt}):`, fieldsFound);
 
-        if (Object.values(fieldsFound).some(found => !found) && attempt < maxAttempts) {
-            console.warn(`Some fields not found, retrying in 500ms (attempt ${attempt + 1})`);
-            setTimeout(() => initializeFormFields(attempt + 1, maxAttempts), 500);
-            return;
+        const missingFields = Object.keys(fieldsFound).filter(key => !fieldsFound[key]);
+        if (missingFields.length > 0) {
+            console.warn(`Missing fields (attempt ${attempt}):`, missingFields);
+            if (attempt < maxAttempts) {
+                console.log(`Retrying field initialization in 1000ms (attempt ${attempt + 1}/${maxAttempts})`);
+                setTimeout(() => initializeFormFields(attempt + 1, maxAttempts), 1000);
+                return;
+            } else {
+                console.error(`Failed to initialize fields after ${maxAttempts} attempts:`, missingFields);
+                Swal.fire({
+                    icon: "error",
+                    title: "Initialization Error",
+                    text: `Failed to load form fields: ${missingFields.join(", ")}. Please refresh the page.`,
+                    confirmButtonClass: "btn btn-primary"
+                });
+                return;
+            }
         }
 
-        if (Object.values(fieldsFound).some(found => !found)) {
-            console.error("Failed to initialize all form fields after max attempts");
-        } else {
-            initializeEventListeners();
-        }
+        console.log(`All form fields initialized successfully (attempt ${attempt})`);
+        initializeEventListeners();
     } catch (error) {
         console.error("Error initializing form fields:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Initialization Error",
+            text: "An error occurred while initializing form fields. Please refresh the page.",
+            confirmButtonClass: "btn btn-primary"
+        });
     }
 }
 
 // Calculate total score for Add Modal
 function calculateAddTotalScore() {
     try {
-        if (!addCa1ScoreField || !addCa2ScoreField || !addCa3ScoreField || !addExamScoreField || !addSubmitButton) {
-            console.error("Add modal score fields or submit button not found");
+        if (!addCa1ScoreField || !addCa2ScoreField || !addCa3ScoreField || !addExamScoreField || !addTotalScoreField || !addSubmitButton) {
+            console.error("Add modal fields missing:", {
+                addCa1ScoreField: !!addCa1ScoreField,
+                addCa2ScoreField: !!addCa2ScoreField,
+                addCa3ScoreField: !!addCa3ScoreField,
+                addExamScoreField: !!addExamScoreField,
+                addTotalScoreField: !!addTotalScoreField,
+                addSubmitButton: !!addSubmitButton
+            });
             return;
         }
+
         const ca1 = parseFloat(addCa1ScoreField.value) || 0;
         const ca2 = parseFloat(addCa2ScoreField.value) || 0;
         const ca3 = parseFloat(addCa3ScoreField.value) || 0;
         const exam = parseFloat(addExamScoreField.value) || 0;
         const total = ca1 + ca2 + ca3 + exam;
-        console.log("Add Scores:", { ca1, ca2, ca3, exam, total: total.toFixed(2) });
-        if (addTotalScoreField) addTotalScoreField.value = total.toFixed(2);
+
+        console.log("Add Modal Scores:", {
+            ca1: ca1.toFixed(2),
+            ca2: ca2.toFixed(2),
+            ca3: ca3.toFixed(2),
+            exam: exam.toFixed(2),
+            total: total.toFixed(2)
+        });
+
+        addTotalScoreField.value = total.toFixed(2);
         addSubmitButton.disabled = Math.abs(total - 400) > Number.EPSILON;
-        console.log("Add button disabled:", addSubmitButton.disabled);
+
+        console.log("Add Modal Submit Button Disabled:", addSubmitButton.disabled);
     } catch (error) {
         console.error("Error in calculateAddTotalScore:", error);
     }
@@ -114,19 +180,36 @@ function calculateAddTotalScore() {
 // Calculate total score for Edit Modal
 function calculateEditTotalScore() {
     try {
-        if (!editCa1ScoreField || !editCa2ScoreField || !editCa3ScoreField || !editExamScoreField || !editSubmitButton) {
-            console.error("Edit modal score fields or submit button not found");
+        if (!editCa1ScoreField || !editCa2ScoreField || !editCa3ScoreField || !editExamScoreField || !editTotalScoreField || !editSubmitButton) {
+            console.error("Edit modal fields missing:", {
+                editCa1ScoreField: !!editCa1ScoreField,
+                editCa2ScoreField: !!editCa2ScoreField,
+                editCa3ScoreField: !!editCa3ScoreField,
+                editExamScoreField: !!editExamScoreField,
+                editTotalScoreField: !!editTotalScoreField,
+                editSubmitButton: !!editSubmitButton
+            });
             return;
         }
+
         const ca1 = parseFloat(editCa1ScoreField.value) || 0;
         const ca2 = parseFloat(editCa2ScoreField.value) || 0;
         const ca3 = parseFloat(editCa3ScoreField.value) || 0;
         const exam = parseFloat(editExamScoreField.value) || 0;
         const total = ca1 + ca2 + ca3 + exam;
-        console.log("Edit Scores:", { ca1, ca2, ca3, exam, total: total.toFixed(2) });
-        if (editTotalScoreField) editTotalScoreField.value = total.toFixed(2);
+
+        console.log("Edit Modal Scores:", {
+            ca1: ca1.toFixed(2),
+            ca2: ca2.toFixed(2),
+            ca3: ca3.toFixed(2),
+            exam: exam.toFixed(2),
+            total: total.toFixed(2)
+        });
+
+        editTotalScoreField.value = total.toFixed(2);
         editSubmitButton.disabled = Math.abs(total - 400) > Number.EPSILON;
-        console.log("Edit button disabled:", editSubmitButton.disabled);
+
+        console.log("Edit Modal Submit Button Disabled:", editSubmitButton.disabled);
     } catch (error) {
         console.error("Error in calculateEditTotalScore:", error);
     }
@@ -137,7 +220,7 @@ function initializeCheckAll() {
     const checkAll = document.getElementById("checkAll");
     if (checkAll) {
         checkAll.onclick = function () {
-            console.log("checkAll clicked");
+            console.log("CheckAll clicked");
             const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
             checkboxes.forEach((checkbox) => {
                 checkbox.checked = this.checked;
@@ -154,9 +237,9 @@ function initializeCheckAll() {
                 removeActions.classList.toggle("d-none", checkedCount === 0);
             }
         };
-        console.log("checkAll initialized");
+        console.log("CheckAll initialized");
     } else {
-        console.warn("checkAll element not found");
+        console.warn("CheckAll element not found");
     }
 }
 
@@ -192,7 +275,7 @@ function handleCheckboxChange(e) {
 // Delete single category
 function handleRemoveClick(e) {
     e.preventDefault();
-    const itemId = e.target.closest("tr").querySelector(".id").getAttribute("data-id");
+    const itemId = e.target.closest("tr").querySelector(".id")?.getAttribute("data-id");
     const deleteButton = document.getElementById("delete-record");
     if (deleteButton) {
         deleteButton.addEventListener("click", function () {
@@ -228,21 +311,61 @@ function handleRemoveClick(e) {
 // Edit category
 function handleEditClick(e) {
     e.preventDefault();
-    const itemId = e.target.closest("tr").querySelector(".id").getAttribute("data-id");
     const tr = e.target.closest("tr");
+    const itemId = tr.querySelector(".id")?.getAttribute("data-id");
+    
+    if (!itemId) {
+        console.error("Item ID not found in table row");
+        Swal.fire({
+            icon: "error",
+            title: "Edit Error",
+            text: "Unable to find category ID. Please try again.",
+            confirmButtonClass: "btn btn-primary"
+        });
+        return;
+    }
+
+    console.log("Populating edit modal for item:", itemId);
+
     if (editIdField) editIdField.value = itemId;
-    if (editCategoryField) editCategoryField.value = tr.querySelector(".category").innerText;
-    if (editCa1ScoreField) editCa1ScoreField.value = tr.querySelector(".ca1score").innerText;
-    if (editCa2ScoreField) editCa2ScoreField.value = tr.querySelector(".ca2score").innerText;
-    if (editCa3ScoreField) editCa3ScoreField.value = tr.querySelector(".ca3score").innerText;
-    if (editExamScoreField) editExamScoreField.value = tr.querySelector(".examscore").innerText;
+    if (editCategoryField) editCategoryField.value = tr.querySelector(".category")?.innerText || "";
+    if (editCa1ScoreField) editCa1ScoreField.value = tr.querySelector(".ca1score")?.innerText || "0";
+    if (editCa2ScoreField) editCa2ScoreField.value = tr.querySelector(".ca2score")?.innerText || "0";
+    if (editCa3ScoreField) editCa3ScoreField.value = tr.querySelector(".ca3score")?.innerText || "0";
+    if (editExamScoreField) editExamScoreField.value = tr.querySelector(".examscore")?.innerText || "0";
+
+    // Set is_senior radio buttons
+    const isSeniorAttr = tr.querySelector(".gradetype")?.getAttribute("data-issenior");
+    const isSenior = isSeniorAttr ? parseInt(isSeniorAttr) : 0;
+    console.log("is_senior value from table:", isSenior);
+
+    const editCategoryForm = document.getElementById("edit-category-form");
+    if (editCategoryForm) {
+        const juniorRadio = editCategoryForm.querySelector("#edit-junior");
+        const seniorRadio = editCategoryForm.querySelector("#edit-senior");
+        if (juniorRadio && seniorRadio) {
+            juniorRadio.checked = !isSenior;
+            seniorRadio.checked = !!isSenior;
+            console.log("Set radio buttons:", { junior: !isSenior, senior: !!isSenior });
+        } else {
+            console.warn("Edit modal radio buttons not found");
+        }
+    }
+
     calculateEditTotalScore();
+
     try {
         const modal = new bootstrap.Modal(document.getElementById("editModal"));
         console.log("Edit modal opened for item:", itemId);
         modal.show();
     } catch (error) {
         console.error("Error opening edit modal:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Modal Error",
+            text: "Failed to open edit modal. Please refresh the page.",
+            confirmButtonClass: "btn btn-primary"
+        });
     }
 }
 
@@ -255,6 +378,7 @@ function clearAddFields() {
     if (addCa3ScoreField) addCa3ScoreField.value = "";
     if (addExamScoreField) addExamScoreField.value = "";
     if (addTotalScoreField) addTotalScoreField.value = "";
+    if (addSubmitButton) addSubmitButton.disabled = true;
 }
 
 function clearEditFields() {
@@ -265,6 +389,14 @@ function clearEditFields() {
     if (editCa3ScoreField) editCa3ScoreField.value = "";
     if (editExamScoreField) editExamScoreField.value = "";
     if (editTotalScoreField) editTotalScoreField.value = "";
+    if (editSubmitButton) editSubmitButton.disabled = true;
+    const editCategoryForm = document.getElementById("edit-category-form");
+    if (editCategoryForm) {
+        const juniorRadio = editCategoryForm.querySelector("#edit-junior");
+        const seniorRadio = editCategoryForm.querySelector("#edit-senior");
+        if (juniorRadio) juniorRadio.checked = true; // Default to Junior
+        if (seniorRadio) seniorRadio.checked = false;
+    }
 }
 
 // Delete multiple categories
@@ -378,11 +510,12 @@ function initializeAddCategoryForm() {
             const ca2score = parseFloat(formData.get('ca2score')) || 0;
             const ca3score = parseFloat(formData.get('ca3score')) || 0;
             const examscore = parseFloat(formData.get('examscore')) || 0;
+            const is_senior = parseInt(formData.get('is_senior')) || 0;
             const totalScore = ca1score + ca2score + ca3score + examscore;
 
-            if (!category || !ca1score || !ca2score || !ca3score || !examscore) {
+            if (!category || !ca1score || !ca2score || !ca3score || !examscore || is_senior === null) {
                 if (errorMsg) {
-                    errorMsg.innerHTML = "Please fill in all required fields";
+                    errorMsg.innerHTML = "Please fill in all required fields, including Grade Type";
                     errorMsg.classList.remove("d-none");
                 }
                 return;
@@ -396,13 +529,14 @@ function initializeAddCategoryForm() {
                 return;
             }
 
-            console.log("Submitting Add Category:", { category, ca1score, ca2score, ca3score, examscore, totalScore });
+            console.log("Submitting Add Category:", { category, ca1score, ca2score, ca3score, examscore, is_senior, totalScore });
             axios.post('/classcategories', {
                 category: category,
                 ca1score: ca1score,
                 ca2score: ca2score,
                 ca3score: ca3score,
-                examscore: examscore
+                examscore: examscore,
+                is_senior: is_senior
             }, {
                 headers: { 'Content-Type': 'application/json' }
             }).then(function (response) {
@@ -417,7 +551,11 @@ function initializeAddCategoryForm() {
                 });
                 window.location.reload();
             }).catch(function (error) {
-                console.error("Add Category Error:", error.response);
+                console.error("Add Category Error:", {
+                    status: error.response?.status,
+                    data: error.response?.data,
+                    message: error.message
+                });
                 if (errorMsg) {
                     errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error adding class category";
                     errorMsg.classList.remove("d-none");
@@ -438,24 +576,48 @@ function initializeEditCategoryForm() {
             e.preventDefault();
             const errorMsg = document.getElementById("edit-alert-error-msg");
             if (errorMsg) errorMsg.classList.add("d-none");
+
+            const id = editIdField?.value;
+            if (!id) {
+                console.error("Edit Category: Missing ID");
+                if (errorMsg) {
+                    errorMsg.innerHTML = "Category ID is missing";
+                    errorMsg.classList.remove("d-none");
+                }
+                return;
+            }
+
             const formData = new FormData(editCategoryForm);
             const category = formData.get('category');
             const ca1score = parseFloat(formData.get('ca1score')) || 0;
             const ca2score = parseFloat(formData.get('ca2score')) || 0;
             const ca3score = parseFloat(formData.get('ca3score')) || 0;
             const examscore = parseFloat(formData.get('examscore')) || 0;
+            const is_senior = parseInt(formData.get('is_senior'));
             const totalScore = ca1score + ca2score + ca3score + examscore;
-            const id = editIdField.value;
 
-            if (!category || !ca1score || !ca2score || !ca3score || !examscore) {
+            console.log("Edit Category Form Data:", {
+                id,
+                category,
+                ca1score,
+                ca2score,
+                ca3score,
+                examscore,
+                is_senior,
+                totalScore
+            });
+
+            if (!category || !ca1score || !ca2score || !ca3score || !examscore || isNaN(is_senior)) {
+                console.warn("Edit Category: Invalid form data");
                 if (errorMsg) {
-                    errorMsg.innerHTML = "Please fill in all required fields";
+                    errorMsg.innerHTML = "Please fill in all required fields, including Grade Type";
                     errorMsg.classList.remove("d-none");
                 }
                 return;
             }
 
             if (Math.abs(totalScore - 400) > Number.EPSILON) {
+                console.warn("Edit Category: Total score not 400");
                 if (errorMsg) {
                     errorMsg.innerHTML = "The sum of CA1, CA2, CA3, and Exam scores must be exactly 400";
                     errorMsg.classList.remove("d-none");
@@ -463,13 +625,14 @@ function initializeEditCategoryForm() {
                 return;
             }
 
-            console.log("Submitting Edit Category:", { id, category, ca1score, ca2score, ca3score, examscore, totalScore });
+            console.log("Submitting Edit Category:", { id, category, ca1score, ca2score, ca3score, examscore, is_senior, totalScore });
             axios.put(`/classcategories/${id}`, {
                 category: category,
                 ca1score: ca1score,
                 ca2score: ca2score,
                 ca3score: ca3score,
-                examscore: examscore
+                examscore: examscore,
+                is_senior: is_senior
             }, {
                 headers: { 'Content-Type': 'application/json' }
             }).then(function (response) {
@@ -484,7 +647,11 @@ function initializeEditCategoryForm() {
                 });
                 window.location.reload();
             }).catch(function (error) {
-                console.error("Edit Category Error:", error.response);
+                console.error("Edit Category Error:", {
+                    status: error.response?.status,
+                    data: error.response?.data,
+                    message: error.message
+                });
                 if (errorMsg) {
                     errorMsg.innerHTML = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Error updating class category";
                     errorMsg.classList.remove("d-none");
@@ -503,6 +670,7 @@ function initializeModals() {
     if (addModal) {
         addModal.addEventListener("show.bs.modal", function (e) {
             console.log("Add modal opening");
+            clearAddFields();
             if (e.relatedTarget.classList.contains("add-btn")) {
                 const modalLabel = document.getElementById("exampleModalLabel");
                 const addBtn = document.getElementById("add-btn");
@@ -512,6 +680,7 @@ function initializeModals() {
             calculateAddTotalScore();
         });
         addModal.addEventListener("hidden.bs.modal", function () {
+            console.log("Add modal closed");
             clearAddFields();
         });
         console.log("Add modal initialized");
@@ -528,6 +697,7 @@ function initializeModals() {
             calculateEditTotalScore();
         });
         editModal.addEventListener("hidden.bs.modal", function () {
+            console.log("Edit modal closed");
             clearEditFields();
         });
         console.log("Edit modal initialized");
@@ -538,26 +708,26 @@ function initializeModals() {
 function initializeEventListeners() {
     try {
         // Add event listeners for Add Modal score inputs
-        [addCa1ScoreField, addCa2ScoreField, addCa3ScoreField, addExamScoreField].forEach(field => {
+        const addScoreFields = [addCa1ScoreField, addCa2ScoreField, addCa3ScoreField, addExamScoreField];
+        addScoreFields.forEach((field, index) => {
             if (field) {
-                field.addEventListener('input', () => {
-                    console.log(`Input changed for ${field.id}: ${field.value}`);
-                    calculateAddTotalScore();
-                });
+                field.removeEventListener('input', handleAddScoreInput);
+                field.addEventListener('input', handleAddScoreInput);
+                console.log(`Added input listener for Add Modal field: ${field.id}`);
             } else {
-                console.warn(`Field not found for add modal: ${field}`);
+                console.warn(`Add Modal score field ${index} not found`);
             }
         });
 
         // Add event listeners for Edit Modal score inputs
-        [editCa1ScoreField, editCa2ScoreField, editCa3ScoreField, editExamScoreField].forEach(field => {
+        const editScoreFields = [editCa1ScoreField, editCa2ScoreField, editCa3ScoreField, editExamScoreField];
+        editScoreFields.forEach((field, index) => {
             if (field) {
-                field.addEventListener('input', () => {
-                    console.log(`Input changed for ${field.id}: ${field.value}`);
-                    calculateEditTotalScore();
-                });
+                field.removeEventListener('input', handleEditScoreInput);
+                field.addEventListener('input', handleEditScoreInput);
+                console.log(`Added input listener for Edit Modal field: ${field.id}`);
             } else {
-                console.warn(`Field not found for edit modal: ${field}`);
+                console.warn(`Edit Modal score field ${index} not found`);
             }
         });
 
@@ -580,15 +750,33 @@ function initializeEventListeners() {
             console.error("Search input not found!");
         }
 
-        console.log("Event listeners initialized");
+        console.log("Event listeners initialized successfully");
     } catch (error) {
         console.error("Error initializing event listeners:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Event Listener Initialization Error",
+            text: "An error occurred while setting up event listeners. Please refresh the page.",
+            confirmButtonClass: "btn btn-primary"
+        });
     }
 }
 
-// Initialize everything after DOM is loaded
-document.addEventListener("DOMContentLoaded", function () {
-    console.log("DOMContentLoaded fired at", new Date().toISOString());
+// Handlers for score input changes
+function handleAddScoreInput(e) {
+    console.log(`Input changed for ${e.target.id}: ${e.target.value}`);
+    calculateAddTotalScore();
+}
+
+function handleEditScoreInput(e) {
+    console.log(`Input changed for ${e.target.id}: ${e.target.value}`);
+    calculateEditTotalScore();
+}
+
+// Initialize everything
+function initializeApp() {
+    if (!checkDependencies()) return;
+    setCsrfToken();
     initializeFormFields();
     initializeCheckAll();
     ischeckboxcheck();
@@ -596,6 +784,21 @@ document.addEventListener("DOMContentLoaded", function () {
     initializeAddCategoryForm();
     initializeEditCategoryForm();
     initializeModals();
+}
+
+// Use window.onload to ensure all assets are loaded
+window.onload = function () {
+    console.log("window.onload fired at", new Date().toISOString());
+    initializeApp();
+};
+
+// Fallback to DOMContentLoaded for faster initialization
+document.addEventListener("DOMContentLoaded", function () {
+    console.log("DOMContentLoaded fired at", new Date().toISOString());
+    if (!window.onloadFired) {
+        initializeApp();
+        window.onloadFired = true;
+    }
 });
 
 // Expose functions to global scope

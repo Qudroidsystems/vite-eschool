@@ -93,6 +93,7 @@
                                                 <th class="min-w-125px sort cursor-pointer" data-sort="ca2score">CA 2 Score</th>
                                                 <th class="min-w-125px sort cursor-pointer" data-sort="ca3score">CA 3 Score</th>
                                                 <th class="min-w-125px sort cursor-pointer" data-sort="examscore">Exam Score</th>
+                                                <th class="min-w-100px sort cursor-pointer" data-sort="gradetype">Grade Type</th>
                                                 <th class="min-w-125px sort cursor-pointer" data-sort="datereg">Date Updated</th>
                                                 <th class="min-w-100px">Actions</th>
                                             </tr>
@@ -112,6 +113,11 @@
                                                     <td class="ca2score" data-ca2score="{{ $sc->ca2score }}">{{ $sc->ca2score }}</td>
                                                     <td class="ca3score" data-ca3score="{{ $sc->ca3score }}">{{ $sc->ca3score }}</td>
                                                     <td class="examscore" data-examscore="{{ $sc->examscore }}">{{ $sc->examscore }}</td>
+                                                    <td class="gradetype" data-issenior="{{ $sc->is_senior ? 1 : 0 }}">
+                                                        <span class="badge bg-{{ $sc->is_senior ? 'success' : 'primary' }}-subtle text-{{ $sc->is_senior ? 'success' : 'primary' }}">
+                                                            {{ $sc->is_senior ? 'Senior' : 'Junior' }}
+                                                        </span>
+                                                    </td>
                                                     <td class="datereg">{{ $sc->updated_at->format('Y-m-d') }}</td>
                                                     <td>
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
@@ -130,7 +136,7 @@
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="9" class="noresult" style="display: block;">No results found</td>
+                                                    <td colspan="10" class="noresult" style="display: block;">No results found</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
@@ -156,6 +162,23 @@
                                 <div class="mb-3">
                                     <label for="category" class="form-label">Class Category</label>
                                     <input type="text" name="category" id="category" class="form-control" placeholder="Enter category name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Grade Type</label>
+                                    <div class="d-flex gap-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="is_senior" id="junior" value="0" checked>
+                                            <label class="form-check-label" for="junior">
+                                                Junior (A, B, C, D, F)
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="is_senior" id="senior" value="1">
+                                            <label class="form-check-label" for="senior">
+                                                Senior (A1, B2, B3, C4, C5, C6, D7, E8, F9)
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="ca1score" class="form-label">CA 1 Score</label>
@@ -203,6 +226,23 @@
                                 <div class="mb-3">
                                     <label for="edit-category" class="form-label">Class Category</label>
                                     <input type="text" name="category" id="edit-category" class="form-control" placeholder="Enter category name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Grade Type</label>
+                                    <div class="d-flex gap-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="is_senior" id="edit-junior" value="0">
+                                            <label class="form-check-label" for="edit-junior">
+                                                Junior (A, B, C, D, F)
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="is_senior" id="edit-senior" value="1">
+                                            <label class="form-check-label" for="edit-senior">
+                                                Senior (A1, B2, B3, C4, C5, C6, D7, E8, F9)
+                                            </label>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="mb-3">
                                     <label for="edit-ca1score" class="form-label">CA 1 Score</label>
@@ -255,11 +295,10 @@
         <!-- End Page-content -->
 
         <!-- Scripts -->
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        {{-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
         <script src="{{ asset('theme/layouts/assets/js/list.min.js') }}"></script>
         <script src="{{ asset('theme/layouts/assets/js/sweetalert2.min.js') }}"></script>
-        <script src="{{ asset('js/classcategory.init.js') }}?v={{ time() }}"></script>
+        <script src="{{ asset('js/classcategory.init.js') }}?v={{ time() }}"></script> --}}
     </div>
-</div>
-@endsection
+</div

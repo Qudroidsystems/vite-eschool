@@ -47,7 +47,8 @@ class ClasscategoryController extends Controller
             'ca1score' => 'required|numeric|min:0',
             'ca2score' => 'required|numeric|min:0',
             'ca3score' => 'required|numeric|min:0',
-            'examscore' => 'required|numeric|min:0'
+            'examscore' => 'required|numeric|min:0',
+            'is_senior' => 'required|boolean'
         ]);
 
         $checkCategory = Classcategory::where('category', $request->input('category'))->exists();
@@ -61,7 +62,8 @@ class ClasscategoryController extends Controller
             'ca1score' => $request->input('ca1score'),
             'ca2score' => $request->input('ca2score'),
             'ca3score' => $request->input('ca3score'),
-            'examscore' => $request->input('examscore')
+            'examscore' => $request->input('examscore'),
+            'is_senior' => $request->input('is_senior')
         ]);
         Log::info('Class Category Created:', $category->toArray());
 
@@ -76,7 +78,8 @@ class ClasscategoryController extends Controller
             'ca1score' => 'required|numeric|min:0',
             'ca2score' => 'required|numeric|min:0',
             'ca3score' => 'required|numeric|min:0',
-            'examscore' => 'required|numeric|min:0'
+            'examscore' => 'required|numeric|min:0',
+            'is_senior' => 'required|boolean'
         ]);
 
         $checkCategory = Classcategory::where('category', $request->input('category'))->where('id', '!=', $id)->exists();
@@ -91,7 +94,8 @@ class ClasscategoryController extends Controller
             'ca1score' => $request->input('ca1score'),
             'ca2score' => $request->input('ca2score'),
             'ca3score' => $request->input('ca3score'),
-            'examscore' => $request->input('examscore')
+            'examscore' => $request->input('examscore'),
+            'is_senior' => $request->input('is_senior')
         ]);
         Log::info('Class Category Updated:', $category->toArray());
 
@@ -128,7 +132,8 @@ class ClasscategoryController extends Controller
             'ca1score' => 'required|numeric|min:0',
             'ca2score' => 'required|numeric|min:0',
             'ca3score' => 'required|numeric|min:0',
-            'examscore' => 'required|numeric|min:0'
+            'examscore' => 'required|numeric|min:0',
+            'is_senior' => 'required|boolean'
         ]);
 
         $checkCategory = Classcategory::where('category', $request->input('category'))->where('id', '!=', $request->id)->exists();
@@ -143,7 +148,8 @@ class ClasscategoryController extends Controller
             'ca1score' => $request->input('ca1score'),
             'ca2score' => $request->input('ca2score'),
             'ca3score' => $request->input('ca3score'),
-            'examscore' => $request->input('examscore')
+            'examscore' => $request->input('examscore'),
+            'is_senior' => $request->input('is_senior')
         ]);
         Log::info('Class Category Updated via AJAX:', $category->toArray());
 
