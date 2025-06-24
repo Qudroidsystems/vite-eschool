@@ -152,7 +152,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
 
             // Populate student picture
             $picture->studentid = $studentId;
-            $picture->image_path = 'N/A'; // Assuming image_path is a field
+            $picture->picture = 'N/A'; // Assuming image_path is a field
             $picture->save();
 
             // Populate student class
@@ -252,7 +252,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             '0' => 'admissionno',
             '1' => 'surname',
             '2' => 'firstname',
-            '4' => 'gender',
+           // '4' => 'gender',
             '7' => 'age',
             '15' => 'schoolclassid',
             '16' => 'termid',
