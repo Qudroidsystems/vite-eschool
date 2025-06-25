@@ -54,19 +54,22 @@ class SubjectTeacherController extends Controller
                 'subjectteacher.updated_at'
             ])
             ->orderBy('staffname')
-            ->paginate(200);
+            ->get();
 
         Log::info('SubjectTeacher Index Query', [
             'count' => $subjectteacher->count(),
-            'total' => $subjectteacher->total(),
-            'items' => $subjectteacher->items()
+            'items' => $subjectteacher->toArray()
         ]);
 
         if ($request->ajax()) {
             return response()->json([
                 'html' => view('subjectteacher.index', compact('subjectteacher', 'terms', 'schoolsessions', 'subjects', 'staffs', 'pagetitle'))->render(),
                 'count' => $subjectteacher->count(),
-                'total' => $subjectteacher->total(),
+                'data' => $subjectteacher->toArray(),
+                'terms' => $terms->toArray(),
+                'schoolsessions' => $schoolsessions->toArray(),
+                'subjects' => $subjects->toArray(),
+                'staffs' => $staffs->toArray()
             ]);
         }
 
@@ -255,7 +258,6 @@ class SubjectTeacherController extends Controller
         $sessionid = $request->input('sessionid');
         $subjectsToRemove = $request->input('subjects_to_remove', []);
 
-        // Check for conflicts excluding the current record
         $existingConflicts = SubjectTeacher::where('staffid', $staffid)
             ->whereIn('subjectid', $subjectids)
             ->whereIn('termid', $termids)
@@ -272,7 +274,6 @@ class SubjectTeacherController extends Controller
             ], 422);
         }
 
-        // Remove subjects for specified terms if provided
         if (!empty($subjectsToRemove)) {
             SubjectTeacher::where('staffid', $staffid)
                 ->whereIn('subjectid', $subjectsToRemove)
@@ -302,7 +303,6 @@ class SubjectTeacherController extends Controller
             }
         }
 
-        // Update related records in Broadsheet and SubjectRegistrationStatus
         $sub = SubjectTeacher::whereIn('subjectteacher.id', array_column($updatedRecords, 'id'))
             ->leftJoin('subjectclass', 'subjectclass.subjectteacherid', '=', 'subjectteacher.id')
             ->leftJoin('broadsheet', 'broadsheet.subjectclassid', '=', 'subjectclass.id')
@@ -421,7 +421,8 @@ class SubjectTeacherController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Subject Teacher deleted successfully.'
+            'message' => 'Subject Teacher deleted successfully.',
+            'data' => ['id' => $id]
         ], 200);
     }
 
@@ -452,7 +453,8 @@ class SubjectTeacherController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Subject Teacher has been removed.'
+            'message' => 'Subject Teacher has been removed.',
+            'data' => ['id' => $request->subjectteacherid]
         ], 200);
     }
 

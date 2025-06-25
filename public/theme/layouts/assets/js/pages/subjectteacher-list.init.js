@@ -82,86 +82,16 @@ function handleCheckboxChange(e) {
     }
 }
 
-// Initialize pagination listeners
-function initializePaginationListeners() {
-    const paginationLinks = document.querySelectorAll('.pagination-prev, .pagination-next, .pagination .page-link');
-    paginationLinks.forEach(link => {
-        link.removeEventListener('click', handlePaginationClick);
-        link.addEventListener('click', handlePaginationClick);
-    });
-}
-
-function handlePaginationClick(e) {
-    e.preventDefault();
-    const url = e.target.closest('a').getAttribute('data-url');
-    if (url && !e.target.closest('a').classList.contains('disabled')) {
-        console.log("Pagination link clicked:", url);
-        fetchPage(url);
+// Event delegation for edit and remove buttons
+document.addEventListener('click', function (e) {
+    const editBtn = e.target.closest('.edit-item-btn');
+    const removeBtn = e.target.closest('.remove-item-btn');
+    if (editBtn) {
+        handleEditClick(e, editBtn);
+    } else if (removeBtn) {
+        handleRemoveClick(e, removeBtn);
     }
-}
-
-// Fetch paginated data
-function fetchPage(url) {
-    if (!url) {
-        console.error("No URL provided for pagination");
-        return;
-    }
-    showLoading();
-    console.log("Fetching page:", url);
-    axios.get(url, {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    }).then(function (response) {
-        console.log("Fetch page success:", response.data);
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(response.data.html, 'text/html');
-        const newTbody = doc.querySelector('#kt_roles_view_table tbody');
-        const newPagination = doc.querySelector('#pagination-element');
-        const newBadge = doc.querySelector('.badge.bg-dark-subtle');
-        if (newTbody && newPagination && newBadge) {
-            document.querySelector('#kt_roles_view_table tbody').innerHTML = newTbody.innerHTML;
-            document.querySelector('#pagination-element').outerHTML = newPagination.outerHTML;
-            document.querySelector('.badge.bg-dark-subtle').outerHTML = newBadge.outerHTML;
-            document.querySelector("#pagination-element .text-muted").innerHTML =
-                `Showing <span class="fw-semibold">${response.data.count}</span> of <span class="fw-semibold">${response.data.total}</span> Results`;
-            const noResult = document.querySelector(".noresult");
-            const rowCount = document.querySelectorAll("#kt_roles_view_table tbody tr").length;
-            if (noResult) {
-                noResult.style.display = rowCount === 0 ? "block" : "none";
-            }
-            // Re-initialize List.js
-            if (subjectTeacherList) {
-                subjectTeacherList.reIndex();
-                filterData(); // Re-apply any existing search filter
-            }
-            // Re-initialize event listeners
-            initializeCheckboxes();
-            initializePaginationListeners();
-        } else {
-            console.error("Required elements not found in response");
-            Swal.fire({
-                position: "center",
-                icon: "error",
-                title: "Error",
-                text: "Incomplete server response",
-                showConfirmButton: true
-            });
-        }
-    }).catch(function (error) {
-        console.error("Error fetching page:", error);
-        Swal.fire({
-            position: "center",
-            icon: "error",
-            title: "Error loading page",
-            text: error.response?.data?.message || "An error occurred",
-            showConfirmButton: true
-        });
-        // Restore table content on error
-        const tableBody = document.querySelector('#kt_roles_view_table tbody');
-        if (tableBody) {
-            tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Failed to load data. Please try again.</td></tr>';
-        }
-    });
-}
+});
 
 // Delete single subject teacher
 function handleRemoveClick(e, button) {
@@ -194,11 +124,12 @@ function handleRemoveClick(e, button) {
                     });
                     if (subjectTeacherList) {
                         subjectTeacherList.remove("id", itemId);
+                        updatePaginationCounts();
                     }
                     const row = document.querySelector(`tr[data-id="${itemId}"]`);
                     if (row) row.remove();
                     modal.hide();
-                    const badge = document.querySelector('.badge.bg-dark-subtle');
+                    const badge = document.querySelector('#total-count');
                     if (badge) {
                         const currentTotal = parseInt(badge.textContent);
                         badge.textContent = currentTotal - 1;
@@ -211,10 +142,6 @@ function handleRemoveClick(e, button) {
                         document.querySelector("#kt_roles_view_table tbody").innerHTML =
                             '<tr><td colspan="9" class="noresult" style="display: block;">No results found</td></tr>';
                     }
-                    // Refresh the current page
-                    const currentPageUrl = document.querySelector('.pagination .page-item.active .page-link')?.getAttribute('data-url') || window.location.href;
-                    console.log("Refreshing page after deletion:", currentPageUrl);
-                    fetchPage(currentPageUrl);
                 })
                 .catch(function (error) {
                     console.error("Delete error:", error.response?.data || error);
@@ -382,7 +309,7 @@ function deleteMultiple() {
     }).then((result) => {
         if (result.isConfirmed) {
             Promise.all(ids_array.map((id) => axios.delete(`/subjectteacher/${id}`)))
-                .then(() => {
+                .then((responses) => {
                     Swal.fire({
                         title: "Deleted!",
                         text: "Your subject teachers have been deleted.",
@@ -390,8 +317,20 @@ function deleteMultiple() {
                         confirmButtonClass: "btn btn-info w-xs mt-2",
                         buttonsStyling: false
                     });
-                    const currentPageUrl = document.querySelector('.pagination .page-item.active .page-link')?.getAttribute('data-url') || window.location.href;
-                    fetchPage(currentPageUrl);
+                    responses.forEach((response) => {
+                        if (response.data.success && subjectTeacherList) {
+                            subjectTeacherList.remove("id", response.data.data.id);
+                        }
+                    });
+                    updatePaginationCounts();
+                    const badge = document.querySelector('#total-count');
+                    if (badge) {
+                        badge.textContent = subjectTeacherList.items.length;
+                    }
+                    const noResult = document.querySelector(".noresult");
+                    if (noResult) {
+                        noResult.style.display = subjectTeacherList.visibleItems.length === 0 ? "block" : "none";
+                    }
                 })
                 .catch((error) => {
                     console.error("Bulk delete error:", error);
@@ -407,33 +346,56 @@ function deleteMultiple() {
     });
 }
 
-// Initialize List.js for client-side filtering
+// Initialize List.js for client-side filtering and pagination
 let subjectTeacherList;
 const subjectTeacherListContainer = document.getElementById('subjectTeacherList');
-if (subjectTeacherListContainer && document.querySelectorAll('#subjectTeacherList tbody tr').length > 0) {
-    try {
-        subjectTeacherList = new List('subjectTeacherList', {
-            valueNames: ['sn', 'subjectteacher', 'subject', 'subjectcode', 'term', 'session', 'datereg'],
-            page: 1,
-            pagination: false,
-            listClass: 'list'
-        });
-        console.log("List.js initialized");
-    } catch (error) {
-        console.error("List.js initialization failed:", error);
+function initializeListJs() {
+    if (subjectTeacherListContainer && document.querySelectorAll('#subjectTeacherList tbody tr').length > 0) {
+        try {
+            subjectTeacherList = new List('subjectTeacherList', {
+                valueNames: ['id', 'sn', 'subjectteacher', 'subject', 'subjectcode', 'term', 'session', 'datereg'],
+                page: 10, // Number of items per page
+                pagination: {
+                    innerWindow: 2,
+                    outerWindow: 1,
+                    left: 0,
+                    right: 0,
+                    paginationClass: "listjs-pagination",
+                    item: "<li><a class='page-link' href='javascript:void(0);'></a></li>"
+                },
+                listClass: 'list'
+            });
+            console.log("List.js initialized with pagination");
+            updatePaginationCounts();
+            subjectTeacherList.on('updated', updatePaginationCounts);
+        } catch (error) {
+            console.error("List.js initialization failed:", error);
+        }
+    } else {
+        console.warn("No subject teachers available for List.js initialization");
+        const tableBody = document.querySelector('#kt_roles_view_table tbody');
+        if (tableBody) {
+            tableBody.innerHTML = '<tr><td colspan="9" class="noresult" style="display: block;">No results found</td></tr>';
+        }
     }
-} else {
-    console.warn("No subject teachers available for List.js initialization");
 }
 
-// Update no results message
-if (subjectTeacherList) {
-    subjectTeacherList.on('searchComplete', function () {
-        const noResultRow = document.querySelector('.noresult');
-        if (noResultRow) {
-            noResultRow.style.display = subjectTeacherList.visibleItems.length === 0 ? 'block' : 'none';
+// Update pagination counts
+function updatePaginationCounts() {
+    if (subjectTeacherList) {
+        const totalCount = subjectTeacherList.items.length;
+        const showingCount = subjectTeacherList.visibleItems.length;
+        const totalCountElement = document.querySelector('#total-count');
+        const totalCountFooterElement = document.querySelector('#total-count-footer');
+        const showingCountElement = document.querySelector('#showing-count');
+        if (totalCountElement) totalCountElement.textContent = totalCount;
+        if (totalCountFooterElement) totalCountFooterElement.textContent = totalCount;
+        if (showingCountElement) showingCountElement.textContent = showingCount;
+        const noResult = document.querySelector(".noresult");
+        if (noResult) {
+            noResult.style.display = showingCount === 0 ? "block" : "none";
         }
-    });
+    }
 }
 
 // Filter data
@@ -443,6 +405,7 @@ function filterData() {
     console.log("Filtering with search:", searchValue);
     if (subjectTeacherList) {
         subjectTeacherList.search(searchValue, ['sn', 'subjectteacher', 'subject', 'subjectcode', 'term', 'session']);
+        updatePaginationCounts();
     }
 }
 
@@ -503,8 +466,8 @@ if (addSubjectTeacherForm) {
                     showCloseButton: true
                 });
                 addBtn.disabled = false;
-                const currentPageUrl = document.querySelector('.pagination .page-item.active .page-link')?.getAttribute('data-url') || window.location.href;
-                fetchPage(currentPageUrl);
+                // Refresh data
+                fetchData();
             })
             .catch(function (error) {
                 console.error("Add error:", error.response?.data || error);
@@ -513,12 +476,6 @@ if (addSubjectTeacherForm) {
                     errorMsg.classList.remove("d-none");
                 }
                 addBtn.disabled = false;
-                if (error.response?.data?.success && error.response?.data?.processed > 0) {
-                    setTimeout(() => {
-                        const currentPageUrl = document.querySelector('.pagination .page-item.active .page-link')?.getAttribute('data-url') || window.location.href;
-                        fetchPage(currentPageUrl);
-                    }, 2000);
-                }
             });
     });
 }
@@ -594,8 +551,8 @@ if (editSubjectTeacherForm) {
                     showCloseButton: true
                 });
                 updateBtn.disabled = false;
-                const currentPageUrl = document.querySelector('.pagination .page-item.active .page-link')?.getAttribute('data-url') || window.location.href;
-                fetchPage(currentPageUrl);
+                // Refresh data
+                fetchData();
             })
             .catch(function (error) {
                 console.error("Edit error:", error.response?.status, error.response?.data || error.message);
@@ -604,14 +561,51 @@ if (editSubjectTeacherForm) {
                     errorMsg.classList.remove("d-none");
                 }
                 updateBtn.disabled = false;
-                if (error.response?.data?.success && error.response?.data?.processed > 0) {
-                    setTimeout(() => {
-                        const currentPageUrl = document.querySelector('.pagination .page-item.active .page-link')?.getAttribute('data-url') || window.location.href;
-                        fetchPage(currentPageUrl);
-                    }, 2000);
-                }
             });
     });
+}
+
+// Fetch data from server
+function fetchData() {
+    showLoading();
+    axios.get('/subjectteacher', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    })
+        .then(function (response) {
+            console.log("Fetch data success:", response.data);
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(response.data.html, 'text/html');
+            const newTbody = doc.querySelector('#kt_roles_view_table tbody');
+            if (newTbody) {
+                document.querySelector('#kt_roles_view_table tbody').innerHTML = newTbody.innerHTML;
+                initializeListJs();
+                initializeCheckboxes();
+                filterData();
+            } else {
+                console.error("Table body not found in response");
+                Swal.fire({
+                    position: "center",
+                    icon: "error",
+                    title: "Error",
+                    text: "Incomplete server response",
+                    showConfirmButton: true
+                });
+            }
+        })
+        .catch(function (error) {
+            console.error("Error fetching data:", error);
+            Swal.fire({
+                position: "center",
+                icon: "error",
+                title: "Error loading data",
+                text: error.response?.data?.message || "An error occurred",
+                showConfirmButton: true
+            });
+            const tableBody = document.querySelector('#kt_roles_view_table tbody');
+            if (tableBody) {
+                tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Failed to load data. Please try again.</td></tr>';
+            }
+        });
 }
 
 // Modal events
@@ -663,7 +657,8 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Search input not found");
     }
     initializeCheckboxes();
-    initializePaginationListeners();
+    initializeListJs();
+    fetchData();
 });
 
 // Expose functions to global scope

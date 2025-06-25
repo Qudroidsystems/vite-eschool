@@ -69,7 +69,7 @@
                         <div class="card">
                             <div class="card-header d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">Subject Teachers <span class="badge bg-dark-subtle text-dark ms-1">{{ $subjectteacher->total() }}</span></h5>
+                                    <h5 class="card-title mb-0">Subject Teachers <span class="badge bg-dark-subtle text-dark ms-1" id="total-count">0</span></h5>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
@@ -101,7 +101,7 @@
                                             </tr>
                                         </thead>
                                         <tbody class="fw-semibold text-gray-600 list form-check-all">
-                                            @php $i = ($subjectteacher->currentPage() - 1) * $subjectteacher->perPage() @endphp
+                                            @php $i = 0 @endphp
                                             @forelse ($subjectteacher as $sc)
                                                 <tr data-url="{{ route('subjectteacher.destroy', $sc->id) }}">
                                                     <td class="id" data-id="{{ $sc->id }}">
@@ -176,28 +176,15 @@
                                         </tbody>
                                     </table>
                                 </div>
-                                <div class="row mt-3 align-items-center" id="pagination-element">
+                                <!-- List.js pagination container -->
+                                <div class="row mt-3 align-items-center">
                                     <div class="col-sm">
                                         <div class="text-muted text-center text-sm-start">
-                                            Showing <span class="fw-semibold">{{ $subjectteacher->count() }}</span> of <span class="fw-semibold">{{ $subjectteacher->total() }}</span> Results
+                                            Showing <span class="fw-semibold" id="showing-count">0</span> of <span class="fw-semibold" id="total-count-footer">0</span> Results
                                         </div>
                                     </div>
                                     <div class="col-sm-auto mt-3 mt-sm-0">
-                                        <div class="pagination-wrap hstack gap-2 justify-content-center">
-                                            <a class="page-item pagination-prev {{ $subjectteacher->onFirstPage() ? 'disabled' : '' }}" href="javascript:void(0);" data-url="{{ $subjectteacher->previousPageUrl() }}">
-                                                <i class="mdi mdi-chevron-left align-middle"></i>
-                                            </a>
-                                            <ul class="pagination listjs-pagination mb-0">
-                                                @foreach ($subjectteacher->links()->elements[0] as $page => $url)
-                                                    <li class="page-item {{ $subjectteacher->currentPage() == $page ? 'active' : '' }}">
-                                                        <a class="page-link" href="javascript:void(0);" data-url="{{ $url }}">{{ $page }}</a>
-                                                    </li>
-                                                @endforeach
-                                            </ul>
-                                            <a class="page-item pagination-next {{ $subjectteacher->hasMorePages() ? '' : 'disabled' }}" href="javascript:void(0);" data-url="{{ $subjectteacher->nextPageUrl() }}">
-                                                <i class="mdi mdi-chevron-right align-middle"></i>
-                                            </a>
-                                        </div>
+                                        <ul class="pagination listjs-pagination mb-0"></ul>
                                     </div>
                                 </div>
                             </div>
@@ -232,7 +219,7 @@
                                         @foreach ($subjects as $subject)
                                             <div class="form-check me-3">
                                                 <input class="form-check-input modal-checkbox" type="checkbox" name="subjectid[]" id="add-subject-{{ $subject->id }}" value="{{ $subject->id }}">
-                                                <label class="form-check-label" for="add-subject-{{ $subject->id }}">
+                                                <404 class="form-check-label" for="add-subject-{{ $subject->id }}">
                                                     {{ $subject->subject }} ({{ $subject->subject_code }})
                                                 </label>
                                             </div>
@@ -430,6 +417,31 @@
     appearance: radio;
     margin-top: 0.1em;
 }
+/* List.js pagination styles */
+.listjs-pagination {
+    display: flex;
+    justify-content: center;
+}
+.listjs-pagination li {
+    margin: 0 2px;
+}
+.listjs-pagination li a {
+    padding: 5px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    color: #405189;
+    text-decoration: none;
+}
+.listjs-pagination li.active a {
+    background-color: #405189;
+    color: white;
+}
+.listjs-pagination li.disabled a {
+    color: #ccc;
+    cursor: not-allowed;
+}
 </style>
 @endsection
 @endsection
+
+
