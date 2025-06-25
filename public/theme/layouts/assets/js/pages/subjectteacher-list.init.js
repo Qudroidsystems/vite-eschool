@@ -25,6 +25,14 @@ function debounce(func, wait) {
     };
 }
 
+// Loading indicator
+function showLoading() {
+    const tableBody = document.querySelector('#kt_roles_view_table tbody');
+    if (tableBody) {
+        tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Loading...</td></tr>';
+    }
+}
+
 // Check all checkbox
 const checkAll = document.getElementById("checkAll");
 if (checkAll) {
@@ -74,25 +82,31 @@ function handleCheckboxChange(e) {
     }
 }
 
-// Event delegation for edit, remove, and pagination buttons
-document.addEventListener('click', function (e) {
-    const editBtn = e.target.closest('.edit-item-btn');
-    const removeBtn = e.target.closest('.remove-item-btn');
-    const paginationLink = e.target.closest('.pagination-prev, .pagination-next, .pagination .page-link');
-    if (editBtn) {
-        handleEditClick(e, editBtn);
-    } else if (removeBtn) {
-        handleRemoveClick(e, removeBtn);
-    } else if (paginationLink) {
-        e.preventDefault();
-        const url = paginationLink.getAttribute('data-url');
-        if (url) fetchPage(url);
+// Initialize pagination listeners
+function initializePaginationListeners() {
+    const paginationLinks = document.querySelectorAll('.pagination-prev, .pagination-next, .pagination .page-link');
+    paginationLinks.forEach(link => {
+        link.removeEventListener('click', handlePaginationClick);
+        link.addEventListener('click', handlePaginationClick);
+    });
+}
+
+function handlePaginationClick(e) {
+    e.preventDefault();
+    const url = e.target.closest('a').getAttribute('data-url');
+    if (url && !e.target.closest('a').classList.contains('disabled')) {
+        console.log("Pagination link clicked:", url);
+        fetchPage(url);
     }
-});
+}
 
 // Fetch paginated data
 function fetchPage(url) {
-    if (!url) return;
+    if (!url) {
+        console.error("No URL provided for pagination");
+        return;
+    }
+    showLoading();
     console.log("Fetching page:", url);
     axios.get(url, {
         headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -107,10 +121,6 @@ function fetchPage(url) {
             document.querySelector('#kt_roles_view_table tbody').innerHTML = newTbody.innerHTML;
             document.querySelector('#pagination-element').outerHTML = newPagination.outerHTML;
             document.querySelector('.badge.bg-dark-subtle').outerHTML = newBadge.outerHTML;
-            if (subjectTeacherList) {
-                subjectTeacherList.reIndex();
-            }
-            initializeCheckboxes();
             document.querySelector("#pagination-element .text-muted").innerHTML =
                 `Showing <span class="fw-semibold">${response.data.count}</span> of <span class="fw-semibold">${response.data.total}</span> Results`;
             const noResult = document.querySelector(".noresult");
@@ -118,8 +128,23 @@ function fetchPage(url) {
             if (noResult) {
                 noResult.style.display = rowCount === 0 ? "block" : "none";
             }
+            // Re-initialize List.js
+            if (subjectTeacherList) {
+                subjectTeacherList.reIndex();
+                filterData(); // Re-apply any existing search filter
+            }
+            // Re-initialize event listeners
+            initializeCheckboxes();
+            initializePaginationListeners();
         } else {
             console.error("Required elements not found in response");
+            Swal.fire({
+                position: "center",
+                icon: "error",
+                title: "Error",
+                text: "Incomplete server response",
+                showConfirmButton: true
+            });
         }
     }).catch(function (error) {
         console.error("Error fetching page:", error);
@@ -130,6 +155,11 @@ function fetchPage(url) {
             text: error.response?.data?.message || "An error occurred",
             showConfirmButton: true
         });
+        // Restore table content on error
+        const tableBody = document.querySelector('#kt_roles_view_table tbody');
+        if (tableBody) {
+            tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Failed to load data. Please try again.</td></tr>';
+        }
     });
 }
 
@@ -206,16 +236,13 @@ function handleEditClick(e, button) {
     e.preventDefault();
     console.log("Edit button clicked at", new Date().toISOString());
 
-    // Get data from table row
     const tr = button.closest("tr");
     const itemId = tr.querySelector(".id")?.getAttribute("data-id");
     const staffId = tr.querySelector(".subjectteacher")?.getAttribute("data-staffid");
     const sessionId = tr.querySelector(".session")?.getAttribute("data-sessionid");
 
-    // Log data for debugging
     console.log("Table row data:", { itemId, staffId, sessionId });
 
-    // Validate required data
     if (!itemId || !staffId || !sessionId) {
         console.error("Missing required data", { itemId, staffId, sessionId });
         Swal.fire({
@@ -228,10 +255,8 @@ function handleEditClick(e, button) {
         return;
     }
 
-    // Clear previous form data
     clearEditFields();
 
-    // Set basic fields
     if (editIdField) editIdField.value = itemId;
     if (editStaffIdField) {
         const staffOption = editStaffIdField.querySelector(`option[value="${staffId}"]`);
@@ -243,7 +268,6 @@ function handleEditClick(e, button) {
         }
     }
 
-    // Pre-select session
     const sessionRadio = document.querySelector(`#edit-session-${sessionId}`);
     if (sessionRadio) {
         sessionRadio.checked = true;
@@ -252,7 +276,6 @@ function handleEditClick(e, button) {
         console.error("Session radio button not found:", sessionId);
     }
 
-    // Fetch subjects and terms via AJAX
     axios.get(`/subjectteacher/${itemId}/subjects`, {
         headers: { 'X-CSRF-TOKEN': csrfToken }
     })
@@ -270,19 +293,16 @@ function handleEditClick(e, button) {
                 return;
             }
 
-            // Ensure subjectIds and termIds are arrays
             const subjectIds = Array.isArray(response.data.subjectIds) ? response.data.subjectIds.map(Number) : [];
             const termIds = Array.isArray(response.data.termIds) ? response.data.termIds.map(Number) : [];
             console.log("Pre-selecting subjects:", subjectIds);
             console.log("Pre-selecting terms:", termIds);
 
-            // Debug available checkboxes
             const subjectCheckboxes = document.querySelectorAll('#editModal input[name="subjectid[]"]');
             const termCheckboxes = document.querySelectorAll('#editModal input[name="termid[]"]');
             console.log("Available subject checkboxes:", Array.from(subjectCheckboxes).map(cb => cb.value));
             console.log("Available term checkboxes:", Array.from(termCheckboxes).map(cb => cb.value));
 
-            // Set subject checkboxes
             subjectCheckboxes.forEach(cb => {
                 const value = Number(cb.value);
                 const isChecked = subjectIds.includes(value);
@@ -290,7 +310,6 @@ function handleEditClick(e, button) {
                 console.log(`Subject checkbox ${value}: ${isChecked ? "checked" : "unchecked"}`);
             });
 
-            // Set term checkboxes
             termCheckboxes.forEach(cb => {
                 const value = Number(cb.value);
                 const isChecked = termIds.includes(value);
@@ -298,7 +317,6 @@ function handleEditClick(e, button) {
                 console.log(`Term checkbox ${value}: ${isChecked ? "checked" : "unchecked"}`);
             });
 
-            // Open modal
             const modal = new bootstrap.Modal(document.getElementById("editModal"));
             modal.show();
             console.log("Edit modal opened");
@@ -312,7 +330,6 @@ function handleEditClick(e, button) {
                 text: error.response?.data?.message || "An error occurred while fetching subjects and terms",
                 showConfirmButton: true
             });
-            // Open modal anyway to allow editing with partial data
             const modal = new bootstrap.Modal(document.getElementById("editModal"));
             modal.show();
         });
@@ -373,7 +390,8 @@ function deleteMultiple() {
                         confirmButtonClass: "btn btn-info w-xs mt-2",
                         buttonsStyling: false
                     });
-                    window.location.reload();
+                    const currentPageUrl = document.querySelector('.pagination .page-item.active .page-link')?.getAttribute('data-url') || window.location.href;
+                    fetchPage(currentPageUrl);
                 })
                 .catch((error) => {
                     console.error("Bulk delete error:", error);
@@ -396,7 +414,7 @@ if (subjectTeacherListContainer && document.querySelectorAll('#subjectTeacherLis
     try {
         subjectTeacherList = new List('subjectTeacherList', {
             valueNames: ['sn', 'subjectteacher', 'subject', 'subjectcode', 'term', 'session', 'datereg'],
-            page: 1000,
+            page: 1,
             pagination: false,
             listClass: 'list'
         });
@@ -418,7 +436,7 @@ if (subjectTeacherList) {
     });
 }
 
-// Filter data (client-side)
+// Filter data
 function filterData() {
     const searchInput = document.querySelector(".search-box input.search");
     const searchValue = searchInput?.value || "";
@@ -447,7 +465,6 @@ if (addSubjectTeacherForm) {
 
         console.log("Form Data:", { staffid, subjectids, termids, sessionid });
 
-        // Client-side validation
         if (!staffid) {
             errorMsg.innerHTML = "Please select a teacher.";
             errorMsg.classList.remove("d-none");
@@ -486,7 +503,8 @@ if (addSubjectTeacherForm) {
                     showCloseButton: true
                 });
                 addBtn.disabled = false;
-                window.location.reload();
+                const currentPageUrl = document.querySelector('.pagination .page-item.active .page-link')?.getAttribute('data-url') || window.location.href;
+                fetchPage(currentPageUrl);
             })
             .catch(function (error) {
                 console.error("Add error:", error.response?.data || error);
@@ -496,7 +514,10 @@ if (addSubjectTeacherForm) {
                 }
                 addBtn.disabled = false;
                 if (error.response?.data?.success && error.response?.data?.processed > 0) {
-                    setTimeout(() => window.location.reload(), 2000);
+                    setTimeout(() => {
+                        const currentPageUrl = document.querySelector('.pagination .page-item.active .page-link')?.getAttribute('data-url') || window.location.href;
+                        fetchPage(currentPageUrl);
+                    }, 2000);
                 }
             });
     });
@@ -522,7 +543,6 @@ if (editSubjectTeacherForm) {
 
         console.log("Form Data:", { id, staffid, subjectids, termids, sessionid });
 
-        // Client-side validation
         if (!id) {
             errorMsg.innerHTML = "Invalid subject teacher ID.";
             errorMsg.classList.remove("d-none");
@@ -574,7 +594,8 @@ if (editSubjectTeacherForm) {
                     showCloseButton: true
                 });
                 updateBtn.disabled = false;
-                window.location.reload();
+                const currentPageUrl = document.querySelector('.pagination .page-item.active .page-link')?.getAttribute('data-url') || window.location.href;
+                fetchPage(currentPageUrl);
             })
             .catch(function (error) {
                 console.error("Edit error:", error.response?.status, error.response?.data || error.message);
@@ -584,7 +605,10 @@ if (editSubjectTeacherForm) {
                 }
                 updateBtn.disabled = false;
                 if (error.response?.data?.success && error.response?.data?.processed > 0) {
-                    setTimeout(() => window.location.reload(), 2000);
+                    setTimeout(() => {
+                        const currentPageUrl = document.querySelector('.pagination .page-item.active .page-link')?.getAttribute('data-url') || window.location.href;
+                        fetchPage(currentPageUrl);
+                    }, 2000);
                 }
             });
     });
@@ -639,6 +663,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.error("Search input not found");
     }
     initializeCheckboxes();
+    initializePaginationListeners();
 });
 
 // Expose functions to global scope

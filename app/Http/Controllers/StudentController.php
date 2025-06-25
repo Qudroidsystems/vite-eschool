@@ -91,6 +91,7 @@ class StudentController extends Controller
         $schoolterm = Schoolterm::all();
         $schoolsession = Schoolsession::all();
 
+        // Status counts
         $status_counts = Student::groupBy('statusId')
             ->selectRaw("CASE WHEN statusId = 1 THEN 'Old Student' ELSE 'New Student' END as student_status, COUNT(*) as student_count")
             ->pluck('student_count', 'student_status')
@@ -100,7 +101,28 @@ class StudentController extends Controller
             'New Student' => $status_counts['New Student'] ?? 0
         ];
 
-        return view('student.index', compact('schoolclass', 'schoolterm', 'schoolsession', 'status_counts', 'pagetitle'));
+        // Gender counts
+        $gender_counts = Student::groupBy('gender')
+            ->selectRaw('gender, COUNT(*) as gender_count')
+            ->pluck('gender_count', 'gender')
+            ->toArray();
+        $gender_counts = [
+            'Male' => $gender_counts['Male'] ?? 0,
+            'Female' => $gender_counts['Female'] ?? 0
+        ];
+
+        // Religion counts
+        $religion_counts = Student::groupBy('religion')
+            ->selectRaw('religion, COUNT(*) as religion_count')
+            ->pluck('religion_count', 'religion')
+            ->toArray();
+        $religion_counts = [
+            'Christianity' => $religion_counts['Christianity'] ?? 0,
+            'Islam' => $religion_counts['Islam'] ?? 0,
+            'Others' => $religion_counts['Others'] ?? 0
+        ];
+
+        return view('student.index', compact('schoolclass', 'schoolterm', 'schoolsession', 'status_counts', 'gender_counts', 'religion_counts', 'pagetitle'));
     }
 
  

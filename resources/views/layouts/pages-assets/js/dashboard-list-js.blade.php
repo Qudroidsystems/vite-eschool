@@ -13,7 +13,7 @@
       <!-- apexcharts -->
       <script src="{{ asset('theme/layouts/assets/libs/apexcharts/apexcharts.min.js')}}"></script>
       
-      <script src="{{ asset('theme/layouts/assets/js/pages/dashboard-real-estate.init.js')}}"></script>
+      <script src="{{ asset('theme/layouts/assets/js/pages/dashboard-list.init.js')}}"></script>
       
       <!-- App js -->
       <script src="{{ asset('theme/layouts/assets/js/app.js')}}"></script>
