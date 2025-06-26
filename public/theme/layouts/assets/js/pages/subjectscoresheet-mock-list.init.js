@@ -561,7 +561,7 @@
         }
     }
 
-    // Force update positions after bulk operations
+    // Force update positions after bulk operations (with ties)
     function forceUpdatePositions() {
         if (!window.broadsheets || !Array.isArray(window.broadsheets)) return;
 
@@ -583,7 +583,7 @@
                 }
             });
         } else {
-            // Normal position calculation
+            // Normal position calculation with ties
             const sortedBroadsheets = window.broadsheets
                 .map(b => ({
                     ...b,
@@ -596,8 +596,21 @@
                     return a.id - b.id;
                 });
 
+            let lastTotal = null;
+            let lastPosition = 1;
+            let skip = 0;
             sortedBroadsheets.forEach((broadsheet, index) => {
-                const position = index + 1;
+                let position;
+                if (broadsheet.total === lastTotal) {
+                    position = lastPosition;
+                    skip++;
+                } else {
+                    position = index + 1;
+                    lastPosition = position;
+                    lastTotal = broadsheet.total;
+                    skip = 0;
+                }
+
                 const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
                 if (row) {
                     const positionDisplay = row.querySelector('.position-display span');
@@ -624,6 +637,24 @@
         }
     }
 
+    // Search functionality (search by student name or admission number)
+    function initializeSearch() {
+        const searchInput = document.getElementById('searchInput');
+        if (!searchInput) return;
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            const rows = document.querySelectorAll('tr:has(.score-input)');
+            rows.forEach(row => {
+                const nameCell = row.querySelector('.student-name');
+                const admissionNoCell = row.querySelector('.admission-no');
+                const name = (nameCell?.textContent || '').toLowerCase();
+                const admissionNo = (admissionNoCell?.textContent || '').toLowerCase();
+                const matches = name.includes(searchTerm) || admissionNo.includes(searchTerm);
+                row.style.display = matches ? '' : 'none';
+            });
+        });
+    }
+
     // Initialize the module
     function init() {
         if (!checkDependencies()) return;
@@ -632,6 +663,7 @@
         initializeScoreInputs();
         initializeImportForm();
         initializeCheckAll();
+        initializeSearch();
 
         // Attach bulk update handler
         const bulkUpdateBtn = document.getElementById('bulkUpdateScores');

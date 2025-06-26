@@ -362,5 +362,8 @@
         };
         console.log('Broadsheet data:', window.broadsheets);
         console.log('Routes:', window.routes);
+
+        
     </script>
+    
 @endsection
