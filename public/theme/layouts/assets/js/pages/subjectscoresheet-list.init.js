@@ -121,6 +121,53 @@ function updateRowTotal(row) {
     forceUpdatePositions();
 }
 
+// Standard competition ranking (tied ranks)
+function forceUpdatePositions() {
+    ensureBroadsheetsArray();
+    const cums = window.broadsheets.map(b => parseFloat(b.cum) || 0);
+    const allZero = cums.length > 0 && cums.every(cum => cum === 0);
+
+    if (allZero) {
+        document.querySelectorAll('#scoresheetTableBody tr:not(#noDataRow)').forEach(row => {
+            const positionDisplay = row.querySelector('.position-display span');
+            if (positionDisplay) {
+                positionDisplay.textContent = "0th";
+                positionDisplay.classList.remove('bg-warning');
+                positionDisplay.classList.add('bg-info');
+            }
+        });
+    } else {
+        const sorted = window.broadsheets
+            .map(b => ({...b, cum: parseFloat(b.cum) || 0}))
+            .sort((a, b) => b.cum - a.cum || a.id - b.id);
+
+        let lastCum = null, lastPosition = 0, rank = 0;
+        const idToPos = {};
+        sorted.forEach((broadsheet, idx) => {
+            rank++;
+            if (lastCum !== null && broadsheet.cum === lastCum) {
+                // use lastPosition
+            } else {
+                lastPosition = rank;
+                lastCum = broadsheet.cum;
+            }
+            idToPos[broadsheet.id] = getOrdinalSuffix(lastPosition);
+        });
+
+        window.broadsheets.forEach(broadsheet => {
+            const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
+            if (row) {
+                const positionDisplay = row.querySelector('.position-display span');
+                if (positionDisplay) {
+                    positionDisplay.textContent = idToPos[broadsheet.id] || "-";
+                    positionDisplay.classList.remove('bg-warning');
+                    positionDisplay.classList.add('bg-info');
+                }
+            }
+        });
+    }
+}
+
 // Bulk save all scores: always save all, treat blank as 0, validate, and update positions from server
 function bulkSaveAllScores() {
     ensureBroadsheetsArray();
@@ -251,6 +298,7 @@ function bulkSaveAllScores() {
             window.broadsheets = response.data.data.broadsheets;
             ensureBroadsheetsArray();
             // Update DOM from server response, including positions
+            // We'll use forceUpdatePositions to compute accurate ranking with ties after setting broadsheets data.
             window.broadsheets.forEach(broadsheet => {
                 const row = document.querySelector(`input[data-id="${broadsheet.id}"]`)?.closest('tr');
                 if (row) {
@@ -266,19 +314,7 @@ function bulkSaveAllScores() {
                     if (cumDisplay) cumDisplay.textContent = parseFloat(broadsheet.cum || 0).toFixed(2);
                     const gradeDisplay = row.querySelector('.grade-display span');
                     if (gradeDisplay) gradeDisplay.textContent = broadsheet.grade || '-';
-                    // Show "0th" if server sends 0 for position, otherwise ordinal
-                    const positionDisplay = row.querySelector('.position-display span');
-                    if (positionDisplay) {
-                        const serverPosition = broadsheet.position;
-                        if (serverPosition !== undefined && serverPosition !== null && serverPosition !== '-') {
-                            positionDisplay.textContent =
-                                (parseInt(serverPosition, 10) === 0) ? "0th" : getOrdinalSuffix(parseInt(serverPosition));
-                        } else {
-                            positionDisplay.textContent = '-';
-                        }
-                        positionDisplay.classList.remove('bg-warning');
-                        positionDisplay.classList.add('bg-info');
-                    }
+                    // Position will be handled by forceUpdatePositions
                 }
             });
             // Ensure positions are shown immediately after save
@@ -366,39 +402,7 @@ function deleteSelectedScores() {
     });
 }
 
-// Force update positions for all rows (shows 0th if all cums are zero)
-function forceUpdatePositions() {
-    ensureBroadsheetsArray();
-    const cums = window.broadsheets.map(b => parseFloat(b.cum) || 0);
-    const allZero = cums.length > 0 && cums.every(cum => cum === 0);
-    if (allZero) {
-        document.querySelectorAll('#scoresheetTableBody tr:not(#noDataRow)').forEach(row => {
-            const positionDisplay = row.querySelector('.position-display span');
-            if (positionDisplay) {
-                positionDisplay.textContent = "0th";
-                positionDisplay.classList.remove('bg-warning');
-                positionDisplay.classList.add('bg-info');
-            }
-        });
-    } else {
-        const sorted = window.broadsheets
-            .map(b => ({...b, cum: parseFloat(b.cum) || 0}))
-            .sort((a, b) => b.cum - a.cum || a.id - b.id);
-        sorted.forEach((broadsheet, idx) => {
-            const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
-            if (row) {
-                const positionDisplay = row.querySelector('.position-display span');
-                if (positionDisplay) {
-                    positionDisplay.textContent = getOrdinalSuffix(idx + 1);
-                    positionDisplay.classList.remove('bg-warning');
-                    positionDisplay.classList.add('bg-info');
-                }
-            }
-        });
-    }
-}
-
-// View scores modal (positions "0th" if all zero)
+// View scores modal (positions "0th" if all zero), accurate ties
 function populateScoresModal() {
     const modalBody = document.querySelector('#scoresModal .modal-body');
     if (!modalBody) return;
@@ -413,6 +417,28 @@ function populateScoresModal() {
     // Check if all cums are zero
     const cums = window.broadsheets.map(b => parseFloat(b.cum) || 0);
     const allZero = cums.length > 0 && cums.every(cum => cum === 0);
+
+    // Build tie ranking for modal
+    let idToPos = {};
+    if (allZero) {
+        window.broadsheets.forEach(b => { idToPos[b.id] = "0th"; });
+    } else {
+        const sorted = window.broadsheets
+            .map(b => ({id: b.id, cum: parseFloat(b.cum) || 0}))
+            .sort((a, b) => b.cum - a.cum || a.id - b.id);
+
+        let lastCum = null, lastPosition = 0, rank = 0;
+        sorted.forEach((item, idx) => {
+            rank++;
+            if (lastCum !== null && item.cum === lastCum) {
+                // tied
+            } else {
+                lastPosition = rank;
+                lastCum = item.cum;
+            }
+            idToPos[item.id] = getOrdinalSuffix(lastPosition);
+        });
+    }
 
     let html = `
         <div class="table-responsive">
@@ -439,26 +465,12 @@ function populateScoresModal() {
         const admissionno = broadsheet.admissionno || '-';
 
         // PATCH: Safe position display
-        let position = broadsheet.position;
-        if (allZero) {
-            position = "0th";
-        } else if (
-            position === null ||
-            position === undefined ||
-            position === "" ||
-            isNaN(parseInt(position, 10))
-        ) {
-            position = "-";
-        } else if (parseInt(position, 10) === 0) {
-            position = "0th";
-        } else {
-            position = getOrdinalSuffix(parseInt(position, 10));
-        }
+        let position = idToPos[broadsheet.id] || "-";
 
         html += `<tr>
             <td>${idx + 1}</td>
-            <td>${admissionno}</td>
-            <td>${name}</td>
+            <td class="admissionno">${admissionno}</td>
+            <td class="name">${name}</td>
             <td>${ca1.toFixed(1)}</td>
             <td>${ca2.toFixed(1)}</td>
             <td>${ca3.toFixed(1)}</td>
@@ -473,6 +485,7 @@ function populateScoresModal() {
     html += `</tbody></table></div>`;
     modalBody.innerHTML = html;
 }
+
 // Bulk actions and modal initialization
 function initializeBulkActions() {
     const bulkUpdateScores = document.getElementById('bulkUpdateScores');
@@ -512,6 +525,30 @@ function initializeBulkActions() {
         document.querySelectorAll('.score-checkbox').forEach(checkbox => { checkbox.checked = this.checked; });
     });
     if (scoresModal) scoresModal.addEventListener('show.bs.modal', () => { populateScoresModal(); });
+
+    // SEARCH feature for by name/admissionno
+    const searchInput = document.getElementById('searchInput');
+    const clearSearch = document.getElementById('clearSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function () {
+            const search = this.value.trim().toLowerCase();
+            document.querySelectorAll('#scoresheetTableBody tr:not(#noDataRow)').forEach(row => {
+                const adm = row.querySelector('.admissionno')?.textContent.toLowerCase() || '';
+                const nme = row.querySelector('.name')?.textContent.toLowerCase() || '';
+                if (search === '' || adm.includes(search) || nme.includes(search)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+    if (clearSearch) {
+        clearSearch.addEventListener('click', function () {
+            if (searchInput) searchInput.value = '';
+            document.querySelectorAll('#scoresheetTableBody tr').forEach(row => row.style.display = '');
+        });
+    }
 }
 
 // Score input initialization
