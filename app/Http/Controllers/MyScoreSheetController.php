@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Exports\MarksSheetExport;
 use App\Exports\RecordsheetExport;
+use App\Exports\MockMarksSheetExport;
+use App\Exports\MockRecordsheetExport;
 use App\Imports\ScoresheetImport;
 use App\Models\Broadsheets;
 use App\Models\BroadsheetsMock;
@@ -268,9 +270,6 @@ class MyScoreSheetController extends Controller
             ], 500);
         }
     }
-
-
-
 
     protected function getPreviousTermCum($studentId, $subjectId, $termId, $sessionId)
     {
@@ -737,12 +736,13 @@ class MyScoreSheetController extends Controller
                 $message .= " Skipped " . count($failures) . " rows due to validation errors.";
             }
 
-            return response()->json([
-                'success' => true,
-                'message' => $message,
-                'broadsheets' => $updatedBroadsheets,
-                'errors' => $failures,
-            ]);
+            // return response()->json([
+            //     'success' => true,
+            //     'message' => $message,
+            //     'broadsheets' => $updatedBroadsheets,
+            //     'errors' => $failures,
+            // ]);
+            return redirect()->back()->with('success', 'Batch File Imported  Successfully');
         } catch (\Exception $e) {
             Log::error('Import: Error', [
                 'message' => $e->getMessage(),
@@ -1355,7 +1355,7 @@ class MyScoreSheetController extends Controller
         );
 
         return Excel::download(
-            new RecordsheetExport($schoolclassId, $subjectclassId, $termId, $sessionId, $staffId, true),
+            new MockRecordsheetExport($schoolclassId, $subjectclassId, $termId, $sessionId, $staffId, true),
             $filename
         );
     }
@@ -1374,7 +1374,7 @@ class MyScoreSheetController extends Controller
         }
 
         try {
-            $export = new MarkSheetExport($subjectclassId, $staffId, $termId, $sessionId, $schoolclassId, true);
+            $export = new MockMarkSheetExport($subjectclassId, $staffId, $termId, $sessionId, $schoolclassId, true);
             return $export->download();
         } catch (\Exception $e) {
             Log::error('Mock marksheet download error: ' . $e->getMessage());

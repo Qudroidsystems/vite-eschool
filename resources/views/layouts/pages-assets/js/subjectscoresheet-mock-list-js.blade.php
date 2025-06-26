@@ -2,6 +2,7 @@
 <script src="{{ asset('theme/layouts/assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/libs/simplebar/simplebar.min.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/js/plugins.js') }}"></script>
+
 <!-- list.js min js -->
 <script src="{{ asset('theme/layouts/assets/libs/list.js/list.min.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/libs/list.pagination.js/list.pagination.min.js') }}"></script>
@@ -15,7 +16,7 @@
 
 
 <!-- User list init js (load after list.js and dependencies) -->
-<script src="{{ asset('theme/layouts/assets/js/pages/subjectscoreheet-mock-list.init.js') }}"></script>
+<script src="{{ asset('theme/layouts/assets/js/pages/subjectscoresheet-mock-list.init.js') }}"></script>
 <!-- App js -->
 <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script>
 

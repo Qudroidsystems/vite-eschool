@@ -107,6 +107,11 @@
                                     <i class="ri-arrow-left-line"></i> Back
                                 </a>
                                 <div>
+                                     @if(session('subjectclass_id'))
+                                        <a href="{{ route('subjectscoresheet-mock.download-marksheet') }}" class="btn btn-warning">
+                                            <i class="fas fa-file-pdf"></i> Download Marks Sheet
+                                        </a>
+                                    @endif
                                     <a href="{{ route('subjectscoresheet-mock.export') }}" class="btn btn-info me-2">
                                         <i class="ri-download-line me-1"></i> Download Excel
                                     </a>
@@ -344,13 +349,18 @@
 </style>
 
 <!-- Pass data to JavaScript -->
-<script>
-    window.broadsheets = @json($broadsheets);
-    window.term_id = {{ session('term_id') ?? 0 }};
-    window.session_id = {{ session('session_id') ?? 0 }};
-    window.subjectclass_id = {{ session('subjectclass_id') ?? 0 }};
-    window.schoolclass_id = {{ session('schoolclass_id') ?? 0 }};
-    window.staff_id = {{ session('staff_id') ?? 0 }};
-    console.log('Broadsheet data:', window.broadsheets);
-</script>
+ <script>
+        window.broadsheets = @json($broadsheets);
+        window.term_id = {{ session('term_id') ?? 0 }};
+        window.session_id = {{ session('session_id') ?? 0 }};
+        window.subjectclass_id = {{ session('subjectclass_id') ?? 0 }};
+        window.schoolclass_id = {{ session('schoolclass_id') ?? 0 }};
+        window.staff_id = {{ session('staff_id') ?? 0 }};
+        window.routes = {
+            bulkUpdate: '{{ route("scoresheet-mock.bulk-update") }}',
+            destroy: '{{ route("scoresheet-mock.destroy") }}'
+        };
+        console.log('Broadsheet data:', window.broadsheets);
+        console.log('Routes:', window.routes);
+    </script>
 @endsection

@@ -40,6 +40,6 @@ class BroadsheetRecordMock extends Model
 
     public function broadsheetsMock()
     {
-        return $this->hasMany(BroadsheetsMock::class, 'broadsheet_record_id', 'id');
+        return $this->hasMany(BroadsheetsMock::class, 'broadsheet_records_mock_id', 'id');
     }
 }

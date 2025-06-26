@@ -32,7 +32,7 @@ class Broadsheets extends Model
 
     public function broadsheetRecord()
     {
-        return $this->belongsTo(BroadsheetRecord::class);
+        return $this->belongsTo(BroadsheetRecord::class,'broadsheet_record_id', 'id');
     }
 
     public function term()

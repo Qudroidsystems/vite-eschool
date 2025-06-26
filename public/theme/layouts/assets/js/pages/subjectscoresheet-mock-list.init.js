@@ -1,600 +1,701 @@
-// Debug: Log script loading
-console.log("subjectscoresheet-mock.init.js loading at", new Date().toISOString());
+(function () {
+    // Log script loading
+    console.log("subjectscoresheet-mock.init.js loaded at", new Date().toISOString());
 
-try {
-    // Check for jQuery
-    if (typeof jQuery === 'undefined') {
-        throw new Error("jQuery is not loaded.");
+    // Dependency checks
+    function checkDependencies() {
+        try {
+            if (typeof axios === 'undefined') throw new Error("Axios is not loaded");
+            if (typeof Swal === 'undefined') throw new Error("SweetAlert2 is not loaded");
+            if (typeof bootstrap === 'undefined') throw new Error("Bootstrap is not loaded");
+            console.log("All dependencies loaded successfully");
+            return true;
+        } catch (error) {
+            console.error("Dependency check failed:", error.message);
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: "error",
+                    title: "Dependency Error",
+                    text: "Required libraries are missing. Check console for details.",
+                    showConfirmButton: true
+                });
+            } else {
+                alert("Dependency Error: " + error.message);
+            }
+            return false;
+        }
     }
-    console.log("jQuery version:", jQuery.fn.jquery);
 
-    // Check for Toastr
-    if (typeof toastr === 'undefined') {
-        throw new Error("Toastr is not loaded.");
-    }
-    console.log("Toastr detected.");
-
-    // Check for Bootstrap
-    if (typeof bootstrap === 'undefined') {
-        console.warn("Bootstrap is not loaded. Modals may not work.");
-    } else {
-        console.log("Bootstrap detected.");
-    }
-
-    $(document).ready(function() {
-        console.log("Document ready at", new Date().toISOString());
-
-        // Verify CSRF token
-        const csrfToken = $('meta[name="csrf-token"]').attr('content');
+    // Set CSRF token for Axios
+    function setupAxios() {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+        if (typeof axios !== 'undefined') {
+            axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
+        }
         if (!csrfToken) {
-            console.error("CSRF token not found. AJAX requests will fail.");
-            toastr.error("CSRF token missing. Please refresh the page.");
-        } else {
-            console.log("CSRF token found:", csrfToken);
-            $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken
-                }
-            });
+            console.warn("CSRF token not found. AJAX requests may fail.");
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: "warning",
+                    title: "CSRF Token Missing",
+                    text: "CSRF token not found. AJAX requests may fail.",
+                    timer: 3000
+                });
+            }
+        }
+    }
+
+    // Ensure window.broadsheets is a flat array
+    function ensureBroadsheetsArray() {
+        if (typeof window.broadsheets === 'undefined') {
+            window.broadsheets = [];
+        } else if (!Array.isArray(window.broadsheets)) {
+            window.broadsheets = [window.broadsheets];
+        } else if (window.broadsheets.length === 1 && typeof window.broadsheets[0] === 'object' && !Array.isArray(window.broadsheets[0])) {
+            const nestedObject = window.broadsheets[0];
+            window.broadsheets = Object.values(nestedObject).filter(item => item && typeof item === 'object' && item.id);
+        }
+    }
+
+    // Calculate grade (same as controller)
+    function calculateGrade(score) {
+        if (isNaN(score) || score === null || score === undefined) return '-';
+        const numScore = parseFloat(score);
+        if (numScore >= 70) return 'A';
+        else if (numScore >= 60) return 'B';
+        else if (numScore >= 50) return 'C';
+        else if (numScore >= 40) return 'D';
+        return 'F';
+    }
+
+    // Get ordinal suffix for position
+    function getOrdinalSuffix(position) {
+        const num = parseInt(position);
+        if (isNaN(num)) return position;
+        if (num % 100 >= 11 && num % 100 <= 13) {
+            return num + 'th';
+        }
+        switch (num % 10) {
+            case 1: return num + 'st';
+            case 2: return num + 'nd';
+            case 3: return num + 'rd';
+            default: return num + 'th';
+        }
+    }
+
+    // Update row totals and positions
+    function updateRowTotal(row) {
+        const scoreInput = row.querySelector('.score-input[data-field="exam"]');
+        const id = scoreInput?.dataset.id;
+        if (!id) return;
+        if (!window.broadsheets || !Array.isArray(window.broadsheets) || window.broadsheets.length === 0) return;
+
+        const exam = parseFloat(scoreInput.value) || 0;
+        const total = exam;
+        const grade = calculateGrade(total);
+
+        // Update total display
+        const totalDisplay = row.querySelector('.total-display span');
+        if (totalDisplay) {
+            totalDisplay.textContent = total.toFixed(1);
+            totalDisplay.classList.toggle('text-danger', total < 40 && total !== 0);
+            totalDisplay.classList.add('bg-warning');
+            setTimeout(() => totalDisplay.classList.remove('bg-warning'), 500);
         }
 
-        // Initialize Toastr options
-        toastr.options = {
-            closeButton: true,
-            progressBar: true,
-            positionClass: 'toast-top-right',
-            timeOut: 5000
-        };
+        // Update grade display
+        const gradeDisplay = row.querySelector('.grade-display span');
+        if (gradeDisplay) {
+            gradeDisplay.textContent = grade;
+            gradeDisplay.classList.add('bg-warning');
+            setTimeout(() => gradeDisplay.classList.remove('bg-warning'), 500);
+        }
 
-        // Ensure window.broadsheets is an array
-        function ensureBroadsheetsArray() {
-            console.log("Ensuring window.broadsheets is an array...");
-            if (typeof window.broadsheets === 'undefined') {
-                window.broadsheets = [];
-                console.warn("window.broadsheets was undefined, initialized as empty array");
-            } else if (!Array.isArray(window.broadsheets)) {
-                if (window.broadsheets && typeof window.broadsheets === 'object') {
-                    const keys = Object.keys(window.broadsheets);
-                    if (keys.length > 0 && keys.every(key => !isNaN(key))) {
-                        window.broadsheets = Object.values(window.broadsheets);
-                        console.log("Converted window.broadsheets object to array");
-                    } else {
-                        window.broadsheets = [window.broadsheets];
-                        console.log("Wrapped single broadsheet object in array");
+        // Update broadsheets array
+        const broadsheetIndex = window.broadsheets.findIndex(b => String(b.id) === String(id));
+        if (broadsheetIndex !== -1) {
+            window.broadsheets[broadsheetIndex] = {
+                ...window.broadsheets[broadsheetIndex],
+                exam,
+                total,
+                grade
+            };
+        }
+
+        // Position logic (see forceUpdatePositions)
+        forceUpdatePositions();
+    }
+
+    // Initialize score input fields
+    function initializeScoreInputs() {
+        const scoreInputs = document.querySelectorAll('.score-input');
+        if (scoreInputs.length === 0) return;
+        scoreInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+                input.dataset.dirty = 'true';
+                const row = e.target.closest('tr');
+                if (row) updateRowTotal(row);
+            });
+            input.addEventListener('blur', (e) => {
+                const value = e.target.value.trim();
+                if (value === '') {
+                    e.target.classList.remove('is-invalid', 'is-valid');
+                    return;
+                }
+                const numValue = parseFloat(value);
+                if (isNaN(numValue) || numValue < 0 || numValue > 100) {
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Invalid Score',
+                            text: `Please enter a valid score between 0 and 100 for ${e.target.dataset.field.toUpperCase()}`,
+                            timer: 2000
+                        });
+                    }
+                    e.target.classList.add('is-invalid');
+                    e.target.classList.remove('is-valid');
+                    e.target.focus();
+                } else {
+                    e.target.classList.remove('is-invalid');
+                    e.target.classList.add('is-valid');
+                }
+            });
+        });
+    }
+
+    // Bulk save all scores (includes zeroes)
+    function bulkSaveAllScores() {
+        ensureBroadsheetsArray();
+        const scoreInputs = document.querySelectorAll('.score-input');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = progressContainer?.querySelector('.progress-bar');
+        const bulkUpdateBtn = document.getElementById('bulkUpdateScores');
+        const originalBtnContent = bulkUpdateBtn?.innerHTML;
+
+        if (!scoreInputs.length) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'No Scores',
+                    text: 'No score inputs found.',
+                    timer: 2000
+                });
+            }
+            return;
+        }
+
+        // Validate session variables
+        const sessionVars = {
+            term_id: window.term_id,
+            session_id: window.session_id,
+            subjectclass_id: window.subjectclass_id,
+            schoolclass_id: window.schoolclass_id,
+            staff_id: window.staff_id
+        };
+        for (const [key, value] of Object.entries(sessionVars)) {
+            if (!value) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: `Please select a ${key.replace('_id', '')} before saving.`,
+                        showConfirmButton: true
+                    });
+                }
+                return;
+            }
+        }
+
+        const scores = [];
+        const invalidInputs = [];
+        scoreInputs.forEach(input => {
+            const id = input.dataset.id;
+            const field = input.dataset.field;
+            let value = input.value.trim();
+
+            if (input.disabled) return;
+
+            input.classList.remove('is-invalid', 'is-valid');
+
+            if (!id || !field) {
+                input.classList.add('is-invalid');
+                invalidInputs.push({ input, error: 'Missing required attributes' });
+                return;
+            }
+
+            // Treat empty as zero (force save zero)
+            let numValue = value === '' ? 0 : parseFloat(value);
+            if (isNaN(numValue) || numValue < 0 || numValue > 100) {
+                input.classList.add('is-invalid');
+                invalidInputs.push({ input, error: `Score must be between 0-100 for ${field.toUpperCase()}` });
+                return;
+            }
+            input.classList.add('is-valid');
+
+            let found = scores.find(obj => obj.id == id);
+            if (!found) {
+                found = { id: parseInt(id), exam: 0 };
+                scores.push(found);
+            }
+            found[field] = numValue;
+            found.total = numValue; // Only exam field in this context
+            found.grade = calculateGrade(numValue);
+        });
+
+        if (invalidInputs.length > 0) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validation Failed',
+                    html: `Some scores are invalid:<ul>${invalidInputs.map(e => `<li>${e.error}</li>`).join('')}</ul>`,
+                    showConfirmButton: true
+                });
+            }
+            return;
+        }
+
+        if (!scores.length) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'No Scores',
+                    text: 'No valid scores to save.',
+                    timer: 2000
+                });
+            }
+            return;
+        }
+
+        // Show progress
+        if (progressContainer) progressContainer.style.display = 'block';
+        if (progressBar) progressBar.style.width = '20%';
+        if (bulkUpdateBtn) {
+            bulkUpdateBtn.disabled = true;
+            bulkUpdateBtn.innerHTML = '<i class="ri-loader-4-line sync-icon"></i> Saving...';
+        }
+
+        if (typeof axios !== 'undefined') {
+            axios.post(window.routes?.bulkUpdate || '/subjectscoresheet-mock/bulk-update', {
+                scores,
+                ...sessionVars
+            }, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                },
+                timeout: 30000
+            })
+            .then(response => {
+                if (progressBar) progressBar.style.width = '100%';
+                if (response.data.success && response.data.data?.broadsheets) {
+                    window.broadsheets = response.data.data.broadsheets;
+                    ensureBroadsheetsArray();
+
+                    // Update DOM with server response
+                    window.broadsheets.forEach(broadsheet => {
+                        const row = document.querySelector(`input[data-id="${broadsheet.id}"]`)?.closest('tr');
+                        if (row) {
+                            const examInput = row.querySelector('input[data-field="exam"]');
+                            if (examInput) {
+                                examInput.value = broadsheet.exam !== null ? broadsheet.exam : '';
+                                examInput.dataset.dirty = 'false';
+                            }
+                            const totalDisplay = row.querySelector('.total-display span');
+                            if (totalDisplay) {
+                                totalDisplay.textContent = parseFloat(broadsheet.total || 0).toFixed(1);
+                                totalDisplay.classList.toggle('text-danger', broadsheet.total < 40 && broadsheet.total !== 0);
+                            }
+                            const gradeDisplay = row.querySelector('.grade-display span');
+                            if (gradeDisplay) {
+                                gradeDisplay.textContent = broadsheet.grade || '-';
+                            }
+                            const remarkDisplay = row.querySelector('.remark-display span');
+                            if (remarkDisplay) {
+                                remarkDisplay.textContent = broadsheet.remark || '-';
+                            }
+                        }
+                    });
+
+                    // Recompute and update positions immediately after save!
+                    forceUpdatePositions();
+
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Saved!',
+                            text: `Successfully updated ${scores.length} score${scores.length !== 1 ? 's' : ''} with positions.`,
+                            timer: 2000
+                        });
                     }
                 } else {
-                    window.broadsheets = [];
-                    console.warn("window.broadsheets was not an array or object, initialized as empty array");
-                }
-            }
-            console.log("window.broadsheets is now an array with", window.broadsheets.length, "items");
-        }
-
-        // Initialize original values for inputs
-        function initializeScoreInputs() {
-            console.log("Initializing score inputs...");
-            const $inputs = $('.score-input');
-            if (!$inputs.length) {
-                console.warn("No .score-input elements found in DOM.");
-            }
-            $inputs.each(function() {
-                const $this = $(this);
-                $this.data('original-value', $this.val());
-                $this.data('dirty', false);
-                console.log(`Initialized input ID: ${$this.data('id')}, Value: ${$this.val()}`);
-            });
-            console.log("Initialized", $inputs.length, "score inputs for mock exams");
-        }
-
-        // Debounce function
-        function debounce(func, wait) {
-            let timeout;
-            return function(...args) {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func.apply(this, args), wait);
-            };
-        }
-
-        // Update row display after AJAX response
-        function updateRowDisplay(id, data) {
-            console.log(`=== DEBUG: updateRowDisplay called for ID ${id} (mock exams) ===`);
-            console.log("Data received:", data);
-
-            const $row = $(`input[data-id="${id}"]`).closest('tr');
-            if (!$row.length) {
-                console.warn("Row not found for ID:", id);
-                return;
-            }
-
-            const $examInput = $row.find('input[data-field="exam"]');
-            if ($examInput.length && data.exam !== undefined) {
-                $examInput.val(data.exam !== null ? data.exam : '');
-                $examInput.data('original-value', $examInput.val());
-                $examInput.data('dirty', false);
-                console.log(`Updated exam input to:`, $examInput.val());
-            }
-
-            const $totalDisplay = $row.find('.total-display span');
-            if ($totalDisplay.length && data.total !== undefined) {
-                const totalValue = parseFloat(data.total).toFixed(1);
-                $totalDisplay.text(totalValue);
-                $totalDisplay.toggleClass('text-danger', data.total < 40 && data.total !== 0);
-                console.log(`Updated total display to:`, totalValue);
-            }
-
-            const $gradeDisplay = $row.find('.grade-display span');
-            if ($gradeDisplay.length && data.grade !== undefined) {
-                $gradeDisplay.text(data.grade || '-');
-                console.log(`Updated grade display to:`, data.grade || '-');
-            }
-
-            const $remarkDisplay = $row.find('.remark-display span');
-            if ($remarkDisplay.length && data.remark !== undefined) {
-                $remarkDisplay.text(data.remark || '-');
-                console.log(`Updated remark display to:`, data.remark || '-');
-            }
-
-            const $positionDisplay = $row.find('.position-display span');
-            if ($positionDisplay.length && data.subjectpositionclass !== undefined) {
-                $positionDisplay.text(data.subjectpositionclass || '-');
-                console.log(`Updated position display to:`, data.subjectpositionclass || '-');
-            }
-        }
-
-        // Search functionality
-        const triggerSearch = debounce(function() {
-            console.log("Triggering search...");
-            const searchTerm = $('#searchInput').val().toLowerCase();
-            let visibleRows = 0;
-            $('#scoresheetTableBody tr').each(function() {
-                const $row = $(this);
-                if ($row.is('#noDataRow')) return;
-                const admissionNo = $row.find('.admissionno').data('admissionno')?.toString().toLowerCase() || '';
-                const name = $row.find('.name').data('name')?.toLowerCase() || '';
-                const isVisible = admissionNo.includes(searchTerm) || name.includes(searchTerm);
-                $row.toggle(isVisible);
-                if (isVisible) visibleRows++;
-            });
-            $('#noDataAlert').toggle(visibleRows === 0);
-            console.log("Visible rows:", visibleRows, "Search term:", searchTerm);
-        }, 300);
-
-        $('#searchInput').on('keyup', triggerSearch);
-
-        // Clear search
-        $('#clearSearch').on('click', function() {
-            console.log("Clearing search...");
-            $('#searchInput').val('').trigger('keyup');
-        });
-
-        // Check all checkboxes
-        $('#checkAll').on('change', function() {
-            console.log("Check all toggled:", $(this).is(':checked'));
-            $('.score-checkbox').prop('checked', $(this).is(':checked'));
-        });
-
-        // Update checkAll state when individual checkboxes change
-        $(document).on('change', '.score-checkbox', function() {
-            console.log("Score checkbox changed");
-            $('#checkAll').prop('checked', $('.score-checkbox:checked').length === $('.score-checkbox').length);
-        });
-
-        // Bulk actions initialization
-        function initializeBulkActions() {
-            console.log("Initializing bulk actions...");
-            if (!$('#selectAllScores').length) {
-                console.warn("Select All button not found.");
-            }
-            $('#selectAllScores').on('click', function() {
-                console.log("Select All clicked");
-                $('.score-checkbox').prop('checked', true);
-                $('#checkAll').prop('checked', true);
-            });
-
-            if (!$('#clearAllScores').length) {
-                console.warn("Clear All button not found.");
-            }
-            $('#clearAllScores').on('click', function() {
-                console.log("Clear All clicked");
-                if (confirm('Are you sure you want to clear all scores? This will reset all exam inputs to empty.')) {
-                    $('.score-input').each(function() {
-                        const $input = $(this);
-                        $input.val('');
-                        $input.data('dirty', true);
-                        updateRowDisplay($input.data('id'), { exam: null, total: 0, grade: '-', remark: '-', subjectpositionclass: '-' });
-                    });
-                    toastr.success('All scores cleared.');
-                    console.log("Cleared all scores");
-                }
-            });
-
-            if (!$('#bulkUpdateScores').length) {
-                console.warn("Bulk Update button not found.");
-            }
-            $('#bulkUpdateScores').on('click', function(e) {
-                e.preventDefault();
-                console.log("Bulk Update clicked");
-                bulkSaveAllScores();
-            });
-
-            // Ctrl+S shortcut
-            $(document).on('keydown', function(e) {
-                if (e.ctrlKey && e.key === 's') {
-                    e.preventDefault();
-                    console.log("Ctrl+S pressed - triggering bulk save");
-                    bulkSaveAllScores();
-                }
-            });
-        }
-
-        // Bulk save all scores
-        function bulkSaveAllScores() {
-            console.log("=== DEBUG: Starting bulkSaveAllScores (mock exams) ===");
-            ensureBroadsheetsArray();
-
-            const $scoreInputs = $('.score-input[data-dirty="true"]');
-            const $progressContainer = $('#progressContainer');
-            const $progressBar = $progressContainer.find('.progress-bar');
-            const $bulkUpdateBtn = $('#bulkUpdateScores');
-            const originalBtnContent = $bulkUpdateBtn.html();
-
-            if (!$scoreInputs.length) {
-                toastr.info('No scores have been modified.');
-                console.warn("No modified score inputs found");
-                return;
-            }
-
-            // Verify session variables
-            const sessionVars = {
-                term_id: window.term_id,
-                session_id: window.session_id,
-                subjectclass_id: window.subjectclass_id,
-                schoolclass_id: window.schoolclass_id,
-                staff_id: window.staff_id
-            };
-            console.log("Session values:", sessionVars);
-            for (const [key, value] of Object.entries(sessionVars)) {
-                if (!value) {
-                    console.error(`Missing session variable: ${key}`);
-                    toastr.error(`Please select a ${key.replace('_id', '')} before saving.`);
-                    return;
-                }
-            }
-
-            const scores = [];
-            const scoreData = {};
-            const invalidInputs = [];
-
-            $scoreInputs.each(function() {
-                const $input = $(this);
-                const id = $input.data('id');
-                const field = $input.data('field');
-                const value = $input.val().trim();
-
-                console.log(`Input - ID: ${id}, Field: ${field}, Value: ${value}`);
-
-                $input.removeClass('is-invalid is-valid');
-
-                if (!id || !field) {
-                    console.error("Missing input attributes", { id, field, value });
-                    $input.addClass('is-invalid');
-                    invalidInputs.push({ input: $input, error: 'Missing required attributes' });
-                    return;
-                }
-
-                const numValue = value === '' ? null : parseFloat(value);
-                if (numValue !== null && (isNaN(numValue) || numValue < 0 || numValue > 100)) {
-                    console.error("Invalid score", { id, field, value: numValue });
-                    $input.addClass('is-invalid');
-                    invalidInputs.push({ input: $input, error: 'Score must be between 0-100' });
-                    return;
-                }
-
-                if (value !== '') {
-                    $input.addClass('is-valid');
-                }
-
-                if (!scoreData[id]) scoreData[id] = { id: parseInt(id) };
-                scoreData[id][field] = numValue;
-            });
-
-            if (invalidInputs.length > 0) {
-                console.error("Validation failed:", invalidInputs);
-                toastr.error('Please correct invalid scores (must be between 0 and 100).');
-                return;
-            }
-
-            Object.values(scoreData).forEach(scoreEntry => {
-                console.log(`Processing score ID ${scoreEntry.id}:`, scoreEntry);
-                scores.push({
-                    id: scoreEntry.id,
-                    exam: scoreEntry.exam
-                });
-            });
-
-            if (!scores.length) {
-                console.warn("No valid scores to save");
-                toastr.info('No valid scores to save.');
-                return;
-            }
-
-            console.log("=== DEBUG: Final scores to be sent ===");
-            console.log(JSON.stringify(scores, null, 2));
-
-            $progressContainer.show();
-            $progressBar.css('width', '20%');
-            $bulkUpdateBtn.prop('disabled', true).html('<i class="ri-loader-4-line sync-icon"></i> Saving...');
-
-            $.ajax({
-                url: '{{ route("subjectscoresheet-mock.bulk-update") }}',
-                type: 'POST',
-                data: {
-                    scores: scores,
-                    term_id: window.term_id,
-                    session_id: window.session_id,
-                    subjectclass_id: window.subjectclass_id,
-                    schoolclass_id: window.schoolclass_id,
-                    staff_id: window.staff_id
-                },
-                success: function(response) {
-                    console.log("=== DEBUG: Server response ===");
-                    console.log("Response data:", response);
-
-                    $progressBar.css('width', '100%');
-
-                    $scoreInputs.removeClass('is-invalid is-valid');
-
-                    if (response.success && response.data && response.data.broadsheets) {
-                        const updatedCount = response.data.broadsheets.length;
-                        response.data.broadsheets.forEach(broadsheet => {
-                            console.log(`Server returned broadsheet ${broadsheet.id}:`, broadsheet);
-                            const index = window.broadsheets.findIndex(b => b.id == broadsheet.id);
-                            if (index !== -1) {
-                                window.broadsheets[index] = { ...window.broadsheets[index], ...broadsheet };
-                                console.log(`Updated broadsheet at index ${index}`);
-                            } else {
-                                window.broadsheets.push(broadsheet);
-                                console.log(`Added new broadsheet`);
-                            }
-                            updateRowDisplay(broadsheet.id, broadsheet);
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Save Failed',
+                            text: 'Server did not return updated scores.',
+                            showConfirmButton: true
                         });
-
-                        toastr.success(`Successfully updated ${updatedCount} score${updatedCount !== 1 ? 's' : ''}.`);
-                        populateResultsModal();
-                        $('#scoreCount').text(window.broadsheets.length);
-                        console.log("=== DEBUG: Final window.broadsheets state ===");
-                        console.log(window.broadsheets);
-                    } else {
-                        toastr.error(response.message || 'Failed to update scores.');
                     }
-                },
-                error: function(xhr) {
-                    console.error("=== DEBUG: Server error ===");
-                    console.error("Error details:", {
-                        status: xhr.status,
-                        data: xhr.responseJSON,
-                        message: xhr.statusText
+                }
+            })
+            .catch(error => {
+                let errorMessage = 'Failed to save scores. Check console for details.';
+                if (error.response) {
+                    errorMessage = error.response.data.message || errorMessage;
+                    if (error.response.status === 422) {
+                        const errors = error.response.data.errors || {};
+                        errorMessage += '<ul>' + Object.values(errors).flat().map(err => `<li>${err}</li>`).join('') + '</ul>';
+                    } else if (error.response.status === 419) {
+                        errorMessage = 'Session expired. Please refresh the page.';
+                    }
+                }
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Save Failed',
+                        html: errorMessage,
+                        showConfirmButton: true
                     });
-                    toastr.error('Failed to save scores: ' + (xhr.responseJSON?.message || 'Server error'));
-                },
-                complete: function() {
+                }
+            })
+            .finally(() => {
+                if (progressContainer) {
                     setTimeout(() => {
-                        $progressContainer.hide();
-                        $progressBar.css('width', '0%');
-                        $bulkUpdateBtn.prop('disabled', false).html(originalBtnContent);
+                        progressContainer.style.display = 'none';
+                        if (progressBar) progressBar.style.width = '0%';
                     }, 1000);
                 }
-            });
-        }
-
-        // Populate scores modal
-        function populateResultsModal() {
-            console.log("=== DEBUG: Populating scores modal (mock exams) ===");
-            ensureBroadsheetsArray();
-            const $tbody = $('#scoresBody');
-            $tbody.empty().html('<tr><td colspan="8" class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Loading...</span></div></td></tr>');
-
-            if (!window.broadsheets || window.broadsheets.length === 0) {
-                $tbody.html('<tr><td colspan="8" class="text-center">No mock scores available.</td></tr>');
-                console.log("No broadsheets available for modal");
-                return;
-            }
-
-            window.broadsheets.forEach(function(broadsheet, index) {
-                const name = broadsheet.name || `${broadsheet.fname || ''} ${broadsheet.lname || ''}`.trim();
-                const exam = parseFloat(broadsheet.exam) || 0;
-                const total = parseFloat(broadsheet.total) || exam;
-                const examClass = exam < 40 && exam !== 0 ? 'text-danger' : '';
-                const totalClass = total < 40 && total !== 0 ? 'text-danger' : '';
-
-                console.log(`Row ${index + 1} - ID: ${broadsheet.id}, Total: ${total.toFixed(1)}, Position: ${broadsheet.subjectpositionclass || '-'}`);
-
-                $tbody.append(`
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td>${broadsheet.admissionno || '-'}</td>
-                        <td>${name || '-'}</td>
-                        <td class="${examClass}">${broadsheet.exam !== null && broadsheet.exam !== undefined ? broadsheet.exam : '-'}</td>
-                        <td class="${totalClass}">${broadsheet.total !== null && broadsheet.total !== undefined ? parseFloat(broadsheet.total).toFixed(1) : '-'}</td>
-                        <td>${broadsheet.grade || '-'}</td>
-                        <td>${broadsheet.subjectpositionclass || '-'}</td>
-                        <td>${broadsheet.remark || '-'}</td>
-                    </tr>
-                `);
-            });
-        }
-
-        // Delete selected scores
-        window.deleteSelectedScores = function() {
-            console.log("=== DEBUG: deleteSelectedScores triggered (mock exams) ===");
-            const selectedIds = $('.score-checkbox:checked').map(function() {
-                return $(this).data('id');
-            }).get();
-
-            if (selectedIds.length === 0) {
-                toastr.warning('Please select at least one score to delete.');
-                console.log("No scores selected for deletion");
-                return;
-            }
-
-            if (!confirm('Are you sure you want to delete the selected scores?')) {
-                console.log("Deletion cancelled by user");
-                return;
-            }
-
-            $.ajax({
-                url: '{{ route("subjectscoresheet-mock.destroy") }}',
-                type: 'POST',
-                data: {
-                    _method: 'DELETE',
-                    ids: selectedIds
-                },
-                success: function(response) {
-                    console.log("Delete response:", response);
-                    if (response.success) {
-                        toastr.success(response.message);
-                        selectedIds.forEach(function(id) {
-                            $(`tr:has(.score-checkbox[data-id="${id}"])`).remove();
-                            window.broadsheets = window.broadsheets.filter(b => b.id != id);
-                            console.log(`Removed score ID ${id} from table and window.broadsheets`);
-                        });
-                        $('#scoreCount').text(window.broadsheets.length);
-                        $('#noDataAlert').toggle(window.broadsheets.length === 0);
-                        $('#noDataRow').toggle(window.broadsheets.length === 0);
-                        $('#checkAll').prop('checked', false);
-                        populateResultsModal();
-                    } else {
-                        toastr.error(response.message || 'Failed to delete scores.');
-                    }
-                },
-                error: function(xhr) {
-                    console.error("Delete error:", xhr.responseText);
-                    toastr.error('Failed to delete scores: ' + (xhr.responseJSON?.message || 'Server error'));
+                if (bulkUpdateBtn) {
+                    bulkUpdateBtn.disabled = false;
+                    bulkUpdateBtn.innerHTML = originalBtnContent || '<i class="ri-save-line me-1"></i> Save All Scores';
                 }
             });
-        };
-
-        // Initialize import form
-        function initializeImportForm() {
-            console.log("Initializing import form...");
-            const $form = $('#importForm');
-            if (!$form.length) {
-                console.warn("Import form not found.");
-                return;
+        } else {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Axios library is not loaded.',
+                    showConfirmButton: true
+                });
             }
-            $form.on('submit', function(e) {
-                e.preventDefault();
-                console.log("Import form submitted");
-                const $submitBtn = $form.find('#importSubmit');
-                const originalBtnContent = $submitBtn.find('.indicator-label').text();
-                $submitBtn.find('.indicator-label').hide();
-                $submitBtn.find('.indicator-progress').show();
-                $submitBtn.prop('disabled', true);
+        }
+    }
 
-                const formData = new FormData(this);
-                $.ajax({
-                    url: $form.attr('action'),
-                    type: 'POST',
-                    data: formData,
-                    processData: false,
-                    contentType: false,
-                    success: function(response) {
-                        console.log("Import response:", response);
-                        if (response.success && response.broadsheets) {
-                            toastr.success(response.message);
-                            response.broadsheets.forEach(score => {
-                                const index = window.broadsheets.findIndex(b => b.id == score.id);
-                                if (index !== -1) {
-                                    window.broadsheets[index] = score;
-                                } else {
-                                    window.broadsheets.push(score);
-                                }
-                                updateRowDisplay(score.id, score);
-                            });
-                            $('#scoreCount').text(window.broadsheets.length);
-                            $('#noDataAlert').toggle(window.broadsheets.length === 0);
-                            $('#noDataRow').toggle(window.broadsheets.length === 0);
-                            populateResultsModal();
-                        } else {
-                            let message = response.message || 'Import failed.';
-                            if (response.errors && response.errors.length) {
-                                message += '<ul style="text-align: left; max-height: 200px; overflow-y: auto;">';
-                                response.errors.forEach(err => {
-                                    message += `<li>Row ${err.row}: ${err.attribute === '1' ? 'Admission No.' : err.attribute} - ${err.errors.join(', ')}</li>`;
-                                });
-                                message += '</ul>';
+    // Delete selected scores
+    window.deleteSelectedScores = function() {
+        const selectedCheckboxes = document.querySelectorAll('.score-checkbox:checked');
+        if (!selectedCheckboxes.length) {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'No Selection',
+                    text: 'Please select at least one score to delete.',
+                    timer: 2000
+                });
+            }
+            return;
+        }
+
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Delete Selected Scores?',
+                text: 'This will clear the selected mock scores. Are you sure?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, Delete!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const selectedIds = Array.from(selectedCheckboxes).map(checkbox => checkbox.dataset.id);
+                    if (typeof axios !== 'undefined') {
+                        axios.post(window.routes?.destroy || '/subjectscoresheet-mock/destroy', {
+                            ids: selectedIds
+                        }, {
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
                             }
-                            toastr.error(message, 'Import Failed', { timeOut: 0 });
-                        }
-                    },
-                    error: function(xhr) {
-                        console.error("Import error:", xhr.responseText);
-                        let message = xhr.responseJSON?.message || 'Import failed.';
-                        if (xhr.status === 422 && xhr.responseJSON?.errors) {
-                            message += '<ul style="text-align: left; max-height: 200px; overflow-y: auto;">';
-                            xhr.responseJSON.errors.forEach(err => {
-                                message += `<li>Row ${err.row}: ${err.attribute === '1' ? 'Admission No.' : err.attribute} - ${err.errors.join(', ')}</li>`;
+                        })
+                        .then(response => {
+                            if (response.data.success) {
+                                selectedIds.forEach(id => {
+                                    const row = document.querySelector(`tr:has(.score-checkbox[data-id="${id}"])`);
+                                    if (row) row.remove();
+                                    window.broadsheets = window.broadsheets.filter(b => String(b.id) !== String(id));
+                                });
+                                const scoreCount = document.getElementById('scoreCount');
+                                if (scoreCount) scoreCount.textContent = window.broadsheets.length;
+                                const noDataAlert = document.getElementById('noDataAlert');
+                                if (noDataAlert) noDataAlert.style.display = window.broadsheets.length === 0 ? 'block' : 'none';
+                                const noDataRow = document.getElementById('noDataRow');
+                                if (noDataRow) noDataRow.style.display = window.broadsheets.length === 0 ? '' : 'none';
+                                const checkAll = document.getElementById('checkAll');
+                                if (checkAll) checkAll.checked = false;
+                                forceUpdatePositions();
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Deleted!',
+                                    text: 'Selected scores have been cleared.',
+                                    timer: 2000
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Delete Failed',
+                                    text: response.data.message || 'Failed to delete scores.',
+                                    showConfirmButton: true
+                                });
+                            }
+                        })
+                        .catch(error => {
+                            let message = 'Failed to delete scores: ';
+                            if (error.response) {
+                                message += error.response.data.message || 'Server error';
+                                if (error.response.status === 422) {
+                                    const errors = error.response.data.errors || {};
+                                    message += '<ul>' + Object.values(errors).flat().map(err => `<li>${err}</li>`).join('') + '</ul>';
+                                } else if (error.response.status === 419) {
+                                    message = 'Session expired. Please refresh the page.';
+                                }
+                            }
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Delete Failed',
+                                html: message,
+                                showConfirmButton: true
                             });
-                            message += '</ul>';
-                        }
-                        toastr.error(message, 'Import Failed', { timeOut: 0 });
-                    },
-                    complete: function() {
-                        $submitBtn.find('.indicator-label').show().text(originalBtnContent);
-                        $submitBtn.find('.indicator-progress').hide();
-                        $submitBtn.prop('disabled', false);
+                        });
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'Axios library is not loaded.',
+                            showConfirmButton: true
+                        });
                     }
+                }
+            });
+        }
+    };
+
+    // Import scores from Excel
+    function initializeImportForm() {
+        const importForm = document.getElementById('importForm');
+        const importSubmit = document.getElementById('importSubmit');
+        if (importForm && importSubmit) {
+            importForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const formData = new FormData(importForm);
+                const indicatorLabel = importSubmit.querySelector('.indicator-label');
+                const indicatorProgress = importSubmit.querySelector('.indicator-progress');
+                if (indicatorLabel) indicatorLabel.style.display = 'none';
+                if (indicatorProgress) indicatorProgress.style.display = 'inline';
+                importSubmit.disabled = true;
+                if (typeof axios !== 'undefined') {
+                    axios.post(window.routes?.import || '/subjectscoresheet-mock/import', formData, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => {
+                        if (response.data.success) {
+                            window.broadsheets = response.data.data?.broadsheets || window.broadsheets;
+                            ensureBroadsheetsArray();
+                            forceUpdatePositions();
+                            const scoreCount = document.getElementById('scoreCount');
+                            if (scoreCount) scoreCount.textContent = window.broadsheets.length;
+                            const noDataAlert = document.getElementById('noDataAlert');
+                            if (noDataAlert) noDataAlert.style.display = window.broadsheets.length === 0 ? 'block' : 'none';
+                            const noDataRow = document.getElementById('noDataRow');
+                            if (noDataRow) noDataRow.style.display = window.broadsheets.length === 0 ? '' : 'none';
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Imported!',
+                                    text: 'Scores imported successfully.',
+                                    timer: 2000
+                                });
+                            }
+                            const importModal = document.getElementById('importModal');
+                            if (importModal && typeof bootstrap !== 'undefined') {
+                                const modalInstance = bootstrap.Modal.getInstance(importModal);
+                                if (modalInstance) modalInstance.hide();
+                            }
+                        } else {
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Import Failed',
+                                    text: response.data.message || 'Failed to import scores.',
+                                    showConfirmButton: true
+                                });
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        let message = 'Failed to import scores: ';
+                        if (error.response) {
+                            message += error.response.data.message || 'Server error';
+                            if (error.response.status === 422) {
+                                const errors = error.response.data.errors || {};
+                                message += '<ul>' + Object.values(errors).flat().map(err => `<li>${err}</li>`).join('') + '</ul>';
+                            }
+                        }
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Import Failed',
+                                html: message,
+                                showConfirmButton: true
+                            });
+                        }
+                    })
+                    .finally(() => {
+                        if (indicatorLabel) indicatorLabel.style.display = 'inline';
+                        if (indicatorProgress) indicatorProgress.style.display = 'none';
+                        importSubmit.disabled = false;
+                    });
+                }
+            });
+        }
+    }
+
+    // Force update positions after bulk operations
+    function forceUpdatePositions() {
+        if (!window.broadsheets || !Array.isArray(window.broadsheets)) return;
+
+        // Get all totals
+        const totals = window.broadsheets.map(b => parseFloat(b.total) || 0);
+        const allZero = totals.length > 0 && totals.every(total => total === 0);
+
+        if (allZero) {
+            // Set all positions to "0th"
+            window.broadsheets.forEach(broadsheet => {
+                const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
+                if (row) {
+                    const positionDisplay = row.querySelector('.position-display span');
+                    if (positionDisplay) {
+                        positionDisplay.textContent = "0th";
+                        positionDisplay.classList.remove('bg-warning');
+                        positionDisplay.classList.add('bg-info');
+                    }
+                }
+            });
+        } else {
+            // Normal position calculation
+            const sortedBroadsheets = window.broadsheets
+                .map(b => ({
+                    ...b,
+                    total: parseFloat(b.total) || 0
+                }))
+                .sort((a, b) => {
+                    if (b.total !== a.total) {
+                        return b.total - a.total;
+                    }
+                    return a.id - b.id;
+                });
+
+            sortedBroadsheets.forEach((broadsheet, index) => {
+                const position = index + 1;
+                const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
+                if (row) {
+                    const positionDisplay = row.querySelector('.position-display span');
+                    if (positionDisplay) {
+                        positionDisplay.textContent = getOrdinalSuffix(position);
+                        positionDisplay.classList.remove('bg-warning');
+                        positionDisplay.classList.add('bg-info');
+                    }
+                }
+            });
+        }
+    }
+
+    // Initialize check all functionality
+    function initializeCheckAll() {
+        const checkAll = document.getElementById('checkAll');
+        if (checkAll) {
+            checkAll.addEventListener('change', (e) => {
+                const checkboxes = document.querySelectorAll('.score-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = e.target.checked;
                 });
             });
         }
+    }
 
-        // Debug current state
-        window.debugCurrentState = function() {
-            console.log("=== DEBUG: Current State Check (mock exams) ===");
-            console.log("window.broadsheets:", window.broadsheets);
-            console.log("Score inputs found:", $('.score-input').length);
-            
-            $('.score-input').each(function() {
-                console.log(`Input - ID: ${$(this).data('id')}, Field: ${$(this).data('field')}, Value: ${$(this).val()}, Dirty: ${$(this).data('dirty')}`);
-            });
-            
-            $('.total-display span').each(function(index) {
-                const $row = $(this).closest('tr');
-                const id = $row.find('.score-input').data('id');
-                const position = $row.find('.position-display span').text();
-                console.log(`Row ${index + 1} - ID: ${id}, Total: ${$(this).text()}, Position: ${position}`);
-            });
-        };
+    // Initialize the module
+    function init() {
+        if (!checkDependencies()) return;
+        setupAxios();
+        ensureBroadsheetsArray();
+        initializeScoreInputs();
+        initializeImportForm();
+        initializeCheckAll();
 
-        // Initialize
-        console.log("Starting initialization...");
-        try {
-            ensureBroadsheetsArray();
-            initializeScoreInputs();
-            initializeBulkActions();
-            initializeImportForm();
-            $('#scoresModal').on('show.bs.modal', populateResultsModal);
-
-            // Verify DOM elements
-            console.log("DOM checks:");
-            console.log("scoresheetTableBody:", $('#scoresheetTableBody').length ? "Found" : "Not found");
-            console.log("bulkUpdateScores:", $('#bulkUpdateScores').length ? "Found" : "Not found");
-            console.log("progressContainer:", $('#progressContainer').length ? "Found" : "Not found");
-            console.log("scoresModal:", $('#scoresModal').length ? "Found" : "Not found");
-
-            console.log("Initialization complete for mock exams");
-        } catch (err) {
-            console.error("Initialization error:", err);
-            toastr.error("Script initialization failed. Check console for details.");
+        // Attach bulk update handler
+        const bulkUpdateBtn = document.getElementById('bulkUpdateScores');
+        if (bulkUpdateBtn) {
+            bulkUpdateBtn.addEventListener('click', bulkSaveAllScores);
         }
 
-        // Track input changes for dirty state
-        $(document).on('input', '.score-input', function() {
-            console.log(`Input changed - ID: ${$(this).data('id')}, Value: ${$(this).val()}`);
-            $(this).data('dirty', true);
+        // Add Select All button functionality
+        const selectAllBtn = document.getElementById('selectAllScores');
+        if (selectAllBtn) {
+            selectAllBtn.addEventListener('click', () => {
+                const checkboxes = document.querySelectorAll('.score-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+                const checkAll = document.getElementById('checkAll');
+                if (checkAll) checkAll.checked = true;
+            });
+        }
+
+        // Add Clear All button functionality
+        const clearAllBtn = document.getElementById('clearAllScores');
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', () => {
+                // Clear all score inputs
+                const inputs = document.querySelectorAll('.score-input');
+                inputs.forEach(input => {
+                    input.value = '';
+                    input.classList.remove('is-valid', 'is-invalid');
+                    const row = input.closest('tr');
+                    if (row) {
+                        updateRowTotal(row);
+                    }
+                });
+                // Clear checkboxes as well
+                const checkboxes = document.querySelectorAll('.score-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                // Uncheck "check all" checkbox
+                const checkAll = document.getElementById('checkAll');
+                if (checkAll) checkAll.checked = false;
+            });
+        }
+
+        // Update initial row totals and positions
+        document.querySelectorAll('tr:has(.score-input)').forEach(row => {
+            updateRowTotal(row);
         });
-    });
-} catch (err) {
-    console.error("Critical error loading script:", err);
-    alert("Failed to load scoresheet script. Check console for details.");
-}
+    }
+
+    // Export module functionality
+    window.SubjectScoresheetMock = {
+        init,
+        bulkSaveAllScores,
+        deleteSelectedScores,
+        updateRowTotal,
+        forceUpdatePositions
+    };
+
+    // Auto-initialize if DOM is ready
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        init();
+    } else {
+        document.addEventListener('DOMContentLoaded', init);
+    }
+})();

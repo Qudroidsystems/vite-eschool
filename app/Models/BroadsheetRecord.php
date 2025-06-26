@@ -38,6 +38,7 @@ class BroadsheetRecord extends Model
 
     public function broadsheets()
     {
-        return $this->hasMany(Broadsheet::class);
+        return $this->hasMany(Broadsheet::class,'broadsheet_record_id', 'id');
     }
+   
 }

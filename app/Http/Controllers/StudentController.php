@@ -83,6 +83,7 @@ class StudentController extends Controller
         }
     }
 
+
     public function index(Request $request)
     {
         $pagetitle = "Student Management";
@@ -122,10 +123,26 @@ class StudentController extends Controller
             'Others' => $religion_counts['Others'] ?? 0
         ];
 
-        return view('student.index', compact('schoolclass', 'schoolterm', 'schoolsession', 'status_counts', 'gender_counts', 'religion_counts', 'pagetitle'));
-    }
+        // Calculate total population (total students)
+        $total_population = Student::count();
 
- 
+        // Calculate staff count (assuming you have a Staff model)
+        // Replace 'Staff' with your actual staff model name and table
+        $staff_count = \App\Models\Staff::count(); // Adjust based on your Staff model
+
+        return view('student.index', compact(
+            'schoolclass',
+            'schoolterm',
+            'schoolsession',
+            'status_counts',
+            'gender_counts',
+            'religion_counts',
+            'pagetitle',
+            'total_population',
+            'staff_count'
+        ));
+    }
+    
     public function show($id)
     {
         try {

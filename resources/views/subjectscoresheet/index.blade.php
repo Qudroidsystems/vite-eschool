@@ -112,12 +112,12 @@
                                             <i class="fas fa-file-pdf"></i> Download Marks Sheet
                                         </a>
                                     @endif
-                                    {{-- <a href="{{ route('subjectscoresheet.export') }}" class="btn btn-info me-2">
+                                    <a href="{{ route('subjectscoresheet.export') }}" class="btn btn-info me-2">
                                         <i class="ri-download-line me-1"></i> Download Excel
                                     </a>
                                     <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#importModal" {{ !session('schoolclass_id') || !session('subjectclass_id') || !session('staff_id') || !session('term_id') || !session('session_id') ? 'disabled title="Please select a class, subject, term, and session first"' : '' }}>
                                         <i class="ri-upload-line me-1"></i> Bulk Excel Upload
-                                    </button> --}}
+                                    </button>
                                     @if ($broadsheets->isNotEmpty())
                                         <button class="btn btn-secondary me-2" data-bs-toggle="modal" data-bs-target="#scoresModal">
                                             <i class="bi bi-table me-1"></i> View Scores
