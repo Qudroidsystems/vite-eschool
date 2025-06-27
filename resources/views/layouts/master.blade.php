@@ -210,11 +210,11 @@
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarDashboards">
                                 <ul class="nav nav-sm flex-column">
-                                    @can('dashboard')
+                                  
                                         <li class="nav-item">
                                             <a href="{{ route('dashboard') }}" class="nav-link" data-key="t-analytics"> Administration Analytics </a>
                                         </li> 
-                                    @endcan
+                                  
                                     @can('finance dashboard')
                                     <li class="nav-item">
                                         <a href="dashboard-crm.html" class="nav-link" data-key="t-crm"> Finance Analytics</a>

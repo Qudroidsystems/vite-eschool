@@ -19,89 +19,91 @@
             </div>
             <!-- end page title -->
 
-            <div class="row">
-                <div class="col-xxl-3 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex">
-                                <div class="flex-grow-1">
-                                    <div class="d-flex flex-column h-100">
-                                        <p class="fs-md text-muted mb-4">Population</p>
-                                        <h3 class="mb-0 mt-auto">
-                                            <span class="counter-value" data-target="{{ $total_population }}">0</span>
-                                            <small class="text-success fs-xs mb-0 ms-1"><i class="bi bi-arrow-up me-1"></i> 06.19%</small>
-                                        </h3>
+              
+           @can('dashboard')
+                <div class="row">
+                    <div class="col-xxl-3 col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex flex-column h-100">
+                                            <p class="fs-md text-muted mb-4">Population</p>
+                                            <h3 class="mb-0 mt-auto">
+                                                <span class="counter-value" data-target="{{ $total_population }}">0</span>
+                                                <small class="text-success fs-xs mb-0 ms-1"><i class="bi bi-arrow-up me-1"></i> 06.19%</small>
+                                            </h3>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <div id="population_chart" data-colors='["--tb-primary"]' dir="ltr"></div>
+                                    <div class="flex-shrink-0">
+                                        <div id="population_chart" data-colors='["--tb-primary"]' dir="ltr"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div><!--end col-->
-                <div class="col-xxl-3 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex">
-                                <div class="flex-grow-1">
-                                    <div class="d-flex flex-column h-100">
-                                        <p class="fs-md text-muted mb-4">Staff</p>
-                                        <h3 class="mb-0 mt-auto">
-                                            <span class="counter-value" data-target="{{ $staff_count }}">0</span>
-                                            <small class="text-success fs-xs mb-0 ms-1"><i class="bi bi-arrow-up me-1"></i> 02.33%</small>
-                                        </h3>
+                    </div><!--end col-->
+                    <div class="col-xxl-3 col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex flex-column h-100">
+                                            <p class="fs-md text-muted mb-4">Staff</p>
+                                            <h3 class="mb-0 mt-auto">
+                                                <span class="counter-value" data-target="{{ $staff_count }}">0</span>
+                                                <small class="text-success fs-xs mb-0 ms-1"><i class="bi bi-arrow-up me-1"></i> 02.33%</small>
+                                            </h3>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <div id="staff_chart" data-colors='["--tb-warning"]' dir="ltr"></div>
+                                    <div class="flex-shrink-0">
+                                        <div id="staff_chart" data-colors='["--tb-warning"]' dir="ltr"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div><!--end col-->
-                <div class="col-xxl-3 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex">
-                                <div class="flex-grow-1">
-                                    <div class="d-flex flex-column h-100">
-                                        <p class="fs-md text-muted mb-4">Male</p>
-                                        <h3 class="mb-0 mt-auto">
-                                            <span class="counter-value" data-target="{{ $gender_counts['Male'] }}">0</span>
-                                            <small class="text-success fs-xs mb-0 ms-1"><i class="bi bi-arrow-up me-1"></i> 12.33%</small>
-                                        </h3>
+                    </div><!--end col-->
+                    <div class="col-xxl-3 col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex flex-column h-100">
+                                            <p class="fs-md text-muted mb-4">Male</p>
+                                            <h3 class="mb-0 mt-auto">
+                                                <span class="counter-value" data-target="{{ $gender_counts['Male'] }}">0</span>
+                                                <small class="text-success fs-xs mb-0 ms-1"><i class="bi bi-arrow-up me-1"></i> 12.33%</small>
+                                            </h3>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <div id="male_chart" data-colors='["--tb-secondary"]' dir="ltr"></div>
+                                    <div class="flex-shrink-0">
+                                        <div id="male_chart" data-colors='["--tb-secondary"]' dir="ltr"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div><!--end col-->
-                <div class="col-xxl-3 col-md-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="d-flex">
-                                <div class="flex-grow-1">
-                                    <div class="d-flex flex-column h-100">
-                                        <p class="fs-md text-muted mb-4">Female</p>
-                                        <h3 class="mb-0 mt-auto">
-                                            <span class="counter-value" data-target="{{ $gender_counts['Female'] }}">0</span>
-                                            <small class="text-danger fs-xs mb-0 ms-1"><i class="bi bi-arrow-down me-1"></i> 09.57%</small>
-                                        </h3>
+                    </div><!--end col-->
+                    <div class="col-xxl-3 col-md-6">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex">
+                                    <div class="flex-grow-1">
+                                        <div class="d-flex flex-column h-100">
+                                            <p class="fs-md text-muted mb-4">Female</p>
+                                            <h3 class="mb-0 mt-auto">
+                                                <span class="counter-value" data-target="{{ $gender_counts['Female'] }}">0</span>
+                                                <small class="text-danger fs-xs mb-0 ms-1"><i class="bi bi-arrow-down me-1"></i> 09.57%</small>
+                                            </h3>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <div id="female_chart" data-colors='["--tb-success"]' dir="ltr"></div>
+                                    <div class="flex-shrink-0">
+                                        <div id="female_chart" data-colors='["--tb-success"]' dir="ltr"></div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div><!--end col-->
-            </div><!--end row-->
-
+                    </div><!--end col-->
+                </div><!--end row-->
+           @endcan
             {{-- Commented sections remain unchanged --}}
           {{-- <div class="row">
                 <div class="col-xxl-4 order-last order-xxl-first">
