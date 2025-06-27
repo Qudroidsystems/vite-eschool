@@ -81,7 +81,7 @@ class RecordsheetExport implements FromView, ShouldAutoSize, WithStyles, WithEve
                 'broadsheets.grade',
                 'broadsheets.subject_position_class as position',
                 'broadsheets.remark',
-            ])->sortBy('admissionno');
+            ])->sortBy('lname');
 
         // Fetch active school information
         $school = SchoolInformation::getActiveSchool();
