@@ -75,15 +75,6 @@ use Spatie\Permission\Models\Role;
                                         </div>
                                     </div>
                                     <div class="col-xxl-3 col-sm-6">
-                                        {{-- <div>
-                                            <select class="form-control" data-choices data-choices-search-false data-choices-removeItem multiple data-choices-limit="Required Limit" data-choices-text-unique-true>
-                                                @foreach ($roles as $role => $name)
-                                                    <option value="{{ $role }}">{{ $name }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div> --}}
-                                    </div>
-                                    <div class="col-xxl-3 col-sm-6">
                                         <div>
                                             <select class="form-control" id="idRole" data-choices data-choices-search-false data-choices-removeItem>
                                                 <option value="all">Select Role</option>
@@ -120,14 +111,12 @@ use Spatie\Permission\Models\Role;
                                     <h5 class="card-title mb-0">Users <span class="badge bg-dark-subtle text-dark ms-1">{{ $data->total() }}</span></h5>
                                 </div>
                                 <div class="flex-shrink-0">
-                                   
-                                        <div class="d-flex flex-wrap align-items-start gap-2">
-                                                <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
-                                            @can('Create user')
-                                                <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#showModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Add User</button>
-                                            @endcan
-                                        </div>
-                                  
+                                    <div class="d-flex flex-wrap align-items-start gap-2">
+                                        <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
+                                        @can('Create user')
+                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#showModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Add User</button>
+                                        @endcan
+                                    </div>
                                 </div>
                             </div>
                             <div class="card-body">
@@ -152,7 +141,6 @@ use Spatie\Permission\Models\Role;
                                                             <label class="form-check-label"></label>
                                                         </div>
                                                     </td>
-                                                    {{-- <td class="id" style="display:none;"><a href="javascript:void(0);" class="fw-medium link-primary">{{ $user->id }}</a></td> --}}
                                                     <td class="name" data-name="{{ $user->name }}">
                                                         <div class="d-flex align-items-center">
                                                             <div>
@@ -176,31 +164,28 @@ use Spatie\Permission\Models\Role;
                                                     <td>
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
                                                             @can('View user')
-                                                                 <li>
+                                                                <li>
                                                                     <a href="{{ route('users.show', $user->id) }}" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a>
-                                                                 </li>
+                                                                </li>
                                                             @endcan
-                                                           @can('Update user')
+                                                            @can('Update user')
                                                                 <li>
                                                                     <a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"><i class="ph-pencil"></i></a>
                                                                 </li>
-                                                           @endcan
-                                                           @can('Delete user')
+                                                            @endcan
+                                                            @can('Delete user')
                                                                 <li>
-                                                                   <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i class="ph-trash"></i></a>
+                                                                    <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i class="ph-trash"></i></a>
                                                                 </li>
-                                                           @endcan
-                                                           
+                                                            @endcan
                                                         </ul>
                                                     </td>
                                                 </tr>
-                                                @empty
-                                                      <tr>
-                                                        <td colspan="7" class="noresult" style="display: block;">No results found</td>
-                                                    </tr>
-                                            
+                                            @empty
+                                                <tr>
+                                                    <td colspan="7" class="noresult" style="display: block;">No results found</td>
+                                                </tr>
                                             @endforelse
-                                          
                                         </tbody>
                                     </table>
                                 </div>
@@ -228,8 +213,6 @@ use Spatie\Permission\Models\Role;
                                         </div>
                                     </div>
                                 </div>
-                               
-                               
                             </div>
                         </div>
                     </div>
@@ -242,7 +225,7 @@ use Spatie\Permission\Models\Role;
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 id="exampleModalLabel" class="modal-title">Add User</h5>
+                        <h5 id="addModalLabel" class="modal-title">Add User</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <form class="tablelist-form" autocomplete="off" id="add-user-form">
@@ -288,7 +271,7 @@ use Spatie\Permission\Models\Role;
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 id="exampleModalLabel" class="modal-title">Edit User</h5>
+                        <h5 id="editModalLabel" class="modal-title">Edit User</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <form class="tablelist-form" autocomplete="off" id="edit-user-form">
@@ -358,52 +341,52 @@ use Spatie\Permission\Models\Role;
     <!-- End Page-content -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Scripts -->
-    {{-- <script src="{{ asset('theme/layouts/assets/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('theme/layouts/assets/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('theme/layouts/assets/js/list.min.js') }}"></script>
     <script src="{{ asset('theme/layouts/assets/js/choices.min.js') }}" defer></script>
     <script src="{{ asset('theme/layouts/assets/js/sweetalert2.min.js') }}"></script>
-    <script src="{{ asset('js/user-list.init.js') }}"></script> --}}
+    <script src="{{ asset('js/user-list.init.js') }}"></script>
     <!-- Chart Initialization -->
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        var ctx = document.getElementById("usersByRoleChart").getContext("2d");
-        new Chart(ctx, {
-            type: "bar",
-            data: {
-                labels: @json(array_keys($role_counts)),
-                datasets: [{
-                    label: "Users by Role",
-                    data: @json(array_values($role_counts)),
-                    backgroundColor: ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b"],
-                    borderColor: ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b"],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: "Number of Users"
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var ctx = document.getElementById("usersByRoleChart").getContext("2d");
+            new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: @json(array_keys($role_counts)),
+                    datasets: [{
+                        label: "Users by Role",
+                        data: @json(array_values($role_counts)),
+                        backgroundColor: ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b"],
+                        borderColor: ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b"],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: "Number of Users"
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: "Roles"
+                            }
                         }
                     },
-                    x: {
-                        title: {
+                    plugins: {
+                        legend: {
                             display: true,
-                            text: "Roles"
+                            position: "top"
                         }
                     }
-                },
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: "top"
-                    }
                 }
-            }
+            });
         });
-    });
     </script>
 </div>
 @endsection

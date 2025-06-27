@@ -23,7 +23,6 @@ document.addEventListener("DOMContentLoaded", function () {
     refreshCallbacks();
     ischeckboxcheck();
 
-    // Initialize Choices.js
     if (typeof Choices !== 'undefined') {
         var addRoleVal = new Choices(document.getElementById("role"), { searchEnabled: true, removeItemButton: true });
         var editRoleVal = new Choices(document.getElementById("edit-role"), { searchEnabled: true, removeItemButton: true });
@@ -174,7 +173,7 @@ function handleEditClick(e) {
         editIdField.value = itemId;
         editNameField.value = tr.querySelector(".name a").innerText;
         editEmailField.value = tr.querySelector(".email").innerText;
-        var roles = tr.querySelector(".role").getAttribute("data-role")?.split(",") || [];
+        var roles = tr.querySelector(".role").getAttribute("data-roles")?.split(",") || [];
         if (typeof Choices !== 'undefined' && editRoleVal) {
             editRoleVal.setChoiceByValue(roles.filter(role => role.trim()));
         } else {
@@ -328,7 +327,9 @@ document.getElementById("add-user-form").addEventListener("submit", function (e)
 
     if (!ensureAxios()) return;
 
-    var roles = Array.from(addRoleField.selectedOptions).map(option => option.value);
+    var roles = typeof Choices !== 'undefined' && addRoleVal 
+        ? addRoleVal.getValue(true) 
+        : Array.from(addRoleField.selectedOptions).map(option => option.value);
     axios.post('/users', {
         name: addNameField.value,
         email: addEmailField.value,
@@ -381,16 +382,21 @@ document.getElementById("edit-user-form").addEventListener("submit", function (e
 
     if (!ensureAxios()) return;
 
+    var roles = typeof Choices !== 'undefined' && editRoleVal 
+        ? editRoleVal.getValue(true) 
+        : Array.from(editRoleField.selectedOptions).map(option => option.value);
     var data = {
         name: editNameField.value,
         email: editEmailField.value,
-        roles: Array.from(editRoleField.selectedOptions).map(option => option.value),
+        roles: roles,
         _token: document.querySelector('meta[name="csrf-token"]').content
     };
     if (editPasswordField.value) {
         data.password = editPasswordField.value;
         data.password_confirmation = editPasswordConfirmField.value;
     }
+
+    console.log("Submitting edit form with data:", data);
 
     axios.put(`/users/${editIdField.value}`, data)
         .then(function (response) {
@@ -405,9 +411,10 @@ document.getElementById("edit-user-form").addEventListener("submit", function (e
             });
         })
         .catch(function (error) {
-            console.error("Error updating user:", error);
+            console.error("Error updating user:", error.response || error);
             var message = error.response?.data?.message || "Error updating user";
             if (error.response?.status === 422) {
+                console.log("Validation errors:", error.response.data.errors);
                 message = Object.values(error.response.data.errors || {}).flat().join(", ");
             }
             errorMsg.innerHTML = message;
