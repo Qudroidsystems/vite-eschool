@@ -235,7 +235,7 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::resource('subjectoperation', SubjectOperationController::class);
     Route::get('/subjects', [SubjectOperationController::class, 'index'])->name('subjects.index');
-    Route::post('/subjects', [SubjectOperationController::class, 'store'])->name('subjects.store');
+    //Route::post('/subjects', [SubjectOperationController::class, 'store'])->name('subjects.store');
     Route::post('/subjectregistration', [SubjectOperationController::class, 'store'])->name('subjects.store');
     Route::get('/subjectoperation/subjectinfo/{id}/{schoolclassid}/{termid}/{sessionid}', [SubjectOperationController::class, 'subjectinfo'])->name('subjects.subjectinfo');
     //Route::delete('/subjects/{id}', [SubjectOperationController::class, 'destroy'])->name('subjects.destroy');
@@ -247,7 +247,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/subjectregistration/batch', [SubjectOperationController::class, 'batchRegister'])->name('subjectregistration.batch');
 
 
-    
+
     Route::get('/viewresults/{id}/{schoolclassid}/{sessid}/{termid}', [StudentResultsController::class, 'viewresults']);
     Route::get('/studentpersonalityprofile/{id}/{schoolclassid}/{sessid}/{termid}', [StudentpersonalityprofileController::class, 'studentpersonalityprofile'])->name('myclass.studentpersonalityprofile');
 
