@@ -282,8 +282,9 @@ use Spatie\Permission\Models\Role;
                                 <label for="last_school" class="form-label">Last School Attended <span class="text-danger">*</span></label>
                                 <input type="text" id="last_school" name="last_school" class="form-control" placeholder="Enter last school attended" required>
                             </div>
-                            <div class="mb-3">
-                                अपलोड करें
+                           <div class="mb-3">
+                                <label for="lastClass" class="form-label">Last Class Attended <span class="text-danger">*</span></label>
+                                <input type="text" id="last_class" name="last_class" class="form-control" placeholder="Enter last class attended" required>
                             </div>
                             <div class="mb-3">
                                 <label for="schoolclassid" class="form-label">Class <span></label>
