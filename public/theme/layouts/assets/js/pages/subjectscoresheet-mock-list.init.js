@@ -562,68 +562,70 @@
     }
 
     // Force update positions after bulk operations (with ties)
-    function forceUpdatePositions() {
-        if (!window.broadsheets || !Array.isArray(window.broadsheets)) return;
+ function forceUpdatePositions() {
+    if (!window.broadsheets || !Array.isArray(window.broadsheets)) return;
 
-        // Get all totals
-        const totals = window.broadsheets.map(b => parseFloat(b.total) || 0);
-        const allZero = totals.length > 0 && totals.every(total => total === 0);
+    // Get all totals
+    const totals = window.broadsheets.map(b => parseFloat(b.total) || 0);
+    const allZero = totals.length > 0 && totals.every(total => total === 0);
 
-        if (allZero) {
-            // Set all positions to "0th"
-            window.broadsheets.forEach(broadsheet => {
-                const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
-                if (row) {
-                    const positionDisplay = row.querySelector('.position-display span');
-                    if (positionDisplay) {
-                        positionDisplay.textContent = "0th";
-                        positionDisplay.classList.remove('bg-warning');
-                        positionDisplay.classList.add('bg-info');
-                    }
+    if (allZero) {
+        // Set all positions to "0th"
+        window.broadsheets.forEach(broadsheet => {
+            broadsheet.subjectpositionclass = "0th"; // Update array!
+            const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
+            if (row) {
+                const positionDisplay = row.querySelector('.position-display span');
+                if (positionDisplay) {
+                    positionDisplay.textContent = "0th";
+                    positionDisplay.classList.remove('bg-warning');
+                    positionDisplay.classList.add('bg-info');
                 }
+            }
+        });
+    } else {
+        // Normal position calculation with ties
+        const sortedBroadsheets = window.broadsheets
+            .map(b => ({
+                ...b,
+                total: parseFloat(b.total) || 0
+            }))
+            .sort((a, b) => {
+                if (b.total !== a.total) {
+                    return b.total - a.total;
+                }
+                return a.id - b.id;
             });
-        } else {
-            // Normal position calculation with ties
-            const sortedBroadsheets = window.broadsheets
-                .map(b => ({
-                    ...b,
-                    total: parseFloat(b.total) || 0
-                }))
-                .sort((a, b) => {
-                    if (b.total !== a.total) {
-                        return b.total - a.total;
-                    }
-                    return a.id - b.id;
-                });
 
-            let lastTotal = null;
-            let lastPosition = 1;
-            let skip = 0;
-            sortedBroadsheets.forEach((broadsheet, index) => {
-                let position;
-                if (broadsheet.total === lastTotal) {
-                    position = lastPosition;
-                    skip++;
-                } else {
-                    position = index + 1;
-                    lastPosition = position;
-                    lastTotal = broadsheet.total;
-                    skip = 0;
-                }
+        let lastTotal = null;
+        let lastPosition = 1;
+        sortedBroadsheets.forEach((broadsheet, index) => {
+            let position;
+            if (broadsheet.total === lastTotal) {
+                position = lastPosition;
+            } else {
+                position = index + 1;
+                lastPosition = position;
+                lastTotal = broadsheet.total;
+            }
 
-                const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
-                if (row) {
-                    const positionDisplay = row.querySelector('.position-display span');
-                    if (positionDisplay) {
-                        positionDisplay.textContent = getOrdinalSuffix(position);
-                        positionDisplay.classList.remove('bg-warning');
-                        positionDisplay.classList.add('bg-info');
-                    }
+            // Update array
+            const orig = window.broadsheets.find(b => String(b.id) === String(broadsheet.id));
+            if (orig) orig.subjectpositionclass = getOrdinalSuffix(position);
+
+            // Update table
+            const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
+            if (row) {
+                const positionDisplay = row.querySelector('.position-display span');
+                if (positionDisplay) {
+                    positionDisplay.textContent = getOrdinalSuffix(position);
+                    positionDisplay.classList.remove('bg-warning');
+                    positionDisplay.classList.add('bg-info');
                 }
-            });
-        }
+            }
+        });
     }
-
+}
     // Initialize check all functionality
     function initializeCheckAll() {
         const checkAll = document.getElementById('checkAll');
@@ -731,3 +733,33 @@
         document.addEventListener('DOMContentLoaded', init);
     }
 })();
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Populate the Scores Modal when opened
+    const scoresModal = document.getElementById('scoresModal');
+    if (scoresModal) {
+        scoresModal.addEventListener('show.bs.modal', function () {
+            const tbody = document.getElementById('scoresBody');
+            tbody.innerHTML = ''; // Clear any old rows
+
+            if (window.broadsheets && Array.isArray(window.broadsheets) && window.broadsheets.length > 0) {
+                window.broadsheets.forEach(function(bs, i) {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${i+1}</td>
+                            <td>${bs.admissionno ?? '-'}</td>
+                            <td>${(bs.fname ?? '') + ' ' + (bs.lname ?? '')}</td>
+                            <td>${bs.exam ?? ''}</td>
+                            <td>${bs.total !== undefined && bs.total !== null ? Number(bs.total).toFixed(1) : '0.0'}</td>
+                            <td>${bs.grade ?? '-'}</td>
+                            <td>${bs.subjectpositionclass ?? '-'}</td>
+                            <td>${bs.remark ?? '-'}</td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center">No scores found.</td></tr>`;
+            }
+        });
+    }
+});
