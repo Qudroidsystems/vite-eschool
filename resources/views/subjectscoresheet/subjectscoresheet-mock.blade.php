@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('content')
-<meta name="csrf-token" content="{{ csrf_token() }}">
+
 
 <!-- Main content container -->
 <div class="main-content">
@@ -107,7 +107,7 @@
                                     <i class="ri-arrow-left-line"></i> Back
                                 </a>
                                 <div>
-                                     @if(session('subjectclass_id'))
+                                    @if(session('subjectclass_id'))
                                         <a href="{{ route('subjectscoresheet-mock.download-marksheet') }}" class="btn btn-warning">
                                             <i class="fas fa-file-pdf"></i> Download Marks Sheet
                                         </a>
@@ -164,8 +164,8 @@
                                                     </div>
                                                 </td>
                                                 <td class="sn">{{ ++$i }}</td>
-                                                <td class="admissionno" data-admissionno="{{ $broadsheet->admissionno ?? '-' }}">{{ $broadsheet->admissionno ?? '-' }}</td>
-                                                <td class="name" data-name="{{ ($broadsheet->fname ?? '') . ' ' . ($broadsheet->lname ?? '') }}">
+                                                <td class="admission-no" data-admissionno="{{ $broadsheet->admissionno ?? '-' }}">{{ $broadsheet->admissionno ?? '-' }}</td>
+                                                <td class="student-name" data-name="{{ ($broadsheet->fname ?? '') . ' ' . ($broadsheet->lname ?? '') }}">
                                                     <div class="d-flex align-items-center">
                                                         <div class="avatar-sm me-2">
                                                             <img src="{{ $broadsheet->picture ? Storage::url('images/studentavatar/' . $broadsheet->picture) : Storage::url('images/studentavatar/avatar.jpg') }}" alt="{{ ($broadsheet->fname ?? '') . ' ' . ($broadsheet->lname ?? '') }}" class="rounded-circle w-100" loading="lazy">
@@ -349,21 +349,33 @@
 </style>
 
 <!-- Pass data to JavaScript -->
- <script>
-        window.broadsheets = @json($broadsheets);
-        window.term_id = {{ session('term_id') ?? 0 }};
-        window.session_id = {{ session('session_id') ?? 0 }};
-        window.subjectclass_id = {{ session('subjectclass_id') ?? 0 }};
-        window.schoolclass_id = {{ session('schoolclass_id') ?? 0 }};
-        window.staff_id = {{ session('staff_id') ?? 0 }};
-        window.routes = {
-            bulkUpdate: '{{ route("scoresheet-mock.bulk-update") }}',
-            destroy: '{{ route("scoresheet-mock.destroy") }}'
-        };
-        console.log('Broadsheet data:', window.broadsheets);
-        console.log('Routes:', window.routes);
+<script>
+    window.broadsheets = @json($broadsheets);
+    window.term_id = {{ session('term_id') ?? 0 }};
+    window.session_id = {{ session('session_id') ?? 0 }};
+    window.subjectclass_id = {{ session('subjectclass_id') ?? 0 }};
+    window.schoolclass_id = {{ session('schoolclass_id') ?? 0 }};
+    window.staff_id = {{ session('staff_id') ?? 0 }};
+    window.routes = {
+        bulkUpdate: '{{ route("scoresheet-mock.bulk-update") }}',
+        destroy: '{{ route("scoresheet-mock.destroy") }}'
+    };
+    console.log('Broadsheet data:', window.broadsheets);
+    console.log('Routes:', window.routes);
+</script>
 
-        
-    </script>
-    
+<!-- Add clear search JS -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const clearSearch = document.getElementById('clearSearch');
+        if (searchInput && clearSearch) {
+            clearSearch.addEventListener('click', function() {
+                searchInput.value = '';
+                const event = new Event('input', { bubbles: true });
+                searchInput.dispatchEvent(event);
+            });
+        }
+    });
+</script>
 @endsection
