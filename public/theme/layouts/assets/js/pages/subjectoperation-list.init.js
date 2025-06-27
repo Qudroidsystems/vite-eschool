@@ -617,3 +617,126 @@ function loadRegisteredClasses() {
     });
 }
 
+/**
+ * Batch registration for selected students and subjects.
+ * Sends one POST to /subjectregistration/batch with all selections.
+ */
+function registerSelectedStudentsBatch() {
+    if (!ensureAxios()) return;
+
+    const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+    const classSelect = document.getElementById("idclass");
+    const sessionSelect = document.getElementById("idsession");
+    const subjectCheckboxes = document.querySelectorAll('.subject-checkbox:checked');
+    const registerButton = document.getElementById("register-selected-btn");
+    const loadingSpinner = document.getElementById("register-loading-spinner");
+
+    if (!classSelect || !sessionSelect) {
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Required filter elements not found. Please refresh the page.",
+            showConfirmButton: true
+        });
+        return;
+    }
+
+    const classValue = classSelect.value;
+    const sessionValue = sessionSelect.value;
+
+    if (classValue === 'ALL' || sessionValue === 'ALL') {
+        Swal.fire({
+            icon: "warning",
+            title: "Missing filters",
+            text: "Please select a class and session before registering students.",
+            showConfirmButton: true
+        });
+        return;
+    }
+
+    if (checkboxes.length === 0) {
+        Swal.fire({
+            icon: "warning",
+            title: "No students selected",
+            text: "Please select at least one student to register.",
+            showConfirmButton: true
+        });
+        return;
+    }
+
+    if (subjectCheckboxes.length === 0) {
+        Swal.fire({
+            icon: "warning",
+            title: "No subjects selected",
+            text: "Please select at least one subject to register.",
+            showConfirmButton: true
+        });
+        return;
+    }
+
+    if (loadingSpinner) loadingSpinner.classList.remove("d-none");
+    if (registerButton) {
+        registerButton.disabled = true;
+        registerButton.setAttribute("aria-disabled", "true");
+    }
+
+    const studentIds = Array.from(checkboxes).map(checkbox => checkbox.closest('tr').querySelector('.id').dataset.id);
+    const subjectClasses = Array.from(subjectCheckboxes).map(checkbox => ({
+        subjectclassid: checkbox.dataset.subjectclassid,
+        staffid: checkbox.dataset.staffid,
+        termid: checkbox.dataset.termid
+    }));
+
+    axios.post('/subjectregistration/batch', {
+        studentids: studentIds,
+        subjectclasses: subjectClasses,
+        sessionid: sessionValue
+    }, {
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    }).then(function (response) {
+        if (loadingSpinner) loadingSpinner.classList.add("d-none");
+        if (registerButton) {
+            registerButton.disabled = false;
+            registerButton.setAttribute("aria-disabled", "false");
+        }
+
+        if (response.data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: `Successfully registered ${studentIds.length} student(s) for ${subjectClasses.length} subject(s).`,
+                showConfirmButton: true
+            });
+        } else {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Partial/Failed',
+                html: `Some or all registrations failed.<br>${(response.data.error_details || []).map(e => e.message).join('<br>')}`,
+                showConfirmButton: true
+            });
+        }
+        filterData();
+    }).catch(function (error) {
+        if (loadingSpinner) loadingSpinner.classList.add("d-none");
+        if (registerButton) {
+            registerButton.disabled = false;
+            registerButton.setAttribute("aria-disabled", "false");
+        }
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: error.response?.data?.message || "Failed to register subjects. Please try again.",
+            showConfirmButton: true
+        });
+    });
+}
+
+// Attach to the button (if not using onclick in HTML)
+document.addEventListener("DOMContentLoaded", function () {
+    const registerBtn = document.getElementById("register-selected-btn");
+    if (registerBtn) {
+        registerBtn.onclick = registerSelectedStudentsBatch;
+    }
+});

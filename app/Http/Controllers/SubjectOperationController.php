@@ -400,6 +400,75 @@ class SubjectOperationController extends Controller
     }
 }
 
+
+/**
+     * Batch registration for students and subjects.
+     */
+    public function batchRegister(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'studentids' => ['required', 'array'],
+            'studentids.*' => ['required', 'exists:studentRegistration,id'],
+            'subjectclasses' => ['required', 'array'],
+            'subjectclasses.*.subjectclassid' => ['required', 'exists:subjectclass,id'],
+            'subjectclasses.*.staffid' => ['required', 'exists:users,id'],
+            'subjectclasses.*.termid' => ['required', 'exists:schoolterm,id'],
+            'sessionid' => ['required', 'exists:schoolsession,id'],
+        ]);
+
+        $results = [];
+        $errors = [];
+        $successCount = 0;
+
+        try {
+            DB::beginTransaction();
+
+            foreach ($validated['subjectclasses'] as $subject) {
+                $subjectclassid = $subject['subjectclassid'];
+                $staffid = $subject['staffid'];
+                $termid = $subject['termid'];
+                $sessionid = $validated['sessionid'];
+
+                $response = $this->processIndividually([
+                    'studentid'      => $validated['studentids'],
+                    'subjectclassid' => $subjectclassid,
+                    'staffid'        => $staffid,
+                    'termid'         => $termid,
+                    'sessionid'      => $sessionid,
+                ]);
+
+                if ($response['success']) {
+                    $successCount += $response['success_count'];
+                } else {
+                    $errors[] = [
+                        'subjectclassid' => $subjectclassid,
+                        'termid'         => $termid,
+                        'message'        => $response['message'] ?? 'Error',
+                        'details'        => $response['errors'] ?? [],
+                    ];
+                }
+                $results[] = $response;
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success'       => empty($errors),
+                'message'       => 'Batch registration completed.',
+                'results'       => $results,
+                'error_details' => $errors,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Batch registration failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Batch registration failed: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+
 /**
  * Process students individually - Best for small datasets (≤50 students)
  * Provides detailed error handling and precise duplicate detection
