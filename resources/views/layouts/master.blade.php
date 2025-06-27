@@ -46,6 +46,10 @@
         @include('layouts.pages-assets.css.session-list-css')
    @endif
 
+   @if (Route::is('school-information.*'))
+        @include('layouts.pages-assets.css.schoolinformation-list-css')
+   @endif
+
    @if (Route::is('term.*'))
         @include('layouts.pages-assets.css.term-list-css')
    @endif
@@ -460,6 +464,26 @@
 
 
                         <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-components">SCHOOL BASIC SETTINGS</span></li>
+
+
+                        <li class="nav-item">
+                            <a href="#sidebarSession" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSession">
+                                <i class="ph-file-text"></i> <span data-key="t-invoices">School Information</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarSession">
+                                <ul class="nav nav-sm flex-column">
+                                    {{-- @can('View session') --}}
+                                          <li class="nav-item">
+                                             <a href="{{ route('school-information.index') }}" class="nav-link" data-key="t-list-view">School Information</a>
+                                          </li>
+                                    {{-- @endcan --}}
+                                   
+                                    
+                                </ul>
+                            </div>
+                        </li> 
+
+
 
                         <li class="nav-item">
                             <a href="#sidebarSession" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSession">
@@ -1798,6 +1822,10 @@
 
       @if (Route::is('term.*'))
          @include('layouts.pages-assets.js.term-list-js')
+      @endif
+
+      @if (Route::is('school-information.*'))
+            @include('layouts.pages-assets.js.schoolinformation-list-js')
       @endif
 
       @if (Route::is('schoolhouse.*'))

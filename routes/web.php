@@ -1,21 +1,26 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\HomeController;
-use App\Http\Controllers\PermissionController;
-use App\Http\Controllers\RoleController;
+use \App\Http\Controllers\SchoolInformationController;
 use App\Http\Controllers\AnalysisController;
 use App\Http\Controllers\BiodataController;
+use App\Http\Controllers\CBTController;
 use App\Http\Controllers\ClasscategoryController;
 use App\Http\Controllers\ClassOperationController;
 use App\Http\Controllers\ClassTeacherController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ExamController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\JobStatusController;
 use App\Http\Controllers\MyClassController;
 use App\Http\Controllers\MyresultroomController;
 use App\Http\Controllers\MyScoreSheetController;
 use App\Http\Controllers\MySubjectController;
 use App\Http\Controllers\OverviewController;
 use App\Http\Controllers\ParentController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\ResultController;
+use App\Http\Controllers\RoleController;
 use App\Http\Controllers\SchoolArmController;
 use App\Http\Controllers\SchoolBillController;
 use App\Http\Controllers\SchoolBillTermSessionController;
@@ -37,11 +42,8 @@ use App\Http\Controllers\SubjectOperationController;
 use App\Http\Controllers\SubjectTeacherController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ViewStudentController;
-use App\Http\Controllers\ExamController;
-use App\Http\Controllers\QuestionController;
-use App\Http\Controllers\CBTController;
-use App\Http\Controllers\ResultController;
-use App\Http\Controllers\JobStatusController;
+use Illuminate\Support\Facades\Route;
+
 
 
 Route::get('/', function () {
@@ -253,6 +255,9 @@ Route::group(['middleware' => ['auth']], function () {
 
 
     Route::post('save', [StudentpersonalityprofileController::class, 'save'])->name('save');
+
+    //school information
+    Route::resource('school-information', SchoolInformationController::class);
 
     
 
