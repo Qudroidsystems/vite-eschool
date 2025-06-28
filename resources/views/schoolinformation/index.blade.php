@@ -108,9 +108,9 @@
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
                                         <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
-                                        {{-- @can('Create school') --}}
+                                        @can('Create schoolinformation')
                                             <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#showModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Add School</button>
-                                        {{-- @endcan --}}
+                                        @endcan
                                     </div>
                                 </div>
                             </div>
@@ -150,21 +150,21 @@
                                                     <td class="created_at">{{ $school->created_at->format('Y-m-d') }}</td>
                                                     <td>
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                            {{-- @can('View school') --}}
+                                                            @can('View schoolinformation')
                                                                 <li>
                                                                     <a href="{{ route('school-information.show', $school->id) }}" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a>
                                                                 </li>
-                                                            {{-- @endcan --}}
-                                                            {{-- @can('Update school') --}}
+                                                            @endcan
+                                                            @can('Update schoolinformation')
                                                                 <li>
                                                                     <a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"><i class="ph-pencil"></i></a>
                                                                 </li>
-                                                            {{-- @endcan --}}
-                                                            {{-- @can('Delete school') --}}
+                                                            @endcan 
+                                                            @can('Delete schoolinformation') 
                                                                 <li>
                                                                     <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i class="ph-trash"></i></a>
                                                                 </li>
-                                                            {{-- @endcan --}}
+                                                            @endcan
                                                         </ul>
                                                     </td>
                                                 </tr>
@@ -346,12 +346,12 @@
         </div>
     </div>
     <!-- End Page-content -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {{-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ asset('theme/layouts/assets/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('theme/layouts/assets/js/list.min.js') }}"></script>
     <script src="{{ asset('theme/layouts/assets/js/choices.min.js') }}" defer></script>
     <script src="{{ asset('theme/layouts/assets/js/sweetalert2.min.js') }}"></script>
-    <script src="{{ asset('js/school-information.init.js') }}"></script>
+    <script src="{{ asset('js/school-information.init.js') }}"></script> --}}
     <!-- Chart Initialization -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {

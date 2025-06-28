@@ -1,13 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
-</head>
-<body>
+@extends('layouts.master')
 
+@section('content')
 <style>
     :root {
         --tb-primary: #009ef7;
@@ -37,6 +30,7 @@
 
     .card-logo {
         height: 28px;
+        margin-bottom: 1rem; /* Space below logo in vertical layout */
     }
 
     .fs-md {
@@ -101,6 +95,22 @@
         width: 50px;
         height: 50px;
         object-fit: cover;
+    }
+
+    .address-wrap {
+        overflow-wrap: break-word;
+        word-break: break-word;
+        hyphens: auto;
+        max-width: 180px; /* Adjusted for vertical layout */
+        display: inline-block; /* Ensures max-width is respected */
+    }
+
+    .school-details {
+        margin-bottom: 1rem; /* Space below details in vertical layout */
+    }
+
+    .school-details h6 {
+        margin-bottom: 0.5rem; /* Spacing between detail items */
     }
 
     @media print {
@@ -204,6 +214,23 @@
             height: 30px;
         }
 
+        .address-wrap {
+            max-width: 120px; /* Adjusted for print */
+        }
+
+        .card-logo {
+            height: 20px; /* Slightly smaller for print */
+            margin-bottom: 0.5cm;
+        }
+
+        .school-details {
+            margin-bottom: 0.5cm;
+        }
+
+        .school-details h6 {
+            margin-bottom: 0.3rem;
+        }
+
         @page {
             size: A4;
             margin: 0.5cm;
@@ -232,9 +259,41 @@
         table {
             font-size: 0.875rem;
         }
+
+        .address-wrap {
+            max-width: 100%; /* Full width on small screens */
+        }
+
+        .card-logo {
+            margin-bottom: 0.75rem;
+        }
+
+        .school-details {
+            margin-bottom: 0.75rem;
+        }
     }
 </style>
 
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <strong>Error!</strong> There were some problems with your input.<br>
+                    <ul>
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            @if (session('status') || session('success'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    {{ session('status') ?: session('success') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            @endif
 
             <div class="row justify-content-center">
                 <div class="col-xxl-9 col-lg-10 col-md-12">
@@ -260,14 +319,13 @@
                             </svg>
                         </div>
                         <div class="card-body z-1 position-relative">
-                            <div class="d-flex">
-                                <div class="flex-grow-1">
-                                    <img src="{{ $schoolInfo->logo_url }}" class="card-logo" alt="{{ $schoolInfo->school_name ?? 'TOPCLASS COLLEGE' }}" height="28">
-                                </div>
-                                <div class="flex-shrink-0 mt-sm-0 mt-3">
+                            <div class="school-header">
+                                <img src="{{ $schoolInfo->logo_url }}" class="card-logo" alt="{{ $schoolInfo->school_name ?? 'TOPCLASS COLLEGE' }}" height="28">
+                                <div class="school-details">
                                     <h6><span class="text-muted fw-normal">Invoice No:</span> <span id="legal-register-no">{{ $invoiceNumber }}</span></h6>
                                     <h6><span class="text-muted fw-normal">Email:</span> <span id="email">{{ $schoolInfo->school_email ?? 'info@topclassschool.edu' }}</span></h6>
-                                    <h6><span class="text-muted fw-normal">Address:</span> <span id="address">{{ $schoolInfo->school_address ?? 'Your School Address Here' }}</span></h6>
+                                    <h6><span class="text-muted fw-normal">Website:</span> <span id="website">{{ $schoolInfo->school_website ? '<a href="' . $schoolInfo->school_website . '" target="_blank">' . $schoolInfo->school_website . '</a>' : 'N/A' }}</span></h6>
+                                    <h6><span class="text-muted fw-normal">Address:</span> <span id="address" class="address-wrap">{!! Str::replace(',', ',<br>', $schoolInfo->school_address ?? 'Your School Address Here') !!}</span></h6>
                                     <h6 class="mb-0"><span class="text-muted fw-normal">Contact No: </span><span id="contact-no">{{ $schoolInfo->school_phone ?? 'Your Phone Number' }}</span></h6>
                                 </div>
                             </div>
@@ -314,7 +372,7 @@
                                         <div class="col-6">
                                             <p class="text-muted text-uppercase">Billing Address</p>
                                             <h6 class="fs-md">{{ $s->firstname }} {{ $s->lastname }}</h6>
-                                            <p class="text-muted mb-1">{{ nl2br(wordwrap($s->homeaddress ?? ($s->homeadd ?? 'N/A'), 20, "\n", true)) }}</p>
+                                            <p class="text-muted mb-1 address-wrap">{!! Str::replace(',', ',<br>', $s->homeaddress ?? ($s->homeadd ?? 'N/A')) !!}</p>
                                             <p class="text-muted mb-0">Phone: {{ $s->phone ?? ($schoolInfo->school_phone ?? 'Your Phone Number') }}</p>
                                         </div>
                                         @endforeach
@@ -410,7 +468,6 @@
                                     <p class="text-muted mb-0">Total Bill Amount: <span class="fw-medium">₦</span><span id="card-total-amount">{{ number_format($totalBillAmount, 2, '.', ',') }}</span></p>
                                 </div>
                             @endif
-                           
                             <div>
                                 <p class="mb-4 pb-2"><b>Thank you for your continued partnership with {{ $schoolInfo->school_name ?? 'TOPCLASS COLLEGE' }}!</b> We appreciate your commitment to your child's education.</p>
                                 <div class="invoice-signature text-center">
@@ -438,7 +495,7 @@
                 </div>
             </div>
 
-            <script>
+            {{-- <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     const downloadButton = document.getElementById('download-button');
                     if (downloadButton) {
@@ -453,8 +510,8 @@
                         });
                     }
                 });
-            </script>
-       
-    
-</body>
-</html>
+            </script> --}}
+        </div>
+    </div>
+</div>
+@endsection

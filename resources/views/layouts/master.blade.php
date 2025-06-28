@@ -472,11 +472,11 @@
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarSession">
                                 <ul class="nav nav-sm flex-column">
-                                    {{-- @can('View session') --}}
+                                    @can('View schoolinformation')
                                           <li class="nav-item">
                                              <a href="{{ route('school-information.index') }}" class="nav-link" data-key="t-list-view">School Information</a>
                                           </li>
-                                    {{-- @endcan --}}
+                                    @endcan
                                    
                                     
                                 </ul>

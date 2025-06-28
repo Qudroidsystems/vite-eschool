@@ -15,10 +15,10 @@ class SchoolInformationController extends Controller
 {
     public function __construct()
     {
-        // $this->middleware('permission:View school|Create school|Update school|Delete school', ['only' => ['index', 'store']]);
-        // $this->middleware('permission:Create school', ['only' => ['create', 'store']]);
-        // $this->middleware('permission:Update school', ['only' => ['edit', 'update']]);
-        // $this->middleware('permission:Delete school', ['only' => ['destroy']]);
+        $this->middleware('permission:View schoolinformation|Create schoolinformation|Update schoolinformation|Delete schoolinformation', ['only' => ['index', 'store']]);
+        $this->middleware('permission:Create schoolinformation', ['only' => ['create', 'store']]);
+        $this->middleware('permission:Update schoolinformation', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:Delete schoolinformation', ['only' => ['destroy']]);
     }
 
     public function index(Request $request): View
@@ -48,8 +48,8 @@ class SchoolInformationController extends Controller
     {
         \Log::debug("Creating school information", $request->all());
 
-        if (!auth()->user()->hasPermissionTo('Create school')) {
-            \Log::warning("User ID " . auth()->user()->id . " attempted to create school information without 'Create school' permission");
+        if (!auth()->user()->hasPermissionTo('Create schoolinformation')) {
+            \Log::warning("User ID " . auth()->user()->id . " attempted to create school information without 'Create schoolinformation' permission");
             return response()->json([
                 'success' => false,
                 'message' => 'User does not have the right permissions',

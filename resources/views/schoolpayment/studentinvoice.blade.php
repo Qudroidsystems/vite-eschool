@@ -96,136 +96,341 @@
         object-fit: cover;
     }
 
-    @media print {
-        html, body {
-            background-color: #fff;
-            margin: 0;
-            padding: 0;
-            width: 210mm;
-            height: 297mm;
-        }
-
-        .main-content, .page-content, .container-fluid {
-            padding: 0 !important;
-            margin: 0 !important;
-            width: 100% !important;
-        }
-
-        .card {
-            box-shadow: none;
-            max-width: 100%;
-            width: 100%;
-            border-radius: 0;
-            margin: 0;
-            padding: 0;
-        }
-
-        .card-body {
-            padding: 0.5cm;
-        }
-
-        .d-print-none, .alert {
-            display: none !important;
-        }
-
-        .invoice-effect-top {
-            display: none;
-        }
-
-        .card::before {
-            content: "{{ $schoolInfo->school_name ?? 'TOPCLASS COLLEGE' }} Invoice";
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 10px;
-            color: #212529;
-        }
-
-        .card::after {
-            content: "© {{ date('Y') }} {{ $schoolInfo->school_name ?? 'TOPCLASS COLLEGE' }}";
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 8px;
-            color: #7E8299;
-        }
-
-        .table-responsive {
-            overflow: visible;
-        }
-
-        table {
-            table-layout: fixed;
-            font-size: 0.75rem;
-        }
-
-        .fs-md {
-            font-size: 0.9rem !important;
-        }
-
-        .fs-xxs {
-            font-size: 0.5rem !important;
-        }
-
-        .table-borderless th, .table-borderless td {
-            padding: 0.3rem 0.5rem;
-        }
-
-        .row.g-3 {
-            margin-bottom: 0.5rem;
-        }
-
-        .col-lg, .col-6 {
-            padding: 0 0.25rem;
-        }
-
-        h6, p {
-            margin-bottom: 0.2rem;
-            font-size: 0.8rem;
-        }
-
-        .invoice-signature img {
-            height: 20px;
-        }
-
-        .student-avatar {
-            width: 30px;
-            height: 30px;
-        }
-
-        @page {
-            size: A4;
-            margin: 0.5cm;
-        }
+    .address-wrap {
+        overflow-wrap: break-word;
+        word-break: break-word;
+        hyphens: auto;
+        max-width: 180px; /* Reduced for better wrapping */
+        display: inline-block; /* Ensures max-width is respected */
     }
 
-    @media (max-width: 767.98px) {
-        .card-body {
-            padding: 1rem;
-        }
 
-        .hstack {
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .col-6 {
-            width: 100%;
-            margin-bottom: 1rem;
-        }
-
-        .table-nowrap th, .table-nowrap td {
-            white-space: normal;
-        }
-
-        table {
-            font-size: 0.875rem;
-        }
+/* Enhanced Print Styles for Invoice - Replace your existing @media print section */
+@media print {
+    html, body {
+        background-color: #fff;
+        margin: 0;
+        padding: 0;
+        width: 210mm;
+        height: 297mm;
+        font-size: 12px;
+        line-height: 1.3;
     }
+
+    .main-content, .page-content, .container-fluid {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+
+    .card {
+        box-shadow: none;
+        max-width: 100%;
+        width: 100%;
+        border-radius: 0;
+        margin: 0;
+        padding: 0;
+        page-break-inside: avoid;
+    }
+
+    .card-body {
+        padding: 0.4cm !important;
+        font-size: 11px;
+    }
+
+    .d-print-none, .alert {
+        display: none !important;
+    }
+
+    .invoice-effect-top {
+        display: none !important;
+    }
+
+    /* Header Section - More Compact */
+    .d-flex {
+        margin-bottom: 8px !important;
+    }
+
+    .card-logo {
+        height: 20px !important;
+    }
+
+    /* Invoice Details Section - FIXED: Keep horizontal layout */
+    .mt-5.pt-4 {
+        margin-top: 15px !important;
+        padding-top: 10px !important;
+    }
+
+    .row.g-3 {
+        margin-bottom: 8px !important;
+        gap: 5px !important;
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: flex-start !important;
+        justify-content: space-between !important;
+    }
+
+    /* CRITICAL FIX: Force columns to stay horizontal */
+    .row.g-3 > .col-lg,
+    .row.g-3 > .col-6 {
+        padding: 0 3px !important;
+        margin-bottom: 0 !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        max-width: none !important;
+        width: auto !important;
+        flex-basis: auto !important;
+        display: inline-block !important;
+        vertical-align: top !important;
+    }
+
+    /* Ensure specific widths for each invoice detail item */
+    .row.g-3 > .col-lg:nth-child(1),
+    .row.g-3 > .col-6:nth-child(1) {
+        flex: 0 0 18% !important;
+    }
+
+    .row.g-3 > .col-lg:nth-child(2),
+    .row.g-3 > .col-6:nth-child(2) {
+        flex: 0 0 18% !important;
+    }
+
+    .row.g-3 > .col-lg:nth-child(3),
+    .row.g-3 > .col-6:nth-child(3) {
+        flex: 0 0 18% !important;
+    }
+
+    .row.g-3 > .col-lg:nth-child(4),
+    .row.g-3 > .col-6:nth-child(4) {
+        flex: 0 0 22% !important;
+    }
+
+    .row.g-3 > .col-lg:nth-child(5),
+    .row.g-3 > .col-6:nth-child(5) {
+        flex: 0 0 24% !important;
+    }
+
+    /* Student Details Section */
+    .mt-4.pt-2 {
+        margin-top: 12px !important;
+        padding-top: 8px !important;
+    }
+
+    /* Typography Adjustments */
+    h6 {
+        font-size: 10px !important;
+        margin-bottom: 2px !important;
+        line-height: 1.2;
+        white-space: nowrap !important;
+    }
+
+    h5.fs-md {
+        font-size: 11px !important;
+        margin-bottom: 2px !important;
+        line-height: 1.2;
+        white-space: nowrap !important;
+    }
+
+    p {
+        margin-bottom: 3px !important;
+        font-size: 9px !important;
+        line-height: 1.2;
+    }
+
+    .text-uppercase {
+        font-size: 8px !important;
+        letter-spacing: 0.5px;
+        white-space: nowrap !important;
+    }
+
+    /* Table Styles */
+    .table-responsive {
+        overflow: visible !important;
+        margin-top: 12px !important;
+    }
+
+    table {
+        table-layout: fixed;
+        font-size: 9px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .table-borderless th, .table-borderless td {
+        padding: 3px 4px !important;
+        vertical-align: middle;
+        border: none !important;
+    }
+
+    thead th {
+        font-size: 8px !important;
+        font-weight: 600;
+        background-color: #f8f9fa !important;
+        padding: 4px 3px !important;
+    }
+
+    tbody td {
+        font-size: 8px !important;
+        line-height: 1.1;
+    }
+
+    /* Table Column Widths for Better Fit */
+    .table th:nth-child(1), .table td:nth-child(1) { width: 6%; } /* # */
+    .table th:nth-child(2), .table td:nth-child(2) { width: 25%; } /* Bill Details */
+    .table th:nth-child(3), .table td:nth-child(3) { width: 12%; } /* Bill Amount */
+    .table th:nth-child(4), .table td:nth-child(4) { width: 12%; } /* Previous Paid */
+    .table th:nth-child(5), .table td:nth-child(5) { width: 12%; } /* Paid Today */
+    .table th:nth-child(6), .table td:nth-child(6) { width: 12%; } /* Total Paid */
+    .table th:nth-child(7), .table td:nth-child(7) { width: 13%; } /* Payment Method */
+    .table th:nth-child(8), .table td:nth-child(8) { width: 8%; } /* Outstanding */
+
+    /* Badge Styles */
+    .badge {
+        font-size: 7px !important;
+        padding: 2px 4px !important;
+    }
+
+    /* Total Section */
+    .border-top-dashed {
+        margin-top: 8px !important;
+        padding-top: 8px !important;
+    }
+
+    #products-list-total table {
+        width: 250px !important;
+        font-size: 8px !important;
+    }
+
+    #products-list-total td, #products-list-total th {
+        padding: 2px 4px !important;
+        font-size: 8px !important;
+    }
+
+    /* Payment Details Section */
+    .mt-3 {
+        margin-top: 8px !important;
+    }
+
+    .fw-semibold {
+        font-size: 8px !important;
+    }
+
+    /* Student Avatar */
+    .student-avatar {
+        width: 25px !important;
+        height: 25px !important;
+        margin-bottom: 3px !important;
+    }
+
+    /* Address Wrapping */
+    .address-wrap {
+        max-width: 100px !important;
+        font-size: 8px !important;
+        line-height: 1.1;
+        word-break: break-word;
+    }
+
+    /* Signature Section */
+    .invoice-signature {
+        margin-top: 10px !important;
+    }
+
+    .invoice-signature img {
+        height: 18px !important;
+    }
+
+    .invoice-signature h6 {
+        font-size: 8px !important;
+        margin-top: 5px !important;
+    }
+
+    /* Thank you message */
+    .mb-4.pb-2 {
+        margin-bottom: 8px !important;
+        padding-bottom: 5px !important;
+        font-size: 9px !important;
+    }
+
+    /* Page Settings */
+    @page {
+        size: A4;
+        margin: 0.3cm 0.5cm 0.3cm 0.5cm;
+    }
+
+    /* Force content to fit on one page */
+    .card-body {
+        max-height: 26cm;
+        overflow: hidden;
+    }
+
+    /* Compact spacing for sections */
+    .mt-4 {
+        margin-top: 10px !important;
+    }
+
+    .pt-2 {
+        padding-top: 5px !important;
+    }
+
+    .pt-4 {
+        padding-top: 8px !important;
+    }
+
+    /* Header and Footer */
+    .card::before {
+        content: "Invoice";
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 8px;
+        color: #212529;
+        padding: 2px 0;
+        background: white;
+        z-index: 1000;
+    }
+
+    .card::after {
+        content: "© 2025 School Invoice";
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 7px;
+        color: #7E8299;
+        padding: 2px 0;
+        background: white;
+        z-index: 1000;
+    }
+
+    /* Hide empty rows message if needed */
+    .text-center.text-muted {
+        font-size: 8px !important;
+    }
+
+    /* Ensure no page breaks within important sections */
+    .table, .border-top-dashed, .invoice-signature {
+        page-break-inside: avoid;
+    }
+
+    /* Additional fix for Bootstrap grid system in print */
+    .row {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+    }
+
+    /* Override any Bootstrap column stacking for small screens in print */
+    .col-lg, .col-6, .col-sm-6, .col-md-6 {
+        position: relative !important;
+        width: auto !important;
+        padding-right: 5px !important;
+        padding-left: 5px !important;
+        flex-shrink: 0 !important;
+    }
+}
 </style>
 
 <div class="main-content">
@@ -254,7 +459,7 @@
                     <div class="hstack gap-2 justify-content-end d-print-none mb-4">
                         <a href="{{ route('schoolpayment.termsessionpayments', ['studentId' => $studentId, 'termid' => $termId, 'sessionid' => $sessionId]) }}" class="btn btn-light"><i class="fas fa-arrow-left me-1"></i> Back</a>
                         <a href="javascript:window.print()" class="btn btn-success"><i class="ri-printer-line align-bottom me-1"></i> Print</a>
-                        <button type="button" id="download-button" class="btn btn-primary"><i class="ri-download-2-line align-bottom me-1"></i> Download</button>
+                        {{-- <button type="button" id="download-button" class="btn btn-primary"><i class="ri-download-2-line align-bottom me-1"></i> Download</button> --}}
                     </div>
                     <div class="card overflow-hidden" id="invoice">
                         <div class="invoice-effect-top position-absolute start-0">
@@ -280,7 +485,8 @@
                                 <div class="flex-shrink-0 mt-sm-0 mt-3">
                                     <h6><span class="text-muted fw-normal">Invoice No:</span> <span id="legal-register-no">{{ $invoiceNumber }}</span></h6>
                                     <h6><span class="text-muted fw-normal">Email:</span> <span id="email">{{ $schoolInfo->school_email ?? 'info@topclassschool.edu' }}</span></h6>
-                                    <h6><span class="text-muted fw-normal">Address:</span> <span id="address">{{ $schoolInfo->school_address ?? 'Your School Address Here' }}</span></h6>
+                                    <h6><span class="text-muted fw-normal">Website:</span> <span id="website">{{ $schoolInfo->school_website ? '<a href="' . $schoolInfo->school_website . '" target="_blank">' . $schoolInfo->school_website . '</a>' : 'N/A' }}</span></h6>
+                                    <h6><span class="text-muted fw-normal">Address:</span> <span id="address" class="address-wrap">{!! Str::replace(',', ',<br>', $schoolInfo->school_address ?? 'Your School Address Here') !!}</span></h6>
                                     <h6 class="mb-0"><span class="text-muted fw-normal">Contact No: </span><span id="contact-no">{{ $schoolInfo->school_phone ?? 'Your Phone Number' }}</span></h6>
                                 </div>
                             </div>
@@ -288,7 +494,7 @@
                                 <div class="row g-3">
                                     <div class="col-lg col-6">
                                         <p class="text-muted mb-2 text-uppercase">Invoice No</p>
-                                        <h5 class="fs-md mb-0">#TBS<span id="invoice-no">{{ $invoiceNumber }}</span></h5>
+                                        <h5 class="fs-md mb-0">#<span id="invoice-no">{{ $invoiceNumber }}</span></h5>
                                     </div>
                                     <div class="col-lg col-6">
                                         <p class="text-muted mb-2 text-uppercase">Date</p>
@@ -327,8 +533,8 @@
                                         <div class="col-6">
                                             <p class="text-muted text-uppercase">Billing Address</p>
                                             <h6 class="fs-md">{{ $s->firstname }} {{ $s->lastname }}</h6>
-                                            <p class="text-muted mb-1">{{ nl2br(wordwrap($s->homeaddress ?? ($s->homeadd ?? 'N/A'), 20, "\n", true)) }}</p>
-                                            <p class="text-muted mb-0">Phone: {{ $s->phone ?? ($schoolInfo->school_phone ?? 'Your Phone Number') }}</p>
+                                            <p class="text-muted mb-1 address-wrap">{!! Str::replace(',', ',<br>', $s->homeaddress ?? ($s->homeadd ?? 'N/A')) !!}</p>
+                                            <p class="text-muted mb-0">Phone: {{ $s->phone ?? 'N/A' }}</p>
                                         </div>
                                         @endforeach
                                     @else
@@ -423,7 +629,6 @@
                                     <p class="text-muted mb-0">Total Bill Amount: <span class="fw-medium">₦</span><span id="card-total-amount">{{ number_format($totalBillAmount, 2, '.', ',') }}</span></p>
                                 </div>
                             @endif
-                           
                             <div>
                                 <p class="mb-4 pb-2"><b>Thank you for your continued partnership with {{ $schoolInfo->school_name ?? 'TOPCLASS COLLEGE' }}!</b> We appreciate your commitment to your child's education.</p>
                                 <div class="invoice-signature text-center">
@@ -451,8 +656,34 @@
                 </div>
             </div>
 
-            <script>
+            
+            
+
+               <script>
                 document.addEventListener('DOMContentLoaded', function() {
+                    // Print button functionality
+                    const printButton = document.getElementById('print-button');
+                    if (printButton) {
+                        printButton.addEventListener('click', function() {
+                            // Optional: Show loading state
+                            const originalText = this.innerHTML;
+                            this.innerHTML = '<i class="ri-printer-line align-bottom me-1"></i> Printing...';
+                            this.disabled = true;
+                            
+                            // Small delay to ensure the button state is visible
+                            setTimeout(() => {
+                                window.print();
+                                
+                                // Reset button state after print dialog
+                                setTimeout(() => {
+                                    this.innerHTML = originalText;
+                                    this.disabled = false;
+                                }, 1000);
+                            }, 100);
+                        });
+                    }
+
+                    // Download button functionality
                     const downloadButton = document.getElementById('download-button');
                     if (downloadButton) {
                         downloadButton.addEventListener('click', function() {
@@ -465,7 +696,117 @@
                             }, 2000);
                         });
                     }
+
+                    // Handle print events for better user experience
+                    window.addEventListener('beforeprint', function() {
+                        console.log('Preparing to print...');
+                    });
+
+                    window.addEventListener('afterprint', function() {
+                        console.log('Print dialog closed');
+                    });
                 });
+
+                document.addEventListener('DOMContentLoaded', function() {
+    // Store the original document title
+    const originalTitle = document.title;
+    
+    // Get data passed from Laravel blade (you'll need to add this to your blade file)
+    const studentName = @json($studentdata->isNotEmpty() ? $studentdata->first()->firstname . ' ' . $studentdata->first()->lastname : 'Student');
+    const invoiceNumber = @json($invoiceNumber ?? 'INV-000');
+    
+    // Clean the student name for filename (remove special characters)
+    const cleanStudentName = studentName.replace(/[^a-zA-Z0-9\s]/g, '').trim().replace(/\s+/g, '_');
+    const cleanInvoiceNumber = invoiceNumber.replace(/[^a-zA-Z0-9-]/g, '');
+    
+    // Print button functionality with custom filename
+    function handlePrint() {
+        const customFilename = `${cleanStudentName}_${cleanInvoiceNumber}`;
+        
+        // Set document title to desired filename
+        document.title = customFilename;
+        
+        // Find the active print element
+        const printButton = document.getElementById('print-button');
+        const printLink = document.querySelector('a[href="javascript:window.print()"]');
+        const activeButton = printButton || printLink;
+        
+        if (activeButton) {
+            const originalText = activeButton.innerHTML;
+            activeButton.innerHTML = '<i class="ri-printer-line align-bottom me-1"></i> Printing...';
+            if (activeButton.disabled !== undefined) {
+                activeButton.disabled = true;
+            }
+            
+            setTimeout(() => {
+                window.print();
+                
+                setTimeout(() => {
+                    document.title = originalTitle;
+                    activeButton.innerHTML = originalText;
+                    if (activeButton.disabled !== undefined) {
+                        activeButton.disabled = false;
+                    }
+                }, 1000);
+            }, 100);
+        } else {
+            window.print();
+            setTimeout(() => {
+                document.title = originalTitle;
+            }, 1000);
+        }
+    }
+    
+    // Attach event listeners
+    const printButton = document.getElementById('print-button');
+    if (printButton) {
+        printButton.addEventListener('click', handlePrint);
+    }
+    
+    const printLink = document.querySelector('a[href="javascript:window.print()"]');
+    if (printLink) {
+        printLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            handlePrint();
+        });
+    }
+
+    // Download button functionality
+    const downloadButton = document.getElementById('download-button');
+    if (downloadButton) {
+        downloadButton.addEventListener('click', function() {
+            this.disabled = true;
+            this.innerHTML = '<i class="ri-download-line align-bottom me-1"></i> Downloading...';
+            
+            const customFilename = `${cleanStudentName}_${cleanInvoiceNumber}`;
+            document.title = customFilename;
+            
+            // Pass filename to download route
+            const currentUrl = new URL(window.location.href);
+            currentUrl.searchParams.set('download_pdf', '1');
+            currentUrl.searchParams.set('filename', customFilename);
+            window.location.assign(currentUrl.toString());
+            
+            setTimeout(() => {
+                document.title = originalTitle;
+                this.disabled = false;
+                this.innerHTML = '<i class="ri-download-2-line align-bottom me-1"></i> Download';
+            }, 2000);
+        });
+    }
+
+    // Handle print events
+    window.addEventListener('beforeprint', function() {
+        const customFilename = `${cleanStudentName}_${cleanInvoiceNumber}`;
+        document.title = customFilename;
+    });
+
+    window.addEventListener('afterprint', function() {
+        setTimeout(() => {
+            document.title = originalTitle;
+        }, 500);
+    });
+});
             </script>
         </div>
     </div>

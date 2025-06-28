@@ -24,8 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
     ischeckboxcheck();
 
     if (typeof Choices !== 'undefined') {
-        var addStatusVal = new Choices(document.getElementById("idStatus"), { searchEnabled: true });
-        var editStatusVal = new Choices(document.getElementById("edit_is_active"), { searchEnabled: true });
+        var statusFilterVal = new Choices(document.getElementById("idStatus"), { searchEnabled: true });
         var emailFilterVal = new Choices(document.getElementById("idEmail"), { searchEnabled: true });
     } else {
         console.warn("Choices.js not available, falling back to native select");
@@ -179,8 +178,8 @@ function handleEditClick(e) {
         editAddressField.value = tr.querySelector(".name").getAttribute("data-address") || "";
         editPhoneField.value = tr.querySelector(".phone")?.innerText || "";
         editEmailField.value = tr.querySelector(".email").innerText;
-        editMottoField.value = tr.querySelector(".motto")?.innerText || "";
-        editWebsiteField.value = tr.querySelector(".website")?.innerText || "";
+        editMottoField.value = tr.querySelector(".name").getAttribute("data-motto") || "";
+        editWebsiteField.value = tr.querySelector(".name").getAttribute("data-website") || "";
         var status = tr.querySelector(".status").getAttribute("data-status") === "Active";
         editStatusField.checked = status;
         var modal = new bootstrap.Modal(document.getElementById("editModal"));
@@ -282,7 +281,7 @@ function filterData() {
     var searchInput = document.querySelector(".search-box input.search").value.toLowerCase();
     var statusSelect = document.getElementById("idStatus");
     var emailSelect = document.getElementById("idEmail");
-    var selectedStatus = typeof Choices !== 'undefined' && statusSelect ? statusSelect.value : statusSelect.value;
+    var selectedStatus = typeof Choices !== 'undefined' && statusFilterVal ? statusFilterVal.getValue(true) : statusSelect.value;
     var selectedEmail = typeof Choices !== 'undefined' && emailFilterVal ? emailFilterVal.getValue(true) : emailSelect.value;
 
     console.log("Filtering with:", { search: searchInput, status: selectedStatus, email: selectedEmail });
@@ -394,17 +393,12 @@ document.getElementById("edit-school-form").addEventListener("submit", function 
     formData.append('school_website', editWebsiteField.value);
     formData.append('is_active', editStatusField.checked ? 1 : 0);
     formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
+    formData.append('_method', 'PUT');
 
-    console.log("Submitting edit form with data:", formData);
+    console.log("Submitting edit form with data:", [...formData.entries()]);
 
     axios.post(`/school-information/${editIdField.value}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-        method: 'POST',
-        data: formData,
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'X-HTTP-Method-Override': 'PUT'
-        }
+        headers: { 'Content-Type': 'multipart/form-data' }
     }).then(function (response) {
         window.location.reload();
         Swal.fire({
