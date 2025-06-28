@@ -472,7 +472,7 @@ class SchoolPaymentController extends Controller
     /**
      * Generate and display/download an invoice.
      */
-    public function invoice(Request $request, $studentId, $schoolclassid, $termid, $sessionid)
+   public function invoice(Request $request, $studentId, $schoolclassid, $termid, $sessionid)
     {
         $pagetitle = 'Student Payment Invoice';
 
@@ -543,31 +543,28 @@ class SchoolPaymentController extends Controller
             ->get();
 
         $payments = $schoolBills->map(function ($bill) use ($studentId, $schoolclassid, $termid, $sessionid, $invoiceNumber) {
-            // Get all payment records for this specific bill
+            // Get all payment records for this specific bill ordered by date
             $paymentRecords = StudentBillPaymentRecord::where('student_bill_payment_id', $bill->paymentid)
                 ->orderBy('created_at', 'asc')
                 ->get();
 
             // Calculate totals for this bill
             $totalPaidForThisBill = $paymentRecords->sum('amount_paid');
-            $todayPaid = $paymentRecords->where('created_at', '>=', Carbon::today())->sum('amount_paid');
-            $previousPaid = $totalPaidForThisBill - $todayPaid;
+            
+            // Get the most recent payment (last payment made)
+            $lastPaymentRecord = $paymentRecords->sortByDesc('created_at')->first();
+            $lastPaymentAmount = $lastPaymentRecord ? $lastPaymentRecord->amount_paid : 0;
+            
+            // Previous paid = Total paid - Last payment amount
+            $previousPaid = $totalPaidForThisBill - $lastPaymentAmount;
             
             // Calculate current balance (outstanding amount)
             $currentBalance = max(0, $bill->amount - $totalPaidForThisBill);
 
-            // Get the latest payment record for this bill
-            $latestPaymentRecord = $paymentRecords->last();
-            
-            // Update or set invoice number for today's payments
-            if ($todayPaid > 0) {
-                $todayPaymentRecords = $paymentRecords->where('created_at', '>=', Carbon::today());
-                foreach ($todayPaymentRecords as $record) {
-                    if (!$record->invoiceNo) {
-                        StudentBillPaymentRecord::where('id', $record->id)
-                            ->update(['invoiceNo' => $invoiceNumber]);
-                    }
-                }
+            // Update or set invoice number for the last payment if it doesn't have one
+            if ($lastPaymentRecord && $lastPaymentAmount > 0 && !$lastPaymentRecord->invoiceNo) {
+                StudentBillPaymentRecord::where('id', $lastPaymentRecord->id)
+                    ->update(['invoiceNo' => $invoiceNumber]);
             }
 
             // Determine payment completion status
@@ -578,15 +575,15 @@ class SchoolPaymentController extends Controller
                 'title' => $bill->title,
                 'description' => $bill->description,
                 'amount' => $bill->amount,
-                'previousPaid' => $previousPaid,
-                'todayPaid' => $todayPaid,
+                'previousPaid' => $previousPaid, // Total of all payments before the last one
+                'todayPaid' => $lastPaymentAmount, // Most recent payment amount
                 'amountPaid' => $totalPaidForThisBill,
                 'balance' => $currentBalance, // This is the actual outstanding amount
                 'paymentMethod' => $bill->payment_method ?? 'N/A',
                 'receivedBy' => $bill->receivedBy ?? 'Unknown',
-                'paymentDate' => $bill->payment_date,
+                'paymentDate' => $lastPaymentRecord ? $lastPaymentRecord->created_at : $bill->payment_date,
                 'complete_payment' => $isCompletePayment,
-                'invoiceNo' => $latestPaymentRecord->invoiceNo ?? $invoiceNumber,
+                'invoiceNo' => $lastPaymentRecord->invoiceNo ?? $invoiceNumber,
             ];
         });
 
@@ -598,7 +595,7 @@ class SchoolPaymentController extends Controller
         // Calculate totals
         $totalBillAmount = $payments->sum('amount');
         $totalPreviousPaid = $payments->sum('previousPaid');
-        $totalTodayPaid = $payments->sum('todayPaid');
+        $totalLastPayments = $payments->sum('todayPaid'); // This is now total of last payments, not today's payments
         $totalPaid = $payments->sum('amountPaid');
         $totalOutstanding = $payments->sum('balance'); // This will now be the correct outstanding total
 
@@ -633,7 +630,7 @@ class SchoolPaymentController extends Controller
             'studentpaymentbill' => $payments,
             'totalBillAmount' => $totalBillAmount,
             'totalPreviousPaid' => $totalPreviousPaid,
-            'totalTodayPaid' => $totalTodayPaid,
+            'totalTodayPaid' => $totalLastPayments, // This represents total of last payments made
             'totalPaid' => $totalPaid,
             'totalOutstanding' => $totalOutstanding,
             'schoolInfo' => $schoolInfo,
