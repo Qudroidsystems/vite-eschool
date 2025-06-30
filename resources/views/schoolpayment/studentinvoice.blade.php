@@ -26,7 +26,8 @@
         z-index: 1;
         position: relative;
         padding: 1.5rem;
-        font-size: 14px; /* Increased for better readability */
+        font-size: 14px;
+        font-weight: 600; /* Added for bolder text */
     }
 
     .card-logo {
@@ -34,18 +35,21 @@
     }
 
     .fs-md {
-        font-size: 1.25rem !important; /* Increased from 1.125rem */
+        font-size: 1.25rem !important;
+        font-weight: 700; /* Bolder headings */
     }
 
     .fs-xxs {
-        font-size: 0.75rem !important; /* Increased from 0.625rem */
+        font-size: 0.75rem !important;
+        font-weight: 600; /* Bolder small text */
     }
 
     .table-borderless th, .table-borderless td {
         border: none;
-        padding: 0.75rem 1rem; /* Increased padding */
+        padding: 0.75rem 1rem;
         vertical-align: middle;
-        font-size: 14px; /* Added base font size */
+        font-size: 14px;
+        font-weight: 600; /* Bolder table text */
     }
 
     .table-nowrap th, .table-nowrap td {
@@ -65,6 +69,7 @@
         border-color: #f1416c;
         color: #f1416c;
         padding: 0.75rem;
+        font-weight: 600; /* Bolder alert text */
     }
 
     .invoice-signature img {
@@ -102,8 +107,9 @@
         overflow-wrap: break-word;
         word-break: break-word;
         hyphens: auto;
-        max-width: 200px; /* Increased from 180px */
+        max-width: 200px;
         display: inline-block;
+        font-weight: 600; /* Bolder address text */
     }
 
     /* Enhanced Print Styles for Invoice */
@@ -114,8 +120,9 @@
             padding: 0;
             width: 210mm;
             height: 297mm;
-            font-size: 14px; /* Increased from 12px */
+            font-size: 14px;
             line-height: 1.4;
+            font-weight: 600; /* Bolder base text */
         }
 
         .main-content, .page-content, .container-fluid {
@@ -135,8 +142,9 @@
         }
 
         .card-body {
-            padding: 0.5cm !important; /* Increased padding */
-            font-size: 13px; /* Increased from 11px */
+            padding: 0.5cm !important;
+            font-size: 13px;
+            font-weight: 600; /* Bolder card body text */
         }
 
         .d-print-none, .alert {
@@ -213,29 +221,33 @@
         }
 
         h6 {
-            font-size: 12px !important; /* Increased from 10px */
+            font-size: 12px !important;
             margin-bottom: 3px !important;
             line-height: 1.3;
             white-space: nowrap !important;
+            font-weight: 700; /* Bolder headings */
         }
 
         h5.fs-md {
-            font-size: 13px !important; /* Increased from 11px */
+            font-size: 13px !important;
             margin-bottom: 3px !important;
             line-height: 1.3;
             white-space: nowrap !important;
+            font-weight: 700; /* Bolder headings */
         }
 
         p {
             margin-bottom: 4px !important;
-            font-size: 11px !important; /* Increased from 9px */
+            font-size: 11px !important;
             line-height: 1.3;
+            font-weight: 600; /* Bolder paragraphs */
         }
 
         .text-uppercase {
-            font-size: 10px !important; /* Increased from 8px */
+            font-size: 10px !important;
             letter-spacing: 0.6px;
             white-space: nowrap !important;
+            font-weight: 600; /* Bolder uppercase text */
         }
 
         .table-responsive {
@@ -245,26 +257,29 @@
 
         table {
             table-layout: fixed;
-            font-size: 11px !important; /* Increased from 9px */
+            font-size: 11px !important;
             margin-bottom: 10px !important;
+            font-weight: 600; /* Bolder table text */
         }
 
         .table-borderless th, .table-borderless td {
-            padding: 4px 5px !important; /* Increased padding */
+            padding: 4px 5px !important;
             vertical-align: middle;
             border: none !important;
+            font-weight: 600; /* Bolder table cells */
         }
 
         thead th {
-            font-size: 10px !important; /* Increased from 8px */
-            font-weight: 600;
+            font-size: 10px !important;
+            font-weight: 700; /* Bolder table headers */
             background-color: #f8f9fa !important;
             padding: 5px 4px !important;
         }
 
         tbody td {
-            font-size: 10px !important; /* Increased from 8px */
+            font-size: 10px !important;
             line-height: 1.2;
+            font-weight: 600; /* Bolder table body text */
         }
 
         .table th:nth-child(1), .table td:nth-child(1) { width: 6%; }
@@ -277,8 +292,9 @@
         .table th:nth-child(8), .table td:nth-child(8) { width: 8%; }
 
         .badge {
-            font-size: 9px !important; /* Increased from 7px */
+            font-size: 9px !important;
             padding: 3px 5px !important;
+            font-weight: 600; /* Bolder badges */
         }
 
         .border-top-dashed {
@@ -287,23 +303,30 @@
         }
 
         #products-list-total table {
-            width: 280px !important; /* Increasedkok
+            width: 280px !important;
+            font-size: 10px !important;
+            font-weight: 600; /* Bolder total table */
+        }
 
-        /* Student Avatar */
+        #products-list-total td, #products-list-total th {
+            padding: 3px 5px !important;
+            font-size: 10px !important;
+            font-weight: 600; /* Bolder total table cells */
+        }
+
         .student-avatar {
             width: 25px !important;
             height: 25px !important;
             margin-bottom: 3px !important;
         }
 
-        /* Address Wrapping */
         .address-wrap {
-            max-width: 120px !important; /* Increased from 100px */
-            font-size: 10px !important; /* Increased from 8px */
+            max-width: 120px !important;
+            font-size: 10px !important;
             line-height: 1.2;
+            font-weight: 600; /* Bolder address text */
         }
 
-        /* Signature Section */
         .invoice-signature {
             margin-top: 10px !important;
         }
@@ -313,30 +336,28 @@
         }
 
         .invoice-signature h6 {
-            font-size: 10px !important; /* Increased from 8px */
+            font-size: 10px !important;
             margin-top: 6px !important;
+            font-weight: 700; /* Bolder signature text */
         }
 
-        /* Thank you message */
         .mb-4.pb-2 {
             margin-bottom: 10px !important;
             padding-bottom: 6px !important;
-            font-size: 11px !important; /* Increased from 9px */
+            font-size: 11px !important;
+            font-weight: 600; /* Bolder thank you message */
         }
 
-        /* Page Settings */
         @page {
             size: A4;
             margin: 0.3cm 0.5cm 0.3cm 0.5cm;
         }
 
-        /* Force content to fit on one page */
         .card-body {
             max-height: 26cm;
             overflow: hidden;
         }
 
-        /* Compact spacing for sections */
         .mt-4 {
             margin-top: 10px !important;
         }
@@ -349,7 +370,6 @@
             padding-top: 8px !important;
         }
 
-        /* Header and Footer */
         .card::before {
             content: "Invoice";
             position: fixed;
@@ -357,11 +377,12 @@
             left: 0;
             right: 0;
             text-align: center;
-            font-size: 10px !important; /* Increased from 8px */
+            font-size: 10px !important;
             color: #212529;
             padding: 2px 0;
             background: white;
             z-index: 1000;
+            font-weight: 700; /* Bolder header */
         }
 
         .card::after {
@@ -371,24 +392,23 @@
             left: 0;
             right: 0;
             text-align: center;
-            font-size: 9px !important; /* Increased from 7px */
+            font-size: 9px !important;
             color: #7E8299;
             padding: 2px 0;
             background: white;
             z-index: 1000;
+            font-weight: 600; /* Bolder footer */
         }
 
-        /* Hide empty rows message if needed */
         .text-center.text-muted {
-            font-size: 10px !important; /* Increased from 8px */
+            font-size: 10px !important;
+            font-weight: 600; /* Bolder no-bills message */
         }
 
-        /* Ensure no page breaks within important sections */
         .table, .border-top-dashed, .invoice-signature {
             page-break-inside: avoid;
         }
 
-        /* Additional fix for Bootstrap grid system in print */
         .row {
             display: flex !important;
             flex-wrap: nowrap !important;
@@ -439,7 +459,7 @@
                             <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 764 182" width="764" height="182">
                                 <g>
                                     <g>
-                                        <path style="fill: var(--tb-light);" d="m-6.6 177.4c Ignacio.1 35.1 0 52.8-0.4 286.8-6.6 537.6-77.8 700.3-184.6h-753.1z" />
+                                        <path style="fill: var(--tb-light);" d="m-6.6 177.4c17.5 0.1 35.1 0 52.8-0.4 286.8-6.6 537.6-77.8 700.3-184.6h-753.1z" />
                                     </g>
                                     <g>
                                         <path style="fill: var(--tb-secondary);" d="m-6.6 132.8c43.5 2.1 87.9 2.7 132.9 1.7 246.9-5.6 467.1-59.2 627.4-142.1h-760.3z" />
@@ -631,39 +651,27 @@
 
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
-                    // Store the original document title
                     const originalTitle = document.title;
-                    
-                    // Get data passed from Laravel blade
                     const studentName = @json($studentdata->isNotEmpty() ? $studentdata->first()->firstname . ' ' . $studentdata->first()->lastname : 'Student');
                     const invoiceNumber = @json($invoiceNumber ?? 'INV-000');
-                    
-                    // Clean the student name for filename
-                    const cleanStudentName = studentName.replace(/[^a-zA-Z0-9\s]/g, '').trim().replace(/\s+/g, '_');
+                    const cleanStudentName = studentName.replace(/[^a-zA-Z0-9\S]/g, '').trim().replace(/\s+/g, '_');
                     const cleanInvoiceNumber = invoiceNumber.replace(/[^a-zA-Z0-9-]/g, '');
-                    
-                    // Print button functionality with custom filename
+
                     function handlePrint() {
                         const customFilename = `${cleanStudentName}_${cleanInvoiceNumber}`;
-                        
-                        // Set document title to desired filename
                         document.title = customFilename;
-                        
-                        // Find the active print element
                         const printButton = document.getElementById('print-button');
                         const printLink = document.querySelector('a[href="javascript:window.print()"]');
                         const activeButton = printButton || printLink;
-                        
+
                         if (activeButton) {
                             const originalText = activeButton.innerHTML;
                             activeButton.innerHTML = '<i class="ri-printer-line align-bottom me-1"></i> Printing...';
                             if (activeButton.disabled !== undefined) {
                                 activeButton.disabled = true;
                             }
-                            
                             setTimeout(() => {
                                 window.print();
-                                
                                 setTimeout(() => {
                                     document.title = originalTitle;
                                     activeButton.innerHTML = originalText;
@@ -679,13 +687,12 @@
                             }, 1000);
                         }
                     }
-                    
-                    // Attach event listeners
+
                     const printButton = document.getElementById('print-button');
                     if (printButton) {
                         printButton.addEventListener('click', handlePrint);
                     }
-                    
+
                     const printLink = document.querySelector('a[href="javascript:window.print()"]');
                     if (printLink) {
                         printLink.addEventListener('click', function(e) {
@@ -694,22 +701,17 @@
                         });
                     }
 
-                    // Download button functionality
                     const downloadButton = document.getElementById('download-button');
                     if (downloadButton) {
                         downloadButton.addEventListener('click', function() {
                             this.disabled = true;
                             this.innerHTML = '<i class="ri-download-line align-bottom me-1"></i> Downloading...';
-                            
                             const customFilename = `${cleanStudentName}_${cleanInvoiceNumber}`;
                             document.title = customFilename;
-                            
-                            // Pass filename to download route
                             const currentUrl = new URL(window.location.href);
                             currentUrl.searchParams.set('download_pdf', '1');
                             currentUrl.searchParams.set('filename', customFilename);
                             window.location.assign(currentUrl.toString());
-                            
                             setTimeout(() => {
                                 document.title = originalTitle;
                                 this.disabled = false;
@@ -718,7 +720,6 @@
                         });
                     }
 
-                    // Handle print events
                     window.addEventListener('beforeprint', function() {
                         const customFilename = `${cleanStudentName}_${cleanInvoiceNumber}`;
                         document.title = customFilename;

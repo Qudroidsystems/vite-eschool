@@ -246,10 +246,6 @@ use Spatie\Permission\Models\Role;
                                 <span id="addAge" class="text-muted"></span>
                             </div>
                             <div class="mb-3">
-                                <label for="age1" class="form-label">Age</label>
-                                <input type="text" id="age1" name="age" class="form-control" placeholder="Age will be calculated" readonly>
-                            </div>
-                            <div class="mb-3">
                                 <label for="placeofbirth" class="form-label">Place of Birth <span class="text-danger">*</span></label>
                                 <input type="text" id="placeofbirth" name="placeofbirth" class="form-control" placeholder="Enter place of birth" required>
                             </div>
@@ -282,12 +278,12 @@ use Spatie\Permission\Models\Role;
                                 <label for="last_school" class="form-label">Last School Attended <span class="text-danger">*</span></label>
                                 <input type="text" id="last_school" name="last_school" class="form-control" placeholder="Enter last school attended" required>
                             </div>
-                           <div class="mb-3">
+                            <div class="mb-3">
                                 <label for="lastClass" class="form-label">Last Class Attended <span class="text-danger">*</span></label>
                                 <input type="text" id="last_class" name="last_class" class="form-control" placeholder="Enter last class attended" required>
                             </div>
                             <div class="mb-3">
-                                <label for="schoolclassid" class="form-label">Class <span></label>
+                                <label for="schoolclassid" class="form-label">Class <span class="text-danger">*</span></label>
                                 <select id="schoolclassid" name="schoolclassid" class="form-control" required>
                                     <option value="">Select Class</option>
                                     @foreach ($schoolclass as $class)
@@ -410,10 +406,6 @@ use Spatie\Permission\Models\Role;
                                 <label for="editDOB" class="form-label">Date of Birth <span class="text-danger">*</span></label>
                                 <input type="date" id="editDOB" name="dateofbirth" class="form-control" required onchange="showage(this.value, 'editAge')">
                                 <span id="editAge" class="text-muted"></span>
-                            </div>
-                            <div class="mb-3">
-                                <label for="editAge" class="form-label">Age</label>
-                                <input type="text" id="editAge" name="age" class="form-control" placeholder="Age will be calculated" readonly>
                             </div>
                             <div class="mb-3">
                                 <label for="editPlaceofbirth" class="form-label">Place of Birth <span class="text-danger">*</span></label>
@@ -547,7 +539,6 @@ use Spatie\Permission\Models\Role;
         };
 
         document.addEventListener("DOMContentLoaded", function () {
-            // Debug Axios and CSRF token
             if (typeof axios === 'undefined') {
                 console.error('Axios is not loaded');
                 alert('Axios library is missing. Please check the script inclusion.');
@@ -559,7 +550,6 @@ use Spatie\Permission\Models\Role;
                 return;
             }
 
-            // Students by Status Chart
             var ctx = document.getElementById("studentsByStatusChart").getContext("2d");
             new Chart(ctx, {
                 type: "bar",
@@ -598,7 +588,6 @@ use Spatie\Permission\Models\Role;
                 }
             });
 
-            // Initialize Choices.js for select elements
             if (typeof Choices !== 'undefined') {
                 document.querySelectorAll('[data-choices]').forEach(element => {
                     new Choices(element, {
@@ -610,7 +599,6 @@ use Spatie\Permission\Models\Role;
                 console.warn('Choices.js is not loaded. Select elements will function as standard dropdowns.');
             }
 
-            // Debug the /students/data endpoint
             axios.get('/students/data')
                 .then(response => {
                     console.log('Students data response:', response.data);
@@ -624,7 +612,6 @@ use Spatie\Permission\Models\Role;
                     alert('Failed to fetch students. Check the console for details.');
                 });
 
-            // Initialize student list
             initializeStudentList();
         });
     </script>
