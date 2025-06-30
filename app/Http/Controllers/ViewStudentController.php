@@ -60,8 +60,29 @@ class ViewStudentController extends Controller
             }
         }
 
-        $allstudents = $query->latest('studentclass.created_at')->paginate(10)
-            ->appends(['schoolclassid' => $request->input('schoolclassid'), 'termid' => $request->input('termid'), 'sessionid' => $request->input('sessionid')]);
+       
+        $allstudents = Studentclass::where('schoolclassid', $request->input('schoolclassid'))
+                ->where('termid', $request->input('termid'))
+                ->where('sessionid', $request->input('sessionid'))
+                ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+                ->select([
+                    'studentRegistration.admissionNo as admissionno',
+                    'studentRegistration.firstname as firstname',
+                    'studentRegistration.lastname as lastname',
+                    'studentRegistration.id as stid',
+                    'studentRegistration.othername as othername',
+                    'studentRegistration.gender as gender',
+                    'studentpicture.picture as picture',
+                    // If you need any fields from studentclass table, add them here as well.
+                ])
+                ->latest('studentclass.created_at')
+                ->paginate(10)
+                ->appends([
+                    'schoolclassid' => $request->input('schoolclassid'),
+                    'termid' => $request->input('termid'),
+                    'sessionid' => $request->input('sessionid')
+                ]);
 
         $studentcount = Studentclass::where('schoolclassid', $request->input('schoolclassid'))
             ->where('sessionid', $request->input('sessionid'))

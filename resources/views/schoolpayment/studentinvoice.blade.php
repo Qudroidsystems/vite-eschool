@@ -26,6 +26,7 @@
         z-index: 1;
         position: relative;
         padding: 1.5rem;
+        font-size: 14px; /* Increased for better readability */
     }
 
     .card-logo {
@@ -33,17 +34,18 @@
     }
 
     .fs-md {
-        font-size: 1.125rem !important;
+        font-size: 1.25rem !important; /* Increased from 1.125rem */
     }
 
     .fs-xxs {
-        font-size: 0.625rem !important;
+        font-size: 0.75rem !important; /* Increased from 0.625rem */
     }
 
     .table-borderless th, .table-borderless td {
         border: none;
-        padding: 0.5rem 0.75rem;
+        padding: 0.75rem 1rem; /* Increased padding */
         vertical-align: middle;
+        font-size: 14px; /* Added base font size */
     }
 
     .table-nowrap th, .table-nowrap td {
@@ -100,337 +102,308 @@
         overflow-wrap: break-word;
         word-break: break-word;
         hyphens: auto;
-        max-width: 180px; /* Reduced for better wrapping */
-        display: inline-block; /* Ensures max-width is respected */
+        max-width: 200px; /* Increased from 180px */
+        display: inline-block;
     }
 
+    /* Enhanced Print Styles for Invoice */
+    @media print {
+        html, body {
+            background-color: #fff;
+            margin: 0;
+            padding: 0;
+            width: 210mm;
+            height: 297mm;
+            font-size: 14px; /* Increased from 12px */
+            line-height: 1.4;
+        }
 
-/* Enhanced Print Styles for Invoice - Replace your existing @media print section */
-@media print {
-    html, body {
-        background-color: #fff;
-        margin: 0;
-        padding: 0;
-        width: 210mm;
-        height: 297mm;
-        font-size: 12px;
-        line-height: 1.3;
+        .main-content, .page-content, .container-fluid {
+            padding: 0 !important;
+            margin: 0 !important;
+            width: 100% !important;
+        }
+
+        .card {
+            box-shadow: none;
+            max-width: 100%;
+            width: 100%;
+            border-radius: 0;
+            margin: 0;
+            padding: 0;
+            page-break-inside: avoid;
+        }
+
+        .card-body {
+            padding: 0.5cm !important; /* Increased padding */
+            font-size: 13px; /* Increased from 11px */
+        }
+
+        .d-print-none, .alert {
+            display: none !important;
+        }
+
+        .invoice-effect-top {
+            display: none !important;
+        }
+
+        .d-flex {
+            margin-bottom: 8px !important;
+        }
+
+        .card-logo {
+            height: 20px !important;
+        }
+
+        .mt-5.pt-4 {
+            margin-top: 15px !important;
+            padding-top: 10px !important;
+        }
+
+        .row.g-3 {
+            margin-bottom: 8px !important;
+            gap: 5px !important;
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            align-items: flex-start !important;
+            justify-content: space-between !important;
+        }
+
+        .row.g-3 > .col-lg,
+        .row.g-3 > .col-6 {
+            padding: 0 3px !important;
+            margin-bottom: 0 !important;
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            width: auto !important;
+            flex-basis: auto !important;
+            display: inline-block !important;
+            vertical-align: top !important;
+        }
+
+        .row.g-3 > .col-lg:nth-child(1),
+        .row.g-3 > .col-6:nth-child(1) {
+            flex: 0 0 18% !important;
+        }
+
+        .row.g-3 > .col-lg:nth-child(2),
+        .row.g-3 > .col-6:nth-child(2) {
+            flex: 0 0 18% !important;
+        }
+
+        .row.g-3 > .col-lg:nth-child(3),
+        .row.g-3 > .col-6:nth-child(3) {
+            flex: 0 0 18% !important;
+        }
+
+        .row.g-3 > .col-lg:nth-child(4),
+        .row.g-3 > .col-6:nth-child(4) {
+            flex: 0 0 22% !important;
+        }
+
+        .row.g-3 > .col-lg:nth-child(5),
+        .row.g-3 > .col-6:nth-child(5) {
+            flex: 0 0 24% !important;
+        }
+
+        .mt-4.pt-2 {
+            margin-top: 12px !important;
+            padding-top: 8px !important;
+        }
+
+        h6 {
+            font-size: 12px !important; /* Increased from 10px */
+            margin-bottom: 3px !important;
+            line-height: 1.3;
+            white-space: nowrap !important;
+        }
+
+        h5.fs-md {
+            font-size: 13px !important; /* Increased from 11px */
+            margin-bottom: 3px !important;
+            line-height: 1.3;
+            white-space: nowrap !important;
+        }
+
+        p {
+            margin-bottom: 4px !important;
+            font-size: 11px !important; /* Increased from 9px */
+            line-height: 1.3;
+        }
+
+        .text-uppercase {
+            font-size: 10px !important; /* Increased from 8px */
+            letter-spacing: 0.6px;
+            white-space: nowrap !important;
+        }
+
+        .table-responsive {
+            overflow: visible !important;
+            margin-top: 12px !important;
+        }
+
+        table {
+            table-layout: fixed;
+            font-size: 11px !important; /* Increased from 9px */
+            margin-bottom: 10px !important;
+        }
+
+        .table-borderless th, .table-borderless td {
+            padding: 4px 5px !important; /* Increased padding */
+            vertical-align: middle;
+            border: none !important;
+        }
+
+        thead th {
+            font-size: 10px !important; /* Increased from 8px */
+            font-weight: 600;
+            background-color: #f8f9fa !important;
+            padding: 5px 4px !important;
+        }
+
+        tbody td {
+            font-size: 10px !important; /* Increased from 8px */
+            line-height: 1.2;
+        }
+
+        .table th:nth-child(1), .table td:nth-child(1) { width: 6%; }
+        .table th:nth-child(2), .table td:nth-child(2) { width: 25%; }
+        .table th:nth-child(3), .table td:nth-child(3) { width: 12%; }
+        .table th:nth-child(4), .table td:nth-child(4) { width: 12%; }
+        .table th:nth-child(5), .table td:nth-child(5) { width: 12%; }
+        .table th:nth-child(6), .table td:nth-child(6) { width: 12%; }
+        .table th:nth-child(7), .table td:nth-child(7) { width: 13%; }
+        .table th:nth-child(8), .table td:nth-child(8) { width: 8%; }
+
+        .badge {
+            font-size: 9px !important; /* Increased from 7px */
+            padding: 3px 5px !important;
+        }
+
+        .border-top-dashed {
+            margin-top: 8px !important;
+            padding-top: 8px !important;
+        }
+
+        #products-list-total table {
+            width: 280px !important; /* Increasedkok
+
+        /* Student Avatar */
+        .student-avatar {
+            width: 25px !important;
+            height: 25px !important;
+            margin-bottom: 3px !important;
+        }
+
+        /* Address Wrapping */
+        .address-wrap {
+            max-width: 120px !important; /* Increased from 100px */
+            font-size: 10px !important; /* Increased from 8px */
+            line-height: 1.2;
+        }
+
+        /* Signature Section */
+        .invoice-signature {
+            margin-top: 10px !important;
+        }
+
+        .invoice-signature img {
+            height: 18px !important;
+        }
+
+        .invoice-signature h6 {
+            font-size: 10px !important; /* Increased from 8px */
+            margin-top: 6px !important;
+        }
+
+        /* Thank you message */
+        .mb-4.pb-2 {
+            margin-bottom: 10px !important;
+            padding-bottom: 6px !important;
+            font-size: 11px !important; /* Increased from 9px */
+        }
+
+        /* Page Settings */
+        @page {
+            size: A4;
+            margin: 0.3cm 0.5cm 0.3cm 0.5cm;
+        }
+
+        /* Force content to fit on one page */
+        .card-body {
+            max-height: 26cm;
+            overflow: hidden;
+        }
+
+        /* Compact spacing for sections */
+        .mt-4 {
+            margin-top: 10px !important;
+        }
+
+        .pt-2 {
+            padding-top: 5px !important;
+        }
+
+        .pt-4 {
+            padding-top: 8px !important;
+        }
+
+        /* Header and Footer */
+        .card::before {
+            content: "Invoice";
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 10px !important; /* Increased from 8px */
+            color: #212529;
+            padding: 2px 0;
+            background: white;
+            z-index: 1000;
+        }
+
+        .card::after {
+            content: "© 2025 School Invoice";
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 9px !important; /* Increased from 7px */
+            color: #7E8299;
+            padding: 2px 0;
+            background: white;
+            z-index: 1000;
+        }
+
+        /* Hide empty rows message if needed */
+        .text-center.text-muted {
+            font-size: 10px !important; /* Increased from 8px */
+        }
+
+        /* Ensure no page breaks within important sections */
+        .table, .border-top-dashed, .invoice-signature {
+            page-break-inside: avoid;
+        }
+
+        /* Additional fix for Bootstrap grid system in print */
+        .row {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            margin-right: 0 !important;
+            margin-left: 0 !important;
+        }
+
+        .col-lg, .col-6, .col-sm-6, .col-md-6 {
+            position: relative !important;
+            width: auto !important;
+            padding-right: 5px !important;
+            padding-left: 5px !important;
+            flex-shrink: 0 !important;
+        }
     }
-
-    .main-content, .page-content, .container-fluid {
-        padding: 0 !important;
-        margin: 0 !important;
-        width: 100% !important;
-    }
-
-    .card {
-        box-shadow: none;
-        max-width: 100%;
-        width: 100%;
-        border-radius: 0;
-        margin: 0;
-        padding: 0;
-        page-break-inside: avoid;
-    }
-
-    .card-body {
-        padding: 0.4cm !important;
-        font-size: 11px;
-    }
-
-    .d-print-none, .alert {
-        display: none !important;
-    }
-
-    .invoice-effect-top {
-        display: none !important;
-    }
-
-    /* Header Section - More Compact */
-    .d-flex {
-        margin-bottom: 8px !important;
-    }
-
-    .card-logo {
-        height: 20px !important;
-    }
-
-    /* Invoice Details Section - FIXED: Keep horizontal layout */
-    .mt-5.pt-4 {
-        margin-top: 15px !important;
-        padding-top: 10px !important;
-    }
-
-    .row.g-3 {
-        margin-bottom: 8px !important;
-        gap: 5px !important;
-        display: flex !important;
-        flex-wrap: nowrap !important;
-        align-items: flex-start !important;
-        justify-content: space-between !important;
-    }
-
-    /* CRITICAL FIX: Force columns to stay horizontal */
-    .row.g-3 > .col-lg,
-    .row.g-3 > .col-6 {
-        padding: 0 3px !important;
-        margin-bottom: 0 !important;
-        flex: 1 1 auto !important;
-        min-width: 0 !important;
-        max-width: none !important;
-        width: auto !important;
-        flex-basis: auto !important;
-        display: inline-block !important;
-        vertical-align: top !important;
-    }
-
-    /* Ensure specific widths for each invoice detail item */
-    .row.g-3 > .col-lg:nth-child(1),
-    .row.g-3 > .col-6:nth-child(1) {
-        flex: 0 0 18% !important;
-    }
-
-    .row.g-3 > .col-lg:nth-child(2),
-    .row.g-3 > .col-6:nth-child(2) {
-        flex: 0 0 18% !important;
-    }
-
-    .row.g-3 > .col-lg:nth-child(3),
-    .row.g-3 > .col-6:nth-child(3) {
-        flex: 0 0 18% !important;
-    }
-
-    .row.g-3 > .col-lg:nth-child(4),
-    .row.g-3 > .col-6:nth-child(4) {
-        flex: 0 0 22% !important;
-    }
-
-    .row.g-3 > .col-lg:nth-child(5),
-    .row.g-3 > .col-6:nth-child(5) {
-        flex: 0 0 24% !important;
-    }
-
-    /* Student Details Section */
-    .mt-4.pt-2 {
-        margin-top: 12px !important;
-        padding-top: 8px !important;
-    }
-
-    /* Typography Adjustments */
-    h6 {
-        font-size: 10px !important;
-        margin-bottom: 2px !important;
-        line-height: 1.2;
-        white-space: nowrap !important;
-    }
-
-    h5.fs-md {
-        font-size: 11px !important;
-        margin-bottom: 2px !important;
-        line-height: 1.2;
-        white-space: nowrap !important;
-    }
-
-    p {
-        margin-bottom: 3px !important;
-        font-size: 9px !important;
-        line-height: 1.2;
-    }
-
-    .text-uppercase {
-        font-size: 8px !important;
-        letter-spacing: 0.5px;
-        white-space: nowrap !important;
-    }
-
-    /* Table Styles */
-    .table-responsive {
-        overflow: visible !important;
-        margin-top: 12px !important;
-    }
-
-    table {
-        table-layout: fixed;
-        font-size: 9px !important;
-        margin-bottom: 8px !important;
-    }
-
-    .table-borderless th, .table-borderless td {
-        padding: 3px 4px !important;
-        vertical-align: middle;
-        border: none !important;
-    }
-
-    thead th {
-        font-size: 8px !important;
-        font-weight: 600;
-        background-color: #f8f9fa !important;
-        padding: 4px 3px !important;
-    }
-
-    tbody td {
-        font-size: 8px !important;
-        line-height: 1.1;
-    }
-
-    /* Table Column Widths for Better Fit */
-    .table th:nth-child(1), .table td:nth-child(1) { width: 6%; } /* # */
-    .table th:nth-child(2), .table td:nth-child(2) { width: 25%; } /* Bill Details */
-    .table th:nth-child(3), .table td:nth-child(3) { width: 12%; } /* Bill Amount */
-    .table th:nth-child(4), .table td:nth-child(4) { width: 12%; } /* Previous Paid */
-    .table th:nth-child(5), .table td:nth-child(5) { width: 12%; } /* Paid Today */
-    .table th:nth-child(6), .table td:nth-child(6) { width: 12%; } /* Total Paid */
-    .table th:nth-child(7), .table td:nth-child(7) { width: 13%; } /* Payment Method */
-    .table th:nth-child(8), .table td:nth-child(8) { width: 8%; } /* Outstanding */
-
-    /* Badge Styles */
-    .badge {
-        font-size: 7px !important;
-        padding: 2px 4px !important;
-    }
-
-    /* Total Section */
-    .border-top-dashed {
-        margin-top: 8px !important;
-        padding-top: 8px !important;
-    }
-
-    #products-list-total table {
-        width: 250px !important;
-        font-size: 8px !important;
-    }
-
-    #products-list-total td, #products-list-total th {
-        padding: 2px 4px !important;
-        font-size: 8px !important;
-    }
-
-    /* Payment Details Section */
-    .mt-3 {
-        margin-top: 8px !important;
-    }
-
-    .fw-semibold {
-        font-size: 8px !important;
-    }
-
-    /* Student Avatar */
-    .student-avatar {
-        width: 25px !important;
-        height: 25px !important;
-        margin-bottom: 3px !important;
-    }
-
-    /* Address Wrapping */
-    .address-wrap {
-        max-width: 100px !important;
-        font-size: 8px !important;
-        line-height: 1.1;
-        word-break: break-word;
-    }
-
-    /* Signature Section */
-    .invoice-signature {
-        margin-top: 10px !important;
-    }
-
-    .invoice-signature img {
-        height: 18px !important;
-    }
-
-    .invoice-signature h6 {
-        font-size: 8px !important;
-        margin-top: 5px !important;
-    }
-
-    /* Thank you message */
-    .mb-4.pb-2 {
-        margin-bottom: 8px !important;
-        padding-bottom: 5px !important;
-        font-size: 9px !important;
-    }
-
-    /* Page Settings */
-    @page {
-        size: A4;
-        margin: 0.3cm 0.5cm 0.3cm 0.5cm;
-    }
-
-    /* Force content to fit on one page */
-    .card-body {
-        max-height: 26cm;
-        overflow: hidden;
-    }
-
-    /* Compact spacing for sections */
-    .mt-4 {
-        margin-top: 10px !important;
-    }
-
-    .pt-2 {
-        padding-top: 5px !important;
-    }
-
-    .pt-4 {
-        padding-top: 8px !important;
-    }
-
-    /* Header and Footer */
-    .card::before {
-        content: "Invoice";
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        text-align: center;
-        font-size: 8px;
-        color: #212529;
-        padding: 2px 0;
-        background: white;
-        z-index: 1000;
-    }
-
-    .card::after {
-        content: "© 2025 School Invoice";
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        text-align: center;
-        font-size: 7px;
-        color: #7E8299;
-        padding: 2px 0;
-        background: white;
-        z-index: 1000;
-    }
-
-    /* Hide empty rows message if needed */
-    .text-center.text-muted {
-        font-size: 8px !important;
-    }
-
-    /* Ensure no page breaks within important sections */
-    .table, .border-top-dashed, .invoice-signature {
-        page-break-inside: avoid;
-    }
-
-    /* Additional fix for Bootstrap grid system in print */
-    .row {
-        display: flex !important;
-        flex-wrap: nowrap !important;
-        margin-right: 0 !important;
-        margin-left: 0 !important;
-    }
-
-    /* Override any Bootstrap column stacking for small screens in print */
-    .col-lg, .col-6, .col-sm-6, .col-md-6 {
-        position: relative !important;
-        width: auto !important;
-        padding-right: 5px !important;
-        padding-left: 5px !important;
-        flex-shrink: 0 !important;
-    }
-}
 </style>
 
 <div class="main-content">
@@ -466,7 +439,7 @@
                             <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 764 182" width="764" height="182">
                                 <g>
                                     <g>
-                                        <path style="fill: var(--tb-light);" d="m-6.6 177.4c17.5 0.1 35.1 0 52.8-0.4 286.8-6.6 537.6-77.8 700.3-184.6h-753.1z" />
+                                        <path style="fill: var(--tb-light);" d="m-6.6 177.4c Ignacio.1 35.1 0 52.8-0.4 286.8-6.6 537.6-77.8 700.3-184.6h-753.1z" />
                                     </g>
                                     <g>
                                         <path style="fill: var(--tb-secondary);" d="m-6.6 132.8c43.5 2.1 87.9 2.7 132.9 1.7 246.9-5.6 467.1-59.2 627.4-142.1h-760.3z" />
@@ -595,7 +568,7 @@
                                 </table>
                             </div>
                             <div class="border-top border-top-dashed mt-2" id="products-list-total">
-                                <table class="table table-borderless table-nowrap align-middle mb-0 ms-auto" style="width:300px">
+                                <table class="table table-borderless table-nowrap align-middle mb-0 ms-auto" style="width:280px">
                                     <tbody>
                                         <tr>
                                             <td>Total Bill Amount</td>
@@ -656,30 +629,68 @@
                 </div>
             </div>
 
-            
-            
-
-               <script>
+            <script>
                 document.addEventListener('DOMContentLoaded', function() {
-                    // Print button functionality
-                    const printButton = document.getElementById('print-button');
-                    if (printButton) {
-                        printButton.addEventListener('click', function() {
-                            // Optional: Show loading state
-                            const originalText = this.innerHTML;
-                            this.innerHTML = '<i class="ri-printer-line align-bottom me-1"></i> Printing...';
-                            this.disabled = true;
+                    // Store the original document title
+                    const originalTitle = document.title;
+                    
+                    // Get data passed from Laravel blade
+                    const studentName = @json($studentdata->isNotEmpty() ? $studentdata->first()->firstname . ' ' . $studentdata->first()->lastname : 'Student');
+                    const invoiceNumber = @json($invoiceNumber ?? 'INV-000');
+                    
+                    // Clean the student name for filename
+                    const cleanStudentName = studentName.replace(/[^a-zA-Z0-9\s]/g, '').trim().replace(/\s+/g, '_');
+                    const cleanInvoiceNumber = invoiceNumber.replace(/[^a-zA-Z0-9-]/g, '');
+                    
+                    // Print button functionality with custom filename
+                    function handlePrint() {
+                        const customFilename = `${cleanStudentName}_${cleanInvoiceNumber}`;
+                        
+                        // Set document title to desired filename
+                        document.title = customFilename;
+                        
+                        // Find the active print element
+                        const printButton = document.getElementById('print-button');
+                        const printLink = document.querySelector('a[href="javascript:window.print()"]');
+                        const activeButton = printButton || printLink;
+                        
+                        if (activeButton) {
+                            const originalText = activeButton.innerHTML;
+                            activeButton.innerHTML = '<i class="ri-printer-line align-bottom me-1"></i> Printing...';
+                            if (activeButton.disabled !== undefined) {
+                                activeButton.disabled = true;
+                            }
                             
-                            // Small delay to ensure the button state is visible
                             setTimeout(() => {
                                 window.print();
                                 
-                                // Reset button state after print dialog
                                 setTimeout(() => {
-                                    this.innerHTML = originalText;
-                                    this.disabled = false;
+                                    document.title = originalTitle;
+                                    activeButton.innerHTML = originalText;
+                                    if (activeButton.disabled !== undefined) {
+                                        activeButton.disabled = false;
+                                    }
                                 }, 1000);
                             }, 100);
+                        } else {
+                            window.print();
+                            setTimeout(() => {
+                                document.title = originalTitle;
+                            }, 1000);
+                        }
+                    }
+                    
+                    // Attach event listeners
+                    const printButton = document.getElementById('print-button');
+                    if (printButton) {
+                        printButton.addEventListener('click', handlePrint);
+                    }
+                    
+                    const printLink = document.querySelector('a[href="javascript:window.print()"]');
+                    if (printLink) {
+                        printLink.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            handlePrint();
                         });
                     }
 
@@ -689,124 +700,36 @@
                         downloadButton.addEventListener('click', function() {
                             this.disabled = true;
                             this.innerHTML = '<i class="ri-download-line align-bottom me-1"></i> Downloading...';
-                            window.location.assign('{{ url()->current() }}?download_pdf=1');
+                            
+                            const customFilename = `${cleanStudentName}_${cleanInvoiceNumber}`;
+                            document.title = customFilename;
+                            
+                            // Pass filename to download route
+                            const currentUrl = new URL(window.location.href);
+                            currentUrl.searchParams.set('download_pdf', '1');
+                            currentUrl.searchParams.set('filename', customFilename);
+                            window.location.assign(currentUrl.toString());
+                            
                             setTimeout(() => {
+                                document.title = originalTitle;
                                 this.disabled = false;
                                 this.innerHTML = '<i class="ri-download-2-line align-bottom me-1"></i> Download';
                             }, 2000);
                         });
                     }
 
-                    // Handle print events for better user experience
+                    // Handle print events
                     window.addEventListener('beforeprint', function() {
-                        console.log('Preparing to print...');
+                        const customFilename = `${cleanStudentName}_${cleanInvoiceNumber}`;
+                        document.title = customFilename;
                     });
 
                     window.addEventListener('afterprint', function() {
-                        console.log('Print dialog closed');
+                        setTimeout(() => {
+                            document.title = originalTitle;
+                        }, 500);
                     });
                 });
-
-                document.addEventListener('DOMContentLoaded', function() {
-    // Store the original document title
-    const originalTitle = document.title;
-    
-    // Get data passed from Laravel blade (you'll need to add this to your blade file)
-    const studentName = @json($studentdata->isNotEmpty() ? $studentdata->first()->firstname . ' ' . $studentdata->first()->lastname : 'Student');
-    const invoiceNumber = @json($invoiceNumber ?? 'INV-000');
-    
-    // Clean the student name for filename (remove special characters)
-    const cleanStudentName = studentName.replace(/[^a-zA-Z0-9\s]/g, '').trim().replace(/\s+/g, '_');
-    const cleanInvoiceNumber = invoiceNumber.replace(/[^a-zA-Z0-9-]/g, '');
-    
-    // Print button functionality with custom filename
-    function handlePrint() {
-        const customFilename = `${cleanStudentName}_${cleanInvoiceNumber}`;
-        
-        // Set document title to desired filename
-        document.title = customFilename;
-        
-        // Find the active print element
-        const printButton = document.getElementById('print-button');
-        const printLink = document.querySelector('a[href="javascript:window.print()"]');
-        const activeButton = printButton || printLink;
-        
-        if (activeButton) {
-            const originalText = activeButton.innerHTML;
-            activeButton.innerHTML = '<i class="ri-printer-line align-bottom me-1"></i> Printing...';
-            if (activeButton.disabled !== undefined) {
-                activeButton.disabled = true;
-            }
-            
-            setTimeout(() => {
-                window.print();
-                
-                setTimeout(() => {
-                    document.title = originalTitle;
-                    activeButton.innerHTML = originalText;
-                    if (activeButton.disabled !== undefined) {
-                        activeButton.disabled = false;
-                    }
-                }, 1000);
-            }, 100);
-        } else {
-            window.print();
-            setTimeout(() => {
-                document.title = originalTitle;
-            }, 1000);
-        }
-    }
-    
-    // Attach event listeners
-    const printButton = document.getElementById('print-button');
-    if (printButton) {
-        printButton.addEventListener('click', handlePrint);
-    }
-    
-    const printLink = document.querySelector('a[href="javascript:window.print()"]');
-    if (printLink) {
-        printLink.addEventListener('click', function(e) {
-            e.preventDefault();
-            handlePrint();
-        });
-    }
-
-    // Download button functionality
-    const downloadButton = document.getElementById('download-button');
-    if (downloadButton) {
-        downloadButton.addEventListener('click', function() {
-            this.disabled = true;
-            this.innerHTML = '<i class="ri-download-line align-bottom me-1"></i> Downloading...';
-            
-            const customFilename = `${cleanStudentName}_${cleanInvoiceNumber}`;
-            document.title = customFilename;
-            
-            // Pass filename to download route
-            const currentUrl = new URL(window.location.href);
-            currentUrl.searchParams.set('download_pdf', '1');
-            currentUrl.searchParams.set('filename', customFilename);
-            window.location.assign(currentUrl.toString());
-            
-            setTimeout(() => {
-                document.title = originalTitle;
-                this.disabled = false;
-                this.innerHTML = '<i class="ri-download-2-line align-bottom me-1"></i> Download';
-            }, 2000);
-        });
-    }
-
-    // Handle print events
-    window.addEventListener('beforeprint', function() {
-        const customFilename = `${cleanStudentName}_${cleanInvoiceNumber}`;
-        document.title = customFilename;
-    });
-
-    window.addEventListener('afterprint', function() {
-        setTimeout(() => {
-            document.title = originalTitle;
-        }, 500);
-    });
-});
             </script>
         </div>
     </div>

@@ -145,14 +145,14 @@ use Spatie\Permission\Models\Role;
                                                     <td class="name" data-name="{{ $student->firstname }} {{ $student->lastname }} {{ $student->othername }}">
                                                         <div class="d-flex align-items-center">
                                                             <div class="symbol symbol-circle symbol-50px overflow-hidden me-3">
-                                                                <a href="{{ route('studentpersonalityprofile', [$student->stid, $schoolclassid, $termid, $sessionid]) }}">
+                                                                <a href="{{ route('myclass.studentpersonalityprofile', [$student->stid, $schoolclassid, $termid, $sessionid]) }}">
                                                                     <div class="symbol-label">
                                                                         <img src="{{ Storage::url('images/studentavatar/' . ($student->picture ?? 'unnamed.png')) }}" alt="{{ $student->firstname }} {{ $student->lastname }}" class="w-100" />
                                                                     </div>
                                                                 </a>
                                                             </div>
                                                             <div>
-                                                                <h6 class="mb-0"><a href="{{ route('studentpersonalityprofile', [$student->stid, $schoolclassid, $termid, $sessionid]) }}" class="text-reset">{{ $student->firstname }} {{ $student->lastname }} {{ $student->othername }}</a></h6>
+                                                                <h6 class="mb-0"><a href="{{ route('myclass.studentpersonalityprofile', [$student->stid, $schoolclassid, $termid, $sessionid]) }}" class="text-reset">{{ $student->firstname }} {{ $student->lastname }} {{ $student->othername }}</a></h6>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -161,7 +161,7 @@ use Spatie\Permission\Models\Role;
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
                                                             @can('View student')
                                                                 <li>
-                                                                    <a href="{{ route('studentpersonalityprofile', [$student->stid, $schoolclassid, $termid, $sessionid]) }}" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a>
+                                                                    <a href="{{ route('myclass.studentpersonalityprofile', [$student->stid, $schoolclassid, $termid, $sessionid]) }}" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a>
                                                                 </li>
                                                             @endcan
                                                             @can('Update student')
