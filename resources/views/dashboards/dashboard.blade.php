@@ -19,8 +19,7 @@
             </div>
             <!-- end page title -->
 
-              
-           @can('dashboard')
+            @hasrole('Super Admin')
                 <div class="row">
                     <div class="col-xxl-3 col-md-6">
                         <div class="card">
@@ -103,30 +102,30 @@
                         </div>
                     </div><!--end col-->
                 </div><!--end row-->
-           @endcan
+            @endhasrole
             {{-- Commented sections remain unchanged --}}
-          {{-- <div class="row">
+            {{-- <div class="row">
                 <div class="col-xxl-4 order-last order-xxl-first">
-                    <div class="card">
-                        <div class="card-header d-flex">
-                            <h4 class="card-title mb-0 flex-grow-1">School Population Census</h4>
-                            <div class="dropdown card-header-dropdown float-end">
-                                <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <i class="bi bi-three-dots-vertical"></i>
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-end">
-                                    <a class="dropdown-item" href="#">Today</a>
-                                    <a class="dropdown-item" href="#">Last Week</a>
-                                    <a class="dropdown-item" href="#">Last Month</a>
-                                    <a class="dropdown-item" href="#">Current Year</a>
+                        <div class="card">
+                            <div class="card-header d-flex">
+                                <h4 class="card-title mb-0 flex-grow-1">School Population Census</h4>
+                                <div class="dropdown card-header-dropdown float-end">
+                                    <a class="text-reset dropdown-btn" href="#" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </a>
+                                    <div class="dropdown-menu dropdown-menu-end">
+                                        <a class="dropdown-item" href="#">Today</a>
+                                        <a class="dropdown-item" href="#">Last Week</a>
+                                        <a class="dropdown-item" href="#">Last Month</a>
+                                        <a class="dropdown-item" href="#">Current Year</a>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="card-body">
-                            <div id="property_type" data-colors='["--tb-primary", "--tb-secondary", "--tb-light","--tb-danger", "--tb-success"]' class="e-charts shadow-none" style="height: 336px;"></div>
+                            <div class="card-body">
+                                <div id="property_type" data-colors='["--tb-primary", "--tb-secondary", "--tb-light","--tb-danger", "--tb-success"]' class="e-charts shadow-none" style="height: 336px;"></div>
+                            </div>
                         </div>
                     </div>
-                </div>
                 <!--end col-->
                 <div class="col-xxl-8">
                     <div class="card">
@@ -206,10 +205,10 @@
                         </div>
                     </div>
                 </div><!--end col-->
-            </div> 
+            </div>  --}}
             <!--end row-->
 
-           <div class="row">
+            {{-- <div class="row">
                 <div class="col-xxl-9">
                     <div class="card" id="propertyList">
                         <div class="card-header align-items-center d-flex">
@@ -995,14 +994,14 @@
                         </div>
                     </div>
                 </div>
-            </div>
-        </div> --}}
+            </div> --}}
+        </div>
         <!-- container-fluid -->
     </div>
     <!-- End Page-content -->
 
     <!-- JAVASCRIPT -->
-    {{-- <script src="{{ asset('theme/layouts/assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
+    <script src="{{ asset('theme/layouts/assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
     <script src="{{ asset('theme/layouts/assets/libs/simplebar/simplebar.min.js') }}"></script>
     <script src="{{ asset('theme/layouts/assets/js/plugins.js') }}"></script>
     <script src="{{ asset('theme/layouts/assets/libs/list.js/list.min.js') }}"></script>
@@ -1010,7 +1009,61 @@
     <script src="{{ asset('theme/layouts/assets/libs/apexcharts/apexcharts.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ asset('theme/layouts/assets/js/pages/dashboard-real-estate.init.js') }}"></script>
-    <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script> --}}
+    <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script>
+  
+   <!-- Doughnut Chart Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const ctx = document.getElementById('property_type').getContext('2d');
+            const maleCount = {{ $gender_counts['Male'] }};
+            const femaleCount = {{ $gender_counts['Female'] }};
+            const staffCount = {{ $staff_count }};
+
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Male', 'Female', 'Staff'],
+                    datasets: [{
+                        data: [maleCount, femaleCount, staffCount],
+                        backgroundColor: [
+                            'rgba(113, 128, 150, 0.8)', // --tb-secondary
+                            'rgba(16, 185, 129, 0.8)',  // --tb-success
+                            'rgba(245, 158, 11, 0.8)'   // --tb-warning
+                        ],
+                        borderColor: [
+                            'rgba(113, 128, 150, 1)',
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(245, 158, 11, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    let label = context.label || '';
+                                    let value = context.raw || 0;
+                                    return `${label}: ${value}`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+        });
+    </script> 
 </div>
 @endsection
-
