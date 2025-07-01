@@ -30,7 +30,7 @@ class UserController extends Controller
     public function index(Request $request): View
     {
         $pagetitle = "User Management";
-        $data = User::latest()->paginate(10);
+        $data = User::latest()->get(); // Fetch all users instead of paginating
         $roles = Role::pluck('name', 'name')->toArray();
         $role_permissions = Role::all();
 
@@ -45,8 +45,7 @@ class UserController extends Controller
             \Log::info('User roles example:', User::first()->getRoleNames()->toArray());
         }
 
-        return view('users.index', compact('data', 'roles', 'role_permissions', 'pagetitle', 'role_counts'))
-            ->with('i', ($request->input('page', 1) - 1) * 10);
+        return view('users.index', compact('data', 'roles', 'role_permissions', 'pagetitle', 'role_counts'));
     }
 
     public function roles(): JsonResponse

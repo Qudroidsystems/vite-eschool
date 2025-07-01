@@ -1,8 +1,11 @@
-var perPage = 5,
+var perPage = 50,
     editlist = false,
     checkAll = document.getElementById("checkAll"),
     options = {
         valueNames: ["id", "name", "email", "role", "datereg"],
+        page: perPage,
+        pagination: true,
+        item: '<tr><td class="id" data-id><div class="form-check"><input class="form-check-input" type="checkbox" name="chk_child"><label class="form-check-label"></label></div></td><td class="name" data-name><div class="d-flex align-items-center"><div><h6 class="mb-0"><a href="#" class="text-reset products"></a></h6></div></div></td><td class="email" data-email></td><td class="role" data-roles><div></div></td><td class="datereg"></td><td><ul class="d-flex gap-2 list-unstyled mb-0"><li><a href="#" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a></li><li><a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"><i class="ph-pencil"></i></a></li><li><a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i class="ph-trash"></i></a></li></ul></td></tr>'
     },
     userList = new List("userList", options);
 
@@ -11,6 +14,8 @@ console.log("Initial userList items:", userList.items.length);
 userList.on("updated", function (e) {
     console.log("List.js updated, matching items:", e.matchingItems.length, "total items:", userList.items.length);
     document.getElementsByClassName("noresult")[0].style.display = e.matchingItems.length === 0 ? "block" : "none";
+    document.getElementById("pagination-showing").innerText = e.matchingItems.length;
+    document.getElementById("pagination-total").innerText = userList.items.length;
     setTimeout(() => {
         refreshCallbacks();
         ischeckboxcheck();
@@ -31,6 +36,10 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
         console.warn("Choices.js not available, falling back to native select");
     }
+
+    // Update pagination display
+    document.getElementById("pagination-showing").innerText = Math.min(perPage, userList.items.length);
+    document.getElementById("pagination-total").innerText = userList.items.length;
 });
 
 if (checkAll) {
@@ -130,7 +139,7 @@ function handleRemoveClick(e) {
                 headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
             }).then(function () {
                 console.log("Deleted user ID:", itemId);
-                window.location.reload();
+                userList.remove("id", itemId);
                 Swal.fire({
                     position: "center",
                     icon: "success",
@@ -249,7 +258,7 @@ function deleteMultiple() {
                         headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
                     });
                 })).then(() => {
-                    window.location.reload();
+                    ids_array.forEach(id => userList.remove("id", id));
                     Swal.fire({
                         title: "Deleted!",
                         text: "Your data has been deleted.",
@@ -338,7 +347,13 @@ document.getElementById("add-user-form").addEventListener("submit", function (e)
         password_confirmation: addPasswordConfirmField.value,
         _token: document.querySelector('meta[name="csrf-token"]').content
     }).then(function (response) {
-        window.location.reload();
+        userList.add({
+            id: response.data.user.id,
+            name: response.data.user.name,
+            email: response.data.user.email,
+            role: response.data.user.roles.join(','),
+            datereg: new Date().toISOString().slice(0, 10)
+        });
         Swal.fire({
             position: "center",
             icon: "success",
@@ -347,6 +362,8 @@ document.getElementById("add-user-form").addEventListener("submit", function (e)
             timer: 2000,
             showCloseButton: true
         });
+        var modal = bootstrap.Modal.getInstance(document.getElementById("showModal"));
+        modal.hide();
     }).catch(function (error) {
         console.error("Error adding user:", error);
         var message = error.response?.data?.message || "Error adding user";
@@ -400,7 +417,7 @@ document.getElementById("edit-user-form").addEventListener("submit", function (e
 
     axios.put(`/users/${editIdField.value}`, data)
         .then(function (response) {
-            window.location.reload();
+            userList.update();
             Swal.fire({
                 position: "center",
                 icon: "success",
@@ -409,6 +426,8 @@ document.getElementById("edit-user-form").addEventListener("submit", function (e
                 timer: 2000,
                 showCloseButton: true
             });
+            var modal = bootstrap.Modal.getInstance(document.getElementById("editModal"));
+            modal.hide();
         })
         .catch(function (error) {
             console.error("Error updating user:", error.response || error);
