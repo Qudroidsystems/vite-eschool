@@ -472,7 +472,7 @@ class SchoolPaymentController extends Controller
     /**
      * Generate and display/download an invoice.
      */
-   public function invoice(Request $request, $studentId, $schoolclassid, $termid, $sessionid)
+    public function invoice(Request $request, $studentId, $schoolclassid, $termid, $sessionid)
     {
         $pagetitle = 'Student Payment Invoice';
 
@@ -513,8 +513,38 @@ class SchoolPaymentController extends Controller
         // Generate invoice number
         $invoiceNumber = 'INV-' . str_pad($studentId, 4, '0', STR_PAD_LEFT) . '-' . date('Ymd');
 
-        // Get all school bills for this student, term, and session
-        $schoolBills = StudentBillPayment::where('student_bill_payment.student_id', $studentId)
+        // Get all school bills assigned to this class, term, and session using the proper junction table
+        try {
+            $allClassBills = SchoolBillTermSession::where('school_bill_class_term_session.class_id', $schoolclassid)
+                ->where('school_bill_class_term_session.termid_id', $termid)
+                ->where('school_bill_class_term_session.session_id', $sessionid)
+                ->leftJoin('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
+                ->leftJoin('student_status', 'student_status.id', '=', 'school_bill.statusId')
+                ->where('student_status.id', 1) // Only active bills
+                ->select([
+                    'school_bill.id as school_bill_id',
+                    'school_bill.title as title',
+                    'school_bill.description as description',
+                    'school_bill.bill_amount as amount'
+                ])
+                ->get();
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (strpos($e->getMessage(), 'school_bill_class_term_session') !== false) {
+                // Fallback query: Fetch all school bills if school_bill_class_term_session table doesn't exist
+                Log::warning('Table school_bill_class_term_session not found, falling back to all school bills.');
+                $allClassBills = SchoolBillModel::select([
+                    'school_bill.id as school_bill_id',
+                    'school_bill.title as title',
+                    'school_bill.description as description',
+                    'school_bill.bill_amount as amount',
+                ])->get();
+            } else {
+                throw $e; // Rethrow other database errors
+            }
+        }
+
+        // Get all payment records for this student, term, and session
+        $paidBills = StudentBillPayment::where('student_bill_payment.student_id', $studentId)
             ->where('student_bill_payment.class_id', $schoolclassid)
             ->where('student_bill_payment.termid_id', $termid)
             ->where('student_bill_payment.session_id', $sessionid)
@@ -540,64 +570,87 @@ class SchoolPaymentController extends Controller
                 'school_bill.bill_amount',
                 'users.name'
             ])
-            ->get();
+            ->get()
+            ->keyBy('school_bill_id');
 
-        $payments = $schoolBills->map(function ($bill) use ($studentId, $schoolclassid, $termid, $sessionid, $invoiceNumber) {
-            // Get all payment records for this specific bill ordered by date
-            $paymentRecords = StudentBillPaymentRecord::where('student_bill_payment_id', $bill->paymentid)
-                ->orderBy('created_at', 'asc')
-                ->get();
+        // Process all bills (both paid and unpaid)
+        $payments = $allClassBills->map(function ($bill) use ($paidBills, $studentId, $schoolclassid, $termid, $sessionid, $invoiceNumber) {
+            $paidBill = $paidBills->get($bill->school_bill_id);
+            
+            if ($paidBill) {
+                // This bill has payment records
+                $paymentRecords = StudentBillPaymentRecord::where('student_bill_payment_id', $paidBill->paymentid)
+                    ->orderBy('created_at', 'asc')
+                    ->get();
 
-            // Calculate totals for this bill
-            $totalPaidForThisBill = $paymentRecords->sum('amount_paid');
-            
-            // Get the most recent payment (last payment made)
-            $lastPaymentRecord = $paymentRecords->sortByDesc('created_at')->first();
-            $lastPaymentAmount = $lastPaymentRecord ? $lastPaymentRecord->amount_paid : 0;
-            
-            // Previous paid = Total paid - Last payment amount
-            $previousPaid = $totalPaidForThisBill - $lastPaymentAmount;
-            
-            // Calculate current balance (outstanding amount)
-            $currentBalance = max(0, $bill->amount - $totalPaidForThisBill);
+                // Calculate totals for this bill
+                $totalPaidForThisBill = $paymentRecords->sum('amount_paid');
+                
+                // Get the most recent payment (last payment made)
+                $lastPaymentRecord = $paymentRecords->sortByDesc('created_at')->first();
+                $lastPaymentAmount = $lastPaymentRecord ? $lastPaymentRecord->amount_paid : 0;
+                
+                // Previous paid = Total paid - Last payment amount
+                $previousPaid = $totalPaidForThisBill - $lastPaymentAmount;
+                
+                // Calculate current balance (outstanding amount)
+                $currentBalance = max(0, $bill->amount - $totalPaidForThisBill);
 
-            // Update or set invoice number for the last payment if it doesn't have one
-            if ($lastPaymentRecord && $lastPaymentAmount > 0 && !$lastPaymentRecord->invoiceNo) {
-                StudentBillPaymentRecord::where('id', $lastPaymentRecord->id)
-                    ->update(['invoiceNo' => $invoiceNumber]);
+                // Update or set invoice number for the last payment if it doesn't have one
+                if ($lastPaymentRecord && $lastPaymentAmount > 0 && !$lastPaymentRecord->invoiceNo) {
+                    StudentBillPaymentRecord::where('id', $lastPaymentRecord->id)
+                        ->update(['invoiceNo' => $invoiceNumber]);
+                }
+
+                // Determine payment completion status
+                $isCompletePayment = $currentBalance == 0 ? 1 : 0;
+
+                return (object) [
+                    'school_bill_id' => $bill->school_bill_id,
+                    'title' => $bill->title,
+                    'description' => $bill->description,
+                    'amount' => $bill->amount,
+                    'previousPaid' => $previousPaid,
+                    'todayPaid' => $lastPaymentAmount,
+                    'amountPaid' => $totalPaidForThisBill,
+                    'balance' => $currentBalance,
+                    'paymentMethod' => $paidBill->payment_method ?? 'N/A',
+                    'receivedBy' => $paidBill->receivedBy ?? 'Unknown',
+                    'paymentDate' => $lastPaymentRecord ? $lastPaymentRecord->created_at : $paidBill->payment_date,
+                    'complete_payment' => $isCompletePayment,
+                    'invoiceNo' => $lastPaymentRecord->invoiceNo ?? $invoiceNumber,
+                ];
+            } else {
+                // This bill has no payment records - it's completely outstanding
+                return (object) [
+                    'school_bill_id' => $bill->school_bill_id,
+                    'title' => $bill->title,
+                    'description' => $bill->description,
+                    'amount' => $bill->amount,
+                    'previousPaid' => 0,
+                    'todayPaid' => 0,
+                    'amountPaid' => 0,
+                    'balance' => $bill->amount, // Full amount is outstanding
+                    'paymentMethod' => 'N/A',
+                    'receivedBy' => 'N/A',
+                    'paymentDate' => null,
+                    'complete_payment' => 0,
+                    'invoiceNo' => null,
+                ];
             }
-
-            // Determine payment completion status
-            $isCompletePayment = $currentBalance == 0 ? 1 : 0;
-
-            return (object) [
-                'school_bill_id' => $bill->school_bill_id,
-                'title' => $bill->title,
-                'description' => $bill->description,
-                'amount' => $bill->amount,
-                'previousPaid' => $previousPaid, // Total of all payments before the last one
-                'todayPaid' => $lastPaymentAmount, // Most recent payment amount
-                'amountPaid' => $totalPaidForThisBill,
-                'balance' => $currentBalance, // This is the actual outstanding amount
-                'paymentMethod' => $bill->payment_method ?? 'N/A',
-                'receivedBy' => $bill->receivedBy ?? 'Unknown',
-                'paymentDate' => $lastPaymentRecord ? $lastPaymentRecord->created_at : $bill->payment_date,
-                'complete_payment' => $isCompletePayment,
-                'invoiceNo' => $lastPaymentRecord->invoiceNo ?? $invoiceNumber,
-            ];
         });
 
-        // Remove duplicate bills (group by school_bill_id and take the most recent)
+        // Remove duplicate bills and sort by payment date (unpaid bills will be at the end)
         $payments = $payments->groupBy('school_bill_id')->map(function ($billGroup) {
             return $billGroup->sortByDesc('paymentDate')->first();
-        })->values();
+        })->values()->sortByDesc('paymentDate');
 
         // Calculate totals
         $totalBillAmount = $payments->sum('amount');
         $totalPreviousPaid = $payments->sum('previousPaid');
-        $totalLastPayments = $payments->sum('todayPaid'); // This is now total of last payments, not today's payments
+        $totalLastPayments = $payments->sum('todayPaid');
         $totalPaid = $payments->sum('amountPaid');
-        $totalOutstanding = $payments->sum('balance'); // This will now be the correct outstanding total
+        $totalOutstanding = $payments->sum('balance');
 
         // Fetch school information
         $schoolInfo = SchoolInformation::first() ?? (object) [
@@ -630,7 +683,7 @@ class SchoolPaymentController extends Controller
             'studentpaymentbill' => $payments,
             'totalBillAmount' => $totalBillAmount,
             'totalPreviousPaid' => $totalPreviousPaid,
-            'totalTodayPaid' => $totalLastPayments, // This represents total of last payments made
+            'totalTodayPaid' => $totalLastPayments,
             'totalPaid' => $totalPaid,
             'totalOutstanding' => $totalOutstanding,
             'schoolInfo' => $schoolInfo,
@@ -654,8 +707,7 @@ class SchoolPaymentController extends Controller
 
         return view('schoolpayment.studentinvoice', $data);
     }
-
-    /**
+        /**
      * Generate and download a payment statement for all student payments.
      */
     public function statement(Request $request, $studentId, $schoolclassid, $termid, $sessionid)

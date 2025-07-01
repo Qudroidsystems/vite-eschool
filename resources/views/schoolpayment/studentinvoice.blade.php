@@ -27,7 +27,8 @@
         position: relative;
         padding: 1.5rem;
         font-size: 14px;
-        font-weight: 600; /* Added for bolder text */
+        font-weight: 700; /* Bolder text */
+        color: #000000; /* Black text */
     }
 
     .card-logo {
@@ -36,12 +37,14 @@
 
     .fs-md {
         font-size: 1.25rem !important;
-        font-weight: 700; /* Bolder headings */
+        font-weight: 800; /* Bolder headings */
+        color: #000000; /* Black text */
     }
 
     .fs-xxs {
         font-size: 0.75rem !important;
-        font-weight: 600; /* Bolder small text */
+        font-weight: 700; /* Bolder small text */
+        color: #000000; /* Black text */
     }
 
     .table-borderless th, .table-borderless td {
@@ -49,7 +52,8 @@
         padding: 0.75rem 1rem;
         vertical-align: middle;
         font-size: 14px;
-        font-weight: 600; /* Bolder table text */
+        font-weight: 700; /* Bolder table text */
+        color: #000000; /* Black text */
     }
 
     .table-nowrap th, .table-nowrap td {
@@ -69,7 +73,7 @@
         border-color: #f1416c;
         color: #f1416c;
         padding: 0.75rem;
-        font-weight: 600; /* Bolder alert text */
+        font-weight: 700; /* Bolder alert text */
     }
 
     .invoice-signature img {
@@ -109,7 +113,13 @@
         hyphens: auto;
         max-width: 200px;
         display: inline-block;
-        font-weight: 600; /* Bolder address text */
+        font-weight: 700; /* Bolder address text */
+        color: #000000; /* Black text */
+    }
+
+    .text-muted {
+        color: #000000 !important; /* Override grey to black */
+        font-weight: 700; /* Bolder text */
     }
 
     /* Enhanced Print Styles for Invoice */
@@ -122,7 +132,8 @@
             height: 297mm;
             font-size: 14px;
             line-height: 1.4;
-            font-weight: 600; /* Bolder base text */
+            font-weight: 700; /* Bolder base text */
+            color: #000000; /* Black text */
         }
 
         .main-content, .page-content, .container-fluid {
@@ -144,7 +155,8 @@
         .card-body {
             padding: 0.5cm !important;
             font-size: 13px;
-            font-weight: 600; /* Bolder card body text */
+            font-weight: 700; /* Bolder card body text */
+            color: #000000; /* Black text */
         }
 
         .d-print-none, .alert {
@@ -225,7 +237,8 @@
             margin-bottom: 3px !important;
             line-height: 1.3;
             white-space: nowrap !important;
-            font-weight: 700; /* Bolder headings */
+            font-weight: 800; /* Bolder headings */
+            color: #000000; /* Black text */
         }
 
         h5.fs-md {
@@ -233,21 +246,24 @@
             margin-bottom: 3px !important;
             line-height: 1.3;
             white-space: nowrap !important;
-            font-weight: 700; /* Bolder headings */
+            font-weight: 800; /* Bolder headings */
+            color: #000000; /* Black text */
         }
 
         p {
             margin-bottom: 4px !important;
             font-size: 11px !important;
             line-height: 1.3;
-            font-weight: 600; /* Bolder paragraphs */
+            font-weight: 700; /* Bolder paragraphs */
+            color: #000000; /* Black text */
         }
 
         .text-uppercase {
             font-size: 10px !important;
             letter-spacing: 0.6px;
             white-space: nowrap !important;
-            font-weight: 600; /* Bolder uppercase text */
+            font-weight: 700; /* Bolder uppercase text */
+            color: #000000; /* Black text */
         }
 
         .table-responsive {
@@ -259,27 +275,31 @@
             table-layout: fixed;
             font-size: 11px !important;
             margin-bottom: 10px !important;
-            font-weight: 600; /* Bolder table text */
+            font-weight: 700; /* Bolder table text */
+            color: #000000; /* Black text */
         }
 
         .table-borderless th, .table-borderless td {
             padding: 4px 5px !important;
             vertical-align: middle;
             border: none !important;
-            font-weight: 600; /* Bolder table cells */
+            font-weight: 700; /* Bolder table cells */
+            color: #000000; /* Black text */
         }
 
         thead th {
             font-size: 10px !important;
-            font-weight: 700; /* Bolder table headers */
+            font-weight: 800; /* Bolder table headers */
             background-color: #f8f9fa !important;
             padding: 5px 4px !important;
+            color: #000000; /* Black text */
         }
 
         tbody td {
             font-size: 10px !important;
             line-height: 1.2;
-            font-weight: 600; /* Bolder table body text */
+            font-weight: 700; /* Bolder table body text */
+            color: #000000; /* Black text */
         }
 
         .table th:nth-child(1), .table td:nth-child(1) { width: 6%; }
@@ -294,7 +314,7 @@
         .badge {
             font-size: 9px !important;
             padding: 3px 5px !important;
-            font-weight: 600; /* Bolder badges */
+            font-weight: 700; /* Bolder badges */
         }
 
         .border-top-dashed {
@@ -305,13 +325,15 @@
         #products-list-total table {
             width: 280px !important;
             font-size: 10px !important;
-            font-weight: 600; /* Bolder total table */
+            font-weight: 700; /* Bolder total table */
+            color: #000000; /* Black text */
         }
 
         #products-list-total td, #products-list-total th {
             padding: 3px 5px !important;
             font-size: 10px !important;
-            font-weight: 600; /* Bolder total table cells */
+            font-weight: 700; /* Bolder total table cells */
+            color: #000000; /* Black text */
         }
 
         .student-avatar {
@@ -324,7 +346,8 @@
             max-width: 120px !important;
             font-size: 10px !important;
             line-height: 1.2;
-            font-weight: 600; /* Bolder address text */
+            font-weight: 700; /* Bolder address text */
+            color: #000000; /* Black text */
         }
 
         .invoice-signature {
@@ -338,14 +361,16 @@
         .invoice-signature h6 {
             font-size: 10px !important;
             margin-top: 6px !important;
-            font-weight: 700; /* Bolder signature text */
+            font-weight: 800; /* Bolder signature text */
+            color: #000000; /* Black text */
         }
 
         .mb-4.pb-2 {
             margin-bottom: 10px !important;
             padding-bottom: 6px !important;
             font-size: 11px !important;
-            font-weight: 600; /* Bolder thank you message */
+            font-weight: 700; /* Bolder thank you message */
+            color: #000000; /* Black text */
         }
 
         @page {
@@ -378,11 +403,11 @@
             right: 0;
             text-align: center;
             font-size: 10px !important;
-            color: #212529;
+            color: #000000; /* Black text */
             padding: 2px 0;
             background: white;
             z-index: 1000;
-            font-weight: 700; /* Bolder header */
+            font-weight: 800; /* Bolder header */
         }
 
         .card::after {
@@ -393,16 +418,17 @@
             right: 0;
             text-align: center;
             font-size: 9px !important;
-            color: #7E8299;
+            color: #000000; /* Black text */
             padding: 2px 0;
             background: white;
             z-index: 1000;
-            font-weight: 600; /* Bolder footer */
+            font-weight: 700; /* Bolder footer */
         }
 
         .text-center.text-muted {
             font-size: 10px !important;
-            font-weight: 600; /* Bolder no-bills message */
+            font-weight: 700; /* Bolder no-bills message */
+            color: #000000 !important; /* Black text */
         }
 
         .table, .border-top-dashed, .invoice-signature {

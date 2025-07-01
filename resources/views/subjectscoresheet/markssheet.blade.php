@@ -234,7 +234,7 @@
             <tr>
                 <td>{{ $index + 1 }}</td>
                 <td>{{ $broadsheet->admissionno }}</td>
-                <td class="student-name">{{ $broadsheet->fname }} {{ $broadsheet->lname }}</td>
+                <td class="student-name">{{ $broadsheet->fname }} {{ $broadsheet->mname }} {{ $broadsheet->lname }}</td>
                 <td></td>
                 <td></td>
                 <td></td>

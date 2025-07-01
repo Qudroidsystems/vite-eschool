@@ -176,7 +176,7 @@
                                                             <img src="{{ $broadsheet->picture ? Storage::url('images/studentavatar/' . $broadsheet->picture) : Storage::url('images/studentavatar/avatar.jpg') }}" alt="{{ ($broadsheet->fname ?? '') . ' ' . ($broadsheet->lname ?? '') }}" class="rounded-circle w-100">
                                                         </div>
                                                         <div class="d-flex flex-column">
-                                                            {{ ($broadsheet->fname ?? '') . ' ' . ($broadsheet->lname ?? '') }}
+                                                            {{ ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '').' ' . ($broadsheet->lname ?? '') }}
                                                         </div>
                                                     </div>
                                                 </td>

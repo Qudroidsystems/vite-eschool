@@ -59,6 +59,7 @@ class StudentController extends Controller
                     'studentRegistration.admissionNo',
                     'studentRegistration.firstname',
                     'studentRegistration.lastname',
+                    'studentRegistration.othername',
                     'studentRegistration.gender',
                     'studentRegistration.statusId',
                     'studentRegistration.created_at',
