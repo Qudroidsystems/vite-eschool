@@ -230,13 +230,13 @@ function renderStudents(students) {
                     <label class="form-check-label"></label>
                 </div>
             </td>
-            <td class="name" data-name="${student.firstname || ''} ${student.lastname || ''}">
+            <td class="name" data-name="${student.lastname || ''} ${student.firstname || ''} ${student.othername || ''}">
                 <div class="d-flex align-items-center">
                     <div class="symbol symbol-50px me-3">
-                        <img src="${student.picture ? '/storage/' + student.picture : '/theme/layouts/assets/media/avatars/blank.png'}" alt="" class="avatar-xs"/>
+                        <img src="${student.picture ? '/storage/' + student.picture : '/theme/layouts/assets/media/avatars/blank.png'}" alt="${student.lastname || ''} ${student.firstname || ''} ${student.othername || ''}" class="avatar-xs"/>
                     </div>
                     <div>
-                        <h6 class="mb-0"><a href="/student/${student.id || ''}" class="text-reset products">${student.firstname || ''} ${student.lastname || ''}</a></h6>
+                        <h6 class="mb-0"><a href="/student/${student.id || ''}" class="text-reset products"><span class="fw-bold">${student.lastname || ''}</span> ${student.firstname || ''} ${student.othername || ''}</a></h6>
                     </div>
                 </div>
             </td>

@@ -155,7 +155,6 @@
                                             <th>Cum</th>
                                             <th>Grade</th>
                                             <th>Position</th>
-                                           
                                         </tr>
                                     </thead>
                                     <tbody id="scoresheetTableBody" class="list form-check-all">
@@ -170,13 +169,13 @@
                                                 </td>
                                                 <td class="sn">{{ ++$i }}</td>
                                                 <td class="admissionno" data-admissionno="{{ $broadsheet->admissionno }}">{{ $broadsheet->admissionno ?? '-' }}</td>
-                                                <td class="name" data-name="{{ ($broadsheet->fname ?? '') . ' ' . ($broadsheet->lname ?? '') }}">
+                                                <td class="name" data-name="{{ ($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '') }}">
                                                     <div class="d-flex align-items-center">
                                                         <div class="avatar-sm me-2">
-                                                            <img src="{{ $broadsheet->picture ? Storage::url('images/studentavatar/' . $broadsheet->picture) : Storage::url('images/studentavatar/avatar.jpg') }}" alt="{{ ($broadsheet->fname ?? '') . ' ' . ($broadsheet->lname ?? '') }}" class="rounded-circle w-100">
+                                                            <img src="{{ $broadsheet->picture ? Storage::url('images/studentavatar/' . $broadsheet->picture) : Storage::url('images/studentavatar/avatar.jpg') }}" alt="{{ ($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '') }}" class="rounded-circle w-100">
                                                         </div>
                                                         <div class="d-flex flex-column">
-                                                            {{ ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '').' ' . ($broadsheet->lname ?? '') }}
+                                                            <span class="fw-bold">{{ $broadsheet->lname ?? '' }}</span> {{ $broadsheet->fname ?? '' }} {{ $broadsheet->mname ?? '' }}
                                                         </div>
                                                     </div>
                                                 </td>
@@ -207,7 +206,6 @@
                                                 <td class="position-display text-center">
                                                     <span class="badge bg-info">{{ $broadsheet->position ?? '-' }}</span>
                                                 </td>
-                                               
                                             </tr>
                                         @empty
                                             <tr id="noDataRow">
@@ -217,7 +215,7 @@
                                     </tbody>
                                 </table>
                             </div>
-                            
+
                             <!-- Enhanced Control Panel -->
                             @if ($broadsheets->isNotEmpty())
                                 <div class="row mt-3">
@@ -252,7 +250,7 @@
                                         </div>
                                     </div>
                                 </div>
-                            
+
                                 <!-- Progress Indicator -->
                                 <div class="row mt-2" id="progressContainer" style="display: none;">
                                     <div class="col-12">
@@ -320,7 +318,51 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <!-- Scores will be populated by JavaScript -->
+                            <div class="table-responsive">
+                                <table class="table table-centered align-middle table-nowrap mb-0">
+                                    <thead class="table-active">
+                                        <tr>
+                                            <th>SN</th>
+                                            <th>Admission No</th>
+                                            <th>Name</th>
+                                            <th>CA1</th>
+                                            <th>CA2</th>
+                                            <th>CA3</th>
+                                            <th>Exam</th>
+                                            <th>Total</th>
+                                            <th>BF</th>
+                                            <th>Cum</th>
+                                            <th>Grade</th>
+                                            <th>Position</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @php $i = 0; @endphp
+                                        @forelse ($broadsheets as $broadsheet)
+                                            <tr>
+                                                <td>{{ ++$i }}</td>
+                                                <td class="admissionno">{{ $broadsheet->admissionno ?? '-' }}</td>
+                                                <td class="name">
+                                                    <span class="fw-bold">{{ $broadsheet->lname ?? '' }}</span> {{ $broadsheet->fname ?? '' }} {{ $broadsheet->mname ?? '' }}
+                                                </td>
+                                                <td>{{ $broadsheet->ca1 ? number_format($broadsheet->ca1, 1) : '0.0' }}</td>
+                                                <td>{{ $broadsheet->ca2 ? number_format($broadsheet->ca2, 1) : '0.0' }}</td>
+                                                <td>{{ $broadsheet->ca3 ? number_format($broadsheet->ca3, 1) : '0.0' }}</td>
+                                                <td>{{ $broadsheet->exam ? number_format($broadsheet->exam, 1) : '0.0' }}</td>
+                                                <td>{{ $broadsheet->total ? number_format($broadsheet->total, 1) : '0.0' }}</td>
+                                                <td>{{ $broadsheet->bf ? number_format($broadsheet->bf, 2) : '0.00' }}</td>
+                                                <td>{{ $broadsheet->cum ? number_format($broadsheet->cum, 2) : '0.00' }}</td>
+                                                <td>{{ $broadsheet->grade ?? '-' }}</td>
+                                                <td>{{ $broadsheet->position ?? '-' }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="12" class="text-center">No scores available.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -336,7 +378,6 @@
 <!-- JavaScript Dependencies -->
 <script>
     window.broadsheets = @json($broadsheets);
-    //window.term_id = {{ session('term_id') ?? 1 }};
     window.term_id = {{ session('term_id') }};
     window.session_id = {{ session('session_id') }};
     window.subjectclass_id = {{ session('subjectclass_id') }};

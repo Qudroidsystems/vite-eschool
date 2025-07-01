@@ -614,6 +614,54 @@ use Spatie\Permission\Models\Role;
 
             initializeStudentList();
         });
+
+        function renderStudents(students) {
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = '';
+            students.forEach(student => {
+                const row = document.createElement('tr');
+                const actionButtons = [];
+                if (window.appPermissions.canShowStudent) {
+                    actionButtons.push(`<li><a href="/student/${student.id || ''}" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a></li>`);
+                }
+                if (window.appPermissions.canUpdateStudent) {
+                    actionButtons.push(`<li><a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" data-bs-toggle="modal" data-bs-target="#editStudentModal" data-id="${student.id || ''}"><i class="ph-pencil"></i></a></li>`);
+                }
+                if (window.appPermissions.canDeleteStudent) {
+                    actionButtons.push(`<li><a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-id="${student.id || ''}"><i class="ph-trash"></i></a></li>`);
+                }
+                row.innerHTML = `
+                    <td class="id" data-id="${student.id || ''}">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="chk_child">
+                            <label class="form-check-label"></label>
+                        </div>
+                    </td>
+                    <td class="name" data-name="${student.lastname || ''} ${student.firstname || ''} ${student.othername || ''}">
+                        <div class="d-flex align-items-center">
+                            <div class="symbol symbol-50px me-3">
+                                <img src="${student.picture ? '/storage/' + student.picture : '/theme/layouts/assets/media/avatars/blank.png'}" alt="${student.lastname || ''} ${student.firstname || ''} ${student.othername || ''}" class="avatar-xs"/>
+                            </div>
+                            <div>
+                                <h6 class="mb-0"><a href="/student/${student.id || ''}" class="text-reset products"><span class="fw-bold">${student.lastname || ''}</span> ${student.firstname || ''} ${student.othername || ''}</a></h6>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="admissionNo" data-admissionNo="${student.admissionNo || ''}">${student.admissionNo || ''}</td>
+                    <td class="class" data-class="${student.schoolclassid || ''}">${student.schoolclass || ''} - ${student.arm || ''}</td>
+                    <td class="status" data-status="${student.statusId || ''}">${student.statusId == 1 ? 'Old Student' : student.statusId == 2 ? 'New Student' : ''}</td>
+                    <td class="gender" data-gender="${student.gender || ''}">${student.gender || ''}</td>
+                    <td class="datereg">${student.created_at ? new Date(student.created_at).toISOString().split('T')[0] : ''}</td>
+                    <td>
+                        <ul class="d-flex gap-2 list-unstyled mb-0">
+                            ${actionButtons.join('')}
+                        </ul>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+            initializeCheckboxes();
+        }
     </script>
 </div>
 @endsection

@@ -2,7 +2,6 @@
 
 @section('content')
 
-
 <!-- Main content container -->
 <div class="main-content">
     <div class="page-content">
@@ -165,13 +164,13 @@
                                                 </td>
                                                 <td class="sn">{{ ++$i }}</td>
                                                 <td class="admission-no" data-admissionno="{{ $broadsheet->admissionno ?? '-' }}">{{ $broadsheet->admissionno ?? '-' }}</td>
-                                                <td class="student-name" data-name="{{ ($broadsheet->fname ?? '') . ' ' . ($broadsheet->lname ?? '') }}">
+                                                <td class="student-name" data-name="{{ ($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '') }}">
                                                     <div class="d-flex align-items-center">
                                                         <div class="avatar-sm me-2">
-                                                            <img src="{{ $broadsheet->picture ? Storage::url('images/studentavatar/' . $broadsheet->picture) : Storage::url('images/studentavatar/avatar.jpg') }}" alt="{{ ($broadsheet->fname ?? '') . ' ' . ($broadsheet->lname ?? '') }}" class="rounded-circle w-100" loading="lazy">
+                                                            <img src="{{ $broadsheet->picture ? Storage::url('images/studentavatar/' . $broadsheet->picture) : Storage::url('images/studentavatar/avatar.jpg') }}" alt="{{ ($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '') }}" class="rounded-circle w-100" loading="lazy">
                                                         </div>
                                                         <div class="d-flex flex-column">
-                                                            {{ ($broadsheet->fname ?? '') . ' ' . ($broadsheet->lname ?? '') }}
+                                                            <span class="fw-bold">{{ $broadsheet->lname ?? '' }}</span> {{ $broadsheet->fname ?? '' }} {{ $broadsheet->mname ?? '' }}
                                                         </div>
                                                     </div>
                                                 </td>
@@ -362,11 +361,29 @@
     };
     console.log('Broadsheet data:', window.broadsheets);
     console.log('Routes:', window.routes);
-</script>
 
-<!-- Add clear search JS -->
-<script>
+    // Populate Scores Modal
     document.addEventListener('DOMContentLoaded', function() {
+        const scoresBody = document.getElementById('scoresBody');
+        if (scoresBody && window.broadsheets) {
+            scoresBody.innerHTML = '';
+            window.broadsheets.forEach((broadsheet, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td class="admissionno">${broadsheet.admissionno || '-'}</td>
+                    <td class="name"><span class="fw-bold">${broadsheet.lname || ''}</span> ${broadsheet.fname || ''} ${broadsheet.mname || ''}</td>
+                    <td>${broadsheet.exam ? Number(broadsheet.exam).toFixed(1) : '0.0'}</td>
+                    <td>${broadsheet.total ? Number(broadsheet.total).toFixed(1) : '0.0'}</td>
+                    <td>${broadsheet.grade || '-'}</td>
+                    <td>${broadsheet.subjectpositionclass || '-'}</td>
+                    <td>${broadsheet.remark || '-'}</td>
+                `;
+                scoresBody.appendChild(row);
+            });
+        }
+
+        // Clear Search Functionality
         const searchInput = document.getElementById('searchInput');
         const clearSearch = document.getElementById('clearSearch');
         if (searchInput && clearSearch) {
