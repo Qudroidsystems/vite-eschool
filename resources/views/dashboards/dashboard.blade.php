@@ -19,7 +19,7 @@
             </div>
             <!-- end page title -->
 
-            @hasrole('Super Admin')
+            {{-- @hasrole('Super Admin') --}}
                 <div class="row">
                     <div class="col-xxl-3 col-md-6">
                         <div class="card">
@@ -102,7 +102,7 @@
                         </div>
                     </div><!--end col-->
                 </div><!--end row-->
-            @endhasrole
+            {{-- @endhasrole --}}
             {{-- Commented sections remain unchanged --}}
             {{-- <div class="row">
                 <div class="col-xxl-4 order-last order-xxl-first">
