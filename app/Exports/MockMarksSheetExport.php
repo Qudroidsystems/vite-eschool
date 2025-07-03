@@ -124,6 +124,7 @@ class MockMarksSheetExport
                 'studentRegistration.admissionNO as admissionno',
                 'studentRegistration.firstname as fname',
                 'studentRegistration.lastname as lname',
+                'studentRegistration.othername as mname',
                 'broadsheets.ca1',
                 'broadsheets.ca2',
                 'broadsheets.ca3',

@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Student Marks Sheet</title>
+    <title>Student Mock Marks Sheet</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -223,7 +223,6 @@
             <th>Admission No.</th>
             <th>Student Name</th>
             <th>Exam<br><small>({{ $classInfo->max_exam ?? 'N/A' }})</small></th>
-   
         </tr>
     </thead>
     <tbody>
@@ -231,12 +230,18 @@
             <tr>
                 <td>{{ $index + 1 }}</td>
                 <td>{{ $broadsheet->admissionno }}</td>
-                <td class="student-name">{{ $broadsheet->fname }} {{ $broadsheet->mname }} {{ $broadsheet->lname }}</td>
+                <td class="student-name">
+                    @if($broadsheet->lname || $broadsheet->fname || $broadsheet->mname)
+                        <span class="fw-bold">{{ $broadsheet->lname ?? '' }}</span> {{ $broadsheet->fname ?? '' }} {{ $broadsheet->mname ?? '' }}
+                    @else
+                        -
+                    @endif
+                </td>
                 <td></td>
             </tr>
         @empty
             <tr>
-                <td colspan="11">No students found.</td>
+                <td colspan="4">No students found.</td>
             </tr>
         @endforelse
     </tbody>

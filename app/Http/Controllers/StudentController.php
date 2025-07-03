@@ -47,7 +47,7 @@ class StudentController extends Controller
         $this->middleware("permission:Create student-bulk-uploadsave", ["only" => ["bulkuploadsave"]]);
     }
 
- public function data(Request $request): JsonResponse
+    public function data(Request $request): JsonResponse
     {
         try {
             $students = Student::leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
@@ -259,6 +259,7 @@ class StudentController extends Controller
             ]);
 
             if ($validator->fails()) {
+                Log::debug('Validation failed', $validator->errors()->toArray());
                 return response()->json([
                     'success' => false,
                     'message' => $validator->errors()->first(),
@@ -299,8 +300,6 @@ class StudentController extends Controller
             $studentClass->sessionid = $request->sessionid;
             $studentClass->save();
 
-            
-
             $promotion = new PromotionStatus();
             $promotion->studentId = $studentId;
             $promotion->schoolclassid = $request->schoolclassid;
@@ -317,9 +316,22 @@ class StudentController extends Controller
             $picture = new Studentpicture();
             $picture->studentid = $studentId;
             if ($request->hasFile('avatar')) {
-                $filename = $studentId . '_' . $request->file('avatar')->getClientOriginalName();
-                $path = $request->file('avatar')->storeAs('public/images/studentavatar', $filename);
-                $picture->picture = str_replace('public/', '', $path);
+                if ($request->file('avatar')->isValid()) {
+                    $filename = $studentId . '_' . time() . '.' . $request->file('avatar')->getClientOriginalExtension();
+                    $path = $request->file('avatar')->storeAs('student_avatars', $filename, 'public');
+                    Log::debug('Avatar stored', [
+                        'filename' => $filename,
+                        'path' => $path,
+                        'full_path' => storage_path('app/public/' . $path),
+                        'url' => asset('storage/' . $path)
+                    ]);
+                    $picture->picture = $path;
+                } else {
+                    Log::error('Invalid avatar file uploaded');
+                    throw new \Exception('Invalid avatar file uploaded');
+                }
+            } else {
+                Log::debug('No avatar file provided in request');
             }
             $picture->save();
 
@@ -341,7 +353,8 @@ class StudentController extends Controller
             Log::debug("Student created successfully: ID {$studentId}");
             return response()->json([
                 'success' => true,
-                'message' => 'Student created successfully'
+                'message' => 'Student created successfully',
+                'image_url' => $picture->picture ? asset('storage/' . $picture->picture) : null
             ], 200);
 
         } catch (\Exception $e) {
@@ -399,159 +412,190 @@ class StudentController extends Controller
         }
     }
 
-   public function update(Request $request, $student): JsonResponse
-{
-    try {
-        $statesLgas = json_decode(file_get_contents(public_path('states_lgas.json')), true);
-        $states = array_column($statesLgas, 'state');
-        $lgas = collect($statesLgas)->pluck('lgas', 'state')->toArray();
+    public function update(Request $request, $student): JsonResponse
+    {
+        try {
+            $statesLgas = json_decode(file_get_contents(public_path('states_lgas.json')), true);
+            $states = array_column($statesLgas, 'state');
+            $lgas = collect($statesLgas)->pluck('lgas', 'state')->toArray();
 
-        $validator = Validator::make($request->all(), [
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-            'admissionNo' => 'required|string|max:255|unique:studentRegistration,admissionNo,' . $student,
-            'title' => 'required|in:Mr,Mrs,Miss',
-            'firstname' => 'required|string|max:255',
-            'lastname' => 'required|string|max:255',
-            'othername' => 'nullable|string|max:255',
-            'gender' => 'required|in:Male,Female',
-            'home_address' => 'required|string|max:255',
-            'home_address2' => 'required|string|max:255',
-            'dateofbirth' => 'required|date|before:today',
-            'placeofbirth' => 'required|string|max:255',
-            'nationality' => 'required|string|max:255',
-            'state' => ['required', 'string', 'max:255', function ($attribute, $value, $fail) use ($states) {
-                if (!in_array($value, $states)) {
-                    $fail('The selected state is invalid.');
-                }
-            }],
-            'local' => ['required', 'string', 'max:255', function ($attribute, $value, $fail) use ($request, $lgas) {
-                $state = $request->input('state');
-                if (!isset($lgas[$state]) || !in_array($value, $lgas[$state])) {
-                    $fail('The selected local government is invalid for the chosen state.');
-                }
-            }],
-            'religion' => 'required|in:Christianity,Islam,Others',
-            'last_school' => 'required|string|max:255',
-            'last_class' => 'required|string|max:255',
-            'schoolclassid' => 'required|exists:schoolclass,id',
-            'termid' => 'required|exists:schoolterm,id',
-            'sessionid' => 'required|exists:schoolsession,id',
-            'statusId' => 'required|in:1,2'
-        ]);
+            $validator = Validator::make($request->all(), [
+                'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+                'admissionNo' => 'required|string|max:255|unique:studentRegistration,admissionNo,' . $student,
+                'title' => 'required|in:Mr,Mrs,Miss',
+                'firstname' => 'required|string|max:255',
+                'lastname' => 'required|string|max:255',
+                'othername' => 'nullable|string|max:255',
+                'gender' => 'required|in:Male,Female',
+                'home_address' => 'required|string|max:255',
+                'home_address2' => 'required|string|max:255',
+                'dateofbirth' => 'required|date|before:today',
+                'placeofbirth' => 'required|string|max:255',
+                'nationality' => 'required|string|max:255',
+                'state' => ['required', 'string', 'max:255', function ($attribute, $value, $fail) use ($states) {
+                    if (!in_array($value, $states)) {
+                        $fail('The selected state is invalid.');
+                    }
+                }],
+                'local' => ['required', 'string', 'max:255', function ($attribute, $value, $fail) use ($request, $lgas) {
+                    $state = $request->input('state');
+                    if (!isset($lgas[$state]) || !in_array($value, $lgas[$state])) {
+                        $fail('The selected local government is invalid for the chosen state.');
+                    }
+                }],
+                'religion' => 'required|in:Christianity,Islam,Others',
+                'last_school' => 'required|string|max:255',
+                'last_class' => 'required|string|max:255',
+                'schoolclassid' => 'required|exists:schoolclass,id',
+                'termid' => 'required|exists:schoolterm,id',
+                'sessionid' => 'required|exists:schoolsession,id',
+                'statusId' => 'required|in:1,2'
+            ]);
 
-        if ($validator->fails()) {
+            if ($validator->fails()) {
+                Log::debug('Validation failed', $validator->errors()->toArray());
+                return response()->json([
+                    'success' => false,
+                    'message' => $validator->errors()->first(),
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            DB::beginTransaction();
+
+            // Calculate age based on dateofbirth
+            $birthDate = new \DateTime($request->dateofbirth);
+            $today = new \DateTime();
+            $age = $today->diff($birthDate)->y;
+
+            $updateData = [
+                'admissionNo' => $request->admissionNo,
+                'title' => $request->title,
+                'firstname' => $request->firstname,
+                'lastname' => $request->lastname,
+                'othername' => $request->othername,
+                'gender' => $request->gender,
+                'home_address' => $request->home_address,
+                'home_address2' => $request->home_address2,
+                'dateofbirth' => $request->dateofbirth,
+                'age' => $age,
+                'placeofbirth' => $request->placeofbirth,
+                'nationality' => $request->nationality,
+                'state' => $request->state,
+                'local' => $request->local,
+                'religion' => $request->religion,
+                'last_school' => $request->last_school,
+                'last_class' => $request->last_class,
+                'statusId' => $request->statusId,
+                'updated_at' => now(),
+            ];
+
+            DB::table('studentRegistration')
+                ->where('id', $student)
+                ->update($updateData);
+
+            DB::table('studentclass')->updateOrInsert(
+                ['studentId' => $student],
+                [
+                    'schoolclassid' => $request->schoolclassid,
+                    'termid' => $request->termid,
+                    'sessionid' => $request->sessionid,
+                    'updated_at' => now(),
+                ]
+            );
+
+            if ($request->hasFile('avatar')) {
+                if ($request->file('avatar')->isValid()) {
+                    // Delete existing picture if it exists
+                    $existingPicture = DB::table('studentpicture')->where('studentid', $student)->first();
+                    if ($existingPicture && $existingPicture->picture) {
+                        Storage::disk('public')->delete($existingPicture->picture);
+                        Log::debug('Deleted existing avatar', ['path' => $existingPicture->picture]);
+                    }
+
+                    // Store new avatar
+                    $filename = $student . '_' . time() . '.' . $request->file('avatar')->getClientOriginalExtension();
+                    $path = $request->file('avatar')->storeAs('student_avatars', $filename, 'public');
+                    if (!Storage::disk('public')->exists($path)) {
+                        Log::error('Failed to store avatar', ['path' => $path]);
+                        throw new \Exception('Failed to store avatar file');
+                    }
+                    Log::debug('Avatar stored', [
+                        'filename' => $filename,
+                        'path' => $path,
+                        'full_path' => storage_path('app/public/' . $path),
+                        'url' => asset('storage/' . $path)
+                    ]);
+
+                    // Update or insert picture record
+                    DB::table('studentpicture')->updateOrInsert(
+                        ['studentid' => $student],
+                        ['picture' => $path, 'updated_at' => now()]
+                    );
+                } else {
+                    Log::error('Invalid avatar file uploaded');
+                    throw new \Exception('Invalid avatar file uploaded');
+                }
+            } else {
+                Log::debug('No avatar file provided in request');
+            }
+
+            // Update related tables
+            DB::table('promotionStatus')->updateOrInsert(
+                ['studentId' => $student],
+                [
+                    'schoolclassid' => $request->schoolclassid,
+                    'termid' => $request->termid,
+                    'sessionid' => $request->sessionid,
+                    'promotionStatus' => 'PROMOTED',
+                    'classstatus' => 'CURRENT',
+                    'updated_at' => now(),
+                ]
+            );
+
+            DB::table('studenthouses')->updateOrInsert(
+                ['studentid' => $student],
+                [
+                    'termid' => $request->termid,
+                    'sessionid' => $request->sessionid,
+                    'updated_at' => now(),
+                ]
+            );
+
+            DB::table('studentpersonalityprofiles')->updateOrInsert(
+                ['studentid' => $student],
+                [
+                    'schoolclassid' => $request->schoolclassid,
+                    'termid' => $request->termid,
+                    'sessionid' => $request->sessionid,
+                    'updated_at' => now(),
+                ]
+            );
+
+            DB::commit();
+
+            $imageUrl = null;
+            $picture = DB::table('studentpicture')->where('studentid', $student)->first();
+            if ($picture && $picture->picture) {
+                $imageUrl = asset('storage/' . $picture->picture);
+            }
+
+            Log::debug("Student updated successfully: ID {$student}");
+            return response()->json([
+                'success' => true,
+                'message' => 'Student updated successfully',
+                'image_url' => $imageUrl
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("Error updating student ID {$student}: {$e->getMessage()}\nStack trace: {$e->getTraceAsString()}");
             return response()->json([
                 'success' => false,
-                'message' => $validator->errors()->first(),
-                'errors' => $validator->errors()
-            ], 422);
+                'message' => 'Failed to update student: ' . $e->getMessage(),
+            ], 500);
         }
-
-        DB::beginTransaction();
-
-        // Calculate age based on dateofbirth
-        $birthDate = new \DateTime($request->dateofbirth);
-        $today = new \DateTime();
-        $age = $today->diff($birthDate)->y;
-
-        $updateData = [
-            'admissionNo' => $request->admissionNo,
-            'title' => $request->title,
-            'firstname' => $request->firstname,
-            'lastname' => $request->lastname,
-            'othername' => $request->othername,
-            'gender' => $request->gender,
-            'home_address' => $request->home_address,
-            'home_address2' => $request->home_address2,
-            'dateofbirth' => $request->dateofbirth,
-            'age' => $age,
-            'placeofbirth' => $request->placeofbirth,
-            'nationality' => $request->nationality,
-            'state' => $request->state,
-            'local' => $request->local,
-            'religion' => $request->religion,
-            'last_school' => $request->last_school,
-            'last_class' => $request->last_class,
-            'statusId' => $request->statusId,
-            'updated_at' => now(),
-        ];
-
-        DB::table('studentRegistration')
-            ->where('id', $student)
-            ->update($updateData);
-
-        DB::table('studentclass')->updateOrInsert(
-            ['studentId' => $student],
-            [
-                'schoolclassid' => $request->schoolclassid,
-                'termid' => $request->termid,
-                'sessionid' => $request->sessionid,
-                'updated_at' => now(),
-            ]
-        );
-
-        if ($request->hasFile('avatar')) {
-            $existingPicture = DB::table('studentpicture')->where('studentid', $student)->first();
-            if ($existingPicture && $existingPicture->picture) {
-                Storage::delete('public/' . $existingPicture->picture);
-            }
-            $filename = $student . '_' . $request->file('avatar')->getClientOriginalName();
-            $path = $request->file('avatar')->storeAs('public/images/studentavatar', $filename);
-            DB::table('studentpicture')->updateOrInsert(
-                ['studentid' => $student],
-                ['picture' => str_replace('public/', '', $path), 'updated_at' => now()]
-            );
-        }
-
-        // Update related tables (if needed)
-        DB::table('promotionStatus')->updateOrInsert(
-            ['studentId' => $student],
-            [
-                'schoolclassid' => $request->schoolclassid,
-                'termid' => $request->termid,
-                'sessionid' => $request->sessionid,
-                'promotionStatus' => 'PROMOTED',
-                'classstatus' => 'CURRENT',
-                'updated_at' => now(),
-            ]
-        );
-
-        DB::table('studenthouses')->updateOrInsert(
-            ['studentid' => $student],
-            [
-                'termid' => $request->termid,
-                'sessionid' => $request->sessionid,
-                'updated_at' => now(),
-            ]
-        );
-
-        DB::table('studentpersonalityprofiles')->updateOrInsert(
-            ['studentid' => $student],
-            [
-                'schoolclassid' => $request->schoolclassid,
-                'termid' => $request->termid,
-                'sessionid' => $request->sessionid,
-                'updated_at' => now(),
-            ]
-        );
-
-        DB::commit();
-
-        Log::debug("Student updated successfully: ID {$student}");
-        return response()->json([
-            'success' => true,
-            'message' => 'Student updated successfully',
-        ], 200);
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error("Error updating student ID {$student}: {$e->getMessage()}\nStack trace: {$e->getTraceAsString()}");
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to update student: ' . $e->getMessage(),
-        ], 500);
     }
-}
 
     public function destroy($id): JsonResponse
     {

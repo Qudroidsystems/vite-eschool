@@ -226,7 +226,6 @@
             <th>CA2<br><small>({{ $classInfo->max_ca2 ?? 'N/A' }})</small></th>
             <th>CA3<br><small>({{ $classInfo->max_ca3 ?? 'N/A' }})</small></th>
             <th>Exam<br><small>({{ $classInfo->max_exam ?? 'N/A' }})</small></th>
-   
         </tr>
     </thead>
     <tbody>
@@ -234,16 +233,21 @@
             <tr>
                 <td>{{ $index + 1 }}</td>
                 <td>{{ $broadsheet->admissionno }}</td>
-                <td class="student-name">{{ $broadsheet->fname }} {{ $broadsheet->mname }} {{ $broadsheet->lname }}</td>
+                <td class="student-name">
+                    @if($broadsheet->lname || $broadsheet->fname || $broadsheet->mname)
+                        <span class="fw-bold">{{ $broadsheet->lname ?? '' }}</span> {{ $broadsheet->fname ?? '' }} {{ $broadsheet->mname ?? '' }}
+                    @else
+                        -
+                    @endif
+                </td>
                 <td></td>
                 <td></td>
                 <td></td>
                 <td></td>
-         
             </tr>
         @empty
             <tr>
-                <td colspan="11">No students found.</td>
+                <td colspan="7">No students found.</td>
             </tr>
         @endforelse
     </tbody>

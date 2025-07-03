@@ -9,7 +9,7 @@ use App\Exports\MockRecordsheetExport;
 use App\Imports\ScoresheetImport;
 use App\Models\Broadsheets;
 use App\Models\BroadsheetsMock;
-use App\Models\BroadsheetRecordMock; // Added explicit import
+use App\Models\BroadsheetRecordMock;
 use App\Models\PromotionStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,8 +19,6 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class MyScoreSheetController extends Controller
 {
-    // Existing methods (unchanged where no issues exist)
-
     public function index(Request $request)
     {
         $pagetitle = 'My Scoresheets';
@@ -100,7 +98,6 @@ class MyScoreSheetController extends Controller
         return view('subjectscoresheet.index', compact('broadsheets', 'pagetitle'));
     }
 
-   // Ensure getBroadsheets fetches subject_position_class correctly
     protected function getBroadsheets($staffId, $termId, $sessionId, $schoolClassId = null, $subjectClassId = null)
     {
         $query = Broadsheets::query()
@@ -126,40 +123,40 @@ class MyScoreSheetController extends Controller
             $query->where('subjectclass.id', $subjectClassId);
         }
 
-       $results = $query->get([
-                'broadsheets.id',
-                'studentRegistration.admissionNO as admissionno',
-                'broadsheet_records.student_id as student_id',
-                'studentRegistration.firstname as fname',
-                'studentRegistration.lastname as lname',
-                'studentRegistration.othername as mname',
-                'subject.subject as subject',
-                'subject.subject_code as subject_code',
-                'broadsheet_records.subject_id',
-                'schoolclass.schoolclass',
-                'schoolarm.arm',
-                'schoolterm.term',
-                'schoolsession.session',
-                'subjectclass.id as subjectclid',
-                'broadsheets.staff_id',
-                'broadsheets.term_id',
-                'broadsheet_records.session_id as sessionid',
-                'classcategories.ca1score as ca1score',
-                'classcategories.ca2score as ca2score',
-                'classcategories.ca3score as ca3score',
-                'classcategories.examscore as examscore',
-                'studentpicture.picture',
-                'broadsheets.ca1',
-                'broadsheets.ca2',
-                'broadsheets.ca3',
-                'broadsheets.exam',
-                'broadsheets.total',
-                'broadsheets.bf',
-                'broadsheets.cum',
-                'broadsheets.grade',
-                'broadsheets.subject_position_class as position', // Ensure position is fetched
-                'broadsheets.remark',
-            ])->sortBy('lname'); // Sort by last name ascending
+        $results = $query->get([
+            'broadsheets.id',
+            'studentRegistration.admissionNO as admissionno',
+            'broadsheet_records.student_id as student_id',
+            'studentRegistration.firstname as fname',
+            'studentRegistration.lastname as lname',
+            'studentRegistration.othername as mname',
+            'subject.subject as subject',
+            'subject.subject_code as subject_code',
+            'broadsheet_records.subject_id',
+            'schoolclass.schoolclass',
+            'schoolarm.arm',
+            'schoolterm.term',
+            'schoolsession.session',
+            'subjectclass.id as subjectclid',
+            'broadsheets.staff_id',
+            'broadsheets.term_id',
+            'broadsheet_records.session_id as sessionid',
+            'classcategories.ca1score as ca1score',
+            'classcategories.ca2score as ca2score',
+            'classcategories.ca3score as ca3score',
+            'classcategories.examscore as examscore',
+            'studentpicture.picture',
+            'broadsheets.ca1',
+            'broadsheets.ca2',
+            'broadsheets.ca3',
+            'broadsheets.exam',
+            'broadsheets.total',
+            'broadsheets.bf',
+            'broadsheets.cum',
+            'broadsheets.grade',
+            'broadsheets.subject_position_class as position',
+            'broadsheets.remark',
+        ])->sortBy('lastname');
 
         foreach ($results as $broadsheet) {
             $ca1 = $broadsheet->ca1 ?? 0;
@@ -217,7 +214,6 @@ class MyScoreSheetController extends Controller
         return $results;
     }
 
-    // Ensure results fetches position correctly
     public function results()
     {
         try {
@@ -255,7 +251,7 @@ class MyScoreSheetController extends Controller
                     'broadsheets.bf',
                     'broadsheets.cum',
                     'broadsheets.grade',
-                    'broadsheets.subject_position_class as position', // Ensure position is fetched
+                    'broadsheets.subject_position_class as position',
                     'broadsheets.term_id',
                 ]);
 
@@ -336,11 +332,13 @@ class MyScoreSheetController extends Controller
         $lastScore = null;
         $rows = 0;
 
-        $broadsheets = Broadsheets::where('subjectclass_id', $subjectclassid)
-            ->where('staff_id', $staffid)
-            ->where('term_id', $termid)
-            ->orderBy('cum', 'DESC') // Changed from 'total' to 'cum'
-            ->get();
+        $broadsheets = Broadsheets::where('broadsheets.subjectclass_id', $subjectclassid)
+            ->where('broadsheets.staff_id', $staffid)
+            ->where('broadsheets.term_id', $termid)
+            ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+            ->where('broadsheet_records.session_id', $sessionid)
+            ->orderBy('broadsheets.cum', 'DESC')
+            ->get(['broadsheets.id', 'broadsheets.cum', 'broadsheets.broadsheet_record_id']);
 
         foreach ($broadsheets as $row) {
             $rows++;
@@ -366,7 +364,7 @@ class MyScoreSheetController extends Controller
             }
         }
 
-        Log::info('Updated subject positions for regular exams', [
+        Log::info('Updated subject positions for regular exams across entire class', [
             'subjectclass_id' => $subjectclassid,
             'staff_id' => $staffid,
             'term_id' => $termid,
@@ -537,7 +535,7 @@ class MyScoreSheetController extends Controller
 
     public function destroy(Request $request)
     {
-        $id = $request->input('id'); // Adjusted to expect id from request body
+        $id = $request->input('id');
         $broadsheet = Broadsheets::findOrFail($id);
         $subjectclassid = $broadsheet->subjectclass_id;
         $staffid = $broadsheet->staff_id;
@@ -737,13 +735,7 @@ class MyScoreSheetController extends Controller
                 $message .= " Skipped " . count($failures) . " rows due to validation errors.";
             }
 
-            // return response()->json([
-            //     'success' => true,
-            //     'message' => $message,
-            //     'broadsheets' => $updatedBroadsheets,
-            //     'errors' => $failures,
-            // ]);
-            return redirect()->back()->with('success', 'Batch File Imported  Successfully');
+            return redirect()->back()->with('success', 'Batch File Imported Successfully');
         } catch (\Exception $e) {
             Log::error('Import: Error', [
                 'message' => $e->getMessage(),
@@ -756,56 +748,33 @@ class MyScoreSheetController extends Controller
         }
     }
 
-    // public function results()
+
+    // public function import(Request $request)
     // {
     //     try {
-    //         $subjectclass_id = session('subjectclass_id');
-    //         $schoolclass_id = session('schoolclass_id');
-    //         $term_id = session('term_id');
-    //         $session_id = session('session_id');
+    //         $request->validate([
+    //             'file' => 'required|mimes:xlsx,xls',
+    //             'schoolclass_id' => 'required|integer',
+    //             'subjectclass_id' => 'required|integer',
+    //             'staff_id' => 'required|integer',
+    //             'term_id' => 'required|integer|in:1,2,3',
+    //             'session_id' => 'required|integer',
+    //         ]);
 
-    //         if (!$subjectclass_id || !$schoolclass_id || !$term_id || !$session_id) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Missing required session data',
-    //                 'scores' => [],
-    //             ], 400);
-    //         }
-
-    //         $broadsheets = Broadsheets::where([
-    //             'subjectclass_id' => $subjectclass_id,
-    //             'term_id' => $term_id,
-    //         ])
-    //             ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-    //             ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
-    //             ->leftJoin('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
-    //             ->where('broadsheet_records.session_id', $session_id)
-    //             ->get([
-    //                 'broadsheets.id',
-    //                 'studentRegistration.admissionNO as admissionno',
-    //                 'studentRegistration.firstname as fname',
-    //                 'studentRegistration.lastname as lname',
-    //                 'broadsheets.ca1',
-    //                 'broadsheets.ca2',
-    //                 'broadsheets.ca3',
-    //                 'broadsheets.exam',
-    //                 'broadsheets.total',
-    //                 'broadsheets.bf',
-    //                 'broadsheets.cum',
-    //                 'broadsheets.grade',
-    //                 'broadsheets.subject_position_class as position',
-    //                 'broadsheets.term_id',
-    //             ]);
+    //         $import = new ScoresheetImport($request->all());
+    //         Excel::import($import, $request->file('file'));
 
     //         return response()->json([
     //             'success' => true,
-    //             'scores' => $broadsheets->toArray(),
+    //             'broadsheets' => $import->getUpdatedBroadsheets(),
+    //             'failures' => $import->getFailures(),
+    //             'message' => 'Scores imported successfully.'
     //         ]);
     //     } catch (\Exception $e) {
-    //         Log::error('Error in results endpoint: ' . $e->getMessage());
+    //         \Log::error('Scoresheet import failed: ' . $e->getMessage());
     //         return response()->json([
     //             'success' => false,
-    //             'message' => 'Internal server error: ' . $e->getMessage(),
+    //             'message' => 'Failed to import scores: ' . $e->getMessage()
     //         ], 500);
     //     }
     // }
@@ -883,7 +852,10 @@ class MyScoreSheetController extends Controller
         $staffId = session('staff_id');
 
         if (!$schoolclassId || !$subjectclassId || !$termId || !$sessionId || !$staffId) {
-            return redirect()->back()->with('error', 'Missing required data for download.');
+            return response()->json([
+                'error' => 'Missing required data for download.',
+                'session_data' => session()->all(),
+            ], 400);
         }
 
         try {
@@ -891,13 +863,12 @@ class MyScoreSheetController extends Controller
             return $export->download();
         } catch (\Exception $e) {
             Log::error('Marksheet download error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to generate marksheet: ' . $e->getMessage());
+            return response()->json([
+                'error' => 'Failed to generate marksheet: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
-    // Mock exam methods (aligned with route names)
-
-  // Mock exam index
     public function mockIndex(Request $request)
     {
         $pagetitle = 'My Mock Scoresheets';
@@ -939,7 +910,6 @@ class MyScoreSheetController extends Controller
         return view('subjectscoresheet.mock_index', compact('pagetitle', 'broadsheets'));
     }
 
-    // Mock exam scoresheet show
     public function mockSubjectscoresheet($schoolclassid, $subjectclassid, $staffid, $termid, $sessionid)
     {
         Log::info('Mock Subjectscoresheet parameters:', compact('schoolclassid', 'subjectclassid', 'staffid', 'termid', 'sessionid'));
@@ -977,7 +947,6 @@ class MyScoreSheetController extends Controller
         return view('subjectscoresheet.subjectscoresheet-mock', compact('broadsheets', 'pagetitle'));
     }
 
-    // Mock exam edit
     public function mockEdit($id)
     {
         $broadsheet = BroadsheetsMock::where('broadsheetmock.id', $id)
@@ -1034,7 +1003,6 @@ class MyScoreSheetController extends Controller
         return view('scoresheet.mock_edit', compact('broadsheet', 'pagetitle'));
     }
 
-    // Mock exam update
     public function mockUpdate(Request $request, $id)
     {
         $request->validate([
@@ -1076,7 +1044,6 @@ class MyScoreSheetController extends Controller
         )->with('success', 'Mock score updated successfully!');
     }
 
-    // Mock exam destroy
     public function mockDestroy(Request $request)
     {
         $id = $request->input('id');
@@ -1100,7 +1067,6 @@ class MyScoreSheetController extends Controller
         ]);
     }
 
-    // Mock exam bulk update scores
     public function mockBulkUpdateScores(Request $request)
     {
         $scores = $request->input('scores', []);
@@ -1184,7 +1150,6 @@ class MyScoreSheetController extends Controller
         ]);
     }
 
-    // Mock exam import
     public function mockImport(Request $request)
     {
         Log::info('Mock import: Request received', [
@@ -1212,7 +1177,7 @@ class MyScoreSheetController extends Controller
 
             Log::debug('Mock import: Starting import', $importData);
 
-            $import = new ScoresheetImport($importData, true); // true indicates mock import
+            $import = new ScoresheetImport($importData, true);
             Excel::import($import, $request->file('file'));
 
             $updatedBroadsheets = $import->getUpdatedBroadsheets();
@@ -1246,7 +1211,6 @@ class MyScoreSheetController extends Controller
         }
     }
 
-    // Mock exam results
     public function mockResults()
     {
         try {
@@ -1296,7 +1260,6 @@ class MyScoreSheetController extends Controller
         }
     }
 
-    // Mock exam export
     public function mockExport()
     {
         $schoolclassId = session('schoolclass_id');
@@ -1361,7 +1324,6 @@ class MyScoreSheetController extends Controller
         );
     }
 
-    // Mock exam download marksheet
     public function mockDownloadMarkSheet()
     {
         $schoolclassId = session('schoolclass_id');
@@ -1375,7 +1337,7 @@ class MyScoreSheetController extends Controller
         }
 
         try {
-            $export = new MockMarkSheetExport($subjectclassId, $staffId, $termId, $sessionId, $schoolclassId, true);
+            $export = new MockMarksSheetExport($subjectclassId, $staffId, $termId, $sessionId, $schoolclassId, true);
             return $export->download();
         } catch (\Exception $e) {
             Log::error('Mock marksheet download error: ' . $e->getMessage());
@@ -1497,11 +1459,13 @@ class MyScoreSheetController extends Controller
         $lastScore = null;
         $rows = 0;
 
-        $classPos = BroadsheetsMock::where('subjectclass_id', $subjectclassid)
-            ->where('staff_id', $staffid)
-            ->where('term_id', $termid)
-            ->orderBy('total', 'DESC')
-            ->get();
+        $classPos = BroadsheetsMock::where('broadsheetmock.subjectclass_id', $subjectclassid)
+            ->where('broadsheetmock.staff_id', $staffid)
+            ->where('broadsheetmock.term_id', $termid)
+            ->leftJoin('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
+            ->where('broadsheet_records_mock.session_id', $sessionid)
+            ->orderBy('broadsheetmock.total', 'DESC')
+            ->get(['broadsheetmock.id', 'broadsheetmock.total', 'broadsheetmock.broadsheet_records_mock_id']);
 
         foreach ($classPos as $row) {
             $rows++;
@@ -1525,7 +1489,7 @@ class MyScoreSheetController extends Controller
             }
         }
 
-        Log::info('Updated subject positions for mock exams', [
+        Log::info('Updated subject positions for mock exams across entire class', [
             'subjectclass_id' => $subjectclassid,
             'staff_id' => $staffid,
             'term_id' => $termid,

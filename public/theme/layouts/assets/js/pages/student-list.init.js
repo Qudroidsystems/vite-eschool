@@ -145,35 +145,6 @@ let studentList;
 let allStudents = [];
 const itemsPerPage = 10;
 
-function initializeList() {
-    if (typeof List === 'undefined') {
-        console.error('List.js is not loaded');
-        Swal.fire({
-            title: "Error!",
-            text: "List.js library is missing",
-            icon: "error",
-            confirmButtonClass: "btn btn-primary",
-            buttonsStyling: true
-        });
-        return;
-    }
-    const options = {
-        valueNames: ['name', 'admissionNo', 'class', 'status', 'gender', 'datereg'],
-        page: itemsPerPage,
-        pagination: true
-    };
-    studentList = new List('studentList', options);
-    studentList.on('updated', function () {
-        updatePagination();
-        document.querySelector('.noresult') ? 
-            document.querySelector('.noresult').style.display = studentList.visibleItems.length === 0 ? 'block' : 'none' : 
-            console.warn('No .noresult element found');
-        document.querySelector('#showingCount').textContent = studentList.visibleItems.length;
-        document.querySelector('#totalCount').textContent = studentList.items.length;
-        document.querySelector('#totalStudents').textContent = studentList.items.length;
-    });
-}
-
 function fetchStudents() {
     if (!ensureAxios()) return;
     console.log('Fetching students from /students/data');
@@ -212,38 +183,44 @@ function renderStudents(students) {
     const tbody = document.getElementById('studentTableBody');
     tbody.innerHTML = '';
     students.forEach(student => {
+        const studentImage = student.picture 
+            ? '/storage/' + student.picture 
+            : '/storage/student_avatars/unnamed.jpg';
         const row = document.createElement('tr');
         const actionButtons = [];
         if (window.appPermissions.canShowStudent) {
-            actionButtons.push(`<li><a href="/student/${student.id || ''}" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a></li>`);
+            actionButtons.push(`<li><a href="/student/${student.id||''}" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a></li>`);
         }
         if (window.appPermissions.canUpdateStudent) {
-            actionButtons.push(`<li><a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" data-bs-toggle="modal" data-bs-target="#editStudentModal" data-id="${student.id || ''}"><i class="ph-pencil"></i></a></li>`);
+            actionButtons.push(`<li><a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" data-bs-toggle="modal" data-bs-target="#editStudentModal" data-id="${student.id||''}"><i class="ph-pencil"></i></a></li>`);
         }
         if (window.appPermissions.canDeleteStudent) {
-            actionButtons.push(`<li><a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-id="${student.id || ''}"><i class="ph-trash"></i></a></li>`);
+            actionButtons.push(`<li><a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-id="${student.id||''}"><i class="ph-trash"></i></a></li>`);
         }
         row.innerHTML = `
-            <td class="id" data-id="${student.id || ''}">
+            <td class="id" data-id="${student.id||''}">
                 <div class="form-check">
                     <input class="form-check-input" type="checkbox" name="chk_child">
-                    <label class="form-check-label"></label>
                 </div>
             </td>
-            <td class="name" data-name="${student.lastname || ''} ${student.firstname || ''} ${student.othername || ''}">
+            <td class="name" data-name="${student.lastname||''} ${student.firstname||''} ${student.othername||''}">
                 <div class="d-flex align-items-center">
                     <div class="symbol symbol-50px me-3">
-                        <img src="${student.picture ? '/storage/' + student.picture : '/theme/layouts/assets/media/avatars/blank.png'}" alt="${student.lastname || ''} ${student.firstname || ''} ${student.othername || ''}" class="avatar-xs"/>
+                        <img src="${studentImage}" alt="" class="rounded-circle avatar-sm student-image" style="object-fit:cover;" data-bs-toggle="modal" data-bs-target="#imageViewModal" data-image="${studentImage}"/>
                     </div>
                     <div>
-                        <h6 class="mb-0"><a href="/student/${student.id || ''}" class="text-reset products"><span class="fw-bold">${student.lastname || ''}</span> ${student.firstname || ''} ${student.othername || ''}</a></h6>
+                        <h6 class="mb-0">
+                            <a href="/student/${student.id||''}" class="text-reset products">
+                                <b>${student.lastname||''}</b> ${student.firstname||''} ${student.othername||''}
+                            </a>
+                        </h6>
                     </div>
                 </div>
             </td>
-            <td class="admissionNo" data-admissionNo="${student.admissionNo || ''}">${student.admissionNo || ''}</td>
-            <td class="class" data-class="${student.schoolclassid || ''}">${student.schoolclass || ''} - ${student.arm || ''}</td>
-            <td class="status" data-status="${student.statusId || ''}">${student.statusId == 1 ? 'Old Student' : student.statusId == 2 ? 'New Student' : ''}</td>
-            <td class="gender" data-gender="${student.gender || ''}">${student.gender || ''}</td>
+            <td class="admissionNo" data-admissionNo="${student.admissionNo||''}">${student.admissionNo||''}</td>
+            <td class="class" data-class="${student.schoolclassid||''}">${student.schoolclass||''} - ${student.arm||''}</td>
+            <td class="status" data-status="${student.statusId||''}">${student.statusId==1?'Old Student':student.statusId==2?'New Student':''}</td>
+            <td class="gender" data-gender="${student.gender||''}">${student.gender||''}</td>
             <td class="datereg">${student.created_at ? new Date(student.created_at).toISOString().split('T')[0] : ''}</td>
             <td>
                 <ul class="d-flex gap-2 list-unstyled mb-0">
@@ -254,6 +231,32 @@ function renderStudents(students) {
         tbody.appendChild(row);
     });
     initializeCheckboxes();
+}
+
+function initializeList() {
+    if (typeof List === 'undefined') {
+        console.error('List.js is not loaded');
+        Swal.fire({
+            title: "Error!",
+            text: "List.js library is missing",
+            icon: "error",
+            confirmButtonClass: "btn btn-primary",
+            buttonsStyling: true
+        });
+        return;
+    }
+    const options = {
+        valueNames: ['name', 'admissionNo', 'class', 'status', 'gender', 'datereg'],
+        page: itemsPerPage,
+        pagination: true
+    };
+    studentList = new List('studentList', options);
+    studentList.on('updated', function () {
+        updatePagination();
+        document.getElementById('showingCount').textContent = studentList.visibleItems.length;
+        document.getElementById('totalCount').textContent = studentList.items.length;
+        document.getElementById('totalStudents').textContent = studentList.items.length;
+    });
 }
 
 function updatePagination() {
@@ -377,10 +380,16 @@ function initializeCheckboxes() {
 }
 
 function showage(dob, targetId = 'addAge') {
+    const ageInputId = targetId === 'addAge' ? 'addAgeInput' : 'editAgeInput';
+    const ageDisplay = document.getElementById(targetId);
+    const ageInput = document.getElementById(ageInputId);
+    
     if (!dob || isNaN(Date.parse(dob))) {
-        document.getElementById(targetId).textContent = '';
+        if (ageDisplay) ageDisplay.textContent = '';
+        if (ageInput) ageInput.value = '';
         return;
     }
+    
     const birthDate = new Date(dob);
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
@@ -391,7 +400,9 @@ function showage(dob, targetId = 'addAge') {
     if (age < 0) {
         age = 0;
     }
-    document.getElementById(targetId).textContent = `Age: ${age} years`;
+    
+    if (ageDisplay) ageDisplay.textContent = `Age: ${age} years`;
+    if (ageInput) ageInput.value = age;
 }
 
 function initializeStudentList() {
@@ -543,8 +554,8 @@ function initializeStudentList() {
 
                 const avatarElement = document.getElementById("editStudentAvatar");
                 if (avatarElement) {
-                    avatarElement.src = student.picture ? `/storage/${student.picture}` : '/theme/layouts/assets/media/avatars/blank.png';
-                    avatarElement.setAttribute('data-original-src', student.picture ? `/storage/${student.picture}` : '/theme/layouts/assets/media/avatars/blank.png');
+                    avatarElement.src = student.picture ? `/storage/${student.picture}` : '/storage/student_avatars/unnamed.jpg';
+                    avatarElement.setAttribute('data-original-src', student.picture ? `/storage/${student.picture}` : '/storage/student_avatars/unnamed.jpg');
                 }
 
                 const stateSelect = document.getElementById("editState");
@@ -693,5 +704,13 @@ function initializeStudentList() {
                 }
             });
         }
+    });
+
+    // Add event listener for image view modal
+    document.getElementById('imageViewModal').addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const imageSrc = button.getAttribute('data-image');
+        const modalImage = this.querySelector('#enlargedImage');
+        modalImage.src = imageSrc;
     });
 }

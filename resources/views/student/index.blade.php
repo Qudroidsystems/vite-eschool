@@ -74,32 +74,26 @@ use Spatie\Permission\Models\Role;
                                         </div>
                                     </div>
                                     <div class="col-xxl-3 col-sm-6">
-                                        <div>
-                                            <select class="form-control" id="idClass" data-choices data-choices-search-false data-choices-removeItem>
-                                                <option value="all">Select Class</option>
-                                                @foreach ($schoolclass as $class)
-                                                    <option value="{{ $class->id }}">{{ $class->schoolclass }} - {{ $class->arm }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
+                                        <select class="form-control" id="idClass">
+                                            <option value="all">Select Class</option>
+                                            @foreach ($schoolclass as $class)
+                                                <option value="{{ $class->id }}">{{ $class->schoolclass }} - {{ $class->arm }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
                                     <div class="col-xxl-3 col-sm-6">
-                                        <div>
-                                            <select class="form-control" id="idStatus" data-choices data-choices-search-false data-choices-removeItem>
-                                                <option value="all">Select Status</option>
-                                                <option value="1">Old Student</option>
-                                                <option value="2">New Student</option>
-                                            </select>
-                                        </div>
+                                        <select class="form-control" id="idStatus">
+                                            <option value="all">Select Status</option>
+                                            <option value="1">Old Student</option>
+                                            <option value="2">New Student</option>
+                                        </select>
                                     </div>
                                     <div class="col-xxl-2 col-sm-6">
-                                        <div>
-                                            <select class="form-control" id="idGender" data-choices data-choices-search-false data-choices-removeItem>
-                                                <option value="all">Select Gender</option>
-                                                <option value="Male">Male</option>
-                                                <option value="Female">Female</option>
-                                            </select>
-                                        </div>
+                                        <select class="form-control" id="idGender">
+                                            <option value="all">Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
                                     </div>
                                     <div class="col-xxl-1 col-sm-6">
                                         <button type="button" class="btn btn-secondary w-100" onclick="filterData();"><i class="bi bi-funnel align-baseline me-1"></i> Filters</button>
@@ -110,6 +104,7 @@ use Spatie\Permission\Models\Role;
                     </div>
                 </div>
 
+                <!-- Table -->
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="card">
@@ -133,7 +128,12 @@ use Spatie\Permission\Models\Role;
                                     <table class="table table-centered align-middle table-nowrap mb-0" id="studentTable">
                                         <thead class="table-active">
                                             <tr>
-                                                <th><div class="form-check"><input class="form-check-input" type="checkbox" value="option" id="checkAll"><label class="form-check-label" for="checkAll"></label></div></th>
+                                                <th>
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" value="option" id="checkAll">
+                                                        <label class="form-check-label" for="checkAll"></label>
+                                                    </div>
+                                                </th>
                                                 <th class="sort cursor-pointer" data-sort="name">Student</th>
                                                 <th class="sort cursor-pointer" data-sort="admissionNo">Admission No</th>
                                                 <th class="sort cursor-pointer" data-sort="class">Class</th>
@@ -144,7 +144,7 @@ use Spatie\Permission\Models\Role;
                                             </tr>
                                         </thead>
                                         <tbody class="list form-check-all" id="studentTableBody">
-                                            <!-- Student rows will be populated by JavaScript -->
+                                            <!-- JS renders rows here -->
                                         </tbody>
                                     </table>
                                 </div>
@@ -243,6 +243,7 @@ use Spatie\Permission\Models\Role;
                             <div class="mb-3">
                                 <label for="dateofbirth" class="form-label">Date of Birth <span class="text-danger">*</span></label>
                                 <input type="date" id="addDOB" name="dateofbirth" class="form-control" required onchange="showage(this.value)">
+                                <input type="hidden" id="addAgeInput" name="age">
                                 <span id="addAge" class="text-muted"></span>
                             </div>
                             <div class="mb-3">
@@ -405,6 +406,7 @@ use Spatie\Permission\Models\Role;
                             <div class="mb-3">
                                 <label for="editDOB" class="form-label">Date of Birth <span class="text-danger">*</span></label>
                                 <input type="date" id="editDOB" name="dateofbirth" class="form-control" required onchange="showage(this.value, 'editAge')">
+                                <input type="hidden" id="editAgeInput" name="age">
                                 <span id="editAge" class="text-muted"></span>
                             </div>
                             <div class="mb-3">
@@ -520,6 +522,22 @@ use Spatie\Permission\Models\Role;
                 </div>
             </div>
         </div>
+
+        <!-- Image View Modal -->
+        <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Student Image</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <img id="enlargedImage" src="" alt="Student Image" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
     <!-- End Page-content -->
 
@@ -614,54 +632,6 @@ use Spatie\Permission\Models\Role;
 
             initializeStudentList();
         });
-
-        function renderStudents(students) {
-            const tbody = document.getElementById('studentTableBody');
-            tbody.innerHTML = '';
-            students.forEach(student => {
-                const row = document.createElement('tr');
-                const actionButtons = [];
-                if (window.appPermissions.canShowStudent) {
-                    actionButtons.push(`<li><a href="/student/${student.id || ''}" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a></li>`);
-                }
-                if (window.appPermissions.canUpdateStudent) {
-                    actionButtons.push(`<li><a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" data-bs-toggle="modal" data-bs-target="#editStudentModal" data-id="${student.id || ''}"><i class="ph-pencil"></i></a></li>`);
-                }
-                if (window.appPermissions.canDeleteStudent) {
-                    actionButtons.push(`<li><a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-id="${student.id || ''}"><i class="ph-trash"></i></a></li>`);
-                }
-                row.innerHTML = `
-                    <td class="id" data-id="${student.id || ''}">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="chk_child">
-                            <label class="form-check-label"></label>
-                        </div>
-                    </td>
-                    <td class="name" data-name="${student.lastname || ''} ${student.firstname || ''} ${student.othername || ''}">
-                        <div class="d-flex align-items-center">
-                            <div class="symbol symbol-50px me-3">
-                                <img src="${student.picture ? '/storage/' + student.picture : '/theme/layouts/assets/media/avatars/blank.png'}" alt="${student.lastname || ''} ${student.firstname || ''} ${student.othername || ''}" class="avatar-xs"/>
-                            </div>
-                            <div>
-                                <h6 class="mb-0"><a href="/student/${student.id || ''}" class="text-reset products"><span class="fw-bold">${student.lastname || ''}</span> ${student.firstname || ''} ${student.othername || ''}</a></h6>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="admissionNo" data-admissionNo="${student.admissionNo || ''}">${student.admissionNo || ''}</td>
-                    <td class="class" data-class="${student.schoolclassid || ''}">${student.schoolclass || ''} - ${student.arm || ''}</td>
-                    <td class="status" data-status="${student.statusId || ''}">${student.statusId == 1 ? 'Old Student' : student.statusId == 2 ? 'New Student' : ''}</td>
-                    <td class="gender" data-gender="${student.gender || ''}">${student.gender || ''}</td>
-                    <td class="datereg">${student.created_at ? new Date(student.created_at).toISOString().split('T')[0] : ''}</td>
-                    <td>
-                        <ul class="d-flex gap-2 list-unstyled mb-0">
-                            ${actionButtons.join('')}
-                        </ul>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
-            initializeCheckboxes();
-        }
     </script>
 </div>
 @endsection

@@ -23,6 +23,17 @@ if (!csrfToken) {
     console.warn("CSRF token not found. AJAX requests may fail.");
 }
 
+// Utility: Normalize picture path
+function normalizePicturePath(picture) {
+    if (!picture || picture === 'none') {
+        console.log("normalizePicturePath: Empty or 'none' picture, returning 'unnamed.jpg'");
+        return 'unnamed.jpg';
+    }
+    const normalized = picture.replace(/^studentavatar\//, '');
+    console.log(`normalizePicturePath: Original: ${picture}, Normalized: ${normalized}`);
+    return normalized;
+}
+
 // Utility: Ensure broadsheets is a flat array
 function ensureBroadsheetsArray() {
     if (typeof window.broadsheets === 'undefined') {
@@ -39,6 +50,11 @@ function ensureBroadsheetsArray() {
             item => item && typeof item === 'object' && item.id
         );
     }
+    // Debug picture field
+    console.log('Broadsheets pictures:', window.broadsheets.map(b => ({
+        admissionno: b.admissionno,
+        picture: b.picture || 'none'
+    })));
 }
 
 // Grade calculation
@@ -297,8 +313,6 @@ function bulkSaveAllScores() {
         if (response.data.data?.broadsheets) {
             window.broadsheets = response.data.data.broadsheets;
             ensureBroadsheetsArray();
-            // Update DOM from server response, including positions
-            // We'll use forceUpdatePositions to compute accurate ranking with ties after setting broadsheets data.
             window.broadsheets.forEach(broadsheet => {
                 const row = document.querySelector(`input[data-id="${broadsheet.id}"]`)?.closest('tr');
                 if (row) {
@@ -314,10 +328,20 @@ function bulkSaveAllScores() {
                     if (cumDisplay) cumDisplay.textContent = parseFloat(broadsheet.cum || 0).toFixed(2);
                     const gradeDisplay = row.querySelector('.grade-display span');
                     if (gradeDisplay) gradeDisplay.textContent = broadsheet.grade || '-';
-                    // Position will be handled by forceUpdatePositions
+                    // Update image
+                    const image = row.querySelector('.student-image');
+                    if (image) {
+                        const picture = normalizePicturePath(broadsheet.picture);
+                        image.src = `/storage/student_avatars/${picture}`;
+                        image.dataset.image = `/storage/student_avatars/${picture}`;
+                        image.dataset.picture = broadsheet.picture || 'none';
+                        image.onerror = () => {
+                            image.src = '/storage/student_avatars/unnamed.jpg';
+                            console.log(`Image failed to load for admissionno: ${broadsheet.admissionno || 'unknown'}, picture: ${broadsheet.picture || 'none'}`);
+                        };
+                    }
                 }
             });
-            // Ensure positions are shown immediately after save
             forceUpdatePositions();
 
             Swal.fire({
@@ -405,20 +429,24 @@ function deleteSelectedScores() {
 // View scores modal (positions "0th" if all zero), accurate ties
 function populateScoresModal() {
     const modalBody = document.querySelector('#scoresModal .modal-body');
-    if (!modalBody) return;
+    if (!modalBody) {
+        console.error("Scores modal body not found");
+        return;
+    }
     ensureBroadsheetsArray();
     if (!window.broadsheets || !Array.isArray(window.broadsheets) || window.broadsheets.length === 0) {
+        console.log("No broadsheets data available for modal");
         modalBody.innerHTML = `<div class="alert alert-info text-center">
             <i class="ri-information-line me-2"></i>
             No scores available to display.
         </div>`;
         return;
     }
-    // Check if all cums are zero
+    console.log("Populating scores modal with", window.broadsheets.length, "records");
+
     const cums = window.broadsheets.map(b => parseFloat(b.cum) || 0);
     const allZero = cums.length > 0 && cums.every(cum => cum === 0);
 
-    // Build tie ranking for modal
     let idToPos = {};
     if (allZero) {
         window.broadsheets.forEach(b => { idToPos[b.id] = "0th"; });
@@ -463,14 +491,24 @@ function populateScoresModal() {
         const grade = calculateGrade(cum);
         const name = `${broadsheet.fname || ''} ${broadsheet.lname || ''}`.trim() || 'Unknown';
         const admissionno = broadsheet.admissionno || '-';
-
-        // PATCH: Safe position display
+        const picture = normalizePicturePath(broadsheet.picture);
+        const imageUrl = `/storage/student_avatars/${picture}`;
         let position = idToPos[broadsheet.id] || "-";
+        console.log(`Modal image for ${admissionno}: Original picture=${broadsheet.picture || 'none'}, Normalized=${picture}, URL=${imageUrl}`);
 
         html += `<tr>
             <td>${idx + 1}</td>
             <td class="admissionno">${admissionno}</td>
-            <td class="name">${name}</td>
+            <td class="name">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-sm me-2">
+                        <img src="${imageUrl}" alt="${name}" class="rounded-circle w-100 student-image" data-bs-toggle="modal" data-bs-target="#imageViewModal" data-image="${imageUrl}" data-picture="${broadsheet.picture || 'none'}" onerror="this.src='/storage/student_avatars/unnamed.jpg'; console.log('Modal image failed to load for admissionno: ${admissionno}, picture: ${broadsheet.picture || 'none'}, attempted URL: ${imageUrl}');">
+                    </div>
+                    <div class="d-flex flex-column">
+                        <span class="fw-bold">${broadsheet.lname || ''}</span> ${broadsheet.fname || ''} ${broadsheet.mname || ''}
+                    </div>
+                </div>
+            </td>
             <td>${ca1.toFixed(1)}</td>
             <td>${ca2.toFixed(1)}</td>
             <td>${ca3.toFixed(1)}</td>
@@ -484,6 +522,15 @@ function populateScoresModal() {
     });
     html += `</tbody></table></div>`;
     modalBody.innerHTML = html;
+
+    // Force image load to catch errors early
+    const images = modalBody.querySelectorAll('.student-image');
+    images.forEach(img => {
+        const src = img.src;
+        img.src = ''; // Reset to trigger reload
+        img.src = src;
+        console.log(`Forcing image load: ${src}`);
+    });
 }
 
 // Bulk actions and modal initialization
@@ -493,6 +540,7 @@ function initializeBulkActions() {
     const clearAllScores = document.getElementById('clearAllScores');
     const checkAll = document.getElementById('checkAll');
     const scoresModal = document.getElementById('scoresModal');
+    const imageViewModal = document.getElementById('imageViewModal');
 
     if (bulkUpdateScores) bulkUpdateScores.addEventListener('click', e => { e.preventDefault(); bulkSaveAllScores(); });
     if (selectAllScores) selectAllScores.addEventListener('click', () => {
@@ -524,7 +572,22 @@ function initializeBulkActions() {
     if (checkAll) checkAll.addEventListener('change', function () {
         document.querySelectorAll('.score-checkbox').forEach(checkbox => { checkbox.checked = this.checked; });
     });
-    if (scoresModal) scoresModal.addEventListener('show.bs.modal', () => { populateScoresModal(); });
+    if (scoresModal) scoresModal.addEventListener('show.bs.modal', () => {
+        console.log("Scores modal opening, calling populateScoresModal");
+        populateScoresModal();
+    });
+    if (imageViewModal) imageViewModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const imageSrc = button.getAttribute('data-image') || '/storage/student_avatars/unnamed.jpg';
+        const pictureName = button.getAttribute('data-picture') || 'none';
+        const modalImage = this.querySelector('#enlargedImage');
+        console.log(`ImageViewModal: Setting image src=${imageSrc}, picture=${pictureName}`);
+        modalImage.src = imageSrc;
+        modalImage.onerror = () => {
+            modalImage.src = '/storage/student_avatars/unnamed.jpg';
+            console.log(`Enlarged image failed to load, picture: ${pictureName}, attempted URL: ${imageSrc}`);
+        };
+    });
 
     // SEARCH feature for by name/admissionno
     const searchInput = document.getElementById('searchInput');
@@ -577,11 +640,9 @@ document.addEventListener("DOMContentLoaded", function () {
     ensureBroadsheetsArray();
     initializeScoreInputs();
     initializeBulkActions();
-    // Initial update for all rows
     document.querySelectorAll('#scoresheetTableBody tr:not(#noDataRow)').forEach(row => {
         updateRowTotal(row);
     });
-    // Ensure initial positions
     forceUpdatePositions();
 });
 

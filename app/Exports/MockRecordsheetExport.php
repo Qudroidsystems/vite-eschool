@@ -61,6 +61,7 @@ class MockRecordsheetExport implements FromView, ShouldAutoSize, WithStyles, Wit
                 'studentRegistration.admissionNO as admissionno',
                 'studentRegistration.firstname as fname',
                 'studentRegistration.lastname as lname',
+                'studentRegistration.othername as mname',
                 'subject.subject',
                 'subject.subject_code',
                 'schoolclass.schoolclass',

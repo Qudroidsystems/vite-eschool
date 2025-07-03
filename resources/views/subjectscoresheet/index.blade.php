@@ -172,7 +172,7 @@
                                                 <td class="name" data-name="{{ ($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '') }}">
                                                     <div class="d-flex align-items-center">
                                                         <div class="avatar-sm me-2">
-                                                            <img src="{{ $broadsheet->picture ? Storage::url('images/studentavatar/' . $broadsheet->picture) : Storage::url('images/studentavatar/avatar.jpg') }}" alt="{{ ($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '') }}" class="rounded-circle w-100">
+                                                            <img src="{{ $broadsheet->picture ? asset('storage/student_avatars/' . basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}" alt="{{ ($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '') }}" class="rounded-circle w-100 student-image" data-bs-toggle="modal" data-bs-target="#imageViewModal" data-image="{{ $broadsheet->picture ? asset('storage/student_avatars/' . basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}" data-picture="{{ $broadsheet->picture ?? 'none' }}" onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'; console.log('Image failed to load for admissionno: {{ $broadsheet->admissionno ?? 'unknown' }}, picture: {{ $broadsheet->picture ?? 'none' }}');">
                                                         </div>
                                                         <div class="d-flex flex-column">
                                                             <span class="fw-bold">{{ $broadsheet->lname ?? '' }}</span> {{ $broadsheet->fname ?? '' }} {{ $broadsheet->mname ?? '' }}
@@ -297,7 +297,15 @@
                                 <input type="hidden" name="session_id" value="{{ session('session_id') }}">
                                 <div class="form-group mb-6">
                                     <label class="required fw-semibold fs-6 mb-2">Excel File</label>
-                                    <input type="file" name="file" class="form-control form-control-sm mb-3" accept=".xlsx" required>
+                                    <input type="file" name="file" class="form-control form-control-sm mb-3" accept=".xlsx,.xls" required>
+                                </div>
+                                <div class="form-group mb-6" id="importLoader" style="display: none;">
+                                    <div class="d-flex align-items-center">
+                                        <div class="spinner-border spinner-border-sm text-primary me-3" role="status">
+                                            <span class="visually-hidden">Uploading...</span>
+                                        </div>
+                                        <span>Uploading file...</span>
+                                    </div>
                                 </div>
                                 <div class="text-center pt-10">
                                     <button type="reset" class="btn btn-outline-secondary me-3" data-bs-dismiss="modal">Discard</button>
@@ -343,7 +351,14 @@
                                                 <td>{{ ++$i }}</td>
                                                 <td class="admissionno">{{ $broadsheet->admissionno ?? '-' }}</td>
                                                 <td class="name">
-                                                    <span class="fw-bold">{{ $broadsheet->lname ?? '' }}</span> {{ $broadsheet->fname ?? '' }} {{ $broadsheet->mname ?? '' }}
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="avatar-sm me-2">
+                                                            <img src="{{ $broadsheet->picture ? asset('storage/student_avatars/' . basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}" alt="{{ ($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '') }}" class="rounded-circle w-100 student-image" data-bs-toggle="modal" data-bs-target="#imageViewModal" data-image="{{ $broadsheet->picture ? asset('storage/student_avatars/' . basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}" data-picture="{{ $broadsheet->picture ?? 'none' }}" onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'; console.log('Image failed to load for admissionno: {{ $broadsheet->admissionno ?? 'unknown' }}, picture: {{ $broadsheet->picture ?? 'none' }}');">
+                                                        </div>
+                                                        <div class="d-flex flex-column">
+                                                            <span class="fw-bold">{{ $broadsheet->lname ?? '' }}</span> {{ $broadsheet->fname ?? '' }} {{ $broadsheet->mname ?? '' }}
+                                                        </div>
+                                                    </div>
                                                 </td>
                                                 <td>{{ $broadsheet->ca1 ? number_format($broadsheet->ca1, 1) : '0.0' }}</td>
                                                 <td>{{ $broadsheet->ca2 ? number_format($broadsheet->ca2, 1) : '0.0' }}</td>
@@ -371,6 +386,21 @@
                 </div>
             </div>
 
+            <!-- Image View Modal -->
+            <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Student Image</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <img id="enlargedImage" src="" alt="Student Image" class="img-fluid" onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'; console.log('Enlarged image failed to load');">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -383,5 +413,11 @@
     window.subjectclass_id = {{ session('subjectclass_id') }};
     window.schoolclass_id = {{ session('schoolclass_id') }};
     window.staff_id = {{ session('staff_id') }};
+   window.routes = {
+    results: '{{ route('subjectscoresheet.results') }}',
+    bulkUpdate: '{{ route('subjectscoresheet.bulk-update') }}',
+    destroy: '{{ route('subjectscoresheet.destroy', ['id' => '__ID__']) }}',
+    import: '{{ route('subjectscoresheet.import') }}'
+};
 </script>
 @endsection

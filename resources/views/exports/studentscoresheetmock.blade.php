@@ -114,22 +114,9 @@
                 <th>#</th>
                 <th>Admission No.</th>
                 <th>Name</th>
-                <th>CA1</th>
-                <th>CA2</th>
-                <th>CA3</th>
-                <th>
-                    <div>CA Avg</div>
-                    <div>(CA1 + CA2 + CA3)/3</div>
-                </th>
                 <th>Exam</th>
                 <th>
                     <div>Total</div>
-                    <div>(CA Avg + Exam)/2</div>
-                </th>
-                <th>BF</th>
-                <th>
-                    <div>Cum</div>
-                    <div>(BF + Total)/2</div>
                 </th>
                 <th>Grade</th>
                 <th>Class Avg.</th>
@@ -149,14 +136,7 @@
                             -
                         @endif
                     </td>
-                    <td>{{ number_format($broadsheet->ca1 ?? 0, 1) }}</td>
-                    <td>{{ number_format($broadsheet->ca2 ?? 0, 1) }}</td>
-                    <td>{{ number_format($broadsheet->ca3 ?? 0, 1) }}</td>
-                    <td>{{ number_format(($broadsheet->ca1 + $broadsheet->ca2 + $broadsheet->ca3) / 3, 1) }}</td>
                     <td>{{ number_format($broadsheet->exam ?? 0, 1) }}</td>
-                    <td>{{ number_format($broadsheet->total ?? 0, 1) }}</td>
-                    <td>{{ number_format($broadsheet->bf ?? 0, 2) }}</td>
-                    <td>{{ number_format($broadsheet->cum ?? 0, 2) }}</td>
                     <td>{{ $broadsheet->grade ?? '-' }}</td>
                     <td>{{ number_format($broadsheet->avg ?? 0, 1) }}</td>
                     <td>{{ $broadsheet->position ?? '-' }}</td>

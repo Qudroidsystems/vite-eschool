@@ -158,6 +158,7 @@ Route::group(['middleware' => ['auth']], function () {
     // Route::get('/subjectscoresheet/{schoolclassid}/{subjectclassid}/{userid}/{termid}/{session_id}', [MyScoreSheetController::class, 'index'])->name('subjectscoresheet.index');
     // Route::get('/subjectscoresheet-mock/{schoolclassid}/{subjectclassid}/{userid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'index'])->name('subjectscoresheet-mock.index');
     Route::resource('studentresults', StudentResultsController::class);
+    
 
     // Terminal Scoresheet Routes
     // Route::resource('subjectscoresheet', MyScoreSheetController::class);
@@ -171,7 +172,7 @@ Route::group(['middleware' => ['auth']], function () {
 
 
 
-    Route::get('/job/status/{job_id}', [JobStatusController::class, 'show'])->name('job.status');
+    // Route::get('/job/status/{job_id}', [JobStatusController::class, 'show'])->name('job.status');
 
    
     // Mock Scoresheet Routes
