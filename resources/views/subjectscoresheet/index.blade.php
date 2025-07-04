@@ -3,6 +3,33 @@
 @section('content')
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
+<style>
+/* Improve input field size and touch target on mobile */
+@media (max-width: 768px) {
+    .score-input {
+        height: 48px; /* Increased height for better touch interaction */
+        font-size: 1.1rem; /* Larger font for better readability */
+        padding: 8px; /* Increased padding for touch */
+        width: 80px; /* Fixed width to accommodate 3 digits (e.g., 100.0) */
+        min-width: 80px; /* Ensure minimum width */
+        box-sizing: border-box; /* Ensure padding is included in width */
+        touch-action: manipulation; /* Improve touch interaction */
+        text-align: right; /* Align numbers for better readability */
+    }
+    .table-responsive {
+        overflow-x: auto; /* Ensure table scrolls on mobile */
+    }
+    .avatar-sm {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    /* Adjust table cell padding for better spacing */
+    td.ca1, td.ca2, td.ca3, td.exam {
+        padding: 4px !important; /* Reduced padding to fit wider inputs */
+    }
+}
+</style>
+
 <!-- Main content container -->
 <div class="main-content">
     <div class="page-content">
@@ -180,16 +207,16 @@
                                                     </div>
                                                 </td>
                                                 <td class="ca1">
-                                                    <input type="number" class="form-control form-control-sm score-input" data-field="ca1" data-id="{{ $broadsheet->id }}" value="{{ $broadsheet->ca1 ?? '' }}" min="0" max="100" step="0.1" placeholder="0">
+                                                    <input type="number" class="form-control score-input" data-field="ca1" data-id="{{ $broadsheet->id }}" value="{{ $broadsheet->ca1 ?? '' }}" min="0" max="100" step="0.1" placeholder="">
                                                 </td>
                                                 <td class="ca2">
-                                                    <input type="number" class="form-control form-control-sm score-input" data-field="ca2" data-id="{{ $broadsheet->id }}" value="{{ $broadsheet->ca2 ?? '' }}" min="0" max="100" step="0.1" placeholder="0">
+                                                    <input type="number" class="form-control score-input" data-field="ca2" data-id="{{ $broadsheet->id }}" value="{{ $broadsheet->ca2 ?? '' }}" min="0" max="100" step="0.1" placeholder="">
                                                 </td>
                                                 <td class="ca3">
-                                                    <input type="number" class="form-control form-control-sm score-input" data-field="ca3" data-id="{{ $broadsheet->id }}" value="{{ $broadsheet->ca3 ?? '' }}" min="0" max="100" step="0.1" placeholder="0">
+                                                    <input type="number" class="form-control score-input" data-field="ca3" data-id="{{ $broadsheet->id }}" value="{{ $broadsheet->ca3 ?? '' }}" min="0" max="100" step="0.1" placeholder="">
                                                 </td>
                                                 <td class="exam">
-                                                    <input type="number" class="form-control form-control-sm score-input" data-field="exam" data-id="{{ $broadsheet->id }}" value="{{ $broadsheet->exam ?? '' }}" min="0" max="100" step="0.1" placeholder="0">
+                                                    <input type="number" class="form-control score-input" data-field="exam" data-id="{{ $broadsheet->id }}" value="{{ $broadsheet->exam ?? '' }}" min="0" max="100" step="0.1" placeholder="">
                                                 </td>
                                                 <td class="total-display text-center">
                                                     <span class="badge bg-primary">{{ $broadsheet->total ? number_format($broadsheet->total, 1) : '0.0' }}</span>
@@ -413,11 +440,11 @@
     window.subjectclass_id = {{ session('subjectclass_id') }};
     window.schoolclass_id = {{ session('schoolclass_id') }};
     window.staff_id = {{ session('staff_id') }};
-   window.routes = {
-    results: '{{ route('subjectscoresheet.results') }}',
-    bulkUpdate: '{{ route('subjectscoresheet.bulk-update') }}',
-    destroy: '{{ route('subjectscoresheet.destroy', ['id' => '__ID__']) }}',
-    import: '{{ route('subjectscoresheet.import') }}'
-};
+    window.routes = {
+        results: '{{ route('subjectscoresheet.results') }}',
+        bulkUpdate: '{{ route('subjectscoresheet.bulk-update') }}',
+        destroy: '{{ route('subjectscoresheet.destroy', ['id' => '__ID__']) }}',
+        import: '{{ route('subjectscoresheet.import') }}'
+    };
 </script>
 @endsection

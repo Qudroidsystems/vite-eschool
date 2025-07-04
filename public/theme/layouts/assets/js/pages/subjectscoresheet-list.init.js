@@ -25,11 +25,11 @@ if (!csrfToken) {
 
 // Utility: Normalize picture path
 function normalizePicturePath(picture) {
-    if (!picture || picture === 'none') {
+    if (!picture || picture === 'none' || picture === '') {
         console.log("normalizePicturePath: Empty or 'none' picture, returning 'unnamed.jpg'");
         return 'unnamed.jpg';
     }
-    const normalized = picture.replace(/^studentavatar\//, '');
+    const normalized = picture.replace(/^studentavatar\/|^\//, '');
     console.log(`normalizePicturePath: Original: ${picture}, Normalized: ${normalized}`);
     return normalized;
 }
@@ -50,7 +50,6 @@ function ensureBroadsheetsArray() {
             item => item && typeof item === 'object' && item.id
         );
     }
-    // Debug picture field
     console.log('Broadsheets pictures:', window.broadsheets.map(b => ({
         admissionno: b.admissionno,
         picture: b.picture || 'none'
@@ -184,14 +183,14 @@ function forceUpdatePositions() {
     }
 }
 
-// Bulk save all scores: always save all, treat blank as 0, validate, and update positions from server
+// Bulk save all scores
 function bulkSaveAllScores() {
     ensureBroadsheetsArray();
     const scoreInputs = document.querySelectorAll('.score-input');
     const progressContainer = document.getElementById('progressContainer');
     const progressBar = progressContainer?.querySelector('.progress-bar');
-    const bulkUpdateBtn = document.getElementById('bulkUpdateScores');
-    const originalBtnContent = bulkUpdateBtn?.innerHTML;
+    const bulkUpdateScores = document.getElementById('bulkUpdateScores');
+    const originalBtnContent = bulkUpdateScores?.innerHTML;
 
     if (!scoreInputs.length) {
         Swal.fire({
@@ -293,9 +292,9 @@ function bulkSaveAllScores() {
 
     if (progressContainer) progressContainer.style.display = 'block';
     if (progressBar) progressBar.style.width = '20%';
-    if (bulkUpdateBtn) {
-        bulkUpdateBtn.disabled = true;
-        bulkUpdateBtn.innerHTML = '<i class="ri-loader-4-line sync-icon"></i> Saving...';
+    if (bulkUpdateScores) {
+        bulkUpdateScores.disabled = true;
+        bulkUpdateScores.innerHTML = '<i class="ri-loader-4-line sync-icon"></i> Saving...';
     }
 
     axios.post(window.routes?.bulkUpdate || '/subjectscoresheet/bulk-update', {
@@ -328,16 +327,20 @@ function bulkSaveAllScores() {
                     if (cumDisplay) cumDisplay.textContent = parseFloat(broadsheet.cum || 0).toFixed(2);
                     const gradeDisplay = row.querySelector('.grade-display span');
                     if (gradeDisplay) gradeDisplay.textContent = broadsheet.grade || '-';
-                    // Update image
                     const image = row.querySelector('.student-image');
-                    if (image) {
-                        const picture = normalizePicturePath(broadsheet.picture);
-                        image.src = `/storage/student_avatars/${picture}`;
-                        image.dataset.image = `/storage/student_avatars/${picture}`;
-                        image.dataset.picture = broadsheet.picture || 'none';
+                    if (image && broadsheet.picture) {
+                        const existingPicture = image.dataset.picture || 'none';
+                        const newPicture = broadsheet.picture || existingPicture;
+                        const picture = normalizePicturePath(newPicture);
+                        const imageUrl = `/storage/student_avatars/${picture}`;
+                        image.src = imageUrl;
+                        image.dataset.image = imageUrl;
+                        image.dataset.picture = newPicture;
                         image.onerror = () => {
                             image.src = '/storage/student_avatars/unnamed.jpg';
-                            console.log(`Image failed to load for admissionno: ${broadsheet.admissionno || 'unknown'}, picture: ${broadsheet.picture || 'none'}`);
+                            image.dataset.image = '/storage/student_avatars/unnamed.jpg';
+                            image.dataset.picture = 'none';
+                            console.log(`Image failed to load for admissionno: ${broadsheet.admissionno || 'unknown'}, picture: ${newPicture}, attempted URL: ${imageUrl}`);
                         };
                     }
                 }
@@ -377,14 +380,14 @@ function bulkSaveAllScores() {
                 if (progressBar) progressBar.style.width = '0%';
             }, 1000);
         }
-        if (bulkUpdateBtn) {
-            bulkUpdateBtn.disabled = false;
-            bulkUpdateBtn.innerHTML = originalBtnContent || '<i class="ri-save-line me-1"></i> Save All Scores';
+        if (bulkUpdateScores) {
+            bulkUpdateScores.disabled = false;
+            bulkUpdateScores.innerHTML = originalBtnContent || '<i class="ri-save-line me-1"></i> Save All Scores';
         }
     });
 }
 
-// Delete selected scores: clear inputs on selected rows and update
+// Delete selected scores
 function deleteSelectedScores() {
     const selectedCheckboxes = document.querySelectorAll('.score-checkbox:checked');
     if (!selectedCheckboxes.length) {
@@ -426,7 +429,7 @@ function deleteSelectedScores() {
     });
 }
 
-// View scores modal (positions "0th" if all zero), accurate ties
+// Populate scores modal
 function populateScoresModal() {
     const modalBody = document.querySelector('#scoresModal .modal-body');
     if (!modalBody) {
@@ -523,11 +526,10 @@ function populateScoresModal() {
     html += `</tbody></table></div>`;
     modalBody.innerHTML = html;
 
-    // Force image load to catch errors early
     const images = modalBody.querySelectorAll('.student-image');
     images.forEach(img => {
         const src = img.src;
-        img.src = ''; // Reset to trigger reload
+        img.src = '';
         img.src = src;
         console.log(`Forcing image load: ${src}`);
     });
@@ -542,58 +544,103 @@ function initializeBulkActions() {
     const scoresModal = document.getElementById('scoresModal');
     const imageViewModal = document.getElementById('imageViewModal');
 
-    if (bulkUpdateScores) bulkUpdateScores.addEventListener('click', e => { e.preventDefault(); bulkSaveAllScores(); });
-    if (selectAllScores) selectAllScores.addEventListener('click', () => {
-        document.querySelectorAll('.score-checkbox').forEach(checkbox => { checkbox.checked = true; });
-        if (checkAll) checkAll.checked = true;
-    });
-    if (clearAllScores) clearAllScores.addEventListener('click', () => {
-        Swal.fire({
-            title: 'Clear All Scores?',
-            text: 'This will clear all score inputs. Are you sure?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            cancelButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, Clear All!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.querySelectorAll('.score-input').forEach(input => { input.value = ''; });
-                document.querySelectorAll('#scoresheetTableBody tr:not(#noDataRow)').forEach(row => { updateRowTotal(row); });
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Cleared!',
-                    text: 'All scores have been cleared.',
-                    timer: 2000
-                });
-            }
-        });
-    });
-    if (checkAll) checkAll.addEventListener('change', function () {
-        document.querySelectorAll('.score-checkbox').forEach(checkbox => { checkbox.checked = this.checked; });
-    });
-    if (scoresModal) scoresModal.addEventListener('show.bs.modal', () => {
-        console.log("Scores modal opening, calling populateScoresModal");
-        populateScoresModal();
-    });
-    if (imageViewModal) imageViewModal.addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        const imageSrc = button.getAttribute('data-image') || '/storage/student_avatars/unnamed.jpg';
-        const pictureName = button.getAttribute('data-picture') || 'none';
-        const modalImage = this.querySelector('#enlargedImage');
-        console.log(`ImageViewModal: Setting image src=${imageSrc}, picture=${pictureName}`);
-        modalImage.src = imageSrc;
-        modalImage.onerror = () => {
-            modalImage.src = '/storage/student_avatars/unnamed.jpg';
-            console.log(`Enlarged image failed to load, picture: ${pictureName}, attempted URL: ${imageSrc}`);
-        };
+    console.log('Initializing bulk actions:', {
+        bulkUpdateScores: !!bulkUpdateScores,
+        selectAllScores: !!selectAllScores,
+        clearAllScores: !!clearAllScores,
+        checkAll: !!checkAll,
+        scoresModal: !!scoresModal,
+        imageViewModal: !!imageViewModal
     });
 
-    // SEARCH feature for by name/admissionno
+    if (bulkUpdateScores) {
+        bulkUpdateScores.addEventListener('click', e => {
+            e.preventDefault();
+            console.log('Bulk Update Scores button clicked');
+            bulkSaveAllScores();
+        });
+    } else {
+        console.warn('bulkUpdateScores button not found in DOM');
+    }
+
+    if (selectAllScores) {
+        selectAllScores.addEventListener('click', () => {
+            console.log('Select All Scores button clicked');
+            document.querySelectorAll('.score-checkbox').forEach(checkbox => { checkbox.checked = true; });
+            if (checkAll) checkAll.checked = true;
+        });
+    } else {
+        console.warn('selectAllScores button not found in DOM');
+    }
+
+    if (clearAllScores) {
+        clearAllScores.addEventListener('click', () => {
+            console.log('Clear All Scores button clicked');
+            Swal.fire({
+                title: 'Clear All Scores?',
+                text: 'This will clear all score inputs. Are you sure?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, Clear All!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.querySelectorAll('.score-input').forEach(input => { input.value = ''; });
+                    document.querySelectorAll('#scoresheetTableBody tr:not(#noDataRow)').forEach(row => { updateRowTotal(row); });
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Cleared!',
+                        text: 'All scores have been cleared.',
+                        timer: 2000
+                    });
+                }
+            });
+        });
+    } else {
+        console.warn('clearAllScores button not found in DOM');
+    }
+
+    if (checkAll) {
+        checkAll.addEventListener('change', function () {
+            console.log('Check All checkbox changed:', this.checked);
+            document.querySelectorAll('.score-checkbox').forEach(checkbox => { checkbox.checked = this.checked; });
+        });
+    } else {
+        console.warn('checkAll checkbox not found in DOM');
+    }
+
+    if (scoresModal) {
+        scoresModal.addEventListener('show.bs.modal', () => {
+            console.log('Scores modal opening, calling populateScoresModal');
+            populateScoresModal();
+        });
+    } else {
+        console.warn('scoresModal not found in DOM');
+    }
+
+    if (imageViewModal) {
+        imageViewModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const imageSrc = button.getAttribute('data-image') || '/storage/student_avatars/unnamed.jpg';
+            const pictureName = button.getAttribute('data-picture') || 'none';
+            const modalImage = this.querySelector('#enlargedImage');
+            console.log(`ImageViewModal: Setting image src=${imageSrc}, picture=${pictureName}`);
+            modalImage.src = imageSrc;
+            modalImage.onerror = () => {
+                modalImage.src = '/storage/student_avatars/unnamed.jpg';
+                console.log(`Enlarged image failed to load, picture: ${pictureName}, attempted URL: ${imageSrc}`);
+            };
+        });
+    } else {
+        console.warn('imageViewModal not found in DOM');
+    }
+
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
     if (searchInput) {
         searchInput.addEventListener('input', function () {
+            console.log('Search input changed:', this.value);
             const search = this.value.trim().toLowerCase();
             document.querySelectorAll('#scoresheetTableBody tr:not(#noDataRow)').forEach(row => {
                 const adm = row.querySelector('.admissionno')?.textContent.toLowerCase() || '';
@@ -605,31 +652,48 @@ function initializeBulkActions() {
                 }
             });
         });
+    } else {
+        console.warn('searchInput not found in DOM');
     }
+
     if (clearSearch) {
         clearSearch.addEventListener('click', function () {
+            console.log('Clear Search button clicked');
             if (searchInput) searchInput.value = '';
             document.querySelectorAll('#scoresheetTableBody tr').forEach(row => row.style.display = '');
         });
+    } else {
+        console.warn('clearSearch button not found in DOM');
     }
 }
 
-// Score input initialization
+// Score input initialization with override default 0
 function initializeScoreInputs() {
     const scoreInputs = document.querySelectorAll('.score-input');
     scoreInputs.forEach(input => {
+        // Clear default 0 on focus
+        input.addEventListener('focus', function () {
+            if (this.value === '0') {
+                this.value = '';
+            }
+        });
+
         input.addEventListener('input', function () {
             const row = input.closest('tr');
             if (row) updateRowTotal(row);
         });
+
         input.addEventListener('blur', function () {
-            const value = parseFloat(input.value);
-            if (input.value && (isNaN(value) || value < 0 || value > 100)) {
-                input.classList.add('is-invalid');
-                input.focus();
+            const value = parseFloat(this.value);
+            if (this.value === '') {
+                this.value = ''; // Keep empty if user clears it
+                this.classList.remove('is-invalid', 'is-valid');
+            } else if (isNaN(value) || value < 0 || value > 100) {
+                this.classList.add('is-invalid');
+                this.focus();
             } else {
-                input.classList.remove('is-invalid');
-                if (input.value) input.classList.add('is-valid');
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
             }
         });
     });

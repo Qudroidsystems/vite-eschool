@@ -60,29 +60,15 @@ class ViewStudentController extends Controller
             }
         }
 
-       
-        $allstudents = Studentclass::where('schoolclassid', $request->input('schoolclassid'))
-                ->where('termid', $request->input('termid'))
-                ->where('sessionid', $request->input('sessionid'))
-                ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
-                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-                ->select([
-                    'studentRegistration.admissionNo as admissionno',
-                    'studentRegistration.firstname as firstname',
-                    'studentRegistration.lastname as lastname',
-                    'studentRegistration.id as stid',
-                    'studentRegistration.othername as othername',
-                    'studentRegistration.gender as gender',
-                    'studentpicture.picture as picture',
-                    // If you need any fields from studentclass table, add them here as well.
-                ])
-                ->latest('studentclass.created_at')
-                ->paginate(10)
-                ->appends([
-                    'schoolclassid' => $request->input('schoolclassid'),
-                    'termid' => $request->input('termid'),
-                    'sessionid' => $request->input('sessionid')
-                ]);
+        $allstudents = $query->select([
+            'studentRegistration.admissionNo as admissionno',
+            'studentRegistration.firstname as firstname',
+            'studentRegistration.lastname as lastname',
+            'studentRegistration.id as stid',
+            'studentRegistration.othername as othername',
+            'studentRegistration.gender as gender',
+            'studentpicture.picture as picture',
+        ])->latest('studentclass.created_at')->get();
 
         $studentcount = Studentclass::where('schoolclassid', $request->input('schoolclassid'))
             ->where('sessionid', $request->input('sessionid'))
@@ -172,6 +158,7 @@ class ViewStudentController extends Controller
                     'lastname' => $student->lastname,
                     'othername' => $student->othername,
                     'gender' => $student->gender,
+                    'picture' => null, // Assuming no picture is uploaded during creation
                 ],
             ], 201);
         } catch (ValidationException $e) {
@@ -267,6 +254,7 @@ class ViewStudentController extends Controller
                     'lastname' => $student->lastname,
                     'othername' => $student->othername,
                     'gender' => $student->gender,
+                    'picture' => StudentPicture::where('studentid', $student->id)->first()->picture ?? null,
                 ],
             ], 200);
         } catch (\Exception $e) {
@@ -297,8 +285,8 @@ class ViewStudentController extends Controller
             // Delete related StudentPicture
             Log::debug("Deleting StudentPicture for student ID: {$id}");
             $picture = StudentPicture::where('studentid', $id)->first();
-            if ($picture && $picture->picture && $picture->picture !== 'unnamed.png') {
-                Storage::delete('images/studentavatar/' . $picture->picture);
+            if ($picture && $picture->picture && $picture->picture !== 'unnamed.jpg') {
+                Storage::delete('public/student_avatars/' . $picture->picture);
             }
             StudentPicture::where('studentid', $id)->delete();
 
