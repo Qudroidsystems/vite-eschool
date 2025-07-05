@@ -97,105 +97,80 @@ if (createButton) {
     });
 }
 
-// Event delegation for edit, remove, and pagination buttons
+// Event delegation for edit, remove, and image preview
 document.addEventListener('click', function (e) {
     const editBtn = e.target.closest('.edit-item-btn');
     const removeBtn = e.target.closest('.remove-item-btn');
-    const paginationLink = e.target.closest('.pagination-prev, .pagination-next, .pagination .page-link');
+    const image = e.target.closest('.staff-image');
     
     if (editBtn) {
         handleEditClick(e, editBtn);
     } else if (removeBtn) {
         handleRemoveClick(e, removeBtn);
-    } else if (paginationLink) {
-        e.preventDefault();
-        const url = paginationLink.getAttribute('href') || paginationLink.getAttribute('data-url');
-        if (url && url !== '#') fetchPage(url);
+    } else if (image) {
+        handleImageClick(e, image);
     }
 });
 
-// FIXED: Simplified page refresh function
-function refreshTable() {
-    console.log("Refreshing table...");
-    // Simply reload the current page to ensure data consistency
-    window.location.reload();
-}
-
-// Alternative: More reliable fetchPage function
-function fetchPage(url) {
-    if (!url) {
-        console.warn("No URL provided for fetchPage, refreshing current page");
-        refreshTable();
-        return;
-    }
-    
-    console.log("Fetching page:", url);
-    
-    // Show loading indicator
-    const tableContainer = document.querySelector('.card .card-body');
-    if (tableContainer) {
-        const loadingHtml = `
-            <div class="text-center p-4">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                </div>
-                <p class="mt-2">Loading data...</p>
-            </div>
-        `;
-        tableContainer.innerHTML = loadingHtml;
-    }
-    
-    axios.get(url, {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
-        params: { _t: new Date().getTime() }
-    }).then(function (response) {
-        console.log("Fetch page response received");
-        
-        if (!response.data.html) {
-            console.error("No HTML content in response, refreshing page");
-            refreshTable();
-            return;
-        }
-
-        try {
-            // Create a temporary container to parse the response HTML
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = response.data.html;
-            
-            // Extract only the table content and pagination from the response
-            const newTableContainer = tempDiv.querySelector('.card .card-body');
-            const newPagination = tempDiv.querySelector('#pagination-element');
-            
-            if (newTableContainer) {
-                const currentTableContainer = document.querySelector('.card .card-body');
-                if (currentTableContainer) {
-                    currentTableContainer.innerHTML = newTableContainer.innerHTML;
-                }
-            }
-            
-            if (newPagination) {
-                const currentPagination = document.querySelector('#pagination-element');
-                if (currentPagination) {
-                    currentPagination.innerHTML = newPagination.innerHTML;
-                }
-            }
-
-            // Reinitialize components
-            initializeCheckboxes();
-            initializeListJS();
-            
-        } catch (error) {
-            console.error("Error processing response, refreshing page:", error);
-            refreshTable();
-        }
-        
-    }).catch(function (error) {
-        console.error("Error fetching page:", error.response || error);
-        
-        // Fallback to page refresh on error
-        console.log("Falling back to page refresh");
-        refreshTable();
+// Handle image preview
+function handleImageClick(e, image) {
+    e.preventDefault();
+    console.log("Image clicked, attributes:", {
+        imageUrl: image.getAttribute('data-image'),
+        teacherName: image.getAttribute('data-teachername'),
+        fileExists: image.getAttribute('data-file-exists'),
+        defaultExists: image.getAttribute('data-default-exists'),
+        picture: image.getAttribute('data-picture')
     });
+    
+    const imageUrl = image.getAttribute('data-image');
+    const teacherName = image.getAttribute('data-teachername');
+    const fileExists = image.getAttribute('data-file-exists') === 'true';
+    const defaultExists = image.getAttribute('data-default-exists') === 'true';
+    
+    const previewImage = document.getElementById('preview-image');
+    const previewTeacherName = document.getElementById('preview-teachername');
+    
+    if (previewImage && previewTeacherName) {
+        if (fileExists || (image.getAttribute('data-picture') === 'none' && defaultExists)) {
+            previewImage.src = imageUrl;
+            previewTeacherName.textContent = teacherName || 'Unknown Teacher';
+        } else {
+            previewImage.src = '/storage/staff_avatars/unnamed.jpg';
+            previewTeacherName.textContent = teacherName || 'Unknown Teacher';
+            console.warn('Image not found, using default');
+        }
+        
+        // Add error handling for image load failure
+        previewImage.onerror = function() {
+            this.src = '/storage/staff_avatars/unnamed.jpg';
+            console.error('Preview image failed to load, falling back to default');
+        };
+        
+        try {
+            const modal = new bootstrap.Modal(document.getElementById('imageViewModal'));
+            modal.show();
+            console.log("Image preview modal opened");
+        } catch (error) {
+            console.error("Error opening image preview modal:", error);
+            Swal.fire({
+                position: "center",
+                icon: "error",
+                title: "Error opening image preview",
+                text: "Failed to open modal. Please ensure Bootstrap is loaded.",
+                showConfirmButton: true
+            });
+        }
+    } else {
+        console.error("Preview elements not found");
+        Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "Error opening image preview",
+            text: "Preview elements not found.",
+            showConfirmButton: true
+        });
+    }
 }
 
 // Delete single subject class
@@ -217,9 +192,7 @@ function handleRemoveClick(e, button) {
 
     const deleteButton = document.getElementById("delete-record");
     if (deleteButton) {
-        // Remove any existing event listeners to prevent duplicates
         deleteButton.onclick = null;
-        
         deleteButton.onclick = function () {
             console.log("Deleting subject class:", itemId);
             
@@ -237,7 +210,6 @@ function handleRemoveClick(e, button) {
                     });
                     
                     modal.hide();
-                    // Use page refresh for reliability
                     setTimeout(() => refreshTable(), 500);
                 })
                 .catch(function (error) {
@@ -256,15 +228,6 @@ function handleRemoveClick(e, button) {
     }
 }
 
-// Helper function to get current page URL
-function getCurrentPageUrl() {
-    const activePageLink = document.querySelector('.pagination .page-item.active .page-link');
-    if (activePageLink) {
-        return activePageLink.getAttribute('href') || activePageLink.getAttribute('data-url') || '/subjectclass';
-    }
-    return '/subjectclass';
-}
-
 // Edit subject class
 function handleEditClick(e, button) {
     e.preventDefault();
@@ -278,22 +241,18 @@ function handleEditClick(e, button) {
         return;
     }
     
-    // Get data from the table row
     const schoolClassId = tr.querySelector(".sclass")?.getAttribute("data-schoolclassid") || "";
     const subjectTeacherId = tr.querySelector(".subjectteacher")?.getAttribute("data-subteacherid") || "";
     
     console.log("Edit data:", { itemId, schoolClassId, subjectTeacherId });
     
-    // Populate form fields
     if (editIdField) editIdField.value = itemId;
     if (editSchoolClassIdField) editSchoolClassIdField.value = schoolClassId;
     
-    // Clear all checkboxes first
     document.querySelectorAll('#editModal input[name="subjectteacherid[]"]').forEach(checkbox => {
         checkbox.checked = false;
     });
     
-    // Check the appropriate subject teacher checkbox
     if (subjectTeacherId) {
         const teacherCheckbox = document.querySelector(`#editModal input[name="subjectteacherid[]"][value="${subjectTeacherId}"]`);
         if (teacherCheckbox) {
@@ -377,7 +336,6 @@ function deleteMultiple() {
                         confirmButtonClass: "btn btn-info w-xs mt-2",
                         buttonsStyling: false
                     });
-                    
                     setTimeout(() => refreshTable(), 1000);
                 })
                 .catch((error) => {
@@ -394,7 +352,7 @@ function deleteMultiple() {
     });
 }
 
-// Initialize List.js for client-side filtering
+// Initialize List.js for client-side filtering and pagination
 let subjectClassList;
 
 function initializeListJS() {
@@ -403,33 +361,62 @@ function initializeListJS() {
     
     if (subjectClassListContainer && hasRows) {
         try {
-            // Destroy existing instance if it exists
             if (subjectClassList) {
                 subjectClassList.clear();
             }
             
             subjectClassList = new List('subjectClassList', {
                 valueNames: ['sn', 'subjectteacher', 'subject', 'sclass', 'schoolarm', 'term', 'session', 'datereg'],
-                page: 1000,
-                pagination: false,
+                page: 10,
+                pagination: {
+                    innerWindow: 2,
+                    outerWindow: 1,
+                    left: 0,
+                    right: 0,
+                    paginationClass: "listjs-pagination"
+                },
                 listClass: 'list'
             });
             
-            console.log("List.js initialized/reinitialized");
+            console.log("List.js initialized with pagination");
             
-            // Update no results message
-            subjectClassList.on('searchComplete', function () {
+            subjectClassList.on('updated', function () {
+                const totalRecords = subjectClassList.items.length;
+                const visibleRecords = subjectClassList.visibleItems.length;
+                const showingRecords = Math.min(visibleRecords, subjectClassList.page);
+                const currentPage = Math.ceil((subjectClassList.i - 1) / subjectClassList.page) + 1;
+                const totalPages = Math.ceil(totalRecords / subjectClassList.page);
+                
+                document.getElementById('showing-records').textContent = showingRecords;
+                document.getElementById('total-records').textContent = totalRecords;
+                document.getElementById('total-records-footer').textContent = totalRecords;
+                
+                const pagination = document.querySelector('.listjs-pagination');
+                if (pagination) {
+                    pagination.querySelectorAll('.page').forEach(page => {
+                        page.classList.remove('active');
+                        if (parseInt(page.textContent) === currentPage) {
+                            page.classList.add('active');
+                        }
+                    });
+                }
+                
                 const noResultRow = document.querySelector('.noresult');
                 if (noResultRow) {
-                    noResultRow.style.display = subjectClassList.visibleItems.length === 0 ? 'block' : 'none';
+                    noResultRow.style.display = visibleRecords === 0 ? 'block' : 'none';
                 }
             });
+            
+            subjectClassList.update();
             
         } catch (error) {
             console.error("List.js initialization failed:", error);
         }
     } else {
         console.warn("No subject classes available for List.js initialization");
+        document.getElementById('showing-records').textContent = 0;
+        document.getElementById('total-records').textContent = 0;
+        document.getElementById('total-records-footer').textContent = 0;
     }
 }
 
@@ -442,10 +429,17 @@ function filterData() {
     
     if (subjectClassList) {
         subjectClassList.search(searchValue, ['sn', 'subjectteacher', 'subject', 'sclass', 'schoolarm', 'term', 'session']);
+        subjectClassList.update();
     }
 }
 
-// FIXED: Add subject class with proper modal handling
+// Refresh table after CRUD operations
+function refreshTable() {
+    console.log("Refreshing table...");
+    window.location.reload();
+}
+
+// Add subject class
 const addSubjectClassForm = document.getElementById("add-subjectclass-form");
 if (addSubjectClassForm) {
     addSubjectClassForm.addEventListener("submit", function (e) {
@@ -477,7 +471,6 @@ if (addSubjectClassForm) {
             return;
         }
 
-        // Disable submit button to prevent double submission
         const submitBtn = document.getElementById("add-btn");
         if (submitBtn) {
             submitBtn.disabled = true;
@@ -495,7 +488,6 @@ if (addSubjectClassForm) {
         .then(function (response) {
             console.log("Add success:", response.data);
             
-            // Get modal instance and hide it properly
             const modalElement = document.getElementById("addSubjectClassModal");
             const modal = bootstrap.Modal.getInstance(modalElement);
             
@@ -503,7 +495,6 @@ if (addSubjectClassForm) {
                 modal.hide();
             }
             
-            // Wait for modal to close before showing success message
             setTimeout(() => {
                 Swal.fire({
                     position: "center",
@@ -514,14 +505,12 @@ if (addSubjectClassForm) {
                     showCloseButton: true
                 });
                 
-                // Refresh the table after showing success message
                 setTimeout(() => refreshTable(), 500);
             }, 300);
         })
         .catch(function (error) {
             console.error("Add error:", error.response?.data || error);
             
-            // Re-enable submit button
             if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = "Add Subject Class";
@@ -537,7 +526,7 @@ if (addSubjectClassForm) {
     });
 }
 
-// FIXED: Edit subject class with proper modal handling
+// Edit subject class
 const editSubjectClassForm = document.getElementById("edit-subjectclass-form");
 if (editSubjectClassForm) {
     editSubjectClassForm.addEventListener("submit", function (e) {
@@ -561,7 +550,6 @@ if (editSubjectClassForm) {
             return;
         }
         
-        // Disable submit button
         const submitBtn = document.getElementById("update-btn");
         if (submitBtn) {
             submitBtn.disabled = true;
@@ -570,14 +558,12 @@ if (editSubjectClassForm) {
         
         console.log("Sending edit request:", { id, schoolclassid, subjectteacherids });
         
-        // For edit, we'll send the first selected subject teacher
         const subjectteacherid = subjectteacherids[0];
         
         axios.put(`/subjectclass/${id}`, { schoolclassid, subjectteacherid })
             .then(function (response) {
                 console.log("Edit success:", response.data);
                 
-                // Get modal instance and hide it properly
                 const modalElement = document.getElementById("editModal");
                 const modal = bootstrap.Modal.getInstance(modalElement);
                 
@@ -585,7 +571,6 @@ if (editSubjectClassForm) {
                     modal.hide();
                 }
                 
-                // Wait for modal to close before showing success message
                 setTimeout(() => {
                     Swal.fire({
                         position: "center",
@@ -596,14 +581,12 @@ if (editSubjectClassForm) {
                         showCloseButton: true
                     });
                     
-                    // Refresh the table after showing success message
                     setTimeout(() => refreshTable(), 500);
                 }, 300);
             })
             .catch(function (error) {
                 console.error("Edit error:", error.response?.data || error);
                 
-                // Re-enable submit button
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = "Update";
@@ -619,7 +602,7 @@ if (editSubjectClassForm) {
     });
 }
 
-// FIXED: Modal events with proper cleanup
+// Modal events
 const addModal = document.getElementById("addSubjectClassModal");
 if (addModal) {
     addModal.addEventListener("show.bs.modal", function (e) {
@@ -652,20 +635,17 @@ if (addModal) {
         const errorMsg = document.getElementById("alert-error-msg");
         if (errorMsg) errorMsg.classList.add("d-none");
         
-        // Reset submit button
         const addBtn = document.getElementById("add-btn");
         if (addBtn) {
             addBtn.disabled = true;
             addBtn.innerHTML = "Add Subject Class";
         }
         
-        // Remove modal backdrop if it's stuck
         const backdrop = document.querySelector('.modal-backdrop');
         if (backdrop) {
             backdrop.remove();
         }
         
-        // Ensure body classes are cleaned up
         document.body.classList.remove('modal-open');
         document.body.style.overflow = '';
         document.body.style.paddingRight = '';
@@ -693,20 +673,38 @@ if (editModal) {
         const errorMsg = document.getElementById("edit-alert-error-msg");
         if (errorMsg) errorMsg.classList.add("d-none");
         
-        // Reset submit button
         const updateBtn = document.getElementById("update-btn");
         if (updateBtn) {
             updateBtn.disabled = false;
             updateBtn.innerHTML = "Update";
         }
         
-        // Remove modal backdrop if it's stuck
         const backdrop = document.querySelector('.modal-backdrop');
         if (backdrop) {
             backdrop.remove();
         }
         
-        // Ensure body classes are cleaned up
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    });
+}
+
+// Image preview modal event
+const imageViewModal = document.getElementById("imageViewModal");
+if (imageViewModal) {
+    imageViewModal.addEventListener("hidden.bs.modal", function () {
+        console.log("Image preview modal hidden - cleaning up");
+        const previewImage = document.getElementById("preview-image");
+        const previewTeacherName = document.getElementById("preview-teachername");
+        if (previewImage) previewImage.src = "";
+        if (previewTeacherName) previewTeacherName.textContent = "";
+        
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+        
         document.body.classList.remove('modal-open');
         document.body.style.overflow = '';
         document.body.style.paddingRight = '';

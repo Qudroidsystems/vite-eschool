@@ -67,7 +67,7 @@
                         <div class="card">
                             <div class="card-header d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">Subject Classes <span class="badge bg-dark-subtle text-dark ms-1">{{ $subjectclasses->total() }}</span></h5>
+                                    <h5 class="card-title mb-0">Subject Classes <span class="badge bg-dark-subtle text-dark ms-1" id="total-records">{{ $subjectclasses->count() }}</span></h5>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
@@ -100,8 +100,14 @@
                                             </tr>
                                         </thead>
                                         <tbody class="fw-semibold text-gray-600 list form-check-all">
-                                            @php $i = ($subjectclasses->currentPage() - 1) * $subjectclasses->perPage() @endphp
+                                            @php $i = 0 @endphp
                                             @forelse ($subjectclasses as $sc)
+                                                <?php
+                                                $picture = $sc->picture ?? 'unnamed.jpg';
+                                                $imagePath = asset('storage/staff_avatars/' . $picture);
+                                                $fileExists = file_exists(storage_path('app/public/staff_avatars/' . $picture));
+                                                $defaultImageExists = file_exists(storage_path('app/public/staff_avatars/unnamed.jpg'));
+                                                ?>
                                                 <tr data-url="{{ route('subjectclass.destroy', $sc->scid) }}">
                                                     <td class="id" data-id="{{ $sc->scid }}">
                                                         <div class="form-check form-check-sm form-check-custom form-check-solid">
@@ -112,9 +118,19 @@
                                                     <td class="subjectteacher" data-subteacherid="{{ $sc->subteacherid }}">
                                                         <div class="d-flex align-items-center">
                                                             <div class="symbol symbol-circle symbol-50px overflow-hidden me-3">
-                                                                <a href="#">
+                                                                <a href="javascript:void(0);">
                                                                     <div class="symbol-label">
-                                                                        <img src="{{ $sc->picture ? Storage::url('images/staffavatar/' . $sc->picture) : Storage::url('images/staffavatar/unnamed.png') }}" alt="{{ $sc->teachername }}" class="w-100" />
+                                                                        <img src="{{ $imagePath }}"
+                                                                             alt="{{ $sc->teachername }}"
+                                                                             class="rounded-circle avatar-md staff-image"
+                                                                             data-bs-toggle="modal"
+                                                                             data-bs-target="#imageViewModal"
+                                                                             data-image="{{ $imagePath }}"
+                                                                             data-picture="{{ $sc->picture ?? 'none' }}"
+                                                                             data-teachername="{{ $sc->teachername }}"
+                                                                             data-file-exists="{{ $fileExists ? 'true' : 'false' }}"
+                                                                             data-default-exists="{{ $defaultImageExists ? 'true' : 'false' }}"
+                                                                             onerror="this.src='{{ asset('storage/staff_avatars/unnamed.jpg') }}'; console.log('Table image failed to load for teacher: {{ $sc->teachername ?? 'unknown' }}, picture: {{ $sc->picture ?? 'none' }}');" />
                                                                     </div>
                                                                 </a>
                                                             </div>
@@ -128,8 +144,8 @@
                                                     <td class="schoolarm">{{ $sc->schoolarm }}</td>
                                                     <td class="term" data-termid="{{ $sc->termid }}">
                                                         <span @if($sc->termname === 'First Term') style="color: green"
-                                                            @elseif($sc->termname === 'Second Term')style="color: blue"
-                                                             @elseif($sc->termname === 'Third Term') style="color: red"
+                                                            @elseif($sc->termname === 'Second Term') style="color: blue"
+                                                            @elseif($sc->termname === 'Third Term') style="color: red"
                                                             @else style="color: inherit" @endif>
                                                             {{ $sc->termname }}
                                                         </span>
@@ -152,22 +168,25 @@
                                                     </td>
                                                 </tr>
                                             @empty
-                                                <tr>
-                                                    <td colspan="10" class="noresult">No results found</td>
+                                                <tr class="noresult">
+                                                    <td colspan="10" class="text-center">No results found</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
                                     </table>
                                 </div>
+                                <!-- Client-side pagination controls -->
                                 <div class="row mt-3 align-items-center" id="pagination-element">
                                     <div class="col-sm">
                                         <div class="text-muted text-center text-sm-start">
-                                            Showing <strong>{{ $subjectclasses->count() }}</strong> of <span>{{ $subjectclasses->total() }}</span> Results
+                                            Showing <span id="showing-records">0</span> of <span id="total-records-footer">{{ $subjectclasses->count() }}</span> Results
                                         </div>
                                     </div>
                                     <div class="col-sm-auto mt-3 mt-sm-0">
                                         <div class="pagination-wrap">
-                                            {{ $subjectclasses->links() }}
+                                            <nav aria-label="Page navigation">
+                                                <ul class="pagination listjs-pagination"></ul>
+                                            </nav>
                                         </div>
                                     </div>
                                 </div>
@@ -223,7 +242,6 @@
                     </div>
                 </div>
 
- 
                 <!-- Edit Subject Class Modal -->
                 <div id="editModal" class="modal fade" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true" data-bs-backdrop="static">
                     <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -263,7 +281,7 @@
                                     <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                                     <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
                                 </div>
                             </form>
@@ -286,11 +304,29 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Image Preview Modal -->
+                <div id="imageViewModal" class="modal fade" tabindex="-1" aria-labelledby="imageViewModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 id="imageViewModalLabel" class="modal-title">Staff Image Preview</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <img id="preview-image" src="" alt="Staff Image" class="img-fluid" style="max-height: 400px;" />
+                                <p id="preview-teachername" class="mt-3"></p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
         <!-- End Page-content -->
     </div>
 </div>
-
 
 @endsection

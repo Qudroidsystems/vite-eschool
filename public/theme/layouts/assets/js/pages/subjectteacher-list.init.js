@@ -9,6 +9,13 @@ try {
     console.log("All dependencies loaded successfully");
 } catch (error) {
     console.error("Dependency check failed:", error);
+    Swal.fire({
+        position: "center",
+        icon: "error",
+        title: "Initialization Error",
+        text: "Required dependencies are missing. Please contact support.",
+        showConfirmButton: true
+    });
 }
 
 // Set Axios CSRF token globally
@@ -30,6 +37,14 @@ function showLoading() {
     const tableBody = document.querySelector('#kt_roles_view_table tbody');
     if (tableBody) {
         tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Loading...</td></tr>';
+    }
+}
+
+// Clear loading indicator
+function clearLoading() {
+    const tableBody = document.querySelector('#kt_roles_view_table tbody');
+    if (tableBody && tableBody.innerHTML.includes('Loading...')) {
+        tableBody.innerHTML = '<tr><td colspan="9" class="noresult" style="display: block;">No results found</td></tr>';
     }
 }
 
@@ -82,16 +97,71 @@ function handleCheckboxChange(e) {
     }
 }
 
-// Event delegation for edit and remove buttons
+// Event delegation for edit, remove, and image preview
 document.addEventListener('click', function (e) {
     const editBtn = e.target.closest('.edit-item-btn');
     const removeBtn = e.target.closest('.remove-item-btn');
+    const image = e.target.closest('.staff-image');
     if (editBtn) {
         handleEditClick(e, editBtn);
     } else if (removeBtn) {
         handleRemoveClick(e, removeBtn);
+    } else if (image) {
+        handleImageClick(e, image);
     }
 });
+
+// Handle image preview
+function handleImageClick(e, image) {
+    e.preventDefault();
+    console.log("Image clicked, attributes:", {
+        imageUrl: image.getAttribute('data-image'),
+        staffName: image.getAttribute('data-staffname'),
+        picture: image.getAttribute('data-picture')
+    });
+    
+    const imageUrl = image.getAttribute('data-image');
+    const staffName = image.getAttribute('data-staffname');
+    const previewImage = document.getElementById('preview-image');
+    const previewStaffName = document.getElementById('preview-staffname');
+    
+    if (previewImage && previewStaffName) {
+        previewImage.src = imageUrl;
+        previewStaffName.textContent = staffName || 'Unknown Teacher';
+        
+        previewImage.onerror = function() {
+            this.src = '/storage/staff_avatars/unnamed.jpg';
+            if (!this.dataset.errorLogged) {
+                console.error('Preview image failed to load for teacher:', staffName, 'falling back to unnamed.jpg');
+                this.dataset.errorLogged = 'true';
+            }
+        };
+        
+        try {
+            const modal = new bootstrap.Modal(document.getElementById('imageViewModal'));
+            modal.show();
+            console.log("Image preview modal opened");
+        } catch (error) {
+            console.error("Error opening image preview modal:", error);
+            Swal.fire({
+                position: "center",
+                icon: "error",
+                title: "Error opening image preview",
+                text: "Failed to open modal. Please ensure Bootstrap is loaded.",
+                showConfirmButton: true
+            });
+        }
+    } else {
+        console.error("Preview elements not found");
+        Swal.fire({
+            position: "center",
+            icon: "error",
+            title: "Error opening image preview",
+            text: "Preview elements not found.",
+            showConfirmButton: true
+        });
+    }
+}
 
 // Delete single subject teacher
 function handleRemoveClick(e, button) {
@@ -111,7 +181,7 @@ function handleRemoveClick(e, button) {
     if (deleteButton) {
         deleteButton.onclick = function () {
             console.log("Deleting subject teacher:", itemId);
-            axios.delete(deleteUrl)
+            axios.delete(deleteUrl, { timeout: 5000 })
                 .then(function (response) {
                     console.log("Delete success:", response.data);
                     Swal.fire({
@@ -131,10 +201,10 @@ function handleRemoveClick(e, button) {
                     modal.hide();
                     const badge = document.querySelector('#total-count');
                     if (badge) {
-                        const currentTotal = parseInt(badge.textContent);
+                        const currentTotal = parseInt(badge.textContent) || 0;
                         badge.textContent = currentTotal - 1;
                     }
-                    const rowCount = document.querySelectorAll("#kt_roles_view_table tbody tr").length;
+                    const rowCount = document.querySelectorAll("#kt_roles_view_table tbody tr:not(.noresult)").length;
                     const noResult = document.querySelector(".noresult");
                     if (noResult) {
                         noResult.style.display = rowCount === 0 ? "block" : "none";
@@ -142,6 +212,7 @@ function handleRemoveClick(e, button) {
                         document.querySelector("#kt_roles_view_table tbody").innerHTML =
                             '<tr><td colspan="9" class="noresult" style="display: block;">No results found</td></tr>';
                     }
+                    fetchData(); // Refresh table after delete
                 })
                 .catch(function (error) {
                     console.error("Delete error:", error.response?.data || error);
@@ -149,7 +220,7 @@ function handleRemoveClick(e, button) {
                         position: "center",
                         icon: "error",
                         title: "Error deleting subject teacher",
-                        text: error.response?.data?.message || "An error occurred",
+                        text: error.response?.data?.message || error.message || "An error occurred",
                         showConfirmButton: true
                     });
                     modal.hide();
@@ -204,7 +275,8 @@ function handleEditClick(e, button) {
     }
 
     axios.get(`/subjectteacher/${itemId}/subjects`, {
-        headers: { 'X-CSRF-TOKEN': csrfToken }
+        headers: { 'X-CSRF-TOKEN': csrfToken },
+        timeout: 5000
     })
         .then(function (response) {
             console.log("Subjects and terms response:", response.data);
@@ -254,11 +326,10 @@ function handleEditClick(e, button) {
                 position: "center",
                 icon: "error",
                 title: "Error loading data",
-                text: error.response?.data?.message || "An error occurred while fetching subjects and terms",
+                text: error.response?.data?.message || error.message || "An error occurred while fetching subjects and terms",
                 showConfirmButton: true
             });
-            const modal = new bootstrap.Modal(document.getElementById("editModal"));
-            modal.show();
+            clearLoading();
         });
 }
 
@@ -308,7 +379,7 @@ function deleteMultiple() {
         showCloseButton: true
     }).then((result) => {
         if (result.isConfirmed) {
-            Promise.all(ids_array.map((id) => axios.delete(`/subjectteacher/${id}`)))
+            Promise.all(ids_array.map((id) => axios.delete(`/subjectteacher/${id}`, { timeout: 5000 })))
                 .then((responses) => {
                     Swal.fire({
                         title: "Deleted!",
@@ -331,16 +402,18 @@ function deleteMultiple() {
                     if (noResult) {
                         noResult.style.display = subjectTeacherList.visibleItems.length === 0 ? "block" : "none";
                     }
+                    fetchData(); // Refresh table after delete
                 })
                 .catch((error) => {
                     console.error("Bulk delete error:", error);
                     Swal.fire({
                         title: "Error!",
-                        text: error.response?.data?.message || "Failed to delete subject teachers",
+                        text: error.response?.data?.message || error.message || "Failed to delete subject teachers",
                         icon: "error",
                         confirmButtonClass: "btn btn-info w-xs mt-2",
                         buttonsStyling: false
                     });
+                    clearLoading();
                 });
         }
     });
@@ -350,11 +423,12 @@ function deleteMultiple() {
 let subjectTeacherList;
 const subjectTeacherListContainer = document.getElementById('subjectTeacherList');
 function initializeListJs() {
-    if (subjectTeacherListContainer && document.querySelectorAll('#subjectTeacherList tbody tr').length > 0) {
+    console.log("Rows available for List.js:", document.querySelectorAll('#subjectTeacherList tbody tr:not(.noresult)').length);
+    if (subjectTeacherListContainer && document.querySelectorAll('#subjectTeacherList tbody tr:not(.noresult)').length > 0) {
         try {
             subjectTeacherList = new List('subjectTeacherList', {
                 valueNames: ['id', 'sn', 'subjectteacher', 'subject', 'subjectcode', 'term', 'session', 'datereg'],
-                page: 10, // Number of items per page
+                page: 10,
                 pagination: {
                     innerWindow: 2,
                     outerWindow: 1,
@@ -370,13 +444,19 @@ function initializeListJs() {
             subjectTeacherList.on('updated', updatePaginationCounts);
         } catch (error) {
             console.error("List.js initialization failed:", error);
+            clearLoading();
+            Swal.fire({
+                position: "center",
+                icon: "error",
+                title: "Error",
+                text: "Failed to initialize table. Please try refreshing.",
+                showConfirmButton: true
+            });
         }
     } else {
         console.warn("No subject teachers available for List.js initialization");
-        const tableBody = document.querySelector('#kt_roles_view_table tbody');
-        if (tableBody) {
-            tableBody.innerHTML = '<tr><td colspan="9" class="noresult" style="display: block;">No results found</td></tr>';
-        }
+        clearLoading();
+        updatePaginationCounts();
     }
 }
 
@@ -395,6 +475,16 @@ function updatePaginationCounts() {
         if (noResult) {
             noResult.style.display = showingCount === 0 ? "block" : "none";
         }
+    } else {
+        const initialRows = parseInt(subjectTeacherListContainer?.dataset.initialRows || '0');
+        const totalCountElement = document.querySelector('#total-count');
+        const totalCountFooterElement = document.querySelector('#total-count-footer');
+        const showingCountElement = document.querySelector('#showing-count');
+        if (totalCountElement) totalCountElement.textContent = initialRows;
+        if (totalCountFooterElement) totalCountFooterElement.textContent = initialRows;
+        if (showingCountElement) showingCountElement.textContent = initialRows;
+        const noResult = document.querySelector(".noresult");
+        if (noResult) noResult.style.display = initialRows === 0 ? "block" : "none";
     }
 }
 
@@ -407,6 +497,48 @@ function filterData() {
         subjectTeacherList.search(searchValue, ['sn', 'subjectteacher', 'subject', 'subjectcode', 'term', 'session']);
         updatePaginationCounts();
     }
+}
+
+// Fetch data from server
+function fetchData() {
+    showLoading();
+    console.log("Fetching data from /subjectteacher");
+    axios.get('/subjectteacher', {
+        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        timeout: 5000
+    })
+        .then(function (response) {
+            console.log("Fetch data success, response length:", response.data.html?.length);
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(response.data.html, 'text/html');
+            const newTbody = doc.querySelector('#kt_roles_view_table tbody');
+            if (newTbody && newTbody.querySelectorAll('tr:not(.noresult)').length > 0) {
+                document.querySelector('#kt_roles_view_table tbody').innerHTML = newTbody.innerHTML;
+                initializeListJs();
+                initializeCheckboxes();
+                filterData();
+            } else {
+                console.warn("No valid table rows in response");
+                clearLoading();
+                document.querySelector('#kt_roles_view_table tbody').innerHTML =
+                    '<tr><td colspan="9" class="noresult" style="display: block;">No results found</td></tr>';
+                updatePaginationCounts();
+            }
+        })
+        .catch(function (error) {
+            console.error("Error fetching data:", error.response?.status, error.response?.data || error.message);
+            Swal.fire({
+                position: "center",
+                icon: "error",
+                title: "Error loading data",
+                text: error.response?.data?.message || error.message || "Failed to load subject teachers. Displaying initial data.",
+                showConfirmButton: true
+            });
+            clearLoading();
+            initializeListJs(); // Initialize with existing Blade data
+            initializeCheckboxes();
+            filterData();
+        });
 }
 
 // Add subject teacher
@@ -454,7 +586,7 @@ if (addSubjectTeacherForm) {
         }
 
         console.log("Sending add request:", { staffid, subjectids, termid: termids, sessionid });
-        axios.post('/subjectteacher', { staffid, subjectids, termid: termids, sessionid })
+        axios.post('/subjectteacher', { staffid, subjectids, termid: termids, sessionid }, { timeout: 5000 })
             .then(function (response) {
                 console.log("Add success:", response.data);
                 Swal.fire({
@@ -466,7 +598,8 @@ if (addSubjectTeacherForm) {
                     showCloseButton: true
                 });
                 addBtn.disabled = false;
-                // Refresh data
+                const modal = bootstrap.Modal.getInstance(document.getElementById("addSubjectTeacherModal"));
+                if (modal) modal.hide();
                 fetchData();
             })
             .catch(function (error) {
@@ -539,7 +672,7 @@ if (editSubjectTeacherForm) {
             termid: termids,
             sessionid,
             _token: csrfToken
-        })
+        }, { timeout: 5000 })
             .then(function (response) {
                 console.log("Edit success:", response.data);
                 Swal.fire({
@@ -551,7 +684,8 @@ if (editSubjectTeacherForm) {
                     showCloseButton: true
                 });
                 updateBtn.disabled = false;
-                // Refresh data
+                const modal = bootstrap.Modal.getInstance(document.getElementById("editModal"));
+                if (modal) modal.hide();
                 fetchData();
             })
             .catch(function (error) {
@@ -563,49 +697,6 @@ if (editSubjectTeacherForm) {
                 updateBtn.disabled = false;
             });
     });
-}
-
-// Fetch data from server
-function fetchData() {
-    showLoading();
-    axios.get('/subjectteacher', {
-        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    })
-        .then(function (response) {
-            console.log("Fetch data success:", response.data);
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(response.data.html, 'text/html');
-            const newTbody = doc.querySelector('#kt_roles_view_table tbody');
-            if (newTbody) {
-                document.querySelector('#kt_roles_view_table tbody').innerHTML = newTbody.innerHTML;
-                initializeListJs();
-                initializeCheckboxes();
-                filterData();
-            } else {
-                console.error("Table body not found in response");
-                Swal.fire({
-                    position: "center",
-                    icon: "error",
-                    title: "Error",
-                    text: "Incomplete server response",
-                    showConfirmButton: true
-                });
-            }
-        })
-        .catch(function (error) {
-            console.error("Error fetching data:", error);
-            Swal.fire({
-                position: "center",
-                icon: "error",
-                title: "Error loading data",
-                text: error.response?.data?.message || "An error occurred",
-                showConfirmButton: true
-            });
-            const tableBody = document.querySelector('#kt_roles_view_table tbody');
-            if (tableBody) {
-                tableBody.innerHTML = '<tr><td colspan="9" class="text-center">Failed to load data. Please try again.</td></tr>';
-            }
-        });
 }
 
 // Modal events
@@ -624,6 +715,13 @@ if (addModal) {
         clearAddFields();
         const errorMsg = document.getElementById("alert-error-msg");
         if (errorMsg) errorMsg.classList.add("d-none");
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
     });
 }
 
@@ -641,6 +739,31 @@ if (editModal) {
         clearEditFields();
         const errorMsg = document.getElementById("edit-alert-error-msg");
         if (errorMsg) errorMsg.classList.add("d-none");
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+    });
+}
+
+const imageViewModal = document.getElementById("imageViewModal");
+if (imageViewModal) {
+    imageViewModal.addEventListener("hidden.bs.modal", function () {
+        console.log("Image preview modal hidden - cleaning up");
+        const previewImage = document.getElementById("preview-image");
+        const previewStaffName = document.getElementById("preview-staffname");
+        if (previewImage) previewImage.src = "";
+        if (previewStaffName) previewStaffName.textContent = "";
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
     });
 }
 
@@ -656,9 +779,17 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
         console.error("Search input not found");
     }
+    console.log("Checking for open modals on load");
+    document.querySelectorAll('.modal').forEach(modal => {
+        if (modal.classList.contains('show')) {
+            console.warn("Modal open on load:", modal.id);
+            const modalInstance = bootstrap.Modal.getInstance(modal);
+            if (modalInstance) modalInstance.hide();
+        }
+    });
     initializeCheckboxes();
     initializeListJs();
-    fetchData();
+    // Skip fetchData on initial load to use Blade-rendered data
 });
 
 // Expose functions to global scope

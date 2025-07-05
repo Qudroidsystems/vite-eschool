@@ -2,6 +2,7 @@
 @section('content')
 @php
     use App\Models\SubjectTeacher;
+    \Log::info('SubjectTeacher count: ' . $subjectteacher->count());
 @endphp
 <div class="main-content">
     <div class="page-content">
@@ -46,7 +47,7 @@
                 </div>
             @endif
 
-            <div id="subjectTeacherList">
+            <div id="subjectTeacherList" data-initial-rows="{{ $subjectteacher->count() }}">
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="card">
@@ -69,7 +70,7 @@
                         <div class="card">
                             <div class="card-header d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">Subject Teachers <span class="badge bg-dark-subtle text-dark ms-1" id="total-count">0</span></h5>
+                                    <h5 class="card-title mb-0">Subject Teachers <span class="badge bg-dark-subtle text-dark ms-1" id="total-count">{{ $subjectteacher->count() }}</span></h5>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
@@ -103,6 +104,10 @@
                                         <tbody class="fw-semibold text-gray-600 list form-check-all">
                                             @php $i = 0 @endphp
                                             @forelse ($subjectteacher as $sc)
+                                                <?php
+                                                $picture = $sc->avatar ?? 'unnamed.jpg';
+                                                $imagePath = asset('storage/staff_avatars/' . $picture);
+                                                ?>
                                                 <tr data-url="{{ route('subjectteacher.destroy', $sc->id) }}">
                                                     <td class="id" data-id="{{ $sc->id }}">
                                                         <div class="form-check form-check-sm form-check-custom form-check-solid">
@@ -113,9 +118,19 @@
                                                     <td class="subjectteacher" data-staffid="{{ $sc->userid }}">
                                                         <div class="d-flex align-items-center">
                                                             <div class="symbol symbol-circle symbol-50px overflow-hidden me-3">
-                                                                <a href="#">
+                                                                <a href="javascript:void(0);">
                                                                     <div class="symbol-label">
-                                                                        <img src="{{ $sc->avatar ? Storage::url('images/staffavatar/' . $sc->avatar) : Storage::url('images/staffavatar/unnamed.png') }}" alt="{{ $sc->staffname }}" class="w-100" />
+                                                                        <img src="{{ $imagePath }}"
+                                                                             alt="{{ $sc->staffname }}"
+                                                                             class="rounded-circle avatar-md staff-image"
+                                                                             data-bs-toggle="modal"
+                                                                             data-bs-target="#imageViewModal"
+                                                                             data-image="{{ $imagePath }}"
+                                                                             data-staffname="{{ $sc->staffname }}"
+                                                                             data-picture="{{ $sc->avatar ?? 'none' }}"
+                                                                             data-file-exists="true"
+                                                                             data-default-exists="true"
+                                                                             onerror="this.src='{{ asset('storage/staff_avatars/unnamed.jpg') }}'; if (!this.dataset.errorLogged) { console.log('Table image failed to load for teacher: {{ $sc->staffname ?? 'unknown' }}, picture: {{ $sc->avatar ?? 'none' }}'); this.dataset.errorLogged = 'true'; }" />
                                                                     </div>
                                                                 </a>
                                                             </div>
@@ -180,7 +195,7 @@
                                 <div class="row mt-3 align-items-center">
                                     <div class="col-sm">
                                         <div class="text-muted text-center text-sm-start">
-                                            Showing <span class="fw-semibold" id="showing-count">0</span> of <span class="fw-semibold" id="total-count-footer">0</span> Results
+                                            Showing <span class="fw-semibold" id="showing-count">{{ $subjectteacher->count() }}</span> of <span class="fw-semibold" id="total-count-footer">{{ $subjectteacher->count() }}</span> Results
                                         </div>
                                     </div>
                                     <div class="col-sm-auto mt-3 mt-sm-0">
@@ -191,159 +206,178 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Add Subject Teacher Modal -->
-            <div id="addSubjectTeacherModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 id="exampleModalLabel" class="modal-title">Add Subject Teacher</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <!-- Add Subject Teacher Modal -->
+                <div id="addSubjectTeacherModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 id="exampleModalLabel" class="modal-title">Add Subject Teacher</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form class="tablelist-form" autocomplete="off" id="add-subjectteacher-form">
+                                <div class="modal-body">
+                                    <input type="hidden" id="add-id-field" name="id">
+                                    <div class="mb-3">
+                                        <label for="staffid" class="form-label">Subject Teacher</label>
+                                        <select name="staffid" id="staffid" class="form-control" required>
+                                            <option value="">Select Teacher</option>
+                                            @foreach ($staffs as $staff)
+                                                <option value="{{ $staff->userid }}">{{ $staff->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Subject</label>
+                                        <div class="checkbox-group" style="max-height: 150px; overflow-y: auto;">
+                                            @foreach ($subjects as $subject)
+                                                <div class="form-check me-3">
+                                                    <input class="form-check-input modal-checkbox" type="checkbox" name="subjectid[]" id="add-subject-{{ $subject->id }}" value="{{ $subject->id }}">
+                                                    <label class="form-check-label" for="add-subject-{{ $subject->id }}">
+                                                        {{ $subject->subject }} ({{ $subject->subject_code }})
+                                                    </label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Term</label>
+                                        <div class="checkbox-group">
+                                            @foreach ($terms as $term)
+                                                <div class="form-check me-3">
+                                                    <input class="form-check-input modal-checkbox" type="checkbox" name="termid[]" id="add-term-{{ $term->id }}" value="{{ $term->id }}">
+                                                    <label class="form-check-label" for="add-term-{{ $term->id }}">
+                                                        {{ $term->term }}
+                                                    </label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Session</label>
+                                        <div class="checkbox-group">
+                                            @foreach ($schoolsessions as $session)
+                                                <div class="form-check me-3">
+                                                    <input class="form-check-input" type="radio" name="sessionid" id="add-session-{{ $session->id }}" value="{{ $session->id }}" required>
+                                                    <label class="form-check-label" for="add-session-{{ $session->id }}">
+                                                        {{ $session->session }}
+                                                    </label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-danger d-none" id="alert-error-msg"></div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-primary" id="add-btn">Add Subject Teacher</button>
+                                </div>
+                            </form>
                         </div>
-                        <form class="tablelist-form" autocomplete="off" id="add-subjectteacher-form">
-                            <div class="modal-body">
-                                <input type="hidden" id="add-id-field" name="id">
-                                <div class="mb-3">
-                                    <label for="staffid" class="form-label">Subject Teacher</label>
-                                    <select name="staffid" id="staffid" class="form-control" required>
-                                        <option value="">Select Teacher</option>
-                                        @foreach ($staffs as $staff)
-                                            <option value="{{ $staff->userid }}">{{ $staff->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Subject</label>
-                                    <div class="checkbox-group" style="max-height: 150px; overflow-y: auto;">
-                                        @foreach ($subjects as $subject)
-                                            <div class="form-check me-3">
-                                                <input class="form-check-input modal-checkbox" type="checkbox" name="subjectid[]" id="add-subject-{{ $subject->id }}" value="{{ $subject->id }}">
-                                                <404 class="form-check-label" for="add-subject-{{ $subject->id }}">
-                                                    {{ $subject->subject }} ({{ $subject->subject_code }})
-                                                </label>
-                                            </div>
-                                        @endforeach
+                    </div>
+                </div>
+
+                <!-- Edit Subject Teacher Modal -->
+                <div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 id="editModalLabel" class="modal-title">Edit Subject Teacher</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <form class="tablelist-form" autocomplete="off" id="edit-subjectteacher-form">
+                                <div class="modal-body">
+                                    <input type="hidden" id="edit-id-field" name="id">
+                                    <div class="mb-3">
+                                        <label for="edit-staffid" class="form-label">Subject Teacher</label>
+                                        <select name="staffid" id="edit-staffid" class="form-control" required>
+                                            <option value="">Select Teacher</option>
+                                            @foreach ($staffs as $staff)
+                                                <option value="{{ $staff->userid }}">{{ $staff->name }}</option>
+                                            @endforeach
+                                        </select>
                                     </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Term</label>
-                                    <div class="checkbox-group">
-                                        @foreach ($terms as $term)
-                                            <div class="form-check me-3">
-                                                <input class="form-check-input modal-checkbox" type="checkbox" name="termid[]" id="add-term-{{ $term->id }}" value="{{ $term->id }}">
-                                                <label class="form-check-label" for="add-term-{{ $term->id }}">
-                                                    {{ $term->term }}
-                                                </label>
-                                            </div>
-                                        @endforeach
+                                    <div class="mb-3">
+                                        <label class="form-label">Subject</label>
+                                        <div class="checkbox-group" style="max-height: 150px; overflow-y: auto;">
+                                            @foreach ($subjects as $subject)
+                                                <div class="form-check me-3">
+                                                    <input class="form-check-input modal-checkbox" type="checkbox" name="subjectid[]" id="edit-subject-{{ $subject->id }}" value="{{ $subject->id }}">
+                                                    <label class="form-check-label" for="edit-subject-{{ $subject->id }}">
+                                                        {{ $subject->subject }} ({{ $subject->subject_code }})
+                                                    </label>
+                                                </div>
+                                            @endforeach
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Session</label>
-                                    <div class="checkbox-group">
-                                        @foreach ($schoolsessions as $session)
-                                            <div class="form-check me-3">
-                                                <input class="form-check-input" type="radio" name="sessionid" id="add-session-{{ $session->id }}" value="{{ $session->id }}" required>
-                                                <label class="form-check-label" for="add-session-{{ $session->id }}">
-                                                    {{ $session->session }}
-                                                </label>
-                                            </div>
-                                        @endforeach
+                                    <div class="mb-3">
+                                        <label class="form-label">Term</label>
+                                        <div class="checkbox-group">
+                                            @foreach ($terms as $term)
+                                                <div class="form-check me-3">
+                                                    <input class="form-check-input modal-checkbox" type="checkbox" name="termid[]" id="edit-term-{{ $term->id }}" value="{{ $term->id }}">
+                                                    <label class="form-check-label" for="edit-term-{{ $term->id }}">
+                                                        {{ $term->term }}
+                                                    </label>
+                                                </div>
+                                            @endforeach
+                                        </div>
                                     </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Session</label>
+                                        <div class="checkbox-group">
+                                            @foreach ($schoolsessions as $session)
+                                                <div class="form-check me-3">
+                                                    <input class="form-check-input" type="radio" name="sessionid" id="edit-session-{{ $session->id }}" value="{{ $session->id }}" required>
+                                                    <label class="form-check-label" for="edit-session-{{ $session->id }}">
+                                                        {{ $session->session }}
+                                                    </label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
                                 </div>
-                                <div class="alert alert-danger d-none" id="alert-error-msg"></div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                                    <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Delete Confirmation Modal -->
+                <div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-body text-center">
+                                <h4>Are you sure?</h4>
+                                <p>You won't be able to revert this!</p>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="add-btn">Add Subject Teacher</button>
+                                <button type="button" class="btn btn-danger" id="delete-record">Delete</button>
                             </div>
-                        </form>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Edit Subject Teacher Modal -->
-            <div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 id="editModalLabel" class="modal-title">Edit Subject Teacher</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form class="tablelist-form" autocomplete="off" id="edit-subjectteacher-form">
-                            <div class="modal-body">
-                                <input type="hidden" id="edit-id-field" name="id">
-                                <div class="mb-3">
-                                    <label for="edit-staffid" class="form-label">Subject Teacher</label>
-                                    <select name="staffid" id="edit-staffid" class="form-control" required>
-                                        <option value="">Select Teacher</option>
-                                        @foreach ($staffs as $staff)
-                                            <option value="{{ $staff->userid }}">{{ $staff->name }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Subject</label>
-                                    <div class="checkbox-group" style="max-height: 150px; overflow-y: auto;">
-                                        @foreach ($subjects as $subject)
-                                            <div class="form-check me-3">
-                                                <input class="form-check-input modal-checkbox" type="checkbox" name="subjectid[]" id="edit-subject-{{ $subject->id }}" value="{{ $subject->id }}">
-                                                <label class="form-check-label" for="edit-subject-{{ $subject->id }}">
-                                                    {{ $subject->subject }} ({{ $subject->subject_code }})
-                                                </label>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Term</label>
-                                    <div class="checkbox-group">
-                                        @foreach ($terms as $term)
-                                            <div class="form-check me-3">
-                                                <input class="form-check-input modal-checkbox" type="checkbox" name="termid[]" id="edit-term-{{ $term->id }}" value="{{ $term->id }}">
-                                                <label class="form-check-label" for="edit-term-{{ $term->id }}">
-                                                    {{ $term->term }}
-                                                </label>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Session</label>
-                                    <div class="checkbox-group">
-                                        @foreach ($schoolsessions as $session)
-                                            <div class="form-check me-3">
-                                                <input class="form-check-input" type="radio" name="sessionid" id="edit-session-{{ $session->id }}" value="{{ $session->id }}" required>
-                                                <label class="form-check-label" for="edit-session-{{ $session->id }}">
-                                                    {{ $session->session }}
-                                                </label>
-                                            </div>
-                                        @endforeach
-                                    </div>
-                                </div>
-                                <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
+                <!-- Image Preview Modal -->
+                <div id="imageViewModal" class="modal fade" tabindex="-1" aria-labelledby="imageViewModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 id="imageViewModalLabel" class="modal-title">Staff Image Preview</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <img id="preview-image" src="" alt="Staff Image" class="img-fluid" style="max-height: 400px;" />
+                                <p id="preview-staffname" class="mt-3"></p>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
                             </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Delete Confirmation Modal -->
-            <div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-body text-center">
-                            <h4>Are you sure?</h4>
-                            <p>You won't be able to revert this!</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-danger" id="delete-record">Delete</button>
                         </div>
                     </div>
                 </div>
@@ -443,5 +477,3 @@
 </style>
 @endsection
 @endsection
-
-

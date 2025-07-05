@@ -34,6 +34,15 @@ class Studentpersonalityprofile extends Model
         'termid',
         'sessionid',
         'attendance',
-
+        'attentiveness_in_class',
+        'class_participation',
+        'relationship_with_others',
+        'doing_assignment',
+        'writing_skill',
+        'reading_skill',
+        'spoken_english_communication',
+        'hand_writing',
+        'club',
+        'music',
     ];
 }

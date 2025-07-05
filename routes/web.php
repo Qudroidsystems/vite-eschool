@@ -255,7 +255,7 @@ Route::group(['middleware' => ['auth']], function () {
 
 
     Route::get('/studentpersonalityprofile/{id}/{schoolclassid}/{sessid}/{termid}', [StudentpersonalityprofileController::class, 'studentpersonalityprofile'])->name('myclass.studentpersonalityprofile');
-    Route::post('save', [StudentpersonalityprofileController::class, 'save'])->name('save');
+    Route::post('save', [StudentpersonalityprofileController::class, 'save'])->name('studentpersonalityprofile.save');
 
     //school information
     Route::resource('school-information', SchoolInformationController::class);

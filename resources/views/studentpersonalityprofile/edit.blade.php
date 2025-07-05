@@ -1,256 +1,152 @@
 @extends('layouts.master')
 
 @section('content')
-<style>
-    :root {
-        --tb-primary: #009ef7;
-        --tb-secondary: #3b82f6;
-        --tb-success: #50cd89;
-        --tb-light: #f5f8fa;
-        --tb-success-subtle: rgba(80, 205, 137, 0.1);
-    }
-
-    .card {
-        border: none;
-        border-radius: 10px;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-        max-width: 100%;
-    }
-
-    .card-body {
-        padding: 1.5rem;
-    }
-
-    .card-logo {
-        height: 28px;
-        margin-bottom: 1rem;
-    }
-
-    .fs-md {
-        font-size: 1.125rem !important;
-    }
-
-    .table-borderless th, .table-borderless td {
-        border: none;
-        padding: 0.5rem 0.75rem;
-        vertical-align: middle;
-    }
-
-    .table-nowrap th, .table-nowrap td {
-        white-space: nowrap;
-    }
-
-    .table-light {
-        background-color: var(--tb-light);
-    }
-
-    .alert-danger, .alert-warning {
-        background-color: rgba(241, 65, 108, 0.1);
-        border-color: #f1416c;
-        color: #f1416c;
-        padding: 0.75rem;
-    }
-
-    .alert-success {
-        background-color: var(--tb-success-subtle);
-        border-color: var(--tb-success);
-        color: var(--tb-success);
-        padding: 0.75rem;
-    }
-
-    .hstack {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .d-print-none {
-        display: flex !important;
-    }
-
-    .table-responsive {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    table {
-        width: 100%;
-        table-layout: auto;
-    }
-
-    .symbol img {
-        width: 100px;
-        height: 100px;
-        object-fit: cover;
-    }
-
-    .address-wrap {
-        overflow-wrap: break-word;
-        word-break: break-word;
-        hyphens: auto;
-        max-width: 180px;
-        display: inline-block;
-    }
-
-    .school-details {
-        margin-bottom: 1rem;
-    }
-
-    .school-details h6 {
-        margin-bottom: 0.5rem;
-    }
-
-    @media print {
-        html, body {
-            background-color: #fff;
-            margin: 0;
-            padding: 0;
-            width: 210mm;
-            height: 297mm;
-        }
-
-        .app-main, .app-content, .app-container {
-            padding: 0 !important;
-            margin: 0 !important;
-            width: 100% !important;
-        }
-
-        .card {
-            box-shadow: none;
-            max-width: 100%;
-            width: 100%;
-            border-radius: 0;
-            margin: 0;
-            padding: 0;
-        }
-
-        .card-body {
-            padding: 0.5cm;
-        }
-
-        .d-print-none, .alert {
-            display: none !important;
-        }
-
-        .card::before {
-            content: "{{ $schoolInfo->school_name ?? 'TOPCLASS COLLEGE' }} Personality Profile";
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 10px;
-            color: #212529;
-        }
-
-        .card::after {
-            content: "© {{ date('Y') }} {{ $schoolInfo->school_name ?? 'TOPCLASS COLLEGE' }}";
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 8px;
-            color: #7E8299;
-        }
-
-        .table-responsive {
-            overflow: visible;
-        }
-
-        table {
-            table-layout: fixed;
-            font-size: 0.75rem;
-        }
-
-        .fs-md {
-            font-size: 0.9rem !important;
-        }
-
-        .table-borderless th, .table-borderless td {
-            padding: 0.3rem 0.5rem;
-        }
-
-        h6, p {
-            margin-bottom: 0.2rem;
-            font-size: 0.8rem;
-        }
-
-        .symbol img {
-            width: 30px;
-            height: 30px;
-        }
-
-        .address-wrap {
-            max-width: 120px;
-        }
-
-        .card-logo {
-            height: 20px;
-            margin-bottom: 0.5cm;
-        }
-
-        .school-details {
-            margin-bottom: 0.5cm;
-        }
-
-        .school-details h6 {
-            margin-bottom: 0.3rem;
-        }
-
-        @page {
-            size: A4;
-            margin: 0.5cm;
-        }
-    }
-
-    @media (max-width: 767.98px) {
-        .card-body {
-            padding: 1rem;
-        }
-
-        .hstack {
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .symbol img {
-            width: 80px;
-            height: 80px;
-        }
-
-        .address-wrap {
-            max-width: 100%;
-        }
-
-        .card-logo {
-            margin-bottom: 0.75rem;
-        }
-
-        .school-details {
-            margin-bottom: 0.75rem;
-        }
-    }
-</style>
+   <style>
+      * {
+      /* box-sizing: border-box;
+      margin: 0;
+      padding: 0; */
+      }
+      .fraction {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      font-size: 10px;
+      }
+      .fraction .numerator {
+      border-bottom: 2px solid black;
+      padding: 0 5px;
+      }
+      .fraction .denominator {
+      padding-top: 5px;
+      }
+      tr.rt>th,
+      tr.rt>td {
+      text-align: center;
+      }
+      div.grade>span {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 16px;
+      font-weight: bold;
+      }
+      span.text-space-on-dots {
+      position: relative;
+      width: 500px;
+      border-bottom-style: dotted;
+      }
+      span.text-dot-space2 {
+      position: relative;
+      width: 300px;
+      border-bottom-style: dotted;
+      }
+      @media print {
+      div.print-body {
+      background-color: white;
+      }
+      @page {
+      size: 940px;
+      margin: 0px;
+      }
+      div.print-body {
+      background-color: white;
+      }
+      html,
+      body {
+      width: 940px;
+      }
+      body {
+      margin: 0;
+      }
+      nav {
+      display: none;
+      }
+      }
+      p.school-name1 {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 40px;
+      font-weight: 500;
+      }
+      p.school-name2 {
+      font-family: 'Times New Roman', Times, serif;
+      font-size: 30px;
+      font-weight: bolder;
+      }
+      div.school-logo {
+      width: 80px;
+      height: 60px;
+      }
+      div.header-divider {
+      width: 100%;
+      height: 3px;
+      background-color: black;
+      margin-bottom: 3px;
+      }
+      div.header-divider2 {
+      width: 100%;
+      height: 1px;
+      background-color: black;
+      }
+      span.result-details {
+      font-size: 16px;
+      font-family: 'Times New Roman', Times, serif;
+      font-weight: lighter;
+      font-style: italic;
+      }
+      span.rd1 {
+      position: relative;
+      width: 86.1%;
+      border-bottom-style: dotted;
+      }
+      span.rd2 {
+      position: relative;
+      width: 30%;
+      border-bottom-style: dotted;
+      }
+      span.rd3 {
+      position: relative;
+      width: 30%;
+      border-bottom-style: dotted;
+      }
+      span.rd4 {
+      position: relative;
+      width: 30%;
+      border-bottom-style: dotted;
+      }
+      span.rd5 {
+      position: relative;
+      width: 25%;
+      border-bottom-style: dotted;
+      }
+      span.rd6 {
+      position: relative;
+      width: 28%;
+      border-bottom-style: dotted;
+      }
+      span.rd7 {
+      position: relative;
+      width: 17.2%;
+      border-bottom-style: dotted;
+      }
+      span.rd8 {
+      position: relative;
+      width: 12%;
+      border-bottom-style: dotted;
+      }
+      span.rd9 {
+      position: relative;
+      width: 11%;
+      border-bottom-style: dotted;
+      }
+      span.rd10 {
+      position: relative;
+      width: 11%;
+      border-bottom-style: dotted;
+      }
+    </style>
 
 <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
     <div class="d-flex flex-column flex-column-fluid">
-        <div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
-            <div id="kt_app_toolbar_container" class="app-container container-xxl d-flex flex-stack">
-                <div class="page-title d-flex flex-column justify-content-center flex-wrap me-3">
-                    <h1 class="page-heading d-flex text-dark fw-bold fs-3 flex-column justify-content-center my-0">
-                        <p style="color: green">Student's Personality Profile</p>
-                    </h1>
-                </div>
-                <div class="hstack gap-2 d-print-none">
-                    <a href="{{ route('myclass.index') }}" class="btn btn-light-primary"><i class="fas fa-arrow-left me-1"></i> Back</a>
-                    <a href="javascript:window.print()" class="btn btn-success"><i class="ri-printer-line align-bottom me-1"></i> Print</a>
-                </div>
-            </div>
-        </div>
-
         <div id="kt_app_content" class="app-content flex-column-fluid">
             <div id="kt_app_content_container" class="app-container container-xxl">
                 @if ($errors->any())
@@ -271,322 +167,552 @@
                     </div>
                 @endif
 
-                <div class="card mb-5 mb-xl-10">
-                    <div class="card-body pt-9 pb-0">
-                        <div class="school-header d-none d-print-block">
-                            <img src="{{ $schoolInfo->logo_url }}" class="card-logo" alt="{{ $schoolInfo->school_name ?? 'TOPCLASS COLLEGE' }}" height="28">
-                            <div class="school-details">
-                                <h6><span class="text-muted fw-normal">Email:</span> <span id="email">{{ $schoolInfo->school_email ?? 'info@topclassschool.edu' }}</span></h6>
-                                <h6><span class="text-muted fw-normal">Website:</span> <span id="website">{{ $schoolInfo->school_website ? '<a href="' . $schoolInfo->school_website . '" target="_blank">' . $schoolInfo->school_website . '</a>' : 'N/A' }}</span></h6>
-                                <h6><span class="text-muted fw-normal">Address:</span> <span id="address" class="address-wrap">{!! Str::replace(',', ',<br>', $schoolInfo->school_address ?? 'Your School Address Here') !!}</span></h6>
-                                <h6 class="mb-0"><span class="text-muted fw-normal">Contact No:</span> <span id="contact-no">{{ $schoolInfo->school_phone ?? 'Your Phone Number' }}</span></h6>
-                            </div>
-                        </div>
-                        <div class="d-flex flex-wrap flex-sm-nowrap">
-                            <div class="me-7 mb-4">
-                                @foreach ($students as $st)
-                                    <div class="symbol symbol-100px symbol-lg-160px symbol-fixed position-relative">
-                                        @php
-                                            $image = $st->avatar ?? 'unnamed.png';
-                                        @endphp
-                                        <img src="{{ Storage::url('images/studentavatar/' . $image) }}" alt="{{ $st->fname }} {{ $st->lastname }}" />
-                                        <div class="position-absolute translate-middle bottom-0 start-100 mb-6 bg-success rounded-circle border border-4 border-body h-20px w-20px"></div>
-                                    </div>
-                                @endforeach
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="d-flex justify-content-between align-items-start flex-wrap mb-2">
-                                    <div class="d-flex flex-column">
-                                        <div class="d-flex align-items-center mb-2">
-                                            <a href="#" class="text-gray-900 text-hover-primary fs-2 fw-bold me-1">{{ $st->fname }} {{ $st->lastname }}</a>
-                                            <a href="#"><i class="ki-duotone ki-verify fs-1 text-primary"><span class="path1"></span><span class="path2"></span></i></a>
-                                        </div>
-                                        <div class="d-flex flex-wrap fw-semibold fs-6 mb-4 pe-2">
-                                            <a href="#" class="d-flex align-items-center me-5 mb-2">
-                                                <i class="ki-duotone ki-profile-circle fs-4 me-1"><span class="path1"></span><span class="path2"></span><span class="path3"></span></i>
-                                                {{ $st->gender }}
-                                            </a>
-                                            <a href="#" class="d-flex align-items-center text-gray-400 text-hover-primary me-5 mb-2">
-                                                <i class="ki-duotone ki-geolocation fs-4 me-1"><span class="path1"></span><span class="path2"></span></i>
-                                                <span class="address-wrap">{!! Str::replace(',', ',<br>', $st->homeaddress ?? 'N/A') !!}</span>
-                                            </a>
+                @if ($students->isNotEmpty())
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="d-flex flex-wrap flex-stack mb-4">
+                                            <!-- Student Avatar -->
+                                            <div class="me Temer
+                                            <div class="me-6 mb-3">
+                                                <?php
+                                                $picture = $students[0]->picture ? basename($students[0]->picture) : 'unnamed.jpg';
+                                                $imagePath = asset('storage/student_avatars/' . $picture);
+                                                $fileExists = file_exists(storage_path('app/public/stud ent_avatars/' . $picture));
+                                                $defaultImageExists = file_exists(storage_path('app/public/student_avatars/unnamed.jpg'));
+                                                ?>
+                                                <img src="{{ $students[0]->picture ? asset('storage/student_avatars/' . basename($students[0]->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
+                                                     alt="{{ $students[0]->fname }} {{ $students[0]->lastname }}"
+                                                     class="rounded avatar-xl student-image"
+                                                     data-bs-toggle="modal"
+                                                     data-bs-target="#imageViewModal"
+                                                     data-image="{{ $students[0]->picture ? asset('storage/student_avatars/' . basename($students[0]->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
+                                                     data-picture="{{ $students[0]->picture ?? 'none' }}"
+                                                     data-admissionno="{{ $students[0]->admissionNo }}"
+                                                     data-file-exists="{{ $fileExists ? 'true' : 'false' }}"
+                                                     data-default-exists="{{ $defaultImageExists ? 'true' : 'false' }}"
+                                                     onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'; console.log('Image failed to load for admissionno: {{ $students[0]->admissionNo ?? 'unknown' }}, picture: {{ $students[0]->picture ?? 'none' }}');" />
+                                            </div>
+                                            <!-- Student Information -->
+                                            <div class="d-flex flex-column flex-grow-1 pe-8">
+                                                <div class="d-flex flex-wrap">
+                                                    <!-- Student Name Card -->
+                                                    <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="bi bi-person fs-3 text-primary me-2"></i>
+                                                            <div class="fs-2 fw-bold text-success">{{ $students[0]->lastname }} {{ $students[0]->fname }} {{ $students[0]->othername }} </div>
+                                                        </div>
+                                                        <div class="fw-semibold fs-6 text-gray-400">Student Name</div>
+                                                    </div>
+                                                    <!-- Admission No Card -->
+                                                    <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="bi bi-card-text fs-3 text-success me-2"></i>
+                                                            <div class="fs-2 fw-bold text-success">{{ $students[0]->admissionNo }}</div>
+                                                        </div>
+                                                        <div class="fw-semibold fs-6 text-gray-400">Admission No</div>
+                                                    </div>
+                                                    <!-- Class Card -->
+                                                    <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="bi bi-building fs-3 text-success me-2"></i>
+                                                            <div class="fs-2 fw-bold text-success">{{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : 'N/A' }}</div>
+                                                        </div>
+                                                        <div class="fw-semibold fs-6 text-gray-400">Class</div>
+                                                    </div>
+                                                    <!-- Term | Session Card -->
+                                                    <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
+                                                        <div class="d-flex align-items-center">
+                                                            <i class="bi bi-calendar fs-3 text-success me-2"></i>
+                                                            <div class="fs-2 fw-bold text-success">{{ $schoolterm }} | {{ $schoolsession }}</div>
+                                                        </div>
+                                                        <div class="fw-semibold fs-6 text-gray-400">Term | Session</div>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="card mb-5 mb-xl-10">
-                    <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_profile_details" aria-expanded="true" aria-controls="kt_account_profile_details">
-                        <div class="card-title m-0">
-                            <h3 class="fw-bold m-0"><p style="color: rgb(109, 109, 212)">Personality Profile Details for {{ $st->fname }} {{ $st->lastname }}</p></h3>
+                    <div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
+                        <div id="kt_app_toolbar_container" class="app-container container-xxl d-flex flex-stack">
+                            <div class="hstack gap-2 d-print-none">
+                                <a href="{{ route('viewstudent', [$schoolclassid, $termid, $sessionid]) }}" class="btn btn-success"><i class="ri-printer-line align-bottom me-1"></i> << Back</a>
+                            </div>
                         </div>
                     </div>
-                    <div id="kt_account_settings_profile_details" class="collapse show">
-                        <div class="card-body py-4">
-                            <form role="form" id="inline-validation" class="form-horizontal form-stripe" action="/save" method="POST">
-                                @csrf
-                                <input type="hidden" name="studentid" value="{{ $studentid }}">
-                                <input type="hidden" name="schoolclassid" value="{{ $schoolclassid }}">
-                                <input type="hidden" name="staffid" value="{{ $staffid }}">
-                                <input type="hidden" name="termid" value="{{ $termid }}">
-                                <input type="hidden" name="sessionid" value="{{ $sessionid }}">
 
-                                <div class="table-responsive">
-                                    <table class="table align-middle table-row-dashed fs-6 gy-5 mb-0" id="kt_roles_view_table">
-                                        <thead>
-                                            <tr class="table-light">
-                                                <th scope="col" style="width: 50px;">#</th>
-                                                <th scope="col">Trait</th>
-                                                <th scope="col">Remark</th>
-                                                <th scope="col">Current Value</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach ($studentpp as $s)
-                                                <tr>
-                                                    <td>1</td>
-                                                    <td>Punctuality</td>
-                                                    <td>
-                                                        <select class="form-control col-md-8" name="punctuality" required>
-                                                            <option value="" {{ $s->punctuality == '' ? 'selected' : '' }}>Select Remark</option>
-                                                            <option value="Excellent" {{ $s->punctuality == 'Excellent' ? 'selected' : '' }}>Excellent</option>
-                                                            <option value="Very Good" {{ $s->punctuality == 'Very Good' ? 'selected' : '' }}>Very Good</option>
-                                                            <option value="Good" {{ $s->punctuality == 'Good' ? 'selected' : '' }}>Good</option>
-                                                            <option value="Fairly Good" {{ $s->punctuality == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
-                                                            <option value="Poor" {{ $s->punctuality == 'Poor' ? 'selected' : '' }}>Poor</option>
-                                                        </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="text" class="form-control" value="{{ $s->punctuality }}" readonly required>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>2</td>
-                                                    <td>Neatness</td>
-                                                    <td>
-                                                        <select class="form-control col-md-8" name="neatness" required>
-                                                            <option value="" {{ $s->neatness == '' ? 'selected' : '' }}>Select Remark</option>
-                                                            <option value="Excellent" {{ $s->neatness == 'Excellent' ? 'selected' : '' }}>Excellent</option>
-                                                            <option value="Very Good" {{ $s->neatness == 'Very Good' ? 'selected' : '' }}>Very Good</option>
-                                                            <option value="Good" {{ $s->neatness == 'Good' ? 'selected' : '' }}>Good</option>
-                                                            <option value="Fairly Good" {{ $s->neatness == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
-                                                            <option value="Poor" {{ $s->neatness == 'Poor' ? 'selected' : '' }}>Poor</option>
-                                                        </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="text" class="form-control" value="{{ $s->neatness }}" readonly required>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>3</td>
-                                                    <td>Leadership</td>
-                                                    <td>
-                                                        <select class="form-control col-md-8" name="leadership" required>
-                                                            <option value="" {{ $s->leadership == '' ? 'selected' : '' }}>Select Remark</option>
-                                                            <option value="Excellent" {{ $s->leadership == 'Excellent' ? 'selected' : '' }}>Excellent</option>
-                                                            <option value="Very Good" {{ $s->leadership == 'Very Good' ? 'selected' : '' }}>Very Good</option>
-                                                            <option value="Good" {{ $s->leadership == 'Good' ? 'selected' : '' }}>Good</option>
-                                                            <option value="Fairly Good" {{ $s->leadership == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
-                                                            <option value="Poor" {{ $s->leadership == 'Poor' ? 'selected' : '' }}>Poor</option>
-                                                        </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="text" class="form-control" value="{{ $s->leadership }}" readonly required>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>4</td>
-                                                    <td>Attitude</td>
-                                                    <td>
-                                                        <select class="form-control col-md-8" name="attitude" required>
-                                                            <option value="" {{ $s->attitude == '' ? 'selected' : '' }}>Select Remark</option>
-                                                            <option value="Excellent" {{ $s->attitude == 'Excellent' ? 'selected' : '' }}>Excellent</option>
-                                                            <option value="Very Good" {{ $s->attitude == 'Very Good' ? 'selected' : '' }}>Very Good</option>
-                                                            <option value="Good" {{ $s->attitude == 'Good' ? 'selected' : '' }}>Good</option>
-                                                            <option value="Fairly Good" {{ $s->attitude == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
-                                                            <option value="Poor" {{ $s->attitude == 'Poor' ? 'selected' : '' }}>Poor</option>
-                                                        </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="text" class="form-control" value="{{ $s->attitude }}" readonly required>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>5</td>
-                                                    <td>Reading</td>
-                                                    <td>
-                                                        <select class="form-control col-md-8" name="reading" required>
-                                                            <option value="" {{ $s->reading == '' ? 'selected' : '' }}>Select Remark</option>
-                                                            <option value="Excellent" {{ $s->reading == 'Excellent' ? 'selected' : '' }}>Excellent</option>
-                                                            <option value="Very Good" {{ $s->reading == 'Very Good' ? 'selected' : '' }}>Very Good</option>
-                                                            <option value="Good" {{ $s->reading == 'Good' ? 'selected' : '' }}>Good</option>
-                                                            <option value="Fairly Good" {{ $s->reading == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
-                                                            <option value="Poor" {{ $s->reading == 'Poor' ? 'selected' : '' }}>Poor</option>
-                                                        </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="text" class="form-control" value="{{ $s->reading }}" readonly required>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>6</td>
-                                                    <td>Honesty</td>
-                                                    <td>
-                                                        <select class="form-control col-md-8" name="honesty" required>
-                                                            <option value="" {{ $s->honesty == '' ? 'selected' : '' }}>Select Remark</option>
-                                                            <option value="Excellent" {{ $s->honesty == 'Excellent' ? 'selected' : '' }}>Excellent</option>
-                                                            <option value="Very Good" {{ $s->honesty == 'Very Good' ? 'selected' : '' }}>Very Good</option>
-                                                            <option value="Good" {{ $s->honesty == 'Good' ? 'selected' : '' }}>Good</option>
-                                                            <option value="Fairly Good" {{ $s->honesty == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
-                                                            <option value="Poor" {{ $s->honesty == 'Poor' ? 'selected' : '' }}>Poor</option>
-                                                        </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="text" class="form-control" value="{{ $s->honesty }}" readonly required>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>7</td>
-                                                    <td>Cooperation</td>
-                                                    <td>
-                                                        <select class="form-control col-md-8" name="cooperation" required>
-                                                            <option value="" {{ $s->cooperation == '' ? 'selected' : '' }}>Select Remark</option>
-                                                            <option value="Excellent" {{ $s->cooperation == 'Excellent' ? 'selected' : '' }}>Excellent</option>
-                                                            <option value="Very Good" {{ $s->cooperation == 'Very Good' ? 'selected' : '' }}>Very Good</option>
-                                                            <option value="Good" {{ $s->cooperation == 'Good' ? 'selected' : '' }}>Good</option>
-                                                            <option value="Fairly Good" {{ $s->cooperation == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
-                                                            <option value="Poor" {{ $s->cooperation == 'Poor' ? 'selected' : '' }}>Poor</option>
-                                                        </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="text" class="form-control" value="{{ $s->cooperation }}" readonly required>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>8</td>
-                                                    <td>Self-control</td>
-                                                    <td>
-                                                        <select class="form-control col-md-8" name="selfcontrol" required>
-                                                            <option value="" {{ $s->selfcontrol == '' ? 'selected' : '' }}>Select Remark</option>
-                                                            <option value="Excellent" {{ $s->selfcontrol == 'Excellent' ? 'selected' : '' }}>Excellent</option>
-                                                            <option value="Very Good" {{ $s->selfcontrol == 'Very Good' ? 'selected' : '' }}>Very Good</option>
-                                                            <option value="Good" {{ $s->selfcontrol == 'Good' ? 'selected' : '' }}>Good</option>
-                                                            <option value="Fairly Good" {{ $s->selfcontrol == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
-                                                            <option value="Poor" {{ $s->selfcontrol == 'Poor' ? 'selected' : '' }}>Poor</option>
-                                                        </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="text" class="form-control" value="{{ $s->selfcontrol }}" readonly required>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>9</td>
-                                                    <td>Physical Health</td>
-                                                    <td>
-                                                        <select class="form-control col-md-8" name="physicalhealth" required>
-                                                            <option value="" {{ $s->physicalhealth == '' ? 'selected' : '' }}>Select Remark</option>
-                                                            <option value="Excellent" {{ $s->physicalhealth == 'Excellent' ? 'selected' : '' }}>Excellent</option>
-                                                            <option value="Very Good" {{ $s->physicalhealth == 'Very Good' ? 'selected' : '' }}>Very Good</option>
-                                                            <option value="Good" {{ $s->physicalhealth == 'Good' ? 'selected' : '' }}>Good</option>
-                                                            <option value="Fairly Good" {{ $s->physicalhealth == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
-                                                            <option value="Poor" {{ $s->physicalhealth == 'Poor' ? 'selected' : '' }}>Poor</option>
-                                                        </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="text" class="form-control" value="{{ $s->physicalhealth }}" readonly required>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>10</td>
-                                                    <td>Politeness</td>
-                                                    <td>
-                                                        <select class="form-control col-md-8" name="politeness" required>
-                                                            <option value="" {{ $s->politeness == '' ? 'selected' : '' }}>Select Remark</option>
-                                                            <option value="Excellent" {{ $s->politeness == 'Excellent' ? 'selected' : '' }}>Excellent</option>
-                                                            <option value="Very Good" {{ $s->politeness == 'Very Good' ? 'selected' : '' }}>Very Good</option>
-                                                            <option value="Good" {{ $s->politeness == 'Good' ? 'selected' : '' }}>Good</option>
-                                                            <option value="Fairly Good" {{ $s->politeness == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
-                                                            <option value="Poor" {{ $s->politeness == 'Poor' ? 'selected' : '' }}>Poor</option>
-                                                        </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="text" class="form-control" value="{{ $s->politeness }}" readonly required>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>11</td>
-                                                    <td>Stability</td>
-                                                    <td>
-                                                        <select class="form-control col-md-8" name="stability" required>
-                                                            <option value="" {{ $s->stability == '' ? 'selected' : '' }}>Select Remark</option>
-                                                            <option value="Excellent" {{ $s->stability == 'Excellent' ? 'selected' : '' }}>Excellent</option>
-                                                            <option value="Very Good" {{ $s->stability == 'Very Good' ? 'selected' : '' }}>Very Good</option>
-                                                            <option value="Good" {{ $s->stability == 'Good' ? 'selected' : '' }}>Good</option>
-                                                            <option value="Fairly Good" {{ $s->stability == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
-                                                            <option value="Poor" {{ $s->stability == 'Poor' ? 'selected' : '' }}>Poor</option>
-                                                        </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="text" class="form-control" value="{{ $s->stability }}" readonly required>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>12</td>
-                                                    <td>Games and Sports</td>
-                                                    <td>
-                                                        <select class="form-control col-md-8" name="gamesandsports" required>
-                                                            <option value="" {{ $s->gamesandsports == '' ? 'selected' : '' }}>Select Remark</option>
-                                                            <option value="Excellent" {{ $s->gamesandsports == 'Excellent' ? 'selected' : '' }}>Excellent</option>
-                                                            <option value="Very Good" {{ $s->gamesandsports == 'Very Good' ? 'selected' : '' }}>Very Good</option>
-                                                            <option value="Good" {{ $s->gamesandsports == 'Good' ? 'selected' : '' }}>Good</option>
-                                                            <option value="Fairly Good" {{ $s->gamesandsports == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
-                                                            <option value="Poor" {{ $s->gamesandsports == 'Poor' ? 'selected' : '' }}>Poor</option>
-                                                        </select>
-                                                    </td>
-                                                    <td>
-                                                        <input type="text" class="form-control" value="{{ $s->gamesandsports }}" readonly required>
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td>13</td>
-                                                    <td>School Attendance</td>
-                                                    <td>
-                                                        <input type="number" name="attendance" value="{{ $s->attendance }}" class="form-control" required>
-                                                    </td>
-                                                    <td></td>
-                                                </tr>
-                                                <tr>
-                                                    <td>14</td>
-                                                    <td>Teacher's Comment</td>
-                                                    <td>
-                                                        <input type="text" name="classteachercomment" value="{{ $s->classteachercomment }}" class="form-control">
-                                                    </td>
-                                                    <td></td>
-                                                </tr>
-                                                <tr>
-                                                    <td>15</td>
-                                                    <td>Principal's Comment</td>
-                                                    <td>
-                                                        <input type="text" name="principalscomment" value="{{ $s->principalscomment }}" class="form-control">
-                                                    </td>
-                                                    <td></td>
-                                                </tr>
-                                                <tr>
-                                                    <td></td>
-                                                    <td></td>
-                                                    <td>
-                                                        <button type="submit" class="btn btn-primary" id="update-profile-btn">Update Profile</button>
-                                                    </td>
-                                                    <td></td>
-                                                </tr>
-                                            @endforeach
-                                        </tbody>
-                                    </table>
+                    <div class="row">
+                        <form action="{{ route('studentpersonalityprofile.save') }}" method="POST">
+                            <div class="col-lg-12">
+                                <div class="card">
+                                    <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_profile_details" aria-expanded="true" aria-controls="kt_account_profile_details">
+                                        <div class="card-title m-0">
+                                            <h3 class="fw-bold m-0">Personality Profile Details for {{ $students[0]->fname }} {{ $students[0]->lastname }}</h3>
+                                        </div>
+                                    </div>
+                                    <div id="kt_account_settings_profile_details" class="collapse show">
+                                        <div class="card-body py-4">
+                                            @csrf
+                                            <input type="hidden" name="studentid" value="{{ $studentid }}">
+                                            <input type="hidden" name="schoolclassid" value="{{ $schoolclassid }}">
+                                            <input type="hidden" name="staffid" value="{{ $staffid }}">
+                                            <input type="hidden" name="termid" value="{{ $termid }}">
+                                            <input type="hidden" name="sessionid" value="{{ $sessionid }}">
+
+                                            <div class="table-responsive">
+                                                <table class="table align-middle table-row-dashed fs-6 gy-5 mb-0" id="kt_roles_view_table">
+                                                    <thead>
+                                                        <tr class="table-light">
+                                                            <th scope="col" style="width: 50px;">#</th>
+                                                            <th scope="col">Trait</th>
+                                                            <th scope="col">Remark</th>
+                                                            <th scope="col">Current Value</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach ($studentpp as $s)
+                                                            <tr>
+                                                                <td>1</td>
+                                                                <td>Punctuality</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="punctuality" required>
+                                                                        <option value="" {{ $s->punctuality == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->punctuality == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->punctuality == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->punctuality == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->punctuality == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->punctuality == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->punctuality }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>2</td>
+                                                                <td>Neatness</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="neatness" required>
+                                                                        <option value="" {{ $s->neatness == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->neatness == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->neatness == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->neatness == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->neatness == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->neatness == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->neatness }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>3</td>
+                                                                <td>Leadership</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="leadership" required>
+                                                                        <option value="" {{ $s->leadership == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->leadership == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->leadership == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->leadership == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->leadership == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->leadership == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->leadership }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>4</td>
+                                                                <td>Attitude</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="attitude" required>
+                                                                        <option value="" {{ $s->attitude == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->attitude == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->attitude == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->attitude == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->attitude == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->attitude == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->attitude }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>5</td>
+                                                                <td>Reading</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="reading" required>
+                                                                        <option value="" {{ $s->reading == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->reading == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->reading == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->reading == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->reading == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->reading == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->reading }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>6</td>
+                                                                <td>Honesty</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="honesty" required>
+                                                                        <option value="" {{ $s->honesty == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->honesty == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->honesty == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->honesty == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->honesty == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->honesty == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->honesty }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>7</td>
+                                                                <td>Cooperation</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="cooperation" required>
+                                                                        <option value="" {{ $s->cooperation == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->cooperation == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->cooperation == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->cooperation == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->cooperation == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->cooperation == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->cooperation }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>8</td>
+                                                                <td>Self-control</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="selfcontrol" required>
+                                                                        <option value="" {{ $s->selfcontrol == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->selfcontrol == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->selfcontrol == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->selfcontrol == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->selfcontrol == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->selfcontrol == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->selfcontrol }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>9</td>
+                                                                <td>Politeness</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="politeness" required>
+                                                                        <option value="" {{ $s->politeness == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->politeness == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->politeness == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->politeness == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->politeness == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->politeness == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->politeness }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>10</td>
+                                                                <td>Physical Health</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="physicalhealth" required>
+                                                                        <option value="" {{ $s->physicalhealth == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->physicalhealth == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->physicalhealth == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->physicalhealth == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->physicalhealth == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->physicalhealth == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->physicalhealth }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>11</td>
+                                                                <td>Stability</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="stability" required>
+                                                                        <option value="" {{ $s->stability == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->stability == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->stability == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->stability == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->stability == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->stability == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->stability }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>12</td>
+                                                                <td>Games and Sports</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="gamesandsports" required>
+                                                                        <option value="" {{ $s->gamesandsports == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->gamesandsports == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->gamesandsports == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->gamesandsports == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->gamesandsports == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->gamesandsports == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->gamesandsports }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>13</td>
+                                                                <td>Attentiveness in Class</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="attentiveness_in_class" required>
+                                                                        <option value="" {{ $s->attentiveness_in_class == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->attentiveness_in_class == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->attentiveness_in_class == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->attentiveness_in_class == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->attentiveness_in_class == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->attentiveness_in_class == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->attentiveness_in_class }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>14</td>
+                                                                <td>Class Participation</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="class_participation" required>
+                                                                        <option value="" {{ $s->class_participation == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->class_participation == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->class_participation == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->class_participation == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->class_participation == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->class_participation == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->class_participation }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>15</td>
+                                                                <td>Relationship with Others</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="relationship_with_others" required>
+                                                                        <option value="" {{ $s->relationship_with_others == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->relationship_with_others == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->relationship_with_others == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->relationship_with_others == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->relationship_with_others == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->relationship_with_others == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->relationship_with_others }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>16</td>
+                                                                <td>Doing Assignment</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="doing_assignment" required>
+                                                                        <option value="" {{ $s->doing_assignment == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->doing_assignment == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->doing_assignment == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->doing_assignment == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->doing_assignment == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->doing_assignment == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->doing_assignment }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>17</td>
+                                                                <td>Writing Skill</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="writing_skill" required>
+                                                                        <option value="" {{ $s->writing_skill == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->writing_skill == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->writing_skill == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->writing_skill == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->writing_skill == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->writing_skill == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->writing_skill }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>18</td>
+                                                                <td>Reading Skill</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="reading_skill" required>
+                                                                        <option value="" {{ $s->reading_skill == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->reading_skill == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->reading_skill == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->reading_skill == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->reading_skill == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->reading_skill == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->reading_skill }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>19</td>
+                                                                <td>Spoken English/Communication</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="spoken_english_communication" required>
+                                                                        <option value="" {{ $s->spoken_english_communication == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->spoken_english_communication == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->spoken_english_communication == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->spoken_english_communication == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->spoken_english_communication == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->spoken_english_communication == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->spoken_english_communication }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>20</td>
+                                                                <td>Hand Writing</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="hand_writing" required>
+                                                                        <option value="" {{ $s->hand_writing == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->hand_writing == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->hand_writing == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->hand_writing == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->hand_writing == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->hand_writing == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->hand_writing }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>21</td>
+                                                                <td>Club</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="club" required>
+                                                                        <option value="" {{ $s->club == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->club == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->club == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->club == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->club == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->club == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->club }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>22</td>
+                                                                <td>Music</td>
+                                                                <td>
+                                                                    <select class="form-control col-md-8" name="music" required>
+                                                                        <option value="" {{ $s->music == '' ? 'selected' : '' }}>Select Remark</option>
+                                                                        <option value="Excellent" {{ $s->music == 'Excellent' ? 'selected' : '' }}>Excellent</option>
+                                                                        <option value="Very Good" {{ $s->music == 'Very Good' ? 'selected' : '' }}>Very Good</option>
+                                                                        <option value="Good" {{ $s->music == 'Good' ? 'selected' : '' }}>Good</option>
+                                                                        <option value="Fairly Good" {{ $s->music == 'Fairly Good' ? 'selected' : '' }}>Fairly Good</option>
+                                                                        <option value="Poor" {{ $s->music == 'Poor' ? 'selected' : '' }}>Poor</option>
+                                                                    </select>
+                                                                </td>
+                                                                <td>
+                                                                    <input type="text" class="form-control" value="{{ $s->music }}" readonly required>
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>23</td>
+                                                                <td>School Attendance</td>
+                                                                <td>
+                                                                    <input type="number" name="attendance" value="{{ $s->attendance }}" class="form-control">
+                                                                </td>
+                                                                <td></td>
+                                                            </tr>
+                                                            {{-- <tr>
+                                                                <td>24</td>
+                                                                <td>Teacher's Comment</td>
+                                                                <td>
+                                                                    <input type="text" name="classteachercomment" value="{{ $s->classteachercomment }}" class="form-control">
+                                                                </td>
+                                                                <td></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>25</td>
+                                                                <td>Principal's Comment</td>
+                                                                <td>
+                                                                    <input type="text" name="principalscomment" value="{{ $s->principalscomment }}" class="form-control">
+                                                                </td>
+                                                                <td></td>
+                                                            </tr> --}}
+                                                            <tr>
+                                                                <td></td>
+                                                                <td></td>
+                                                                <td>
+                                                                    <button type="submit" class="btn btn-primary" id="update-profile-btn">Update Profile</button>
+                                                                </td>
+                                                                <td></td>
+                                                            </tr>
+                                                        @endforeach
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                            </form>
+                            </div>
+                        </form>
+                    </div>
+                @else
+                    <div class="alert alert-warning">
+                        No student data found.
+                    </div>
+                @endif
+
+                <!-- Image View Modal -->
+                <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Student Picture</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <img id="enlargedImage" src="" alt="Student Picture" class="img-fluid" />
+                                <div class="placeholder-text">No image available</div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -595,5 +721,450 @@
     </div>
 </div>
 
-<script src="{{ asset('assets/js/personalityprofile/init.js') }}"></script>
+
+
+
+<div class="app-main flex-column flex-row-fluid" id="kt_app_main">
+    <div class="d-flex flex-column flex-column-fluid">
+        <div id="kt_app_content" class="app-content flex-column-fluid">
+            <div id="kt_app_content_container" class="app-container container-xxl">
+               
+
+                @if ($students->isNotEmpty())
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="d-flex flex-wrap flex-stack mb-4">
+                                           
+                                            <div class="card">
+
+                                                <div class="print-body bg-light w-100 h-100">
+                                                    <div class="print-sect container-fluid border bg-white" style="width: 1200px;">
+
+                                                     
+
+                                                        <div class="row mb-2">
+                                                            <div class="col-sm bg-white">
+
+                                                                <div class="mt-3 result-table">
+                                                                    <table class="table table-bordered table-hover table-responsive-sm"
+                                                                        style="border: 1px solid black;">
+                                                                        <thead  style="border: 1px solid black;">
+                                                                            <tr class="rt">
+                                                                                <th></th>
+                                                                                <th>Subjects</th>
+                                                                                <th>a</th>
+                                                                                <th>b</th>
+                                                                                <th>c</th>
+                                                                                <th>d</th>
+                                                                                <th>e</th>
+                                                                                <th>f</th>
+                                                                                <th>g</th>
+                                                                                <th>h</th>
+                                                                                <th>i</th>
+                                                                                <th>j</th>
+                                                                                <th>k</th>
+                                                                                <th>l</th>
+                                                                            </tr>
+                                                                            <tr class="rt">
+                                                                                <th>S/N</th>
+                                                                                <th></th>
+                                                                                <th>T1</th>
+                                                                                <th>T2</th>
+                                                                                <th>T3</th>
+                                                                                <th>
+                                                                                    <div class="fraction">
+                                                                                        <div class="numerator">a + b + c</div>
+                                                                                        <div class="denominator">3</div>
+                                                                                    </div>
+                                                                                </th>
+                                                                                <th>Term Exams</th>
+                                                                                <th>
+                                                                                    <div class="fraction">
+                                                                                        <div class="numerator">d + f</div>
+                                                                                        <div class="denominator">2</div>
+                                                                                    </div>
+                                                                                </th>
+                                                                                <th>B/F</th>
+                                                                                <th><span class="d-block">Cum</span> (f/g)/2</th>
+                                                                                <th>Grade</th>
+                                                                                <th>PSN</th>
+                                                                                <th>Class Average</th>
+                                                                                <th>Sign</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td align="center" style="font-size: 16px; font-weight: bold;">1</td>
+                                                                                <td align="center" style="font-size: 16px; font-weight: bold;">Mathematics</td>
+                                                                                <td align="center" style="font-size: 16px; font-weight: bold;">12</td>
+                                                                                <td align="center" style="font-size: 16px; font-weight: bold;">9</td>
+                                                                                <td align="center" style="font-size: 16px; font-weight: bold;">23</td>
+                                                                                <td align="center" style="font-size: 16px; font-weight: bold;">56</td>
+                                                                                <td align="center" style="font-size: 16px; font-weight: bold;">23</td>
+                                                                                <td align="center" style="font-size: 16px; font-weight: bold;"></td>
+                                                                                <td align="center" style="font-size: 16px; font-weight: bold;"></td>
+                                                                                <td align="center" style="font-size: 16px; font-weight: bold;"></td>
+                                                                                <td align="center" style="font-size: 16px; font-weight: bold;"></td>
+                                                                                <td align="center" style="font-size: 16px; font-weight: bold;"></td>
+                                                                                <td align="center" style="font-size: 16px; font-weight: bold;"></td>
+                                                                                <td align="center" style="font-size: 16px; font-weight: bold;"></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>2</td>
+                                                                                <td>English Language</td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                            </tr>
+                                                                         
+
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+
+
+                                                        <div class="row gap-2 mb-2 flex flex-row">
+                                                            <div class="col bg-white rounded">
+
+                                                                <div class="mt-2">
+                                                                    <div class="h5">Character Assessment</div>
+                                                                    <table class="table table-bordered table-hover table-responsive-sm"
+                                                                        style="border: 1px solid black;">
+                                                                        <thead  style="border: 1px solid black;">
+                                                                            <tr>
+                                                                                <th></th>
+                                                                                <th>Grade</th>
+                                                                                <th>Sign</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td>Class Attendance</td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>Attentiveness in Class</td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>Class Participation</td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>Self Control</td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>Relationship with Others</td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>Doing Assignment</td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>Neatness</td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+
+                                                            </div>
+                                                            <div class="col bg-white rounded">
+
+                                                                <div class="mt-2">
+                                                                    <div class="h5">Skill Development</div>
+                                                                    <table class="table table-bordered table-hover table-responsive-sm"
+                                                                        style="border: 1px solid black;">
+                                                                        <thead  style="border: 1px solid black;">
+                                                                            <tr>
+                                                                                <th></th>
+                                                                                <th>Grade</th>
+                                                                                <th>Sign</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody>
+                                                                            <tr>
+                                                                                <td>Writing Skill</td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>Reading Skill</td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>Spoken English/Communication</td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>Hand Writing</td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>Sports/Games</td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>Club</td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                            </tr>
+                                                                            <tr>
+                                                                                <td>Music</td>
+                                                                                <td></td>
+                                                                                <td></td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+                                                        <div class="row mb-2">
+                                                            <div class="col-md bg-white rounded grade d-flex justify-content-around align-items-center">
+                                                                <span>Grade: V.Good {VG}</span>
+                                                                <span>Good {G}</span>
+                                                                <span>Average {AVG}</span>
+                                                                <span>Below Average {BA}</span>
+                                                                <span>Poor {P}</span>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row mb-2">
+                                                            <div class="col-md bg-white rounded">
+
+                                                                <div class="m-2">
+                                                                    <table class="w-100 table-bordered" style="border: 1px solid black;">
+                                                                        <tbody class="w-100">
+                                                                            <tr class="w-100">
+                                                                                <td class="p-2 w-50">
+                                                                                    <div class="h6">Class Teacher's Remark Signature/Date</div>
+                                                                                    <div class="w-100">
+                                                                                        <span class="text-space-on-dots">aaa</span>
+                                                                                    </div>
+                                                                                </td>
+                                                                                <td class="p-2 w-50">
+                                                                                    <div class="h6">Remark On Other Activities</div>
+                                                                                    <div class="">
+                                                                                        <span class="text-space-on-dots">aaa</span>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                            <tr class="w-50">
+                                                                                <td class="p-2 w-50">
+                                                                                    <div class="h6">Guidance Counselor's Remark Signature/Date</div>
+                                                                                    <div class="">
+                                                                                        <span class="text-space-on-dots">aaa</span>
+                                                                                    </div>
+                                                                                </td>
+                                                                                <td class="p-2 w-50">
+                                                                                    <div class="h6">Principal's Remark Signature/Date</div>
+                                                                                    <div class="">
+                                                                                        <span class="text-space-on-dots">aaa</span>
+                                                                                    </div>
+                                                                                </td>
+                                                                            </tr>
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="row mb-2">
+                                                            <div class="col-md bg-white rounded px-4">
+                                                                <div class=" d-flex flex-row justify-content-left align-items-center p-2  gap-4">
+                                                                    <span>This Result was issued on<span class="m-2 text-dot-space2">abc</span></span>
+                                                                    <span>and collected by<span class="m-2 text-dot-space2">abc</span></span>
+                                                                </div>
+                                                                <div class=" d-flex flex-row justify-content-left align-items-center p-2  gap-4">
+                                                                    <span class="h6">NEXT TERM BEGINS<span class="m-2 text-dot-space2">abc</span></span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
+                        <div id="kt_app_toolbar_container" class="app-container container-xxl d-flex flex-stack">
+                            <div class="hstack gap-2 d-print-none">
+                                <a href="{{ route('viewstudent', [$schoolclassid, $termid, $sessionid]) }}" class="btn btn-success"><i class="ri-printer-line align-bottom me-1"></i> << Back</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                       
+                        
+                        
+                    </div>
+                @else
+                    <div class="alert alert-warning">
+                        No student data found.
+                    </div>
+                @endif
+
+                <!-- Image View Modal -->
+                <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Student Picture</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <img id="enlargedImage" src="" alt="Student Picture" class="img-fluid" />
+                                <div class="placeholder-text">No image available</div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Handle image view modal
+        const imageViewModal = document.getElementById('imageViewModal');
+        if (imageViewModal) {
+            imageViewModal.addEventListener('show.bs.modal', async function (event) {
+                const button = event.relatedTarget;
+                const imageSrc = button.getAttribute('data-image') || '{{ asset('storage/student_avatars/unnamed.jpg') }}';
+                const pictureName = button.getAttribute('data-picture') || 'none';
+                const admissionNo = button.getAttribute('data-admissionno') || 'unknown';
+                const fileExists = button.getAttribute('data-file-exists') === 'true';
+                const defaultImageExists = button.getAttribute('data-default-exists') === 'true';
+                const modalImage = this.querySelector('#enlargedImage');
+                const placeholderText = this.querySelector('.placeholder-text');
+
+                console.log(`Opening imageViewModal for admissionno: ${admissionNo}, picture: ${pictureName}, src: ${imageSrc}, fileExists: ${fileExists}, defaultImageExists: ${defaultImageExists}`);
+
+                // Reset modal content
+                modalImage.src = '';
+                modalImage.style.display = 'none';
+                placeholderText.style.display = 'none';
+
+                // Use server-side file existence check
+                if (!fileExists) {
+                    console.log(`Server-side check indicates image does not exist for admissionno: ${admissionNo}`);
+                    modalImage.src = '{{ asset('storage/student_avatars/unnamed.jpg') }}';
+                    if (defaultImageExists) {
+                        modalImage.style.display = 'block';
+                    } else {
+                        console.error(`Default image /storage/student_avatars/unnamed.jpg does not exist for admissionno: ${admissionNo}`);
+                        placeholderText.textContent = `No image available for ${admissionNo}`;
+                        placeholderText.style.display = 'block';
+                    }
+                } else {
+                    // Verify image accessibility client-side
+                    const imageExists = await checkImageExists(imageSrc);
+                    if (imageExists) {
+                        modalImage.src = imageSrc;
+                        modalImage.style.display = 'block';
+                        console.log(`Set enlarged image for admissionno: ${admissionNo}, src: ${imageSrc}`);
+                    } else {
+                        console.error(`Image does not exist for admissionno: ${admissionNo}, picture: ${pictureName}, attempted URL: ${imageSrc}`);
+                        modalImage.src = '{{ asset('storage/student_avatars/unnamed.jpg') }}';
+                        if (defaultImageExists) {
+                            modalImage.style.display = 'block';
+                        } else {
+                            console.error(`Default image /storage/student_avatars/unnamed.jpg does not exist for admissionno: ${admissionNo}`);
+                            placeholderText.textContent = `No image available for ${admissionNo}`;
+                            placeholderText.style.display = 'block';
+                        }
+                    }
+                }
+
+                // Handle image load success
+                modalImage.onload = () => {
+                    console.log(`Successfully loaded enlarged image for admissionno: ${admissionNo}, src: ${modalImage.src}`);
+                    modalImage.style.display = 'block';
+                    placeholderText.style.display = 'none';
+                };
+
+                // Handle image load failure
+                modalImage.onerror = () => {
+                    console.error(`Failed to load enlarged image for admissionno: ${admissionNo}, picture: ${pictureName}, attempted URL: ${imageSrc}`);
+                    modalImage.src = '{{ asset('storage/student_avatars/unnamed.jpg') }}';
+                    if (defaultImageExists) {
+                        modalImage.style.display = 'block';
+                    } else {
+                        console.error(`Default image /storage/student_avatars/unnamed.jpg failed to load for admissionno: ${admissionNo}`);
+                        placeholderText.textContent = `No image available for ${admissionNo}`;
+                        placeholderText.style.display = 'block';
+                    }
+                };
+            });
+
+            // Clear image when modal is hidden
+            imageViewModal.addEventListener('hidden.bs.modal', function () {
+                const modalImage = this.querySelector('#enlargedImage');
+                const placeholderText = this.querySelector('.placeholder-text');
+                modalImage.src = '';
+                modalImage.style.display = 'none';
+                placeholderText.style.display = 'none';
+                console.log('imageViewModal closed, cleared enlargedImage src and placeholder');
+            });
+        } else {
+            console.warn('imageViewModal not found in DOM');
+        }
+
+        // Function to test if an image exists
+        function checkImageExists(url) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.onload = () => {
+                    console.log(`Image check succeeded for URL: ${url}`);
+                    resolve(true);
+                };
+                img.onerror = () => {
+                    console.log(`Image check failed for URL: ${url}`);
+                    resolve(false);
+                };
+                img.src = url;
+            });
+        }
+    });
+</script>
 @endsection

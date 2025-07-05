@@ -77,15 +77,7 @@ class SubjectClassController extends Controller
                 'subjectclass.updated_at'
             ])
             ->orderBy('sclass')
-            ->paginate(100);
-
-        if ($request->ajax()) {
-            return response()->json([
-                'html' => view('subjectclass.index', compact('subjectclasses', 'schoolclasses', 'subjectteacher', 'pagetitle'))->render(),
-                'count' => $subjectclasses->count(),
-                'total' => $subjectclasses->total(),
-            ]);
-        }
+            ->get();
 
         return view('subjectclass.index')
             ->with('subjectclasses', $subjectclasses)
@@ -332,7 +324,7 @@ class SubjectClassController extends Controller
                 'success' => true,
                 'data' => [
                     'schoolclassid' => $subjectclass->schoolclassid,
-                    'subjectteacherid' => [$subjectclass->subjectteacherid], // Return as array for consistency
+                    'subjectteacherid' => [$subjectclass->subjectteacherid],
                 ]
             ], 200);
         } catch (\Exception $e) {
