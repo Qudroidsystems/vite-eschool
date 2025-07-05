@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
@@ -9,10 +10,11 @@ use App\Models\Schoolterm;
 use App\Models\Subject;
 use App\Models\Schoolsession;
 use App\Models\User;
-use App\Models\Broadsheet;
+use App\Models\Broadsheets;
 use App\Models\Subjectclass;
 use App\Models\SubjectRegistrationStatus;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class SubjectTeacherController extends Controller
 {
@@ -303,22 +305,42 @@ class SubjectTeacherController extends Controller
             }
         }
 
+        // Fetch related broadsheet records to update staff_id
         $sub = SubjectTeacher::whereIn('subjectteacher.id', array_column($updatedRecords, 'id'))
             ->leftJoin('subjectclass', 'subjectclass.subjectteacherid', '=', 'subjectteacher.id')
-            ->leftJoin('broadsheet', 'broadsheet.subjectclassid', '=', 'subjectclass.id')
-            ->get(['broadsheet.staffid as bstaffid', 'broadsheet.subjectclassid as subclass', 'broadsheet.termid as term', 'broadsheet.session_id as session']);
+            ->leftJoin('broadsheets', 'broadsheets.subjectclass_id', '=', 'subjectclass.id')
+            ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+            ->select([
+                'broadsheets.staff_id as bstaffid',
+                'broadsheets.subjectclass_id as subclass',
+                'broadsheets.term_id as term',
+                'broadsheet_records.session_id as session'
+            ])
+            ->get();
 
         foreach ($sub as $value) {
-            Broadsheet::where('subjectclassid', $value->subclass)
-                ->where('termid', $value->term)
-                ->where('session_id', $value->session)
-                ->update(['staffid' => $staffid]);
+            if ($value->subclass && $value->term && $value->session) {
+                Broadsheets::where('subjectclass_id', $value->subclass)
+                    ->where('term_id', $value->term)
+                    ->whereIn('broadsheet_record_id', function ($query) use ($value) {
+                        $query->select('id')
+                            ->from('broadsheet_records')
+                            ->where('session_id', $value->session);
+                    })
+                    ->update(['staff_id' => $staffid]);
 
-            SubjectRegistrationStatus::where('subjectclassid', $value->subclass)
-                ->where('termid', $value->term)
-                ->where('session_id', $value->session)
-                ->update(['staffid' => $staffid]);
+                SubjectRegistrationStatus::where('subjectclassid', $value->subclass)
+                    ->where('termid', $value->term)
+                    ->where('sessionid', $value->session)
+                    ->update(['staffid' => $staffid]);
+            }
         }
+
+        Log::info('Updated Broadsheets and SubjectRegistrationStatus', [
+            'staffid' => $staffid,
+            'updated_records' => $updatedRecords,
+            'sub_query_results' => $sub->toArray()
+        ]);
 
         return response()->json([
             'success' => true,
