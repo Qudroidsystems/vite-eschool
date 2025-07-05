@@ -428,7 +428,7 @@ function initializeListJs() {
         try {
             subjectTeacherList = new List('subjectTeacherList', {
                 valueNames: ['id', 'sn', 'subjectteacher', 'subject', 'subjectcode', 'term', 'session', 'datereg'],
-                page: 10,
+                page: 100,
                 pagination: {
                     innerWindow: 2,
                     outerWindow: 1,
