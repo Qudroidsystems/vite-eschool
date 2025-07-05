@@ -4,59 +4,37 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 
 <style>
+/* Improve input field size and touch target on mobile */
 @media (max-width: 768px) {
     .score-input {
-        height: 48px;
-        font-size: 1.1rem;
-        padding: 8px;
-        width: 80px;
-        min-width: 80px;
-        box-sizing: border-box;
-        touch-action: manipulation;
-        text-align: right;
+        height: 48px; /* Increased height for better touch interaction */
+        font-size: 1.1rem; /* Larger font for better readability */
+        padding: 8px; /* Increased padding for touch */
+        width: 80px; /* Fixed width to accommodate 3 digits (e.g., 100.0) */
+        min-width: 80px; /* Ensure minimum width */
+        box-sizing: border-box; /* Ensure padding is included in width */
+        touch-action: manipulation; /* Improve touch interaction */
+        text-align: right; /* Align numbers for better readability */
     }
     .table-responsive {
-        overflow-x: auto;
+        overflow-x: auto; /* Ensure table scrolls on mobile */
     }
     .avatar-sm {
         width: 40px !important;
         height: 40px !important;
     }
+    /* Adjust table cell padding for better spacing */
     td.ca1, td.ca2, td.ca3, td.exam {
-        padding: 4px !important;
+        padding: 4px !important; /* Reduced padding to fit wider inputs */
     }
-    .chart-container {
-        max-width: 100%;
-        height: 300px;
-    }
-}
-.chart-container {
-    position: relative;
-    width: 100%;
-    max-width: 400px;
-    height: 350px;
-    margin: 20px auto;
-}
-.chart-fallback {
-    display: none;
-    text-align: center;
-    color: #6c757d;
-    font-style: italic;
-}
-.alert-debug {
-    display: none;
-    margin-bottom: 20px;
 }
 </style>
 
+<!-- Main content container -->
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
-            <!-- Debug Alert -->
-            <div class="alert alert-warning alert-debug" id="dataDebugAlert">
-                <strong>Debug Info:</strong> No scores data available. Check controller or database.
-            </div>
-
+            <!-- Display validation errors -->
             @if ($errors->any())
                 <div class="alert alert-danger">
                     <strong>Error!</strong> There were some problems with your input.<br>
@@ -68,6 +46,7 @@
                 </div>
             @endif
 
+            <!-- Display success/status messages -->
             @if (session('status') || session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ session('status') ?: session('success') }}
@@ -75,41 +54,48 @@
                 </div>
             @endif
 
+            <!-- Subject Information Cards -->
             @if ($broadsheets->isNotEmpty())
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="card">
                             <div class="card-body">
-                                <div class="d-flex flex-wrap flex-stack mb-4">
-                                    <div class="d-flex flex-column flex-grow-1 pe-8">
-                                        <div class="d-flex flex-wrap">
-                                            <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="bi bi-book fs-3 text-primary me-2"></i>
-                                                    <div class="fs-2 fw-bold text-success">{{ $broadsheets->first()->subject ?? 'N/A' }}</div>
+                                <div class="row g-3">
+                                    <div class="d-flex flex-wrap flex-stack mb-4">
+                                        <div class="d-flex flex-column flex-grow-1 pe-8">
+                                            <div class="d-flex flex-wrap">
+                                                <!-- Subject Card -->
+                                                <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-book fs-3 text-primary me-2"></i>
+                                                        <div class="fs-2 fw-bold text-success">{{ $broadsheets->first()->subject }}</div>
+                                                    </div>
+                                                    <div class="fw-semibold fs-6 text-gray-400">Subject</div>
                                                 </div>
-                                                <div class="fw-semibold fs-6 text-gray-400">Subject</div>
-                                            </div>
-                                            <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="bi bi-code fs-3 text-success me-2"></i>
-                                                    <div class="fs-2 fw-bold text-success">{{ $broadsheets->first()->subject_code ?? 'N/A' }}</div>
+                                                <!-- Subject Code Card -->
+                                                <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-code fs-3 text-success me-2"></i>
+                                                        <div class="fs-2 fw-bold text-success">{{ $broadsheets->first()->subject_code }}</div>
+                                                    </div>
+                                                    <div class="fw-semibold fs-6 text-gray-400">Subject Code</div>
                                                 </div>
-                                                <div class="fw-semibold fs-6 text-gray-400">Subject Code</div>
-                                            </div>
-                                            <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="bi bi-building fs-3 text-success me-2"></i>
-                                                    <div class="fs-2 fw-bold text-success">{{ $broadsheets->first()->schoolclass ?? 'N/A' }} {{ $broadsheets->first()->arm ?? '' }}</div>
+                                                <!-- Class Card -->
+                                                <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-building fs-3 text-success me-2"></i>
+                                                        <div class="fs-2 fw-bold text-success">{{ $broadsheets->first()->schoolclass }} {{ $broadsheets->first()->arm }}</div>
+                                                    </div>
+                                                    <div class="fw-semibold fs-6 text-gray-400">Class</div>
                                                 </div>
-                                                <div class="fw-semibold fs-6 text-gray-400">Class</div>
-                                            </div>
-                                            <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
-                                                <div class="d-flex align-items-center">
-                                                    <i class="bi bi-calendar fs-3 text-success me-2"></i>
-                                                    <div class="fs-2 fw-bold text-success">{{ $broadsheets->first()->term ?? 'N/A' }} | {{ $broadsheets->first()->session ?? 'N/A' }}</div>
+                                                <!-- Term | Session Card -->
+                                                <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
+                                                    <div class="d-flex align-items-center">
+                                                        <i class="bi bi-calendar fs-3 text-success me-2"></i>
+                                                        <div class="fs-2 fw-bold text-success">{{ $broadsheets->first()->term }} | {{ $broadsheets->first()->session }}</div>
+                                                    </div>
+                                                    <div class="fw-semibold fs-6 text-gray-400">Term | Session</div>
                                                 </div>
-                                                <div class="fw-semibold fs-6 text-gray-400">Term | Session</div>
                                             </div>
                                         </div>
                                     </div>
@@ -120,6 +106,7 @@
                 </div>
             @endif
 
+            <!-- Scoresheet Table -->
             <div class="row">
                 <div class="col-lg-12">
                     <div class="card">
@@ -166,11 +153,13 @@
                                 </div>
                             </div>
 
+                            <!-- No Data Alert -->
                             <div class="alert alert-info text-center" id="noDataAlert" style="display: {{ $broadsheets->isEmpty() ? 'block' : 'none' }};">
                                 <i class="ri-information-line me-2"></i>
                                 No scores available for the selected subject. Please check your filters or import scores.
                             </div>
 
+                            <!-- Scoresheet Table -->
                             <div class="table-responsive">
                                 <table class="table table-centered align-middle table-nowrap mb-0" id="scoresheetTable">
                                     <thead class="table-active">
@@ -210,14 +199,7 @@
                                                 <td class="name" data-name="{{ ($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '') }}">
                                                     <div class="d-flex align-items-center">
                                                         <div class="avatar-sm me-2">
-                                                            <img src="{{ $broadsheet->picture && file_exists(storage_path('app/public/' . $broadsheet->picture)) ? asset('storage/' . $broadsheet->picture) : asset('storage/student_avatars/unnamed.jpg') }}"
-                                                                 alt="{{ ($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '') }}"
-                                                                 class="rounded-circle w-100 student-image"
-                                                                 data-bs-toggle="modal"
-                                                                 data-bs-target="#imageViewModal"
-                                                                 data-image="{{ $broadsheet->picture && file_exists(storage_path('app/public/' . $broadsheet->picture)) ? asset('storage/' . $broadsheet->picture) : asset('storage/student_avatars/unnamed.jpg') }}"
-                                                                 data-picture="{{ $broadsheet->picture ?? 'none' }}"
-                                                                 onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'; console.error('Image failed to load for admissionno: {{ $broadsheet->admissionno ?? 'unknown' }}, path: {{ $broadsheet->picture ?? 'none' }}');">
+                                                            <img src="{{ $broadsheet->picture ? asset('storage/student_avatars/' . basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}" alt="{{ ($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '') }}" class="rounded-circle w-100 student-image" data-bs-toggle="modal" data-bs-target="#imageViewModal" data-image="{{ $broadsheet->picture ? asset('storage/student_avatars/' . basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}" data-picture="{{ $broadsheet->picture ?? 'none' }}" onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'; console.log('Image failed to load for admissionno: {{ $broadsheet->admissionno ?? 'unknown' }}, picture: {{ $broadsheet->picture ?? 'none' }}');">
                                                         </div>
                                                         <div class="d-flex flex-column">
                                                             <span class="fw-bold">{{ $broadsheet->lname ?? '' }}</span> {{ $broadsheet->fname ?? '' }} {{ $broadsheet->mname ?? '' }}
@@ -261,6 +243,7 @@
                                 </table>
                             </div>
 
+                            <!-- Enhanced Control Panel -->
                             @if ($broadsheets->isNotEmpty())
                                 <div class="row mt-3">
                                     <div class="col-12">
@@ -295,6 +278,7 @@
                                     </div>
                                 </div>
 
+                                <!-- Progress Indicator -->
                                 <div class="row mt-2" id="progressContainer" style="display: none;">
                                     <div class="col-12">
                                         <div class="card">
@@ -322,6 +306,7 @@
                 </div>
             </div>
 
+            <!-- Import Modal -->
             <div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
@@ -359,6 +344,7 @@
                 </div>
             </div>
 
+            <!-- Scores Modal -->
             <div class="modal fade" id="scoresModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-xl">
                     <div class="modal-content">
@@ -367,27 +353,7 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="chart-container">
-                                        <h6 class="text-center mb-3">Grade Distribution</h6>
-                                        <canvas id="gradeDistributionChart"></canvas>
-                                        <div class="chart-fallback" id="gradeChartFallback">
-                                            No grades available to display.
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="chart-container">
-                                        <h6 class="text-center mb-3">Total Score Distribution</h6>
-                                        <canvas id="scoreDistributionChart"></canvas>
-                                        <div class="chart-fallback" id="scoreChartFallback">
-                                            No scores available to display.
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="table-responsive mt-4">
+                            <div class="table-responsive">
                                 <table class="table table-centered align-middle table-nowrap mb-0">
                                     <thead class="table-active">
                                         <tr>
@@ -414,14 +380,7 @@
                                                 <td class="name">
                                                     <div class="d-flex align-items-center">
                                                         <div class="avatar-sm me-2">
-                                                            <img src="{{ $broadsheet->picture && file_exists(storage_path('app/public/' . $broadsheet->picture)) ? asset('storage/' . $broadsheet->picture) : asset('storage/student_avatars/unnamed.jpg') }}"
-                                                                 alt="{{ ($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '') }}"
-                                                                 class="rounded-circle w-100 student-image"
-                                                                 data-bs-toggle="modal"
-                                                                 data-bs-target="#imageViewModal"
-                                                                 data-image="{{ $broadsheet->picture && file_exists(storage_path('app/public/' . $broadsheet->picture)) ? asset('storage/' . $broadsheet->picture) : asset('storage/student_avatars/unnamed.jpg') }}"
-                                                                 data-picture="{{ $broadsheet->picture ?? 'none' }}"
-                                                                 onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'; console.error('Image failed to load for admissionno: {{ $broadsheet->admissionno ?? 'unknown' }}, path: {{ $broadsheet->picture ?? 'none' }}');">
+                                                            <img src="{{ $broadsheet->picture ? asset('storage/student_avatars/' . basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}" alt="{{ ($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '') }}" class="rounded-circle w-100 student-image" data-bs-toggle="modal" data-bs-target="#imageViewModal" data-image="{{ $broadsheet->picture ? asset('storage/student_avatars/' . basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}" data-picture="{{ $broadsheet->picture ?? 'none' }}" onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'; console.log('Image failed to load for admissionno: {{ $broadsheet->admissionno ?? 'unknown' }}, picture: {{ $broadsheet->picture ?? 'none' }}');">
                                                         </div>
                                                         <div class="d-flex flex-column">
                                                             <span class="fw-bold">{{ $broadsheet->lname ?? '' }}</span> {{ $broadsheet->fname ?? '' }} {{ $broadsheet->mname ?? '' }}
@@ -454,6 +413,7 @@
                 </div>
             </div>
 
+            <!-- Image View Modal -->
             <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
@@ -462,223 +422,29 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body text-center">
-                            <img id="enlargedImage" src="" alt="Student Image" class="img-fluid" onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'; console.error('Enlarged image failed to load');">
+                            <img id="enlargedImage" src="" alt="Student Image" class="img-fluid" onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'; console.log('Enlarged image failed to load');">
                         </div>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- JavaScript Dependencies -->
 <script>
-    // Debug logs
-    console.log('Chart.js loaded:', typeof Chart !== 'undefined' ? 'Yes' : 'No');
-    console.log('jQuery loaded:', typeof $ !== 'undefined' ? 'Yes' : 'No');
-    console.log('Bootstrap loaded:', typeof bootstrap !== 'undefined' ? 'Yes' : 'No');
-    console.log('Raw broadsheets JSON:', @json($broadsheets));
-
-    // Initialize broadsheets with fallback
-    window.broadsheets = @json($broadsheets) || [
-        { id: 1, admissionno: 'ST001', lname: 'Doe', fname: 'John', cum: 75.5, total: 80.0, picture: 'student_avatars/doe.jpg' },
-        { id: 2, admissionno: 'ST002', lname: 'Smith', fname: 'Jane', cum: 65.0, total: 70.0, picture: 'student_avatars/smith.jpg' },
-        { id: 3, admissionno: 'ST003', lname: 'Brown', fname: 'Bob', cum: 55.0, total: 60.0, picture: 'student_avatars/brown.jpg' }
-    ];
-    console.log('Broadsheets:', window.broadsheets);
-    console.log('Broadsheets length:', window.broadsheets.length);
-
-    // Session variables
-    window.term_id = {{ session('term_id') ?? 'null' }};
-    window.session_id = {{ session('session_id') ?? 'null' }};
-    window.subjectclass_id = {{ session('subjectclass_id') ?? 'null' }};
-    window.schoolclass_id = {{ session('schoolclass_id') ?? 'null' }};
-    window.staff_id = {{ session('staff_id') ?? 'null' }};
-    console.log('Session vars:', { term_id: window.term_id, session_id: window.session_id, subjectclass_id: window.subjectclass_id, schoolclass_id: window.schoolclass_id, staff_id: window.staff_id });
-
-    // Simplified chart rendering
-    function renderCharts() {
-        console.log('renderCharts called');
-        if (typeof Chart === 'undefined') {
-            console.error('Chart.js not loaded');
-            document.getElementById('gradeChartFallback').textContent = 'Error: Chart library not loaded.';
-            document.getElementById('scoreChartFallback').textContent = 'Error: Chart library not loaded.';
-            document.getElementById('gradeChartFallback').style.display = 'block';
-            document.getElementById('scoreChartFallback').style.display = 'block';
-            return;
-        }
-
-        const gradeCanvas = document.getElementById('gradeDistributionChart');
-        const scoreCanvas = document.getElementById('scoreDistributionChart');
-        if (!gradeCanvas || !scoreCanvas) {
-            console.error('Canvas elements missing:', { gradeCanvas: !!gradeCanvas, scoreCanvas: !!scoreCanvas });
-            document.getElementById('gradeChartFallback').textContent = 'Error: Chart containers not found.';
-            document.getElementById('scoreChartFallback').textContent = 'Error: Chart containers not found.';
-            document.getElementById('gradeChartFallback').style.display = 'block';
-            document.getElementById('scoreChartFallback').style.display = 'block';
-            return;
-        }
-
-        // Destroy existing charts
-        if (window.gradeChart) window.gradeChart.destroy();
-        if (window.scoreChart) window.scoreChart.destroy();
-
-        // Process data
-        const gradeCounts = { A: 0, B: 0, C: 0, D: 0, F: 0 };
-        const scoreRanges = { '0-20': 0, '20-40': 0, '40-60': 0, '60-80': 0, '80-100': 0 };
-        let hasData = false;
-
-        if (Array.isArray(window.broadsheets) && window.broadsheets.length > 0) {
-            console.log('Processing broadsheets:', window.broadsheets);
-            window.broadsheets.forEach((broadsheet, index) => {
-                const cum = parseFloat(broadsheet.cum) || 0;
-                const total = parseFloat(broadsheet.total) || 0;
-                if (cum > 0 || total > 0) hasData = true;
-
-                // Grade calculation
-                if (cum >= 70) gradeCounts.A++;
-                else if (cum >= 60) gradeCounts.B++;
-                else if (cum >= 50) gradeCounts.C++;
-                else if (cum >= 40) gradeCounts.D++;
-                else gradeCounts.F++;
-
-                // Score ranges
-                if (total >= 0 && total <= 20) scoreRanges['0-20']++;
-                else if (total <= 40) scoreRanges['20-40']++;
-                else if (total <= 60) scoreRanges['40-60']++;
-                else if (total <= 80) scoreRanges['60-80']++;
-                else if (total <= 100) scoreRanges['80-100']++;
-
-                if (isNaN(cum) || isNaN(total)) {
-                    console.warn(`Invalid data at index ${index}:`, { cum, total });
-                }
-            });
-        } else {
-            console.error('No valid broadsheets data');
-            document.getElementById('dataDebugAlert').style.display = 'block';
-            document.getElementById('gradeChartFallback').textContent = 'No scores data available.';
-            document.getElementById('scoreChartFallback').textContent = 'No scores data available.';
-            document.getElementById('gradeChartFallback').style.display = 'block';
-            document.getElementById('scoreChartFallback').style.display = 'block';
-            return;
-        }
-
-        // Render grade chart
-        ```chartjs
-        {
-            "type": "pie",
-            "data": {
-                "labels": ["A", "B", "C", "D", "F"],
-                "datasets": [{
-                    "label": "Grade Distribution",
-                    "data": [
-                        gradeCounts.A,
-                        gradeCounts.B,
-                        gradeCounts.C,
-                        gradeCounts.D,
-                        gradeCounts.F
-                    ],
-                    "backgroundColor": ["#4CAF50", "#2196F3", "#FF9800", "#F44336", "#9E9E9E"],
-                    "borderColor": ["#388E3C", "#1976D2", "#F57C00", "#D32F2F", "#616161"],
-                    "borderWidth": 1
-                }]
-            },
-            "options": {
-                "responsive": true,
-                "maintainAspectRatio": false,
-                "plugins": {
-                    "legend": {
-                        "display": true,
-                        "position": "top",
-                        "labels": {
-                            "font": { "size": 14 },
-                            "color": "#333"
-                        }
-                    },
-                    "tooltip": {
-                        "callbacks": {
-                            "label": function(context) {
-                                return `${context.label}: ${context.raw} student${context.raw !== 1 ? 's' : ''}`;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        ```
-        window.gradeChart = new Chart(gradeCanvas, chartConfig);
-        console.log('Grade chart rendered:', gradeCounts);
-
-        // Render score chart
-        ```chartjs
-        {
-            "type": "pie",
-            "data": {
-                "labels": ["0-20", "20-40", "40-60", "60-80", "80-100"],
-                "datasets": [{
-                    "label": "Total Score Distribution",
-                    "data": [
-                        scoreRanges['0-20'],
-                        scoreRanges['20-40'],
-                        scoreRanges['40-60'],
-                        scoreRanges['60-80'],
-                        scoreRanges['80-100']
-                    ],
-                    "backgroundColor": ["#FF5733", "#FFC107", "#4CAF50", "#2196F3", "#9C27B0"],
-                    "borderColor": ["#C4302B", "#FFA000", "#388E3C", "#1976D2", "#7B1FA2"],
-                    "borderWidth": 1
-                }]
-            },
-            "options": {
-                "responsive": true,
-                "maintainAspectRatio": false,
-                "plugins": {
-                    "legend": {
-                        "display": true,
-                        "position": "top",
-                        "labels": {
-                            "font": { "size": 14 },
-                            "color": "#333"
-                        }
-                    },
-                    "tooltip": {
-                        "callbacks": {
-                            "label": function(context) {
-                                return `${context.label}: ${context.raw} student${context.raw !== 1 ? 's' : ''}`;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        ```
-        window.scoreChart = new Chart(scoreCanvas, chartConfig);
-        console.log('Score chart rendered:', scoreRanges);
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        console.log('DOM loaded');
-        const scoresModal = document.getElementById('scoresModal');
-        if (scoresModal) {
-            scoresModal.addEventListener('shown.bs.modal', function () {
-                console.log('Scores modal shown');
-                renderCharts();
-            });
-        } else {
-            console.error('Scores modal not found');
-        }
-
-        // Image modal handler
-        document.querySelectorAll('.student-image').forEach(img => {
-            img.addEventListener('click', function() {
-                const enlargedImage = document.getElementById('enlargedImage');
-                const imagePath = this.dataset.image;
-                enlargedImage.src = imagePath;
-                console.log('Loading enlarged image:', imagePath);
-            });
-        });
-    });
+    window.broadsheets = @json($broadsheets);
+    window.term_id = {{ session('term_id') }};
+    window.session_id = {{ session('session_id') }};
+    window.subjectclass_id = {{ session('subjectclass_id') }};
+    window.schoolclass_id = {{ session('schoolclass_id') }};
+    window.staff_id = {{ session('staff_id') }};
+    window.routes = {
+        results: '{{ route('subjectscoresheet.results') }}',
+        bulkUpdate: '{{ route('subjectscoresheet.bulk-update') }}',
+        destroy: '{{ route('subjectscoresheet.destroy', ['id' => '__ID__']) }}',
+        import: '{{ route('subjectscoresheet.import') }}'
+    };
 </script>
 @endsection
