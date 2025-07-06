@@ -244,7 +244,8 @@ Route::group(['middleware' => ['auth']], function () {
     //Route::delete('/subjects/{id}', [SubjectOperationController::class, 'destroy'])->name('subjects.destroy');
     Route::delete('/subjects/registered-classes', [SubjectOperationController::class, 'destroy'])->name('subjects.destroy');
     Route::get('/subjects/registered-classes', [SubjectOperationController::class, 'getRegisteredClasses'])->name('subjects.registered-classes');
-
+    // Route for batch unregistration
+    Route::post('/subjectregistration/destroy', [SubjectOperationController::class, 'destroy'])->name('subjectregistration.destroy');
 
     // Add (or update) your route for the batch endpoint:
     Route::post('/subjectregistration/batch', [SubjectOperationController::class, 'batchRegister'])->name('subjectregistration.batch');
