@@ -54,6 +54,12 @@
                 </div>
             @endif
 
+            @if (session('error'))
+                <div class="alert alert-danger">
+                    {{ session('error') }}
+                </div>
+            @endif
+
             <!-- Subject Information Cards -->
             @if ($broadsheets->isNotEmpty())
                 <div class="row">
@@ -432,19 +438,21 @@
     </div>
 </div>
 
-<!-- JavaScript Dependencies -->
 <script>
+    console.log('Raw broadsheets before normalization:', @json($broadsheets));
     window.broadsheets = @json($broadsheets);
     window.term_id = {{ session('term_id') }};
     window.session_id = {{ session('session_id') }};
     window.subjectclass_id = {{ session('subjectclass_id') }};
     window.schoolclass_id = {{ session('schoolclass_id') }};
     window.staff_id = {{ session('staff_id') }};
+    window.is_senior = {{ $is_senior ? 'true' : 'false' }};
     window.routes = {
         results: '{{ route('subjectscoresheet.results') }}',
         bulkUpdate: '{{ route('subjectscoresheet.bulk-update') }}',
         destroy: '{{ route('subjectscoresheet.destroy', ['id' => '__ID__']) }}',
-        import: '{{ route('subjectscoresheet.import') }}'
+        import: '{{ route('subjectscoresheet.import') }}',
+        gradePreview: '{{ route('subjectscoresheet.grade-preview') }}'
     };
 </script>
 @endsection

@@ -168,6 +168,25 @@
                 @endif
 
                 @if ($students->isNotEmpty())
+                 <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row g-3">
+                                        <div class="d-flex flex-wrap flex-stack mb-4">
+                                            <!-- Student Avatar -->
+                                            
+                                           
+                                            <!-- Student Information -->
+                                            <div class="d-flex flex-column flex-grow-1 pe-8">
+                                               
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="row">
                         <div class="col-lg-12">
                             <div class="card">
@@ -795,41 +814,31 @@
                                                                                 <th>Sign</th>
                                                                             </tr>
                                                                         </thead>
-                                                                        <tbody>
-                                                                            <tr>
-                                                                                <td align="center" style="font-size: 16px; font-weight: bold;">1</td>
-                                                                                <td align="center" style="font-size: 16px; font-weight: bold;">Mathematics</td>
-                                                                                <td align="center" style="font-size: 16px; font-weight: bold;">12</td>
-                                                                                <td align="center" style="font-size: 16px; font-weight: bold;">9</td>
-                                                                                <td align="center" style="font-size: 16px; font-weight: bold;">23</td>
-                                                                                <td align="center" style="font-size: 16px; font-weight: bold;">56</td>
-                                                                                <td align="center" style="font-size: 16px; font-weight: bold;">23</td>
-                                                                                <td align="center" style="font-size: 16px; font-weight: bold;"></td>
-                                                                                <td align="center" style="font-size: 16px; font-weight: bold;"></td>
-                                                                                <td align="center" style="font-size: 16px; font-weight: bold;"></td>
-                                                                                <td align="center" style="font-size: 16px; font-weight: bold;"></td>
-                                                                                <td align="center" style="font-size: 16px; font-weight: bold;"></td>
-                                                                                <td align="center" style="font-size: 16px; font-weight: bold;"></td>
-                                                                                <td align="center" style="font-size: 16px; font-weight: bold;"></td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <td>2</td>
-                                                                                <td>English Language</td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                            </tr>
-                                                                         
-
+                                                                       <tbody>
+                                                                            @forelse ($scores as $index => $score)
+                                                                                <tr>
+                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $index + 1 }}</td>
+                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->subject_name }}</td>
+                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->ca1 ?? '-' }}</td>
+                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->ca2 ?? '-' }}</td>
+                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->ca3 ?? '-' }}</td>
+                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">
+                                                                                        {{ $score->ca1 && $score->ca2 && $score->ca3 ? round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) : '-' }}
+                                                                                    </td>
+                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->exam ?? '-' }}</td>
+                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->total ?? '-' }}</td>
+                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->bf ?? '-' }}</td>
+                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->cum ?? '-' }}</td>
+                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->grade ?? '-' }}</td>
+                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->position ?? '-' }}</td>
+                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->class_average ?? '-' }}</td>
+                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;"></td>
+                                                                                </tr>
+                                                                            @empty
+                                                                                <tr>
+                                                                                    <td colspan="14" align="center">No scores available for this student.</td>
+                                                                                </tr>
+                                                                            @endforelse
                                                                         </tbody>
                                                                     </table>
                                                                 </div>

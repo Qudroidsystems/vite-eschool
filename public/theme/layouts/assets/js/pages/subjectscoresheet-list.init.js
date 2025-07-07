@@ -23,6 +23,9 @@ if (!csrfToken) {
     console.warn("CSRF token not found. AJAX requests may fail.");
 }
 
+// Default image constant
+const DEFAULT_IMAGE = '/storage/student_avatars/unnamed.jpg';
+
 // Utility: Normalize picture path
 function normalizePicturePath(picture) {
     if (!picture || picture === 'none' || picture === '') {
@@ -36,6 +39,7 @@ function normalizePicturePath(picture) {
 
 // Utility: Ensure broadsheets is a flat array
 function ensureBroadsheetsArray() {
+    console.log("Raw broadsheets before processing:", window.broadsheets);
     if (typeof window.broadsheets === 'undefined') {
         window.broadsheets = [];
     } else if (!Array.isArray(window.broadsheets)) {
@@ -50,20 +54,80 @@ function ensureBroadsheetsArray() {
             item => item && typeof item === 'object' && item.id
         );
     }
-    console.log('Broadsheets pictures:', window.broadsheets.map(b => ({
+    console.log('Processed broadsheets:', window.broadsheets.map(b => ({
+        id: b.id,
         admissionno: b.admissionno,
         picture: b.picture || 'none'
     })));
 }
 
-// Grade calculation
+// Utility: Debounce function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Grade calculation (client-side)
 function calculateGrade(score) {
-    if (isNaN(score)) return '-';
-    if (score >= 70) return 'A';
-    if (score >= 60) return 'B';
-    if (score >= 50) return 'C';
-    if (score >= 40) return 'D';
-    return 'F';
+    if (isNaN(score) || score < 0 || score > 100) {
+        console.warn(`Invalid score for grading: ${score}`);
+        return '-';
+    }
+    
+    if (typeof window.is_senior === 'undefined') {
+        console.warn("is_senior flag is undefined, defaulting to junior grading");
+    }
+    
+    const isSenior = window.is_senior === true;
+    console.log(`Calculating grade for score=${score}, is_senior=${isSenior}`);
+    
+    if (isSenior) {
+        // Senior grading scale
+        if (score >= 75) return 'A1';
+        if (score >= 70) return 'B2';
+        if (score >= 65) return 'B3';
+        if (score >= 60) return 'C4';
+        if (score >= 55) return 'C5';
+        if (score >= 50) return 'C6';
+        if (score >= 45) return 'D7';
+        if (score >= 40) return 'E8';
+        return 'F9';
+    } else {
+        // Junior grading scale
+        if (score >= 70) return 'A';
+        if (score >= 60) return 'B';
+        if (score >= 50) return 'C';
+        if (score >= 40) return 'D';
+        return 'F';
+    }
+}
+
+// Fetch grade from backend as fallback
+async function fetchGradeFromBackend(schoolclass_id, cum) {
+    try {
+        const response = await axios.post(window.routes.gradePreview, {
+            schoolclass_id,
+            cum
+        }, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json'
+            },
+            timeout: 5000
+        });
+        console.log(`Backend grade for cum=${cum}: ${response.data.grade}`);
+        return response.data.grade || '-';
+    } catch (error) {
+        console.error('Failed to fetch grade from backend:', error);
+        return null;
+    }
 }
 
 // Ordinal for position
@@ -78,11 +142,13 @@ function getOrdinalSuffix(position) {
 }
 
 // Update a table row and trigger full position update
-function updateRowTotal(row) {
+async function updateRowTotal(row) {
     const scoreInputs = row.querySelectorAll('.score-input');
     const id = row.querySelector('.score-input')?.dataset.id;
-    if (!id) return;
-    if (!window.broadsheets || !Array.isArray(window.broadsheets) || window.broadsheets.length === 0) return;
+    if (!id) {
+        console.error("No dataset.id found for row");
+        return;
+    }
 
     let ca1 = 0, ca2 = 0, ca3 = 0, exam = 0;
     scoreInputs.forEach(input => {
@@ -97,10 +163,24 @@ function updateRowTotal(row) {
 
     const caAverage = (ca1 + ca2 + ca3) / 3;
     const total = (caAverage + exam) / 2;
-    const broadsheet = window.broadsheets.find(b => String(b.id) === String(id));
-    const bf = broadsheet ? parseFloat(broadsheet.bf) || 0 : 0;
+    let bf = 0;
+    let broadsheet = window.broadsheets.find(b => String(b.id) === String(id));
+    if (!broadsheet) {
+        console.warn(`No broadsheet found for id=${id}, using bf=0`);
+        broadsheet = { id, bf: 0 }; // Fallback for missing broadsheet
+    } else {
+        bf = parseFloat(broadsheet.bf) || 0;
+    }
     const cum = window.term_id === 1 ? total : (bf + total) / 2;
-    const grade = calculateGrade(cum);
+
+    // Use client-side grading, fallback to backend for senior classes if needed
+    let grade = calculateGrade(cum);
+    if (window.is_senior === true && !['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'].includes(grade)) {
+        console.warn(`Client-side grade (${grade}) for senior class seems incorrect, fetching from backend`);
+        grade = await fetchGradeFromBackend(window.schoolclass_id, cum) || grade;
+    }
+
+    console.log(`updateRowTotal: id=${id}, ca1=${ca1}, ca2=${ca2}, ca3=${ca3}, exam=${exam}, total=${total.toFixed(1)}, bf=${bf.toFixed(2)}, cum=${cum.toFixed(2)}, grade=${grade}, is_senior=${window.is_senior}`);
 
     // Update DOM
     const totalDisplay = row.querySelector('.total-display span');
@@ -108,6 +188,8 @@ function updateRowTotal(row) {
         totalDisplay.textContent = total.toFixed(1);
         totalDisplay.classList.add('bg-warning');
         setTimeout(() => totalDisplay.classList.remove('bg-warning'), 500);
+    } else {
+        console.warn("total-display span not found in row");
     }
     const bfDisplay = row.querySelector('.bf-display span');
     if (bfDisplay) bfDisplay.textContent = bf.toFixed(2);
@@ -116,12 +198,16 @@ function updateRowTotal(row) {
         cumDisplay.textContent = cum.toFixed(2);
         cumDisplay.classList.add('bg-warning');
         setTimeout(() => cumDisplay.classList.remove('bg-warning'), 500);
+    } else {
+        console.warn("cum-display span not found in row");
     }
     const gradeDisplay = row.querySelector('.grade-display span');
     if (gradeDisplay) {
         gradeDisplay.textContent = grade;
         gradeDisplay.classList.add('bg-warning');
         setTimeout(() => gradeDisplay.classList.remove('bg-warning'), 500);
+    } else {
+        console.warn("grade-display span not found in row");
     }
 
     // Update broadsheets array
@@ -131,6 +217,8 @@ function updateRowTotal(row) {
             ...window.broadsheets[broadsheetIndex],
             ca1, ca2, ca3, exam, total, cum, grade
         };
+    } else {
+        window.broadsheets.push({ id, ca1, ca2, ca3, exam, total, bf, cum, grade });
     }
 
     forceUpdatePositions();
@@ -139,6 +227,19 @@ function updateRowTotal(row) {
 // Standard competition ranking (tied ranks)
 function forceUpdatePositions() {
     ensureBroadsheetsArray();
+    if (!window.broadsheets || window.broadsheets.length === 0) {
+        console.warn("No broadsheets available for position calculation");
+        document.querySelectorAll('#scoresheetTableBody tr:not(#noDataRow)').forEach(row => {
+            const positionDisplay = row.querySelector('.position-display span');
+            if (positionDisplay) {
+                positionDisplay.textContent = "-";
+                positionDisplay.classList.remove('bg-warning');
+                positionDisplay.classList.add('bg-info');
+            }
+        });
+        return;
+    }
+
     const cums = window.broadsheets.map(b => parseFloat(b.cum) || 0);
     const allZero = cums.length > 0 && cums.every(cum => cum === 0);
 
@@ -233,13 +334,18 @@ function bulkSaveAllScores() {
         input.classList.remove('is-invalid', 'is-valid');
         if (!id || !field) {
             input.classList.add('is-invalid');
-            invalidInputs.push({ input, error: 'Missing required attributes' });
+            invalidInputs.push({ input, error: `Missing required attributes for ${field} (ID: ${id})` });
             return;
         }
         const numValue = value === '' ? 0 : parseFloat(value);
         if (isNaN(numValue) || numValue < 0 || numValue > 100) {
             input.classList.add('is-invalid');
-            invalidInputs.push({ input, error: `Score must be between 0-100 for ${field.toUpperCase()}` });
+            const broadsheet = window.broadsheets.find(b => String(b.id) === String(id));
+            const studentName = broadsheet ? `${broadsheet.lname || ''} ${broadsheet.fname || ''}`.trim() || 'Unknown' : 'Unknown';
+            invalidInputs.push({ 
+                input, 
+                error: `Invalid score for ${studentName} (${broadsheet?.admissionno || 'Unknown'}): ${field.toUpperCase()} must be between 0 and 100`
+            });
             return;
         }
         input.classList.add('is-valid');
@@ -254,6 +360,7 @@ function bulkSaveAllScores() {
             html: `Some scores are invalid:<ul>${invalidInputs.map(e => `<li>${e.error}</li>`).join('')}</ul>`,
             showConfirmButton: true
         });
+        invalidInputs.forEach(({ input }) => input.focus());
         return;
     }
 
@@ -264,10 +371,9 @@ function bulkSaveAllScores() {
         const exam = parseFloat(scoreEntry.exam) || 0;
         const caAverage = (ca1 + ca2 + ca3) / 3;
         const total = (caAverage + exam) / 2;
-        const broadsheet = window.broadsheets.find(b => String(b.id) === String(scoreEntry.id));
-        const bf = broadsheet ? parseFloat(broadsheet.bf) || 0 : 0;
+        const broadsheet = window.broadsheets.find(b => String(b.id) === String(scoreEntry.id)) || { bf: 0 };
+        const bf = parseFloat(broadsheet.bf) || 0;
         const cum = window.term_id === 1 ? total : (bf + total) / 2;
-        const grade = calculateGrade(cum);
 
         scoreEntry.ca1 = ca1;
         scoreEntry.ca2 = ca2;
@@ -276,7 +382,6 @@ function bulkSaveAllScores() {
         scoreEntry.total = total;
         scoreEntry.bf = bf;
         scoreEntry.cum = cum;
-        scoreEntry.grade = grade;
         scores.push(scoreEntry);
     });
 
@@ -326,7 +431,10 @@ function bulkSaveAllScores() {
                     const cumDisplay = row.querySelector('.cum-display span');
                     if (cumDisplay) cumDisplay.textContent = parseFloat(broadsheet.cum || 0).toFixed(2);
                     const gradeDisplay = row.querySelector('.grade-display span');
-                    if (gradeDisplay) gradeDisplay.textContent = broadsheet.grade || '-';
+                    if (gradeDisplay) {
+                        gradeDisplay.textContent = broadsheet.grade || '-';
+                        console.log(`Updated grade for ID ${broadsheet.id}: ${broadsheet.grade}, is_senior=${window.is_senior}`);
+                    }
                     const image = row.querySelector('.student-image');
                     if (image && broadsheet.picture) {
                         const existingPicture = image.dataset.picture || 'none';
@@ -337,8 +445,8 @@ function bulkSaveAllScores() {
                         image.dataset.image = imageUrl;
                         image.dataset.picture = newPicture;
                         image.onerror = () => {
-                            image.src = '/storage/student_avatars/unnamed.jpg';
-                            image.dataset.image = '/storage/student_avatars/unnamed.jpg';
+                            image.src = DEFAULT_IMAGE;
+                            image.dataset.image = DEFAULT_IMAGE;
                             image.dataset.picture = 'none';
                             console.log(`Image failed to load for admissionno: ${broadsheet.admissionno || 'unknown'}, picture: ${newPicture}, attempted URL: ${imageUrl}`);
                         };
@@ -366,6 +474,7 @@ function bulkSaveAllScores() {
     .catch(error => {
         let errorMessage = 'Failed to save scores. Check console for details.';
         if (error.response) errorMessage = error.response.data.message || errorMessage;
+        console.error('Bulk save error:', error);
         Swal.fire({
             icon: 'error',
             title: 'Save Failed',
@@ -430,7 +539,7 @@ function deleteSelectedScores() {
 }
 
 // Populate scores modal
-function populateScoresModal() {
+async function populateScoresModal() {
     const modalBody = document.querySelector('#scoresModal .modal-body');
     if (!modalBody) {
         console.error("Scores modal body not found");
@@ -482,7 +591,8 @@ function populateScoresModal() {
                     </tr>
                 </thead>
                 <tbody>`;
-    window.broadsheets.forEach((broadsheet, idx) => {
+
+    for (const [idx, broadsheet] of window.broadsheets.entries()) {
         const ca1 = parseFloat(broadsheet.ca1) || 0;
         const ca2 = parseFloat(broadsheet.ca2) || 0;
         const ca3 = parseFloat(broadsheet.ca3) || 0;
@@ -491,13 +601,17 @@ function populateScoresModal() {
         const total = (caAverage + exam) / 2;
         const bf = parseFloat(broadsheet.bf) || 0;
         const cum = window.term_id === 1 ? total : (bf + total) / 2;
-        const grade = calculateGrade(cum);
+        let grade = calculateGrade(cum);
+        if (window.is_senior === true && !['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'].includes(grade)) {
+            console.warn(`Client-side grade (${grade}) for senior class seems incorrect, fetching from backend`);
+            grade = await fetchGradeFromBackend(window.schoolclass_id, cum) || grade;
+        }
         const name = `${broadsheet.fname || ''} ${broadsheet.lname || ''}`.trim() || 'Unknown';
         const admissionno = broadsheet.admissionno || '-';
         const picture = normalizePicturePath(broadsheet.picture);
         const imageUrl = `/storage/student_avatars/${picture}`;
-        let position = idToPos[broadsheet.id] || "-";
-        console.log(`Modal image for ${admissionno}: Original picture=${broadsheet.picture || 'none'}, Normalized=${picture}, URL=${imageUrl}`);
+        const position = idToPos[broadsheet.id] || "-";
+        console.log(`Modal image for ${admissionno}: Original picture=${broadsheet.picture || 'none'}, Normalized=${picture}, URL=${imageUrl}, grade=${grade}, is_senior=${window.is_senior}`);
 
         html += `<tr>
             <td>${idx + 1}</td>
@@ -505,7 +619,7 @@ function populateScoresModal() {
             <td class="name">
                 <div class="d-flex align-items-center">
                     <div class="avatar-sm me-2">
-                        <img src="${imageUrl}" alt="${name}" class="rounded-circle w-100 student-image" data-bs-toggle="modal" data-bs-target="#imageViewModal" data-image="${imageUrl}" data-picture="${broadsheet.picture || 'none'}" onerror="this.src='/storage/student_avatars/unnamed.jpg'; console.log('Modal image failed to load for admissionno: ${admissionno}, picture: ${broadsheet.picture || 'none'}, attempted URL: ${imageUrl}');">
+                        <img src="${imageUrl}" alt="${name}" class="rounded-circle w-100 student-image" data-bs-toggle="modal" data-bs-target="#imageViewModal" data-image="${imageUrl}" data-picture="${broadsheet.picture || 'none'}" onerror="this.src='${DEFAULT_IMAGE}'; console.log('Modal image failed to load for admissionno: ${admissionno}, picture: ${broadsheet.picture || 'none'}, attempted URL: ${imageUrl}');">
                     </div>
                     <div class="d-flex flex-column">
                         <span class="fw-bold">${broadsheet.lname || ''}</span> ${broadsheet.fname || ''} ${broadsheet.mname || ''}
@@ -522,7 +636,7 @@ function populateScoresModal() {
             <td>${grade}</td>
             <td>${position}</td>
         </tr>`;
-    });
+    }
     html += `</tbody></table></div>`;
     modalBody.innerHTML = html;
 
@@ -622,13 +736,13 @@ function initializeBulkActions() {
     if (imageViewModal) {
         imageViewModal.addEventListener('show.bs.modal', function (event) {
             const button = event.relatedTarget;
-            const imageSrc = button.getAttribute('data-image') || '/storage/student_avatars/unnamed.jpg';
+            const imageSrc = button.getAttribute('data-image') || DEFAULT_IMAGE;
             const pictureName = button.getAttribute('data-picture') || 'none';
             const modalImage = this.querySelector('#enlargedImage');
             console.log(`ImageViewModal: Setting image src=${imageSrc}, picture=${pictureName}`);
             modalImage.src = imageSrc;
             modalImage.onerror = () => {
-                modalImage.src = '/storage/student_avatars/unnamed.jpg';
+                modalImage.src = DEFAULT_IMAGE;
                 console.log(`Enlarged image failed to load, picture: ${pictureName}, attempted URL: ${imageSrc}`);
             };
         });
@@ -678,15 +792,17 @@ function initializeScoreInputs() {
             }
         });
 
-        input.addEventListener('input', function () {
+        const debouncedUpdate = debounce(function () {
             const row = input.closest('tr');
             if (row) updateRowTotal(row);
-        });
+        }, 300);
+
+        input.addEventListener('input', debouncedUpdate);
 
         input.addEventListener('blur', function () {
             const value = parseFloat(this.value);
             if (this.value === '') {
-                this.value = ''; // Keep empty if user clears it
+                this.value = '';
                 this.classList.remove('is-invalid', 'is-valid');
             } else if (isNaN(value) || value < 0 || value > 100) {
                 this.classList.add('is-invalid');
@@ -701,6 +817,8 @@ function initializeScoreInputs() {
 
 // Init
 document.addEventListener("DOMContentLoaded", function () {
+    console.log("DOMContentLoaded, initializing scoresheet");
+    console.log("is_senior:", window.is_senior, "schoolclass_id:", window.schoolclass_id);
     ensureBroadsheetsArray();
     initializeScoreInputs();
     initializeBulkActions();

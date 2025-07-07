@@ -3,6 +3,9 @@
 namespace App\Imports;
 
 use App\Models\Broadsheets;
+use App\Models\Subjectclass;
+use App\Models\Schoolclass;
+use App\Http\Controllers\MyScoreSheetController;
 use Illuminate\Support\Facades\Session;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\ToModel;
@@ -13,8 +16,10 @@ use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Validators\Failure;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
-class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, WithUpserts, WithValidation
+class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, WithUpserts, WithValidation, WithHeadingRow
 {
     use Importable;
 
@@ -26,9 +31,11 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
     {
         $this->data = $importData;
 
-        // Validate term_id
         if (!in_array($this->data['term_id'], [1, 2, 3])) {
-            Log::error('ScoresheetImport: Invalid term_id', ['term_id' => $this->data['term_id']]);
+            Log::error('ScoresheetImport: Invalid term_id', [
+                'term_id' => $this->data['term_id'],
+                'import_data' => $this->data,
+            ]);
             throw new \Exception('Invalid term ID provided. Must be 1, 2, or 3.');
         }
 
@@ -38,7 +45,117 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
         Session::put('session_id', $this->data['session_id']);
         Session::put('schoolclass_id', $this->data['schoolclass_id']);
 
-        Log::info('ScoresheetImport: Initialized', ['data' => $this->data]);
+        Log::info('ScoresheetImport: Initialized', [
+            'data' => $this->data,
+        ]);
+    }
+
+    public function validateExcelMetadata($filePath)
+    {
+        try {
+            if (!file_exists($filePath) || !is_readable($filePath)) {
+                throw new \Exception('Excel file is missing or unreadable.');
+            }
+
+            $spreadsheet = IOFactory::load($filePath);
+            $sheet = $spreadsheet->getActiveSheet();
+            $metadataRow = $sheet->rangeToArray('A4:P4', null, true, true, true)[4] ?? [];
+
+            $metadataString = trim($metadataRow['A'] ?? '');
+            if (empty($metadataString)) {
+                throw new \Exception('Metadata row (row 4) is empty or missing.');
+            }
+
+            $metadata = [];
+            $items = array_filter(array_map('trim', explode('|', $metadataString)));
+            foreach ($items as $item) {
+                $parts = array_map('trim', explode(':', $item, 2));
+                if (count($parts) === 2) {
+                    $metadata[strtolower($parts[0])] = $parts[1];
+                }
+            }
+
+            $requiredFields = ['subject', 'class', 'term', 'session'];
+            $missingFields = array_diff($requiredFields, array_keys($metadata));
+            if (!empty($missingFields)) {
+                throw new \Exception('Missing metadata fields: ' . implode(', ', $missingFields));
+            }
+
+            $subjectclass = Subjectclass::where('id', $this->data['subjectclass_id'])
+                ->with(['subjectTeacher.subject', 'schoolClass.armRelation'])
+                ->first();
+
+            if (!$subjectclass) {
+                throw new \Exception('Subjectclass not found: ' . $this->data['subjectclass_id']);
+            }
+
+            $schoolclass = Schoolclass::where('id', $this->data['schoolclass_id'])
+                ->with(['armRelation'])
+                ->first();
+            $term = \App\Models\Schoolterm::where('id', $this->data['term_id'])->first();
+            $session = \App\Models\Schoolsession::where('id', $this->data['session_id'])->first();
+
+            if (!$schoolclass || !$term || !$session) {
+                throw new \Exception('Invalid schoolclass_id, term_id, or session_id.');
+            }
+
+            Log::debug('ScoresheetImport: Raw database values', [
+                'schoolclass_id' => $this->data['schoolclass_id'],
+                'schoolclass' => $schoolclass->schoolclass ?? null,
+                'arm' => $schoolclass->armRelation ? $schoolclass->armRelation->arm : null,
+                'subject' => $subjectclass->subjectTeacher->subject->subject ?? null,
+                'term' => $term->term ?? null,
+                'session' => $session->session ?? null,
+            ]);
+
+            $className = $schoolclass->schoolclass ?? '';
+            $arm = $schoolclass->armRelation->arm ?? '';
+            $expectedClass = trim($className . ($arm ? ' ' . $arm : ''));
+
+            $expected = [
+                'subject' => $subjectclass->subjectTeacher->subject->subject ?? '',
+                'class' => $expectedClass ?: 'Unknown',
+                'term' => $term->term ?? '',
+                'session' => $session->session ?? '',
+            ];
+
+            $errors = [];
+            foreach ($requiredFields as $key) {
+                $importedValue = trim($metadata[$key] ?? '');
+                $expectedValue = trim($expected[$key]);
+                $normalizedImported = strtolower(preg_replace('/[\s.,\'"&\/-]+/', '', $importedValue));
+                $normalizedExpected = strtolower(preg_replace('/[\s.,\'"&\/-]+/', '', $expectedValue));
+                if ($normalizedImported !== $normalizedExpected) {
+                    $errors[] = "Mismatch in $key: expected '$expectedValue', found '$importedValue'";
+                }
+            }
+
+            if (!empty($errors)) {
+                Log::error('ScoresheetImport: Excel metadata validation failed', [
+                    'file_path' => $filePath,
+                    'import_data' => $this->data,
+                    'errors' => $errors,
+                    'imported_metadata' => $metadata,
+                    'expected_metadata' => $expected,
+                ]);
+                throw new \Exception('Excel file metadata does not match: ' . implode('; ', $errors));
+            }
+
+            Log::info('ScoresheetImport: Excel metadata validated successfully', [
+                'file_path' => $filePath,
+                'import_data' => $this->data,
+                'metadata' => $metadata,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('ScoresheetImport: Error validating Excel metadata', [
+                'file_path' => $filePath,
+                'import_data' => $this->data,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
+        }
     }
 
     public function model(array $row)
@@ -59,7 +176,6 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
                 'raw_row' => array_slice($row, 0, 15),
             ]);
 
-            // Manual validation
             $validationErrors = $this->validateRow($row, $rowNumber);
             if (!empty($validationErrors)) {
                 $this->failures[] = [
@@ -80,7 +196,6 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
                 return null;
             }
 
-            // Parse and cap scores
             $ca1 = $this->parseScore($row[3] ?? null);
             $ca2 = $this->parseScore($row[4] ?? null);
             $ca3 = $this->parseScore($row[5] ?? null);
@@ -106,7 +221,6 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
                 'max_scores' => compact('maxCa1', 'maxCa2', 'maxCa3', 'maxExam'),
             ]);
 
-            // Find or create broadsheet record
             $broadsheetData = DB::table('broadsheets')
                 ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
                 ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
@@ -142,7 +256,7 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
                     return null;
                 }
 
-                $subjectclass = \App\Models\Subjectclass::find($subjectclass_id);
+                $subjectclass = Subjectclass::find($subjectclass_id);
                 if (!$subjectclass) {
                     $this->failures[] = [
                         'row' => $rowNumber,
@@ -209,9 +323,16 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
             $grade = $this->calculateGrade($cum);
             $remark = $this->getRemark($grade);
 
-            // Update broadsheet within a transaction
+            Log::debug('ScoresheetImport: Calculated grade and remark', [
+                'row_number' => $rowNumber,
+                'admission_no' => $admission_no,
+                'cum' => $cum,
+                'grade' => $grade,
+                'remark' => $remark,
+            ]);
+
             $updated = DB::transaction(function () use ($broadsheetData, $ca1, $ca2, $ca3, $exam, $total, $bf, $cum, $grade, $remark) {
-                return DB::table('broadsheets')
+                $updatedRows = DB::table('broadsheets')
                     ->where('id', $broadsheetData->broadsheet_id)
                     ->update([
                         'ca1' => $ca1,
@@ -225,6 +346,7 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
                         'remark' => $remark,
                         'updated_at' => now(),
                     ]);
+                return $updatedRows;
             });
 
             Log::info('ScoresheetImport: Update result', [
@@ -236,7 +358,6 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
             ]);
 
             if ($updated) {
-                // Fetch updated broadsheet with position
                 $broadsheet = Broadsheets::with([
                     'broadsheetRecord.student',
                     'broadsheetRecord.subject'
@@ -416,6 +537,54 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
 
     protected function calculateGrade($score)
     {
+        $subjectclass = Subjectclass::find($this->data['subjectclass_id']);
+        if (!$subjectclass || !$subjectclass->schoolclassid) {
+            Log::error('ScoresheetImport: Cannot find subjectclass or schoolclassid', [
+                'subjectclass_id' => $this->data['subjectclass_id'],
+                'schoolclass_id' => $subjectclass->schoolclassid ?? 'N/A',
+            ]);
+            return $this->calculateJuniorGrade($score); // Fallback
+        }
+
+        $schoolclass = Schoolclass::with('classcategory')->find($subjectclass->schoolclassid);
+        if (!$schoolclass) {
+            Log::error('ScoresheetImport: Schoolclass not found', [
+                'schoolclass_id' => $subjectclass->schoolclassid,
+            ]);
+            return $this->calculateJuniorGrade($score); // Fallback
+        }
+
+        if (!$schoolclass->classcategory) {
+            Log::error('ScoresheetImport: Classcategory not found for schoolclass', [
+                'schoolclass_id' => $subjectclass->schoolclassid,
+                'classcategory_id' => $schoolclass->classcategoryid ?? 'N/A',
+            ]);
+            return $this->calculateJuniorGrade($score); // Fallback
+        }
+
+        $isSenior = $schoolclass->classcategory->is_senior ?? false;
+        Log::debug('ScoresheetImport: Grading info', [
+            'schoolclass_id' => $schoolclass->id,
+            'classcategory_id' => $schoolclass->classcategoryid,
+            'is_senior' => $isSenior,
+            'score' => $score,
+        ]);
+
+        try {
+            return $schoolclass->classcategory->calculateGrade($score);
+        } catch (\Exception $e) {
+            Log::error('ScoresheetImport: Error calling classcategory calculateGrade', [
+                'schoolclass_id' => $schoolclass->id,
+                'classcategory_id' => $schoolclass->classcategoryid,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return $this->calculateJuniorGrade($score); // Fallback
+        }
+    }
+
+    protected function calculateJuniorGrade($score)
+    {
         if ($score >= 70) return 'A';
         elseif ($score >= 60) return 'B';
         elseif ($score >= 50) return 'C';
@@ -431,6 +600,15 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
             'C' => 'Good',
             'D' => 'Pass',
             'F' => 'Fail',
+            'A1' => 'Excellent',
+            'B2' => 'Very Good',
+            'B3' => 'Good',
+            'C4' => 'Credit',
+            'C5' => 'Credit',
+            'C6' => 'Credit',
+            'D7' => 'Pass',
+            'E8' => 'Pass',
+            'F9' => 'Fail',
         ];
         return $remarks[$grade] ?? 'Unknown';
     }
@@ -469,7 +647,7 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
 
     protected function getMaxScore($subjectclass_id, $scoreType)
     {
-        $subjectclass = \App\Models\Subjectclass::find($subjectclass_id);
+        $subjectclass = Subjectclass::find($subjectclass_id);
         if (!$subjectclass) {
             Log::error('ScoresheetImport: Subjectclass not found', ['subjectclass_id' => $subjectclass_id]);
             return 100;
@@ -482,7 +660,7 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
             return 100;
         }
 
-        $schoolclass = \App\Models\Schoolclass::find($subjectclass->schoolclassid);
+        $schoolclass = Schoolclass::find($subjectclass->schoolclassid);
         if (!$schoolclass) {
             Log::error('ScoresheetImport: Schoolclass not found', [
                 'schoolclass_id' => $subjectclass->schoolclassid,
@@ -512,7 +690,7 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
 
     public function startRow(): int
     {
-        return 7; // Data starts on row 7
+        return 7;
     }
 
     public function upsertColumns()
@@ -522,7 +700,7 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
 
     public function uniqueBy()
     {
-        return ['id']; // Upsert based on broadsheet ID
+        return ['id'];
     }
 
     public function afterImport()
@@ -549,42 +727,18 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
                 'failures' => count($this->failures),
             ]);
 
-            DB::transaction(function () use ($subjectclass_id, $staff_id, $term_id, $session_id, $schoolclass_id) {
-                // Update class metrics
-                $metrics = Broadsheets::where('subjectclass_id', $subjectclass_id)
-                    ->where('staff_id', $staff_id)
-                    ->where('term_id', $term_id)
-                    ->selectRaw('MIN(cum) as min_cum, MAX(cum) as max_cum, AVG(cum) as avg_cum')
-                    ->first();
+            $controller = new MyScoreSheetController();
 
-                Log::info('ScoresheetImport: Calculated class metrics', [
-                    'min_cum' => $metrics->min_cum,
-                    'max_cum' => $metrics->max_cum,
-                    'avg_cum' => $metrics->avg_cum,
-                ]);
+            DB::transaction(function () use ($controller, $subjectclass_id, $staff_id, $term_id, $session_id, $schoolclass_id) {
+                $controller->updateClassMetrics($subjectclass_id, $staff_id, $term_id, $session_id);
 
-                $classMin = $metrics->min_cum ?? 0;
-                $classMax = $metrics->max_cum ?? 0;
-                $classAvg = $metrics->avg_cum ? round($metrics->avg_cum, 1) : 0;
-
-                Broadsheets::where('subjectclass_id', $subjectclass_id)
-                    ->where('staff_id', $staff_id)
-                    ->where('term_id', $term_id)
-                    ->update([
-                        'cmin' => $classMin,
-                        'cmax' => $classMax,
-                        'avg' => $classAvg,
-                    ]);
-
-                // Update subject positions (class-wide)
                 $classPos = Broadsheets::where('broadsheets.subjectclass_id', $subjectclass_id)
                     ->where('broadsheets.staff_id', $staff_id)
                     ->where('broadsheets.term_id', $term_id)
                     ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-                    ->where('broadsheet_records.schoolclass_id', $schoolclass_id)
                     ->where('broadsheet_records.session_id', $session_id)
                     ->orderBy('broadsheets.cum', 'DESC')
-                    ->orderBy('broadsheets.id', 'ASC') // Stable sort for ties
+                    ->orderBy('broadsheets.id', 'ASC')
                     ->select('broadsheets.id', 'broadsheets.cum')
                     ->get();
 
@@ -594,11 +748,12 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
 
                 foreach ($classPos as $row) {
                     $rows++;
-                    if ($lastScore !== $row->cum) {
-                        $lastScore = $row->cum;
+                    $score = $row->cum;
+                    if ($lastScore !== $score) {
+                        $lastScore = $score;
                         $rank = $rows;
                     }
-                    $position = $row->cum > 0 ? ($rank . match ($rank) {
+                    $position = $score > 0 ? ($rank . match ($rank) {
                         1 => 'st',
                         2 => 'nd',
                         3 => 'rd',
@@ -614,7 +769,6 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
                     'total_records' => $rows,
                 ]);
 
-                // Refresh updatedBroadsheets with new positions
                 $this->updatedBroadsheets = array_map(function ($broadsheet) use ($subjectclass_id, $term_id, $session_id, $schoolclass_id) {
                     $updatedRecord = Broadsheets::where('broadsheets.id', $broadsheet['id'])
                         ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
@@ -622,7 +776,6 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
                         ->where('broadsheets.subjectclass_id', $subjectclass_id)
                         ->where('broadsheets.term_id', $term_id)
                         ->where('broadsheet_records.session_id', $session_id)
-                        ->where('broadsheet_records.schoolclass_id', $schoolclass_id)
                         ->select(
                             'broadsheets.*',
                             'studentRegistration.firstname as fname',
@@ -656,7 +809,6 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
                     return $broadsheet;
                 }, $this->updatedBroadsheets);
 
-                // Update subjectstotalscores in promotion_status
                 $students = \App\Models\PromotionStatus::where('schoolclassid', $schoolclass_id)
                     ->where('termid', $term_id)
                     ->where('sessionid', $session_id)
@@ -676,12 +828,11 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
                         ->update(['subjectstotalscores' => round($totalCum, 2)]);
                 }
 
-                // Update class positions
                 $pos = \App\Models\PromotionStatus::where('schoolclassid', $schoolclass_id)
                     ->where('termid', $term_id)
                     ->where('sessionid', $session_id)
                     ->orderBy('subjectstotalscores', 'DESC')
-                    ->orderBy('id', 'ASC') // Stable sort for ties
+                    ->orderBy('id', 'ASC')
                     ->select('id', 'subjectstotalscores')
                     ->get();
 

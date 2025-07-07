@@ -57,17 +57,6 @@
         }
     }
 
-    // Calculate grade (same as controller)
-    function calculateGrade(score) {
-        if (isNaN(score) || score === null || score === undefined) return '-';
-        const numScore = parseFloat(score);
-        if (numScore >= 70) return 'A';
-        else if (numScore >= 60) return 'B';
-        else if (numScore >= 50) return 'C';
-        else if (numScore >= 40) return 'D';
-        return 'F';
-    }
-
     // Get ordinal suffix for position
     function getOrdinalSuffix(position) {
         const num = parseInt(position);
@@ -83,8 +72,43 @@
         }
     }
 
-    // Update row totals and positions
-    function updateRowTotal(row) {
+    // Fetch grade from backend
+    async function fetchGrade(id, score) {
+        if (isNaN(score) || score === null || score === undefined) return '-';
+        try {
+            const response = await axios.post(window.routes.calculateGrade || '/subjectscoresheet-mock/calculate-grade', {
+                score,
+                schoolclass_id: window.schoolclass_id
+            }, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Content-Type': 'application/json'
+                },
+                timeout: 10000
+            });
+            return response.data.grade || '-';
+        } catch (error) {
+            console.error('Failed to fetch grade:', error);
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Grade Calculation Failed',
+                    text: 'Unable to calculate grade. Using default grade.',
+                    timer: 2000
+                });
+            }
+            // Fallback to default grade
+            const numScore = parseFloat(score);
+            if (numScore >= 70) return 'A';
+            else if (numScore >= 60) return 'B';
+            else if (numScore >= 50) return 'C';
+            else if (numScore >= 40) return 'D';
+            return 'F';
+        }
+    }
+
+    // Update row totals and grades
+    async function updateRowTotal(row) {
         const scoreInput = row.querySelector('.score-input[data-field="exam"]');
         const id = scoreInput?.dataset.id;
         if (!id) return;
@@ -92,7 +116,9 @@
 
         const exam = parseFloat(scoreInput.value) || 0;
         const total = exam;
-        const grade = calculateGrade(total);
+
+        // Fetch grade from backend
+        const grade = await fetchGrade(id, total);
 
         // Update total display
         const totalDisplay = row.querySelector('.total-display span');
@@ -122,7 +148,7 @@
             };
         }
 
-        // Position logic (see forceUpdatePositions)
+        // Update positions
         forceUpdatePositions();
     }
 
@@ -131,10 +157,10 @@
         const scoreInputs = document.querySelectorAll('.score-input');
         if (scoreInputs.length === 0) return;
         scoreInputs.forEach(input => {
-            input.addEventListener('input', (e) => {
+            input.addEventListener('input', async (e) => {
                 input.dataset.dirty = 'true';
                 const row = e.target.closest('tr');
-                if (row) updateRowTotal(row);
+                if (row) await updateRowTotal(row);
             });
             input.addEventListener('blur', (e) => {
                 const value = e.target.value.trim();
@@ -163,8 +189,8 @@
         });
     }
 
-    // Bulk save all scores (includes zeroes)
-    function bulkSaveAllScores() {
+    // Bulk save all scores
+    async function bulkSaveAllScores() {
         ensureBroadsheetsArray();
         const scoreInputs = document.querySelectorAll('.score-input');
         const progressContainer = document.getElementById('progressContainer');
@@ -223,7 +249,7 @@
                 return;
             }
 
-            // Treat empty as zero (force save zero)
+            // Treat empty as zero
             let numValue = value === '' ? 0 : parseFloat(value);
             if (isNaN(numValue) || numValue < 0 || numValue > 100) {
                 input.classList.add('is-invalid');
@@ -239,7 +265,6 @@
             }
             found[field] = numValue;
             found.total = numValue; // Only exam field in this context
-            found.grade = calculateGrade(numValue);
         });
 
         if (invalidInputs.length > 0) {
@@ -274,8 +299,8 @@
             bulkUpdateBtn.innerHTML = '<i class="ri-loader-4-line sync-icon"></i> Saving...';
         }
 
-        if (typeof axios !== 'undefined') {
-            axios.post(window.routes?.bulkUpdate || '/subjectscoresheet-mock/bulk-update', {
+        try {
+            const response = await axios.post(window.routes?.bulkUpdate || '/subjectscoresheet-mock/bulk-update', {
                 scores,
                 ...sessionVars
             }, {
@@ -284,106 +309,94 @@
                     'Content-Type': 'application/json'
                 },
                 timeout: 30000
-            })
-            .then(response => {
-                if (progressBar) progressBar.style.width = '100%';
-                if (response.data.success && response.data.data?.broadsheets) {
-                    window.broadsheets = response.data.data.broadsheets;
-                    ensureBroadsheetsArray();
+            });
 
-                    // Update DOM with server response
-                    window.broadsheets.forEach(broadsheet => {
-                        const row = document.querySelector(`input[data-id="${broadsheet.id}"]`)?.closest('tr');
-                        if (row) {
-                            const examInput = row.querySelector('input[data-field="exam"]');
-                            if (examInput) {
-                                examInput.value = broadsheet.exam !== null ? broadsheet.exam : '';
-                                examInput.dataset.dirty = 'false';
-                            }
-                            const totalDisplay = row.querySelector('.total-display span');
-                            if (totalDisplay) {
-                                totalDisplay.textContent = parseFloat(broadsheet.total || 0).toFixed(1);
-                                totalDisplay.classList.toggle('text-danger', broadsheet.total < 40 && broadsheet.total !== 0);
-                            }
-                            const gradeDisplay = row.querySelector('.grade-display span');
-                            if (gradeDisplay) {
-                                gradeDisplay.textContent = broadsheet.grade || '-';
-                            }
-                            const remarkDisplay = row.querySelector('.remark-display span');
-                            if (remarkDisplay) {
-                                remarkDisplay.textContent = broadsheet.remark || '-';
-                            }
+            if (progressBar) progressBar.style.width = '100%';
+            if (response.data.success && response.data.data?.broadsheets) {
+                window.broadsheets = response.data.data.broadsheets;
+                ensureBroadsheetsArray();
+
+                // Update DOM with server response
+                window.broadsheets.forEach(broadsheet => {
+                    const row = document.querySelector(`input[data-id="${broadsheet.id}"]`)?.closest('tr');
+                    if (row) {
+                        const examInput = row.querySelector('input[data-field="exam"]');
+                        if (examInput) {
+                            examInput.value = broadsheet.exam !== null ? broadsheet.exam : '';
+                            examInput.dataset.dirty = 'false';
                         }
+                        const totalDisplay = row.querySelector('.total-display span');
+                        if (totalDisplay) {
+                            totalDisplay.textContent = parseFloat(broadsheet.total || 0).toFixed(1);
+                            totalDisplay.classList.toggle('text-danger', broadsheet.total < 40 && broadsheet.total !== 0);
+                        }
+                        const gradeDisplay = row.querySelector('.grade-display span');
+                        if (gradeDisplay) {
+                            gradeDisplay.textContent = broadsheet.grade || '-';
+                        }
+                        const remarkDisplay = row.querySelector('.remark-display span');
+                        if (remarkDisplay) {
+                            remarkDisplay.textContent = broadsheet.remark || '-';
+                        }
+                    }
+                });
+
+                // Update positions
+                forceUpdatePositions();
+
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Saved!',
+                        text: `Successfully updated ${scores.length} score${scores.length !== 1 ? 's' : ''} with positions.`,
+                        timer: 2000
                     });
-
-                    // Recompute and update positions immediately after save!
-                    forceUpdatePositions();
-
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Saved!',
-                            text: `Successfully updated ${scores.length} score${scores.length !== 1 ? 's' : ''} with positions.`,
-                            timer: 2000
-                        });
-                    }
-                } else {
-                    if (typeof Swal !== 'undefined') {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Save Failed',
-                            text: 'Server did not return updated scores.',
-                            showConfirmButton: true
-                        });
-                    }
                 }
-            })
-            .catch(error => {
-                let errorMessage = 'Failed to save scores. Check console for details.';
-                if (error.response) {
-                    errorMessage = error.response.data.message || errorMessage;
-                    if (error.response.status === 422) {
-                        const errors = error.response.data.errors || {};
-                        errorMessage += '<ul>' + Object.values(errors).flat().map(err => `<li>${err}</li>`).join('') + '</ul>';
-                    } else if (error.response.status === 419) {
-                        errorMessage = 'Session expired. Please refresh the page.';
-                    }
-                }
+            } else {
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
                         icon: 'error',
                         title: 'Save Failed',
-                        html: errorMessage,
+                        text: 'Server did not return updated scores.',
                         showConfirmButton: true
                     });
                 }
-            })
-            .finally(() => {
-                if (progressContainer) {
-                    setTimeout(() => {
-                        progressContainer.style.display = 'none';
-                        if (progressBar) progressBar.style.width = '0%';
-                    }, 1000);
+            }
+        } catch (error) {
+            let errorMessage = 'Failed to save scores. Check console for details.';
+            if (error.response) {
+                errorMessage = error.response.data.message || errorMessage;
+                if (error.response.status === 422) {
+                    const errors = error.response.data.errors || {};
+                    errorMessage += '<ul>' + Object.values(errors).flat().map(err => `<li>${err}</li>`).join('') + '</ul>';
+                } else if (error.response.status === 419) {
+                    errorMessage = 'Session expired. Please refresh the page.';
                 }
-                if (bulkUpdateBtn) {
-                    bulkUpdateBtn.disabled = false;
-                    bulkUpdateBtn.innerHTML = originalBtnContent || '<i class="ri-save-line me-1"></i> Save All Scores';
-                }
-            });
-        } else {
+            }
             if (typeof Swal !== 'undefined') {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Error',
-                    text: 'Axios library is not loaded.',
+                    title: 'Save Failed',
+                    html: errorMessage,
                     showConfirmButton: true
                 });
+            }
+        } finally {
+            if (progressContainer) {
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    if (progressBar) progressBar.style.width = '0%';
+                }, 1000);
+            }
+            if (bulkUpdateBtn) {
+                bulkUpdateBtn.disabled = false;
+                bulkUpdateBtn.innerHTML = originalBtnContent || '<i class="ri-save-line me-1"></i> Save All Scores';
             }
         }
     }
 
     // Delete selected scores
-    window.deleteSelectedScores = function() {
+    window.deleteSelectedScores = async function() {
         const selectedCheckboxes = document.querySelectorAll('.score-checkbox:checked');
         if (!selectedCheckboxes.length) {
             if (typeof Swal !== 'undefined') {
@@ -398,7 +411,7 @@
         }
 
         if (typeof Swal !== 'undefined') {
-            Swal.fire({
+            const result = await Swal.fire({
                 title: 'Delete Selected Scores?',
                 text: 'This will clear the selected mock scores. Are you sure?',
                 icon: 'warning',
@@ -406,76 +419,67 @@
                 confirmButtonColor: '#d33',
                 cancelButtonColor: '#3085d6',
                 confirmButtonText: 'Yes, Delete!'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    const selectedIds = Array.from(selectedCheckboxes).map(checkbox => checkbox.dataset.id);
-                    if (typeof axios !== 'undefined') {
-                        axios.post(window.routes?.destroy || '/subjectscoresheet-mock/destroy', {
-                            ids: selectedIds
-                        }, {
-                            headers: {
-                                'X-Requested-With': 'XMLHttpRequest'
-                            }
-                        })
-                        .then(response => {
-                            if (response.data.success) {
-                                selectedIds.forEach(id => {
-                                    const row = document.querySelector(`tr:has(.score-checkbox[data-id="${id}"])`);
-                                    if (row) row.remove();
-                                    window.broadsheets = window.broadsheets.filter(b => String(b.id) !== String(id));
-                                });
-                                const scoreCount = document.getElementById('scoreCount');
-                                if (scoreCount) scoreCount.textContent = window.broadsheets.length;
-                                const noDataAlert = document.getElementById('noDataAlert');
-                                if (noDataAlert) noDataAlert.style.display = window.broadsheets.length === 0 ? 'block' : 'none';
-                                const noDataRow = document.getElementById('noDataRow');
-                                if (noDataRow) noDataRow.style.display = window.broadsheets.length === 0 ? '' : 'none';
-                                const checkAll = document.getElementById('checkAll');
-                                if (checkAll) checkAll.checked = false;
-                                forceUpdatePositions();
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Deleted!',
-                                    text: 'Selected scores have been cleared.',
-                                    timer: 2000
-                                });
-                            } else {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Delete Failed',
-                                    text: response.data.message || 'Failed to delete scores.',
-                                    showConfirmButton: true
-                                });
-                            }
-                        })
-                        .catch(error => {
-                            let message = 'Failed to delete scores: ';
-                            if (error.response) {
-                                message += error.response.data.message || 'Server error';
-                                if (error.response.status === 422) {
-                                    const errors = error.response.data.errors || {};
-                                    message += '<ul>' + Object.values(errors).flat().map(err => `<li>${err}</li>`).join('') + '</ul>';
-                                } else if (error.response.status === 419) {
-                                    message = 'Session expired. Please refresh the page.';
-                                }
-                            }
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Delete Failed',
-                                html: message,
-                                showConfirmButton: true
-                            });
+            });
+
+            if (result.isConfirmed) {
+                const selectedIds = Array.from(selectedCheckboxes).map(checkbox => checkbox.dataset.id);
+                try {
+                    const response = await axios.post(window.routes?.destroy || '/subjectscoresheet-mock/destroy', {
+                        ids: selectedIds
+                    }, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (response.data.success) {
+                        selectedIds.forEach(id => {
+                            const row = document.querySelector(`tr:has(.score-checkbox[data-id="${id}"])`);
+                            if (row) row.remove();
+                            window.broadsheets = window.broadsheets.filter(b => String(b.id) !== String(id));
+                        });
+                        const scoreCount = document.getElementById('scoreCount');
+                        if (scoreCount) scoreCount.textContent = window.broadsheets.length;
+                        const noDataAlert = document.getElementById('noDataAlert');
+                        if (noDataAlert) noDataAlert.style.display = window.broadsheets.length === 0 ? 'block' : 'none';
+                        const noDataRow = document.getElementById('noDataRow');
+                        if (noDataRow) noDataRow.style.display = window.broadsheets.length === 0 ? '' : 'none';
+                        const checkAll = document.getElementById('checkAll');
+                        if (checkAll) checkAll.checked = false;
+                        forceUpdatePositions();
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: 'Selected scores have been cleared.',
+                            timer: 2000
                         });
                     } else {
                         Swal.fire({
                             icon: 'error',
-                            title: 'Error',
-                            text: 'Axios library is not loaded.',
+                            title: 'Delete Failed',
+                            text: response.data.message || 'Failed to delete scores.',
                             showConfirmButton: true
                         });
                     }
+                } catch (error) {
+                    let message = 'Failed to delete scores: ';
+                    if (error.response) {
+                        message += error.response.data.message || 'Server error';
+                        if (error.response.status === 422) {
+                            const errors = error.response.data.errors || {};
+                            message += '<ul>' + Object.values(errors).flat().map(err => `<li>${err}</li>`).join('') + '</ul>';
+                        } else if (error.response.status === 419) {
+                            message = 'Session expired. Please refresh the page.';
+                        }
+                    }
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Delete Failed',
+                        html: message,
+                        showConfirmButton: true
+                    });
                 }
-            });
+            }
         }
     };
 
@@ -484,7 +488,7 @@
         const importForm = document.getElementById('importForm');
         const importSubmit = document.getElementById('importSubmit');
         if (importForm && importSubmit) {
-            importForm.addEventListener('submit', (e) => {
+            importForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const formData = new FormData(importForm);
                 const indicatorLabel = importSubmit.querySelector('.indicator-label');
@@ -492,140 +496,137 @@
                 if (indicatorLabel) indicatorLabel.style.display = 'none';
                 if (indicatorProgress) indicatorProgress.style.display = 'inline';
                 importSubmit.disabled = true;
-                if (typeof axios !== 'undefined') {
-                    axios.post(window.routes?.import || '/subjectscoresheet-mock/import', formData, {
+                try {
+                    const response = await axios.post(window.routes?.import || '/subjectscoresheet-mock/import', formData, {
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest'
                         }
-                    })
-                    .then(response => {
-                        if (response.data.success) {
-                            window.broadsheets = response.data.data?.broadsheets || window.broadsheets;
-                            ensureBroadsheetsArray();
-                            forceUpdatePositions();
-                            const scoreCount = document.getElementById('scoreCount');
-                            if (scoreCount) scoreCount.textContent = window.broadsheets.length;
-                            const noDataAlert = document.getElementById('noDataAlert');
-                            if (noDataAlert) noDataAlert.style.display = window.broadsheets.length === 0 ? 'block' : 'none';
-                            const noDataRow = document.getElementById('noDataRow');
-                            if (noDataRow) noDataRow.style.display = window.broadsheets.length === 0 ? '' : 'none';
-                            if (typeof Swal !== 'undefined') {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Imported!',
-                                    text: 'Scores imported successfully.',
-                                    timer: 2000
-                                });
-                            }
-                            const importModal = document.getElementById('importModal');
-                            if (importModal && typeof bootstrap !== 'undefined') {
-                                const modalInstance = bootstrap.Modal.getInstance(importModal);
-                                if (modalInstance) modalInstance.hide();
-                            }
-                        } else {
-                            if (typeof Swal !== 'undefined') {
-                                Swal.fire({
-                                    icon: 'error',
-                                    title: 'Import Failed',
-                                    text: response.data.message || 'Failed to import scores.',
-                                    showConfirmButton: true
-                                });
-                            }
+                    });
+                    if (response.data.success) {
+                        window.broadsheets = response.data.data?.broadsheets || window.broadsheets;
+                        ensureBroadsheetsArray();
+                        forceUpdatePositions();
+                        const scoreCount = document.getElementById('scoreCount');
+                        if (scoreCount) scoreCount.textContent = window.broadsheets.length;
+                        const noDataAlert = document.getElementById('noDataAlert');
+                        if (noDataAlert) noDataAlert.style.display = window.broadsheets.length === 0 ? 'block' : 'none';
+                        const noDataRow = document.getElementById('noDataRow');
+                        if (noDataRow) noDataRow.style.display = window.broadsheets.length === 0 ? '' : 'none';
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Imported!',
+                                text: 'Scores imported successfully.',
+                                timer: 2000
+                            });
                         }
-                    })
-                    .catch(error => {
-                        let message = 'Failed to import scores: ';
-                        if (error.response) {
-                            message += error.response.data.message || 'Server error';
-                            if (error.response.status === 422) {
-                                const errors = error.response.data.errors || {};
-                                message += '<ul>' + Object.values(errors).flat().map(err => `<li>${err}</li>`).join('') + '</ul>';
-                            }
+                        const importModal = document.getElementById('importModal');
+                        if (importModal && typeof bootstrap !== 'undefined') {
+                            const modalInstance = bootstrap.Modal.getInstance(importModal);
+                            if (modalInstance) modalInstance.hide();
                         }
+                    } else {
                         if (typeof Swal !== 'undefined') {
                             Swal.fire({
                                 icon: 'error',
                                 title: 'Import Failed',
-                                html: message,
+                                text: response.data.message || 'Failed to import scores.',
                                 showConfirmButton: true
                             });
                         }
-                    })
-                    .finally(() => {
-                        if (indicatorLabel) indicatorLabel.style.display = 'inline';
-                        if (indicatorProgress) indicatorProgress.style.display = 'none';
-                        importSubmit.disabled = false;
-                    });
+                    }
+                } catch (error) {
+                    let message = 'Failed to import scores: ';
+                    if (error.response) {
+                        message += error.response.data.message || 'Server error';
+                        if (error.response.status === 422) {
+                            const errors = error.response.data.errors || {};
+                            message += '<ul>' + Object.values(errors).flat().map(err => `<li>${err}</li>`).join('') + '</ul>';
+                        }
+                    }
+                    if (typeof Swal !== 'undefined') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Import Failed',
+                            html: message,
+                            showConfirmButton: true
+                        });
+                    }
+                } finally {
+                    if (indicatorLabel) indicatorLabel.style.display = 'inline';
+                    if (indicatorProgress) indicatorProgress.style.display = 'none';
+                    importSubmit.disabled = false;
                 }
             });
         }
     }
 
     // Force update positions after bulk operations (with ties)
- function forceUpdatePositions() {
-    if (!window.broadsheets || !Array.isArray(window.broadsheets)) return;
+    function forceUpdatePositions() {
+        if (!window.broadsheets || !Array.isArray(window.broadsheets)) return;
 
-    // Get all totals
-    const totals = window.broadsheets.map(b => parseFloat(b.total) || 0);
-    const allZero = totals.length > 0 && totals.every(total => total === 0);
+        // Get all totals
+        const totals = window.broadsheets.map(b => parseFloat(b.total) || 0);
+        const allZero = totals.length > 0 && totals.every(total => total === 0);
 
-    if (allZero) {
-        // Set all positions to "0th"
-        window.broadsheets.forEach(broadsheet => {
-            broadsheet.subjectpositionclass = "0th"; // Update array!
-            const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
-            if (row) {
-                const positionDisplay = row.querySelector('.position-display span');
-                if (positionDisplay) {
-                    positionDisplay.textContent = "0th";
-                    positionDisplay.classList.remove('bg-warning');
-                    positionDisplay.classList.add('bg-info');
+        if (allZero) {
+            // Set all positions to "0th"
+            window.broadsheets.forEach(broadsheet => {
+                broadsheet.subjectpositionclass = "0th";
+                const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
+                if (row) {
+                    const positionDisplay = row.querySelector('.position-display span');
+                    if (positionDisplay) {
+                        positionDisplay.textContent = "0th";
+                        positionDisplay.classList.remove('bg-warning');
+                        positionDisplay.classList.add('bg-info');
+                    }
                 }
-            }
-        });
-    } else {
-        // Normal position calculation with ties
-        const sortedBroadsheets = window.broadsheets
-            .map(b => ({
-                ...b,
-                total: parseFloat(b.total) || 0
-            }))
-            .sort((a, b) => {
-                if (b.total !== a.total) {
-                    return b.total - a.total;
-                }
-                return a.id - b.id;
             });
+        } else {
+            // Normal position calculation with ties
+            const sortedBroadsheets = window.broadsheets
+                .map(b => ({
+                    ...b,
+                    total: parseFloat(b.total) || 0
+                }))
+                .sort((a, b) => {
+                    if (b.total !== a.total) {
+                        return b.total - a.total;
+                    }
+                    return a.id - b.id;
+                });
 
-        let lastTotal = null;
-        let lastPosition = 1;
-        sortedBroadsheets.forEach((broadsheet, index) => {
-            let position;
-            if (broadsheet.total === lastTotal) {
-                position = lastPosition;
-            } else {
-                position = index + 1;
-                lastPosition = position;
-                lastTotal = broadsheet.total;
-            }
-
-            // Update array
-            const orig = window.broadsheets.find(b => String(b.id) === String(broadsheet.id));
-            if (orig) orig.subjectpositionclass = getOrdinalSuffix(position);
-
-            // Update table
-            const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
-            if (row) {
-                const positionDisplay = row.querySelector('.position-display span');
-                if (positionDisplay) {
-                    positionDisplay.textContent = getOrdinalSuffix(position);
-                    positionDisplay.classList.remove('bg-warning');
-                    positionDisplay.classList.add('bg-info');
+            let lastTotal = null;
+            let lastPosition = 1;
+            sortedBroadsheets.forEach((broadsheet, index) => {
+                let position;
+                if (broadsheet.total === lastTotal) {
+                    position = lastPosition;
+                } else {
+                    position = index + 1;
+                    lastPosition = position;
+                    lastTotal = broadsheet.total;
                 }
-            }
-        });
+
+                // Update array
+                const orig = window.broadsheets.find(b => String(b.id) === String(broadsheet.id));
+                if (orig) orig.subjectpositionclass = getOrdinalSuffix(position);
+
+                // Update table
+                const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
+                if (row) {
+                    const positionDisplay = row.querySelector('.position-display span');
+                    if (positionDisplay) {
+                        positionDisplay.textContent = getOrdinalSuffix(position);
+                        positionDisplay.classList.remove('bg-warning');
+                        positionDisplay.classList.add('bg-info');
+                    }
+                }
+            });
+        }
     }
-}
+
     // Initialize check all functionality
     function initializeCheckAll() {
         const checkAll = document.getElementById('checkAll');
@@ -639,7 +640,7 @@
         }
     }
 
-    // Search functionality (search by student name or admission number)
+    // Search functionality
     function initializeSearch() {
         const searchInput = document.getElementById('searchInput');
         if (!searchInput) return;
@@ -647,10 +648,10 @@
             const searchTerm = e.target.value.toLowerCase().trim();
             const rows = document.querySelectorAll('tr:has(.score-input)');
             rows.forEach(row => {
-                const nameCell = row.querySelector('.student-name');
-                const admissionNoCell = row.querySelector('.admission-no');
-                const name = (nameCell?.textContent || '').toLowerCase();
-                const admissionNo = (admissionNoCell?.textContent || '').toLowerCase();
+                const nameCell = row.querySelector('.name');
+                const admissionNoCell = row.querySelector('.admissionno');
+                const name = (nameCell?.dataset.name || '').toLowerCase();
+                const admissionNo = (admissionNoCell?.dataset.admissionno || '').toLowerCase();
                 const matches = name.includes(searchTerm) || admissionNo.includes(searchTerm);
                 row.style.display = matches ? '' : 'none';
             });
@@ -658,7 +659,7 @@
     }
 
     // Initialize the module
-    function init() {
+    async function init() {
         if (!checkDependencies()) return;
         setupAxios();
         ensureBroadsheetsArray();
@@ -690,31 +691,54 @@
         const clearAllBtn = document.getElementById('clearAllScores');
         if (clearAllBtn) {
             clearAllBtn.addEventListener('click', () => {
-                // Clear all score inputs
                 const inputs = document.querySelectorAll('.score-input');
-                inputs.forEach(input => {
+                inputs.forEach(async input => {
                     input.value = '';
                     input.classList.remove('is-valid', 'is-invalid');
                     const row = input.closest('tr');
-                    if (row) {
-                        updateRowTotal(row);
-                    }
+                    if (row) await updateRowTotal(row);
                 });
-                // Clear checkboxes as well
                 const checkboxes = document.querySelectorAll('.score-checkbox');
                 checkboxes.forEach(checkbox => {
                     checkbox.checked = false;
                 });
-                // Uncheck "check all" checkbox
                 const checkAll = document.getElementById('checkAll');
                 if (checkAll) checkAll.checked = false;
             });
         }
 
         // Update initial row totals and positions
-        document.querySelectorAll('tr:has(.score-input)').forEach(row => {
-            updateRowTotal(row);
-        });
+        const rows = document.querySelectorAll('tr:has(.score-input)');
+        for (const row of rows) {
+            await updateRowTotal(row);
+        }
+
+        // Populate Scores Modal
+        const scoresModal = document.getElementById('scoresModal');
+        if (scoresModal) {
+            scoresModal.addEventListener('show.bs.modal', function () {
+                const tbody = document.getElementById('scoresBody');
+                tbody.innerHTML = '';
+                if (window.broadsheets && Array.isArray(window.broadsheets) && window.broadsheets.length > 0) {
+                    window.broadsheets.forEach(function(bs, i) {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${i + 1}</td>
+                                <td>${bs.admissionno ?? '-'}</td>
+                                <td>${(bs.fname ?? '') + ' ' + (bs.lname ?? '')}</td>
+                                <td>${bs.exam ?? ''}</td>
+                                <td>${bs.total !== undefined && bs.total !== null ? Number(bs.total).toFixed(1) : '0.0'}</td>
+                                <td>${bs.grade ?? '-'}</td>
+                                <td>${bs.subjectpositionclass ?? '-'}</td>
+                                <td>${bs.remark ?? '-'}</td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="8" class="text-center">No scores found.</td></tr>`;
+                }
+            });
+        }
     }
 
     // Export module functionality
@@ -733,33 +757,3 @@
         document.addEventListener('DOMContentLoaded', init);
     }
 })();
-
-document.addEventListener('DOMContentLoaded', function() {
-    // Populate the Scores Modal when opened
-    const scoresModal = document.getElementById('scoresModal');
-    if (scoresModal) {
-        scoresModal.addEventListener('show.bs.modal', function () {
-            const tbody = document.getElementById('scoresBody');
-            tbody.innerHTML = ''; // Clear any old rows
-
-            if (window.broadsheets && Array.isArray(window.broadsheets) && window.broadsheets.length > 0) {
-                window.broadsheets.forEach(function(bs, i) {
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${i+1}</td>
-                            <td>${bs.admissionno ?? '-'}</td>
-                            <td>${(bs.fname ?? '') + ' ' + (bs.lname ?? '')}</td>
-                            <td>${bs.exam ?? ''}</td>
-                            <td>${bs.total !== undefined && bs.total !== null ? Number(bs.total).toFixed(1) : '0.0'}</td>
-                            <td>${bs.grade ?? '-'}</td>
-                            <td>${bs.subjectpositionclass ?? '-'}</td>
-                            <td>${bs.remark ?? '-'}</td>
-                        </tr>
-                    `;
-                });
-            } else {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center">No scores found.</td></tr>`;
-            }
-        });
-    }
-});

@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Broadsheets;
+use App\Models\Schoolclass;
 use App\Models\Schoolsession;
 use App\Models\Schoolterm;
-use App\Models\Schoolclass;
 use App\Models\Student;
 use App\Models\Studentpersonalityprofile;
 use Illuminate\Http\Request;
@@ -38,10 +39,11 @@ class StudentpersonalityprofileController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function studentpersonalityprofile($id, $schoolclassid, $sessionid, $termid)
+   public function studentpersonalityprofile($id, $schoolclassid, $sessionid, $termid)
     {
         $pagetitle = "Student Personality Profile";
 
+        // Fetch student details
         $students = Student::where('studentRegistration.id', $id)
             ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
             ->get([
@@ -57,11 +59,38 @@ class StudentpersonalityprofileController extends Controller
                 'studentpicture.picture as picture'
             ]);
 
+        // Fetch personality profile
         $studentpp = Studentpersonalityprofile::where('studentid', $id)
             ->where('schoolclassid', $schoolclassid)
             ->where('sessionid', $sessionid)
             ->where('termid', $termid)
             ->get();
+
+        // Fetch student's scores for all subjects
+        $scores = Broadsheets::where('broadsheet_records.student_id', $id)
+            ->where('broadsheets.term_id', $termid)
+            ->where('broadsheet_records.session_id', $sessionid)
+            ->where('broadsheet_records.schoolclass_id', $schoolclassid)
+            ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+            ->leftJoin('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+            ->get([
+                'subject.subject as subject_name',
+                'subject.subject_code',
+                'broadsheets.ca1',
+                'broadsheets.ca2',
+                'broadsheets.ca3',
+                'broadsheets.exam',
+                'broadsheets.total',
+                'broadsheets.bf',
+                'broadsheets.cum',
+                'broadsheets.grade',
+                'broadsheets.subject_position_class as position',
+                'broadsheets.avg as class_average',
+                // 'classcategories.ca1score',
+                // 'classcategories.ca2score',
+                // 'classcategories.ca3score',
+                // 'classcategories.examscore',
+            ]);
 
         $schoolclass = Schoolclass::where('id', $schoolclassid)->first(['schoolclass', 'arm']);
         $schoolterm = Schoolterm::where('id', $termid)->value('term') ?? 'N/A';
@@ -70,6 +99,7 @@ class StudentpersonalityprofileController extends Controller
         return view('studentpersonalityprofile.edit')
             ->with('students', $students)
             ->with('studentpp', $studentpp)
+            ->with('scores', $scores) // Pass scores to the view
             ->with('staffid', Auth::user()->id)
             ->with('studentid', $id)
             ->with('schoolclassid', $schoolclassid)

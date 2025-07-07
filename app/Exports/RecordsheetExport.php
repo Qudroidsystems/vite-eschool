@@ -127,9 +127,9 @@ class RecordsheetExport implements FromView, ShouldAutoSize, WithStyles, WithEve
         }
 
         // Hide unnecessary columns (L, M, N, O, P for BROADSHEETID, STAFFID, etc.)
-        foreach (['L', 'M', 'N', 'O', 'P'] as $column) {
-            $sheet->getColumnDimension($column)->setVisible(false)->setWidth(0);
-        }
+        // foreach (['L', 'M', 'N', 'O', 'P'] as $column) {
+        //     $sheet->getColumnDimension($column)->setVisible(false)->setWidth(0);
+        // }
 
         return [];
     }
