@@ -39,26 +39,24 @@ function normalizePicturePath(picture) {
 
 // Utility: Ensure broadsheets is a flat array
 function ensureBroadsheetsArray() {
-    console.log("Raw broadsheets before processing:", window.broadsheets);
-    if (typeof window.broadsheets === 'undefined') {
+    console.log("Raw broadsheets before processing:", JSON.stringify(window.broadsheets, null, 2));
+    if (typeof window.broadsheets === 'undefined' || window.broadsheets === null) {
         window.broadsheets = [];
     } else if (!Array.isArray(window.broadsheets)) {
-        window.broadsheets = [window.broadsheets];
-    } else if (
-        window.broadsheets.length === 1 &&
-        typeof window.broadsheets[0] === 'object' &&
-        !Array.isArray(window.broadsheets[0])
-    ) {
-        const nestedObject = window.broadsheets[0];
-        window.broadsheets = Object.values(nestedObject).filter(
-            item => item && typeof item === 'object' && item.id
-        );
+        console.warn("Broadsheets is not an array, attempting to convert:", window.broadsheets);
+        window.broadsheets = Array.isArray(window.broadsheets.data) ? window.broadsheets.data : [window.broadsheets];
     }
-    console.log('Processed broadsheets:', window.broadsheets.map(b => ({
+    // Ensure all items are valid objects with required fields
+    window.broadsheets = window.broadsheets.filter(
+        item => item && typeof item === 'object' && item.id && item.admissionno
+    );
+    console.log('Processed broadsheets:', JSON.stringify(window.broadsheets.map(b => ({
         id: b.id,
         admissionno: b.admissionno,
-        picture: b.picture || 'none'
-    })));
+        picture: b.picture || 'none',
+        grade: b.grade,
+        position: b.position
+    })), null, 2));
 }
 
 // Utility: Debounce function
@@ -74,22 +72,17 @@ function debounce(func, wait) {
     };
 }
 
-// Grade calculation (client-side)
+// Grade calculation (client-side fallback)
 function calculateGrade(score) {
     if (isNaN(score) || score < 0 || score > 100) {
         console.warn(`Invalid score for grading: ${score}`);
         return '-';
     }
-    
-    if (typeof window.is_senior === 'undefined') {
-        console.warn("is_senior flag is undefined, defaulting to junior grading");
-    }
-    
+
     const isSenior = window.is_senior === true;
     console.log(`Calculating grade for score=${score}, is_senior=${isSenior}`);
-    
+
     if (isSenior) {
-        // Senior grading scale
         if (score >= 75) return 'A1';
         if (score >= 70) return 'B2';
         if (score >= 65) return 'B3';
@@ -100,7 +93,6 @@ function calculateGrade(score) {
         if (score >= 40) return 'E8';
         return 'F9';
     } else {
-        // Junior grading scale
         if (score >= 70) return 'A';
         if (score >= 60) return 'B';
         if (score >= 50) return 'C';
@@ -132,6 +124,8 @@ async function fetchGradeFromBackend(schoolclass_id, cum) {
 
 // Ordinal for position
 function getOrdinalSuffix(position) {
+    if (!position || isNaN(position)) return '-';
+    position = parseInt(position);
     if (position % 100 >= 11 && position % 100 <= 13) return position + 'th';
     switch (position % 10) {
         case 1: return position + 'st';
@@ -141,7 +135,7 @@ function getOrdinalSuffix(position) {
     }
 }
 
-// Update a table row and trigger full position update
+// Update a table row and trigger position update if necessary
 async function updateRowTotal(row) {
     const scoreInputs = row.querySelectorAll('.score-input');
     const id = row.querySelector('.score-input')?.dataset.id;
@@ -163,29 +157,34 @@ async function updateRowTotal(row) {
 
     const caAverage = (ca1 + ca2 + ca3) / 3;
     const total = (caAverage + exam) / 2;
-    let bf = 0;
     let broadsheet = window.broadsheets.find(b => String(b.id) === String(id));
     if (!broadsheet) {
         console.warn(`No broadsheet found for id=${id}, using bf=0`);
-        broadsheet = { id, bf: 0 }; // Fallback for missing broadsheet
-    } else {
-        bf = parseFloat(broadsheet.bf) || 0;
+        broadsheet = { id, bf: 0, total: 0, cum: 0, grade: '-', position: null };
     }
+    const bf = parseFloat(broadsheet.bf) || 0;
     const cum = window.term_id === 1 ? total : (bf + total) / 2;
 
-    // Use client-side grading, fallback to backend for senior classes if needed
-    let grade = calculateGrade(cum);
-    if (window.is_senior === true && !['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'].includes(grade)) {
+    const hasChanges = ca1 !== (parseFloat(broadsheet.ca1) || 0) ||
+                      ca2 !== (parseFloat(broadsheet.ca2) || 0) ||
+                      ca3 !== (parseFloat(broadsheet.ca3) || 0) ||
+                      exam !== (parseFloat(broadsheet.exam) || 0);
+
+    let totalDisplayValue = hasChanges ? total.toFixed(1) : (parseFloat(broadsheet.total) || 0).toFixed(1);
+    let cumDisplayValue = hasChanges ? cum.toFixed(2) : (parseFloat(broadsheet.cum) || 0).toFixed(2);
+    let grade = hasChanges ? calculateGrade(cum) : (broadsheet.grade || '-');
+    let position = broadsheet.position;
+
+    if (hasChanges && window.is_senior === true && !['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'].includes(grade)) {
         console.warn(`Client-side grade (${grade}) for senior class seems incorrect, fetching from backend`);
         grade = await fetchGradeFromBackend(window.schoolclass_id, cum) || grade;
     }
 
-    console.log(`updateRowTotal: id=${id}, ca1=${ca1}, ca2=${ca2}, ca3=${ca3}, exam=${exam}, total=${total.toFixed(1)}, bf=${bf.toFixed(2)}, cum=${cum.toFixed(2)}, grade=${grade}, is_senior=${window.is_senior}`);
+    console.log(`updateRowTotal: id=${id}, ca1=${ca1}, ca2=${ca2}, ca3=${ca3}, exam=${exam}, total=${total.toFixed(1)}, bf=${bf.toFixed(2)}, cum=${cum.toFixed(2)}, grade=${grade}, is_senior=${window.is_senior}, hasChanges=${hasChanges}, position=${position}`);
 
-    // Update DOM
     const totalDisplay = row.querySelector('.total-display span');
     if (totalDisplay) {
-        totalDisplay.textContent = total.toFixed(1);
+        totalDisplay.textContent = totalDisplayValue;
         totalDisplay.classList.add('bg-warning');
         setTimeout(() => totalDisplay.classList.remove('bg-warning'), 500);
     } else {
@@ -195,7 +194,7 @@ async function updateRowTotal(row) {
     if (bfDisplay) bfDisplay.textContent = bf.toFixed(2);
     const cumDisplay = row.querySelector('.cum-display span');
     if (cumDisplay) {
-        cumDisplay.textContent = cum.toFixed(2);
+        cumDisplay.textContent = cumDisplayValue;
         cumDisplay.classList.add('bg-warning');
         setTimeout(() => cumDisplay.classList.remove('bg-warning'), 500);
     } else {
@@ -209,19 +208,25 @@ async function updateRowTotal(row) {
     } else {
         console.warn("grade-display span not found in row");
     }
+    const positionDisplay = row.querySelector('.position-display span');
+    if (positionDisplay && !hasChanges) {
+        positionDisplay.textContent = position ? getOrdinalSuffix(position) : '-';
+        positionDisplay.classList.add('bg-info');
+    }
 
-    // Update broadsheets array
     const broadsheetIndex = window.broadsheets.findIndex(b => String(b.id) === String(id));
     if (broadsheetIndex !== -1) {
         window.broadsheets[broadsheetIndex] = {
             ...window.broadsheets[broadsheetIndex],
-            ca1, ca2, ca3, exam, total, cum, grade
+            ca1, ca2, ca3, exam, total, cum, grade, position
         };
     } else {
-        window.broadsheets.push({ id, ca1, ca2, ca3, exam, total, bf, cum, grade });
+        window.broadsheets.push({ id, ca1, ca2, ca3, exam, total, bf, cum, grade, position });
     }
 
-    forceUpdatePositions();
+    if (hasChanges) {
+        forceUpdatePositions();
+    }
 }
 
 // Standard competition ranking (tied ranks)
@@ -240,34 +245,81 @@ function forceUpdatePositions() {
         return;
     }
 
-    const cums = window.broadsheets.map(b => parseFloat(b.cum) || 0);
-    const allZero = cums.length > 0 && cums.every(cum => cum === 0);
+    const hasValidServerPositions = window.broadsheets.some(b => 
+        b.position !== null && b.position !== undefined && !isNaN(b.position) && b.position > 0
+    );
 
-    if (allZero) {
-        document.querySelectorAll('#scoresheetTableBody tr:not(#noDataRow)').forEach(row => {
-            const positionDisplay = row.querySelector('.position-display span');
-            if (positionDisplay) {
-                positionDisplay.textContent = "0th";
-                positionDisplay.classList.remove('bg-warning');
-                positionDisplay.classList.add('bg-info');
+    console.log(`forceUpdatePositions: hasValidServerPositions=${hasValidServerPositions}`);
+    console.log('Broadsheets:', JSON.stringify(window.broadsheets.map(b => ({
+        id: b.id,
+        admissionno: b.admissionno,
+        cum: b.cum,
+        grade: b.grade,
+        position: b.position
+    })), null, 2));
+
+    if (hasValidServerPositions) {
+        console.log("Using server-side positions for broadsheets with valid positions");
+        window.broadsheets.forEach(broadsheet => {
+            const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
+            if (row) {
+                const positionDisplay = row.querySelector('.position-display span');
+                if (positionDisplay) {
+                    const positionText = (broadsheet.position && !isNaN(broadsheet.position) && broadsheet.position > 0) 
+                        ? getOrdinalSuffix(broadsheet.position) 
+                        : '-';
+                    positionDisplay.textContent = positionText;
+                    positionDisplay.classList.remove('bg-warning');
+                    positionDisplay.classList.add('bg-info');
+                    console.log(`Set server position for ID ${broadsheet.id}: ${positionText}`);
+                } else {
+                    console.warn(`position-display span not found for ID ${broadsheet.id}`);
+                }
+            } else {
+                console.warn(`Row not found for broadsheet ID ${broadsheet.id}`);
             }
         });
     } else {
-        const sorted = window.broadsheets
-            .map(b => ({...b, cum: parseFloat(b.cum) || 0}))
-            .sort((a, b) => b.cum - a.cum || a.id - b.id);
+        console.log("No valid server positions found, calculating client-side positions");
+        const validScores = window.broadsheets.filter(b => {
+            const cum = parseFloat(b.cum) || 0;
+            return cum > 0;
+        });
 
-        let lastCum = null, lastPosition = 0, rank = 0;
-        const idToPos = {};
-        sorted.forEach((broadsheet, idx) => {
-            rank++;
-            if (lastCum !== null && broadsheet.cum === lastCum) {
-                // use lastPosition
-            } else {
-                lastPosition = rank;
-                lastCum = broadsheet.cum;
+        if (validScores.length === 0) {
+            console.log("No valid scores for ranking");
+            window.broadsheets.forEach(broadsheet => {
+                const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
+                if (row) {
+                    const positionDisplay = row.querySelector('.position-display span');
+                    if (positionDisplay) {
+                        positionDisplay.textContent = "-";
+                        positionDisplay.classList.remove('bg-warning');
+                        positionDisplay.classList.add('bg-info');
+                    }
+                }
+            });
+            return;
+        }
+
+        validScores.sort((a, b) => {
+            const cumA = parseFloat(a.cum) || 0;
+            const cumB = parseFloat(b.cum) || 0;
+            if (cumB !== cumA) return cumB - cumA;
+            return parseInt(a.id) - parseInt(b.id);
+        });
+
+        let currentPosition = 1;
+        let lastCum = null;
+        let positionMap = {};
+
+        validScores.forEach((broadsheet, index) => {
+            const cum = parseFloat(broadsheet.cum) || 0;
+            if (lastCum !== null && cum !== lastCum) {
+                currentPosition = index + 1;
             }
-            idToPos[broadsheet.id] = getOrdinalSuffix(lastPosition);
+            positionMap[broadsheet.id] = currentPosition;
+            lastCum = cum;
         });
 
         window.broadsheets.forEach(broadsheet => {
@@ -275,9 +327,11 @@ function forceUpdatePositions() {
             if (row) {
                 const positionDisplay = row.querySelector('.position-display span');
                 if (positionDisplay) {
-                    positionDisplay.textContent = idToPos[broadsheet.id] || "-";
+                    const position = positionMap[broadsheet.id];
+                    positionDisplay.textContent = position ? getOrdinalSuffix(position) : '-';
                     positionDisplay.classList.remove('bg-warning');
                     positionDisplay.classList.add('bg-info');
+                    console.log(`Calculated position for ID ${broadsheet.id}: ${position ? getOrdinalSuffix(position) : '-'}`);
                 }
             }
         });
@@ -382,6 +436,8 @@ function bulkSaveAllScores() {
         scoreEntry.total = total;
         scoreEntry.bf = bf;
         scoreEntry.cum = cum;
+        scoreEntry.grade = calculateGrade(cum);
+        scoreEntry.position = null;
         scores.push(scoreEntry);
     });
 
@@ -414,26 +470,62 @@ function bulkSaveAllScores() {
     })
     .then(response => {
         if (progressBar) progressBar.style.width = '100%';
-        if (response.data.data?.broadsheets) {
+        if (response.data.success && response.data.data?.broadsheets) {
+            console.log('bulkSaveAllScores: Server response', response.data.data.broadsheets.map(b => ({
+                id: b.id,
+                admissionno: b.admissionno,
+                ca1: b.ca1,
+                ca2: b.ca2,
+                ca3: b.ca3,
+                exam: b.exam,
+                total: b.total,
+                bf: b.bf,
+                cum: b.cum,
+                grade: b.grade,
+                position: b.position
+            })));
+
             window.broadsheets = response.data.data.broadsheets;
             ensureBroadsheetsArray();
+
             window.broadsheets.forEach(broadsheet => {
-                const row = document.querySelector(`input[data-id="${broadsheet.id}"]`)?.closest('tr');
+                const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
                 if (row) {
                     ['ca1', 'ca2', 'ca3', 'exam'].forEach(field => {
                         const input = row.querySelector(`input[data-field="${field}"]`);
-                        if (input) input.value = broadsheet[field] !== null ? broadsheet[field] : '';
+                        if (input) {
+                            input.value = broadsheet[field] !== null && broadsheet[field] !== undefined ? broadsheet[field] : '';
+                            input.classList.add('is-valid');
+                        }
                     });
                     const totalDisplay = row.querySelector('.total-display span');
-                    if (totalDisplay) totalDisplay.textContent = parseFloat(broadsheet.total || 0).toFixed(1);
+                    if (totalDisplay) {
+                        totalDisplay.textContent = parseFloat(broadsheet.total || 0).toFixed(1);
+                        totalDisplay.classList.add('bg-warning');
+                        setTimeout(() => totalDisplay.classList.remove('bg-warning'), 500);
+                    }
                     const bfDisplay = row.querySelector('.bf-display span');
-                    if (bfDisplay) bfDisplay.textContent = parseFloat(broadsheet.bf || 0).toFixed(2);
+                    if (bfDisplay) {
+                        bfDisplay.textContent = parseFloat(broadsheet.bf || 0).toFixed(2);
+                    }
                     const cumDisplay = row.querySelector('.cum-display span');
-                    if (cumDisplay) cumDisplay.textContent = parseFloat(broadsheet.cum || 0).toFixed(2);
+                    if (cumDisplay) {
+                        cumDisplay.textContent = parseFloat(broadsheet.cum || 0).toFixed(2);
+                        cumDisplay.classList.add('bg-warning');
+                        setTimeout(() => cumDisplay.classList.remove('bg-warning'), 500);
+                    }
                     const gradeDisplay = row.querySelector('.grade-display span');
                     if (gradeDisplay) {
                         gradeDisplay.textContent = broadsheet.grade || '-';
+                        gradeDisplay.classList.add('bg-warning');
+                        setTimeout(() => gradeDisplay.classList.remove('bg-warning'), 500);
                         console.log(`Updated grade for ID ${broadsheet.id}: ${broadsheet.grade}, is_senior=${window.is_senior}`);
+                    }
+                    const positionDisplay = row.querySelector('.position-display span');
+                    if (positionDisplay) {
+                        positionDisplay.textContent = broadsheet.position ? getOrdinalSuffix(broadsheet.position) : '-';
+                        positionDisplay.classList.add('bg-info');
+                        console.log(`Updated position for ID ${broadsheet.id}: ${broadsheet.position}`);
                     }
                     const image = row.querySelector('.student-image');
                     if (image && broadsheet.picture) {
@@ -453,20 +545,22 @@ function bulkSaveAllScores() {
                     }
                 }
             });
+
             forceUpdatePositions();
 
             Swal.fire({
                 icon: 'success',
                 title: 'Saved!',
-                text: `Successfully updated ${scores.length} score${scores.length !== 1 ? 's' : ''} with positions.`,
+                text: `Successfully updated ${scores.length} score${scores.length !== 1 ? 's' : ''} with grades and positions.`,
                 timer: 2000,
                 showConfirmButton: false
             });
         } else {
+            console.error('bulkSaveAllScores: Invalid server response', response.data);
             Swal.fire({
                 icon: 'error',
                 title: 'Save Failed',
-                text: 'Server did not return updated scores.',
+                text: response.data.message || 'Server did not return updated scores.',
                 showConfirmButton: true
             });
         }
@@ -546,6 +640,7 @@ async function populateScoresModal() {
         return;
     }
     ensureBroadsheetsArray();
+    console.log('Broadsheets in populateScoresModal:', JSON.stringify(window.broadsheets, null, 2));
     if (!window.broadsheets || !Array.isArray(window.broadsheets) || window.broadsheets.length === 0) {
         console.log("No broadsheets data available for modal");
         modalBody.innerHTML = `<div class="alert alert-info text-center">
@@ -554,31 +649,8 @@ async function populateScoresModal() {
         </div>`;
         return;
     }
+
     console.log("Populating scores modal with", window.broadsheets.length, "records");
-
-    const cums = window.broadsheets.map(b => parseFloat(b.cum) || 0);
-    const allZero = cums.length > 0 && cums.every(cum => cum === 0);
-
-    let idToPos = {};
-    if (allZero) {
-        window.broadsheets.forEach(b => { idToPos[b.id] = "0th"; });
-    } else {
-        const sorted = window.broadsheets
-            .map(b => ({id: b.id, cum: parseFloat(b.cum) || 0}))
-            .sort((a, b) => b.cum - a.cum || a.id - b.id);
-
-        let lastCum = null, lastPosition = 0, rank = 0;
-        sorted.forEach((item, idx) => {
-            rank++;
-            if (lastCum !== null && item.cum === lastCum) {
-                // tied
-            } else {
-                lastPosition = rank;
-                lastCum = item.cum;
-            }
-            idToPos[item.id] = getOrdinalSuffix(lastPosition);
-        });
-    }
 
     let html = `
         <div class="table-responsive">
@@ -601,8 +673,8 @@ async function populateScoresModal() {
         const total = (caAverage + exam) / 2;
         const bf = parseFloat(broadsheet.bf) || 0;
         const cum = window.term_id === 1 ? total : (bf + total) / 2;
-        let grade = calculateGrade(cum);
-        if (window.is_senior === true && !['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'].includes(grade)) {
+        let grade = broadsheet.grade || calculateGrade(cum);
+        if (!broadsheet.grade && window.is_senior === true && !['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'].includes(grade)) {
             console.warn(`Client-side grade (${grade}) for senior class seems incorrect, fetching from backend`);
             grade = await fetchGradeFromBackend(window.schoolclass_id, cum) || grade;
         }
@@ -610,8 +682,7 @@ async function populateScoresModal() {
         const admissionno = broadsheet.admissionno || '-';
         const picture = normalizePicturePath(broadsheet.picture);
         const imageUrl = `/storage/student_avatars/${picture}`;
-        const position = idToPos[broadsheet.id] || "-";
-        console.log(`Modal image for ${admissionno}: Original picture=${broadsheet.picture || 'none'}, Normalized=${picture}, URL=${imageUrl}, grade=${grade}, is_senior=${window.is_senior}`);
+        const position = broadsheet.position ? getOrdinalSuffix(broadsheet.position) : '-';
 
         html += `<tr>
             <td>${idx + 1}</td>
@@ -781,11 +852,10 @@ function initializeBulkActions() {
     }
 }
 
-// Score input initialization with override default 0
+// Score input initialization
 function initializeScoreInputs() {
     const scoreInputs = document.querySelectorAll('.score-input');
     scoreInputs.forEach(input => {
-        // Clear default 0 on focus
         input.addEventListener('focus', function () {
             if (this.value === '0') {
                 this.value = '';
@@ -818,14 +888,27 @@ function initializeScoreInputs() {
 // Init
 document.addEventListener("DOMContentLoaded", function () {
     console.log("DOMContentLoaded, initializing scoresheet");
-    console.log("is_senior:", window.is_senior, "schoolclass_id:", window.schoolclass_id);
+    console.log("Initial window.broadsheets:", JSON.stringify(window.broadsheets, null, 2));
+    console.log("Initial window.is_senior:", window.is_senior);
+    if (!window.broadsheets) {
+        console.error("window.broadsheets is undefined");
+        Swal.fire({
+            icon: "error",
+            title: "Initialization Error",
+            text: "Broadsheet data is missing. Please reload the page or contact support.",
+            showConfirmButton: true
+        });
+        return;
+    }
     ensureBroadsheetsArray();
+    console.log("Broadsheets after ensureBroadsheetsArray:", JSON.stringify(window.broadsheets, null, 2));
     initializeScoreInputs();
     initializeBulkActions();
     document.querySelectorAll('#scoresheetTableBody tr:not(#noDataRow)').forEach(row => {
         updateRowTotal(row);
     });
     forceUpdatePositions();
+    console.log("Broadsheets after initialization:", JSON.stringify(window.broadsheets, null, 2));
 });
 
 window.bulkSaveAllScores = bulkSaveAllScores;

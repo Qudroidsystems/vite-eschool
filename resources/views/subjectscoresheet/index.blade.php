@@ -401,7 +401,9 @@
                                                 <td>{{ $broadsheet->bf ? number_format($broadsheet->bf, 2) : '0.00' }}</td>
                                                 <td>{{ $broadsheet->cum ? number_format($broadsheet->cum, 2) : '0.00' }}</td>
                                                 <td>{{ $broadsheet->grade ?? '-' }}</td>
-                                                <td>{{ $broadsheet->position ?? '-' }}</td>
+                                                <td>
+                                                    {{ $broadsheet->position ? $broadsheet->position . \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position) : '-' }}
+                                                </td>
                                             </tr>
                                         @empty
                                             <tr>
