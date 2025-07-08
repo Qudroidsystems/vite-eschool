@@ -1,4 +1,4 @@
-var perPage = 100, // Changed to 100 items per page
+var perPage = 100, // Pagination set to 100 items per page
     editlist = false,
     checkAll = document.getElementById("checkAll"),
     options = {
@@ -13,7 +13,12 @@ console.log("Initial userList items:", userList.items.length);
 
 userList.on("updated", function (e) {
     console.log("List.js updated, matching items:", e.matchingItems.length, "total items:", userList.items.length);
-    document.getElementsByClassName("noresult")[0].style.display = e.matchingItems.length === 0 ? "block" : "none";
+    const noResultElement = document.getElementsByClassName("noresult")[0];
+    if (noResultElement) {
+        noResultElement.style.display = e.matchingItems.length === 0 ? "block" : "none";
+    } else {
+        console.warn("No element with class 'noresult' found in the DOM");
+    }
     document.getElementById("pagination-showing").innerText = e.matchingItems.length;
     document.getElementById("pagination-total").innerText = userList.items.length;
     setTimeout(() => {
