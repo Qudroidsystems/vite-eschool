@@ -1,4 +1,4 @@
-var perPage = 50,
+var perPage = 100,
     editlist = false,
     checkAll = document.getElementById("checkAll"),
     options = {

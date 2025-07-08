@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
+
 class MyScoreSheetController extends Controller
 {
     public function index(Request $request)
@@ -1019,81 +1020,192 @@ protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id,
         ],
     ], 200);
 }
-    public function import(Request $request)
-    {
-        Log::info('Import: Request received', [
-            'user_id' => $request->user()->id,
-            'has_file' => $request->hasFile('file'),
-            'input' => $request->all(),
+  
+// public function import(Request $request)
+//     {
+//         Log::info('Import: Request received', [
+//             'user_id' => $request->user()->id,
+//             'has_file' => $request->hasFile('file'),
+//             'input' => $request->all(),
+//         ]);
+
+//         $request->validate([
+//             'file' => 'required|file|mimes:xlsx,xls',
+//             'schoolclass_id' => 'required|integer|exists:schoolclass,id',
+//             'subjectclass_id' => 'required|integer|exists:subjectclass,id',
+//             'staff_id' => 'required|integer|exists:users,id',
+//             'term_id' => 'required|integer|in:1,2,3',
+//             'session_id' => 'required|integer|exists:schoolsession,id',
+//         ]);
+
+//         try {
+//             $importData = [
+//                 'schoolclass_id' => $request->schoolclass_id,
+//                 'subjectclass_id' => $request->subjectclass_id,
+//                 'staff_id' => $request->staff_id,
+//                 'term_id' => $request->term_id,
+//                 'session_id' => $request->session_id,
+//             ];
+
+//             Log::debug('Import: Starting import', $importData);
+
+//             $import = new ScoresheetImport($importData);
+
+//             // Validate Excel metadata
+//             $filePath = $request->file('file')->getPathname();
+//             $import->validateExcelMetadata($filePath);
+
+//             // Proceed with import
+//             Excel::import($import, $request->file('file'));
+
+//             // After import, update class metrics and positions
+//             $this->updateClassMetrics($request->subjectclass_id, $request->staff_id, $request->term_id, $request->session_id);
+//             $this->updateSubjectPositions($request->subjectclass_id, $request->staff_id, $request->term_id, $request->session_id);
+//             $this->updateClassPositions($request->schoolclass_id, $request->term_id, $request->session_id);
+
+//             $updatedBroadsheets = $import->getUpdatedBroadsheets();
+//             $failures = $import->getFailures();
+
+//             Log::info('Import: Success', [
+//                 'updated_broadsheets_count' => count($updatedBroadsheets),
+//                 'failures_count' => count($failures),
+//             ]);
+
+//             $message = "Scores imported successfully! Updated " . count($updatedBroadsheets) . " records.";
+//             if ($failures) {
+//                 $message .= " Skipped " . count($failures) . " rows due to validation errors.";
+//             }
+
+//             return redirect()->back()->with('success', $message);
+
+//         } catch (\Exception $e) {
+//             Log::error('Import: Error', [
+//                 'message' => $e->getMessage(),
+//                 'trace' => $e->getTraceAsString(),
+//             ]);
+
+//             // Customize error message for metadata validation failures
+//             $errorMessage = $e->getMessage();
+//             if (str_contains($errorMessage, 'Excel file metadata does not match')) {
+//                 $errorMessage = 'The uploaded scoresheet does not match the selected class, subject, term, or session. Please check the scoresheet details and try again. Details: ' . $errorMessage;
+//             } else {
+//                 $errorMessage = 'Failed to import scores: ' . $errorMessage;
+//             }
+
+//             return redirect()->back()->with('error', $errorMessage);
+//         }
+//     }
+
+public function import(Request $request)
+{
+    Log::info('Import: Request received', [
+        'user_id' => $request->user()->id,
+        'has_file' => $request->hasFile('file'),
+        'input' => $request->all(),
+    ]);
+
+    $request->validate([
+        'file' => 'required|file|mimes:xlsx,xls',
+        'schoolclass_id' => 'required|integer|exists:schoolclass,id',
+        'subjectclass_id' => 'required|integer|exists:subjectclass,id',
+        'staff_id' => 'required|integer|exists:users,id',
+        'term_id' => 'required|integer|in:1,2,3',
+        'session_id' => 'required|integer|exists:schoolsession,id',
+    ]);
+
+    try {
+        $importData = [
+            'schoolclass_id' => $request->schoolclass_id,
+            'subjectclass_id' => $request->subjectclass_id,
+            'staff_id' => $request->staff_id,
+            'term_id' => $request->term_id,
+            'session_id' => $request->session_id,
+        ];
+
+        Log::debug('Import: Starting import', $importData);
+
+        // Initialize progress tracking
+        $progressKey = 'import_progress_' . $request->user()->id;
+        session([$progressKey => ['progress' => 0, 'total' => 0, 'status' => 'starting']]);
+
+        $import = new ScoresheetImport($importData);
+
+        // Validate Excel metadata
+        $filePath = $request->file('file')->getPathname();
+        $import->validateExcelMetadata($filePath);
+
+        // Estimate total rows for progress tracking
+        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
+        $totalRows = $spreadsheet->getActiveSheet()->getHighestRow() - ($import->startRow() - 1);
+        session([$progressKey => ['progress' => 0, 'total' => $totalRows, 'status' => 'processing']]);
+
+        // Proceed with import
+        Excel::import($import, $request->file('file'));
+
+        // After import, update class metrics and positions
+        $this->updateClassMetrics($request->subjectclass_id, $request->staff_id, $request->term_id, $request->session_id);
+        $this->updateSubjectPositions($request->subjectclass_id, $request->staff_id, $request->term_id, $request->session_id);
+        $this->updateClassPositions($request->schoolclass_id, $request->term_id, $request->session_id);
+
+        $updatedBroadsheets = $import->getUpdatedBroadsheets();
+        $failures = $import->getFailures();
+
+        // Update progress to complete
+        session([$progressKey => ['progress' => $totalRows, 'total' => $totalRows, 'status' => 'completed']]);
+
+        Log::info('Import: Success', [
+            'updated_broadsheets_count' => count($updatedBroadsheets),
+            'failures_count' => count($failures),
         ]);
 
-        $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls',
-            'schoolclass_id' => 'required|integer|exists:schoolclass,id',
-            'subjectclass_id' => 'required|integer|exists:subjectclass,id',
-            'staff_id' => 'required|integer|exists:users,id',
-            'term_id' => 'required|integer|in:1,2,3',
-            'session_id' => 'required|integer|exists:schoolsession,id',
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'broadsheets' => $updatedBroadsheets,
+                'failures' => $failures,
+            ],
+            'message' => 'Scores imported successfully! Updated ' . count($updatedBroadsheets) . ' records.' . 
+                        (count($failures) ? ' Skipped ' . count($failures) . ' rows due to validation errors.' : ''),
         ]);
 
-        try {
-            $importData = [
-                'schoolclass_id' => $request->schoolclass_id,
-                'subjectclass_id' => $request->subjectclass_id,
-                'staff_id' => $request->staff_id,
-                'term_id' => $request->term_id,
-                'session_id' => $request->session_id,
-            ];
+    } catch (\Exception $e) {
+        // Update progress to failed
+        $progressKey = 'import_progress_' . $request->user()->id;
+        session([$progressKey => ['progress' => 0, 'total' => 0, 'status' => 'failed', 'error' => $e->getMessage()]]);
 
-            Log::debug('Import: Starting import', $importData);
+        Log::error('Import: Error', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
 
-            $import = new ScoresheetImport($importData);
-
-            // Validate Excel metadata
-            $filePath = $request->file('file')->getPathname();
-            $import->validateExcelMetadata($filePath);
-
-            // Proceed with import
-            Excel::import($import, $request->file('file'));
-
-            // After import, update class metrics and positions
-            $this->updateClassMetrics($request->subjectclass_id, $request->staff_id, $request->term_id, $request->session_id);
-            $this->updateSubjectPositions($request->subjectclass_id, $request->staff_id, $request->term_id, $request->session_id);
-            $this->updateClassPositions($request->schoolclass_id, $request->term_id, $request->session_id);
-
-            $updatedBroadsheets = $import->getUpdatedBroadsheets();
-            $failures = $import->getFailures();
-
-            Log::info('Import: Success', [
-                'updated_broadsheets_count' => count($updatedBroadsheets),
-                'failures_count' => count($failures),
-            ]);
-
-            $message = "Scores imported successfully! Updated " . count($updatedBroadsheets) . " records.";
-            if ($failures) {
-                $message .= " Skipped " . count($failures) . " rows due to validation errors.";
-            }
-
-            return redirect()->back()->with('success', $message);
-
-        } catch (\Exception $e) {
-            Log::error('Import: Error', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
-            // Customize error message for metadata validation failures
-            $errorMessage = $e->getMessage();
-            if (str_contains($errorMessage, 'Excel file metadata does not match')) {
-                $errorMessage = 'The uploaded scoresheet does not match the selected class, subject, term, or session. Please check the scoresheet details and try again. Details: ' . $errorMessage;
-            } else {
-                $errorMessage = 'Failed to import scores: ' . $errorMessage;
-            }
-
-            return redirect()->back()->with('error', $errorMessage);
+        // Customize error message for metadata validation failures
+        $errorMessage = $e->getMessage();
+        if (str_contains($errorMessage, 'Excel file metadata does not match')) {
+            $errorMessage = 'The uploaded scoresheet does not match the selected class, subject, term, or session. Please check the scoresheet details and try again. Details: ' . $errorMessage;
+        } else {
+            $errorMessage = 'Failed to import scores: ' . $errorMessage;
         }
-    }
 
+        return response()->json([
+            'success' => false,
+            'message' => $errorMessage,
+        ], 422);
+    }
+}
+
+
+public function importProgress(Request $request)
+{
+    $progressKey = 'import_progress_' . $request->user()->id;
+    $progress = session($progressKey, ['progress' => 0, 'total' => 0, 'status' => 'idle']);
+
+    return response()->json([
+        'progress' => $progress['progress'],
+        'total' => $progress['total'],
+        'status' => $progress['status'],
+        'error' => $progress['error'] ?? null,
+    ]);
+}
     public function export()
     {
         $schoolclassId = session('schoolclass_id');

@@ -466,7 +466,14 @@ function bulkSaveAllScores() {
             'X-Requested-With': 'XMLHttpRequest',
             'Content-Type': 'application/json'
         },
-        timeout: 30000
+        timeout: 30000,
+        onUploadProgress: progressEvent => {
+            if (progressEvent.lengthComputable) {
+                const percentComplete = (progressEvent.loaded / progressEvent.total) * 100;
+                if (progressBar) progressBar.style.width = `${percentComplete}%`;
+                console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
+            }
+        }
     })
     .then(response => {
         if (progressBar) progressBar.style.width = '100%';
@@ -720,6 +727,365 @@ async function populateScoresModal() {
     });
 }
 
+// Download Excel with progress
+function downloadExcel() {
+    const downloadExcelButton = document.getElementById('downloadExcel');
+    const downloadProgressContainer = document.getElementById('downloadProgressContainer');
+    const downloadProgressBar = document.getElementById('downloadProgressBar');
+    const originalBtnContent = downloadExcelButton?.innerHTML;
+
+    if (!downloadExcelButton || !downloadProgressContainer || !downloadProgressBar) {
+        console.error('Download elements not found in DOM');
+        Swal.fire({
+            icon: 'error',
+            title: 'Download Failed',
+            text: 'Required elements are missing. Check console for details.',
+            showConfirmButton: true
+        });
+        return;
+    }
+
+    downloadExcelButton.disabled = true;
+    downloadExcelButton.innerHTML = '<i class="ri-loader-4-line sync-icon"></i> Downloading...';
+    downloadProgressContainer.style.display = 'block';
+    downloadProgressBar.style.width = '10%';
+
+    axios.get(window.routes?.export || '/subjectscoresheet/export', {
+        responseType: 'blob',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        timeout: 30000,
+        onDownloadProgress: progressEvent => {
+            if (progressEvent.lengthComputable) {
+                const percentComplete = (progressEvent.loaded / progressEvent.total) * 100;
+                downloadProgressBar.style.width = `${percentComplete}%`;
+                console.log(`Download progress: ${percentComplete.toFixed(2)}%`);
+            }
+        }
+    })
+    .then(response => {
+        downloadProgressBar.style.width = '100%';
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'scoresheet.xlsx');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        Swal.fire({
+            icon: 'success',
+            title: 'Downloaded!',
+            text: 'Excel file downloaded successfully.',
+            timer: 2000,
+            showConfirmButton: false
+        });
+    })
+    .catch(error => {
+        let errorMessage = 'Failed to download Excel file. Check console for details.';
+        if (error.response) errorMessage = error.response.data.message || errorMessage;
+        console.error('Download error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Download Failed',
+            text: errorMessage,
+            showConfirmButton: true
+        });
+    })
+    .finally(() => {
+        setTimeout(() => {
+            downloadProgressContainer.style.display = 'none';
+            downloadProgressBar.style.width = '0%';
+            downloadExcelButton.disabled = false;
+            downloadExcelButton.innerHTML = originalBtnContent || '<i class="ri-download-line me-1"></i> Download Excel';
+        }, 1000);
+    });
+}
+
+// Download Marks Sheet with progress
+function downloadMarksSheet() {
+    const downloadMarksSheetButton = document.getElementById('downloadMarksSheet');
+    const downloadProgressContainer = document.getElementById('downloadProgressContainer');
+    const downloadProgressBar = document.getElementById('downloadProgressBar');
+    const originalBtnContent = downloadMarksSheetButton?.innerHTML;
+
+    if (!downloadMarksSheetButton || !downloadProgressContainer || !downloadProgressBar) {
+        console.error('Download Marks Sheet elements not found in DOM');
+        Swal.fire({
+            icon: 'error',
+            title: 'Download Failed',
+            text: 'Required elements are missing. Check console for details.',
+            showConfirmButton: true
+        });
+        return;
+    }
+
+    downloadMarksSheetButton.disabled = true;
+    downloadMarksSheetButton.innerHTML = '<i class="ri-loader-4-line sync-icon"></i> Downloading...';
+    downloadProgressContainer.style.display = 'block';
+    downloadProgressBar.style.width = '10%';
+
+    axios.get(window.routes?.downloadMarksSheet || '/scoresheet/download-marks-sheet', {
+        responseType: 'blob',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        timeout: 30000,
+        onDownloadProgress: progressEvent => {
+            if (progressEvent.lengthComputable) {
+                const percentComplete = (progressEvent.loaded / progressEvent.total) * 100;
+                downloadProgressBar.style.width = `${percentComplete}%`;
+                console.log(`Marks Sheet download progress: ${percentComplete.toFixed(2)}%`);
+            }
+        }
+    })
+    .then(response => {
+        downloadProgressBar.style.width = '100%';
+        const url = window.URL.createObjectURL(new Blob([response.data]));
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', 'marks-sheet.pdf');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        Swal.fire({
+            icon: 'success',
+            title: 'Downloaded!',
+            text: 'Marks sheet downloaded successfully.',
+            timer: 2000,
+            showConfirmButton: false
+        });
+    })
+    .catch(error => {
+        let errorMessage = 'Failed to download marks sheet. Check console for details.';
+        if (error.response) errorMessage = error.response.data.message || errorMessage;
+        console.error('Marks Sheet download error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Download Failed',
+            text: errorMessage,
+            showConfirmButton: true
+        });
+    })
+    .finally(() => {
+        setTimeout(() => {
+            downloadProgressContainer.style.display = 'none';
+            downloadProgressBar.style.width = '0%';
+            downloadMarksSheetButton.disabled = false;
+            downloadMarksSheetButton.innerHTML = originalBtnContent || '<i class="fas fa-file-pdf"></i> Download Marks Sheet';
+        }, 1000);
+    });
+}
+
+// Handle bulk upload with server-side progress via SSE
+// Handle bulk upload with server-side progress
+function handleBulkUpload() {
+    const importForm = document.getElementById('importForm');
+    const importSubmit = document.getElementById('importSubmit');
+    const importLoader = document.getElementById('importLoader');
+    const uploadProgressBar = document.getElementById('uploadProgressBar');
+    const originalBtnContent = importSubmit?.innerHTML;
+
+    if (!importForm || !importSubmit || !importLoader || !uploadProgressBar) {
+        console.error('Upload elements not found in DOM');
+        Swal.fire({
+            icon: 'error',
+            title: 'Upload Failed',
+            text: 'Required elements are missing. Check console for details.',
+            showConfirmButton: true
+        });
+        return;
+    }
+
+    importForm.addEventListener('submit', function (e) {
+        e.preventDefault();
+        const formData = new FormData(importForm);
+        importSubmit.disabled = true;
+        importSubmit.innerHTML = '<i class="ri-loader-4-line sync-icon"></i> Uploading...';
+        importLoader.style.display = 'block';
+        uploadProgressBar.style.width = '10%';
+
+        // Start polling for progress
+        const progressInterval = setInterval(() => {
+            axios.get('/subjectscoresheet/import-progress', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                const { status, progress, message } = response.data;
+                console.log(`Import progress: ${progress}% - ${message}`);
+                uploadProgressBar.style.width = `${progress}%`;
+                if (status === 'completed' || status === 'error') {
+                    clearInterval(progressInterval);
+                    if (status === 'error') {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Upload Failed',
+                            text: message,
+                            showConfirmButton: true
+                        });
+                        importLoader.style.display = 'none';
+                        uploadProgressBar.style.width = '0%';
+                        importSubmit.disabled = false;
+                        importSubmit.innerHTML = originalBtnContent || 'Upload';
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Progress fetch error:', error);
+                clearInterval(progressInterval);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Progress Fetch Failed',
+                    text: 'Failed to fetch upload progress. Check console for details.',
+                    showConfirmButton: true
+                });
+                importLoader.style.display = 'none';
+                uploadProgressBar.style.width = '0%';
+                importSubmit.disabled = false;
+                importSubmit.innerHTML = originalBtnContent || 'Upload';
+            });
+        }, 1000);
+
+        axios.post(window.routes?.import || '/subjectscoresheet/import', formData, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'multipart/form-data'
+            },
+            timeout: 60000
+        })
+        .then(response => {
+            clearInterval(progressInterval);
+            uploadProgressBar.style.width = '100%';
+            if (response.data.success && response.data.data?.broadsheets) {
+                console.log('handleBulkUpload: Server response', response.data.data.broadsheets.map(b => ({
+                    id: b.id,
+                    admissionno: b.admissionno,
+                    ca1: b.ca1,
+                    ca2: b.ca2,
+                    ca3: b.ca3,
+                    exam: b.exam,
+                    total: b.total,
+                    bf: b.bf,
+                    cum: b.cum,
+                    grade: b.grade,
+                    position: b.position
+                })));
+
+                window.broadsheets = response.data.data.broadsheets;
+                ensureBroadsheetsArray();
+
+                window.broadsheets.forEach(broadsheet => {
+                    const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
+                    if (row) {
+                        ['ca1', 'ca2', 'ca3', 'exam'].forEach(field => {
+                            const input = row.querySelector(`input[data-field="${field}"]`);
+                            if (input) {
+                                input.value = broadsheet[field] !== null && broadsheet[field] !== undefined ? broadsheet[field] : '';
+                                input.classList.add('is-valid');
+                            }
+                        });
+                        const totalDisplay = row.querySelector('.total-display span');
+                        if (totalDisplay) {
+                            totalDisplay.textContent = parseFloat(broadsheet.total || 0).toFixed(1);
+                            totalDisplay.classList.add('bg-warning');
+                            setTimeout(() => totalDisplay.classList.remove('bg-warning'), 500);
+                        }
+                        const bfDisplay = row.querySelector('.bf-display span');
+                        if (bfDisplay) {
+                            bfDisplay.textContent = parseFloat(broadsheet.bf || 0).toFixed(2);
+                        }
+                        const cumDisplay = row.querySelector('.cum-display span');
+                        if (cumDisplay) {
+                            cumDisplay.textContent = parseFloat(broadsheet.cum || 0).toFixed(2);
+                            cumDisplay.classList.add('bg-warning');
+                            setTimeout(() => cumDisplay.classList.remove('bg-warning'), 500);
+                        }
+                        const gradeDisplay = row.querySelector('.grade-display span');
+                        if (gradeDisplay) {
+                            gradeDisplay.textContent = broadsheet.grade || '-';
+                            gradeDisplay.classList.add('bg-warning');
+                            setTimeout(() => gradeDisplay.classList.remove('bg-warning'), 500);
+                        }
+                        const positionDisplay = row.querySelector('.position-display span');
+                        if (positionDisplay) {
+                            positionDisplay.textContent = broadsheet.position ? getOrdinalSuffix(broadsheet.position) : '-';
+                            positionDisplay.classList.add('bg-info');
+                        }
+                        const image = row.querySelector('.student-image');
+                        if (image && broadsheet.picture) {
+                            const existingPicture = image.dataset.picture || 'none';
+                            const newPicture = broadsheet.picture || existingPicture;
+                            const picture = normalizePicturePath(newPicture);
+                            const imageUrl = `/storage/student_avatars/${picture}`;
+                            image.src = imageUrl;
+                            image.dataset.image = imageUrl;
+                            image.dataset.picture = newPicture;
+                            image.onerror = () => {
+                                image.src = DEFAULT_IMAGE;
+                                image.dataset.image = DEFAULT_IMAGE;
+                                image.dataset.picture = 'none';
+                                console.log(`Image failed to load for admissionno: ${broadsheet.admissionno || 'unknown'}, picture: ${newPicture}, attempted URL: ${imageUrl}`);
+                            };
+                        }
+                    }
+                });
+
+                forceUpdatePositions();
+                const scoreCount = document.getElementById('scoreCount');
+                if (scoreCount) scoreCount.textContent = window.broadsheets.length;
+                const noDataAlert = document.getElementById('noDataAlert');
+                if (noDataAlert) noDataAlert.style.display = window.broadsheets.length ? 'none' : 'block';
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Uploaded!',
+                    text: response.data.message || `Successfully uploaded scores for ${window.broadsheets.length} students.`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+
+                const importModal = document.getElementById('importModal');
+                if (importModal) {
+                    const modalInstance = bootstrap.Modal.getInstance(importModal);
+                    if (modalInstance) modalInstance.hide();
+                }
+            } else {
+                console.error('handleBulkUpload: Invalid server response', response.data);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Upload Failed',
+                    text: response.data.message || 'Server did not return updated scores.',
+                    showConfirmButton: true
+                });
+            }
+        })
+        .catch(error => {
+            clearInterval(progressInterval);
+            let errorMessage = 'Failed to upload scores. Check console for details.';
+            if (error.response) errorMessage = error.response.data.message || errorMessage;
+            console.error('Upload error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Upload Failed',
+                text: errorMessage,
+                showConfirmButton: true
+            });
+        })
+        .finally(() => {
+            setTimeout(() => {
+                importLoader.style.display = 'none';
+                uploadProgressBar.style.width = '0%';
+                importSubmit.disabled = false;
+                importSubmit.innerHTML = originalBtnContent || 'Upload';
+            }, 1000);
+        });
+    });
+}
+
 // Bulk actions and modal initialization
 function initializeBulkActions() {
     const bulkUpdateScores = document.getElementById('bulkUpdateScores');
@@ -728,6 +1094,8 @@ function initializeBulkActions() {
     const checkAll = document.getElementById('checkAll');
     const scoresModal = document.getElementById('scoresModal');
     const imageViewModal = document.getElementById('imageViewModal');
+    const downloadExcelButton = document.getElementById('downloadExcel');
+    const downloadMarksSheetButton = document.getElementById('downloadMarksSheet');
 
     console.log('Initializing bulk actions:', {
         bulkUpdateScores: !!bulkUpdateScores,
@@ -735,7 +1103,9 @@ function initializeBulkActions() {
         clearAllScores: !!clearAllScores,
         checkAll: !!checkAll,
         scoresModal: !!scoresModal,
-        imageViewModal: !!imageViewModal
+        imageViewModal: !!imageViewModal,
+        downloadExcelButton: !!downloadExcelButton,
+        downloadMarksSheetButton: !!downloadMarksSheetButton
     });
 
     if (bulkUpdateScores) {
@@ -751,7 +1121,9 @@ function initializeBulkActions() {
     if (selectAllScores) {
         selectAllScores.addEventListener('click', () => {
             console.log('Select All Scores button clicked');
-            document.querySelectorAll('.score-checkbox').forEach(checkbox => { checkbox.checked = true; });
+            document.querySelectorAll('.score-checkbox').forEach(checkbox => {
+                checkbox.checked = true;
+            });
             if (checkAll) checkAll.checked = true;
         });
     } else {
@@ -771,8 +1143,12 @@ function initializeBulkActions() {
                 confirmButtonText: 'Yes, Clear All!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    document.querySelectorAll('.score-input').forEach(input => { input.value = ''; });
-                    document.querySelectorAll('#scoresheetTableBody tr:not(#noDataRow)').forEach(row => { updateRowTotal(row); });
+                    document.querySelectorAll('.score-input').forEach(input => {
+                        input.value = '';
+                    });
+                    document.querySelectorAll('#scoresheetTableBody tr:not(#noDataRow)').forEach(row => {
+                        updateRowTotal(row);
+                    });
                     Swal.fire({
                         icon: 'success',
                         title: 'Cleared!',
@@ -789,7 +1165,9 @@ function initializeBulkActions() {
     if (checkAll) {
         checkAll.addEventListener('change', function () {
             console.log('Check All checkbox changed:', this.checked);
-            document.querySelectorAll('.score-checkbox').forEach(checkbox => { checkbox.checked = this.checked; });
+            document.querySelectorAll('.score-checkbox').forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
         });
     } else {
         console.warn('checkAll checkbox not found in DOM');
@@ -797,7 +1175,7 @@ function initializeBulkActions() {
 
     if (scoresModal) {
         scoresModal.addEventListener('show.bs.modal', () => {
-            console.log('Scores modal opening, calling populateScoresModal');
+            console.log('Scores modal show event triggered');
             populateScoresModal();
         });
     } else {
@@ -806,113 +1184,106 @@ function initializeBulkActions() {
 
     if (imageViewModal) {
         imageViewModal.addEventListener('show.bs.modal', function (event) {
+            console.log('Image view modal show event triggered');
             const button = event.relatedTarget;
-            const imageSrc = button.getAttribute('data-image') || DEFAULT_IMAGE;
-            const pictureName = button.getAttribute('data-picture') || 'none';
-            const modalImage = this.querySelector('#enlargedImage');
-            console.log(`ImageViewModal: Setting image src=${imageSrc}, picture=${pictureName}`);
-            modalImage.src = imageSrc;
-            modalImage.onerror = () => {
-                modalImage.src = DEFAULT_IMAGE;
-                console.log(`Enlarged image failed to load, picture: ${pictureName}, attempted URL: ${imageSrc}`);
-            };
+            const imageUrl = button.getAttribute('data-image') || DEFAULT_IMAGE;
+            const enlargedImage = imageViewModal.querySelector('#enlargedImage');
+            if (enlargedImage) {
+                enlargedImage.src = imageUrl;
+                enlargedImage.onerror = () => {
+                    enlargedImage.src = DEFAULT_IMAGE;
+                    console.log(`Enlarged image failed to load: ${imageUrl}`);
+                };
+                console.log(`Setting enlarged image src: ${imageUrl}`);
+            } else {
+                console.warn('enlargedImage not found in imageViewModal');
+            }
         });
     } else {
         console.warn('imageViewModal not found in DOM');
     }
 
+    if (downloadExcelButton) {
+        downloadExcelButton.addEventListener('click', e => {
+            e.preventDefault();
+            console.log('Download Excel button clicked');
+            downloadExcel();
+        });
+    } else {
+        console.warn('downloadExcel button not found in DOM');
+    }
+
+    if (downloadMarksSheetButton) {
+        downloadMarksSheetButton.addEventListener('click', e => {
+            e.preventDefault();
+            console.log('Download Marks Sheet button clicked');
+            downloadMarksSheet();
+        });
+    } else {
+        console.warn('downloadMarksSheet button not found in DOM');
+    }
+
+    // Initialize bulk upload handler
+    handleBulkUpload();
+
+    // Initialize score input listeners
+    document.querySelectorAll('.score-input').forEach(input => {
+        input.addEventListener('input', debounce(() => {
+            const row = input.closest('tr');
+            if (row) {
+                updateRowTotal(row);
+            } else {
+                console.warn('Parent row not found for score input');
+            }
+        }, 300));
+    });
+
+    // Initialize search functionality
     const searchInput = document.getElementById('searchInput');
     const clearSearch = document.getElementById('clearSearch');
     if (searchInput) {
-        searchInput.addEventListener('input', function () {
-            console.log('Search input changed:', this.value);
-            const search = this.value.trim().toLowerCase();
+        searchInput.addEventListener('input', debounce(() => {
+            const query = searchInput.value.toLowerCase().trim();
+            console.log(`Search query: ${query}`);
             document.querySelectorAll('#scoresheetTableBody tr:not(#noDataRow)').forEach(row => {
-                const adm = row.querySelector('.admissionno')?.textContent.toLowerCase() || '';
-                const nme = row.querySelector('.name')?.textContent.toLowerCase() || '';
-                if (search === '' || adm.includes(search) || nme.includes(search)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+                const admissionno = row.querySelector('.admissionno')?.dataset.admissionno?.toLowerCase() || '';
+                const name = row.querySelector('.name')?.dataset.name?.toLowerCase() || '';
+                const match = admissionno.includes(query) || name.includes(query);
+                row.style.display = match ? '' : 'none';
             });
-        });
+        }, 300));
     } else {
         console.warn('searchInput not found in DOM');
     }
 
     if (clearSearch) {
-        clearSearch.addEventListener('click', function () {
-            console.log('Clear Search button clicked');
-            if (searchInput) searchInput.value = '';
-            document.querySelectorAll('#scoresheetTableBody tr').forEach(row => row.style.display = '');
+        clearSearch.addEventListener('click', () => {
+            if (searchInput) {
+                searchInput.value = '';
+                document.querySelectorAll('#scoresheetTableBody tr:not(#noDataRow)').forEach(row => {
+                    row.style.display = '';
+                });
+                console.log('Search cleared');
+            }
         });
     } else {
         console.warn('clearSearch button not found in DOM');
     }
-}
 
-// Score input initialization
-function initializeScoreInputs() {
-    const scoreInputs = document.querySelectorAll('.score-input');
-    scoreInputs.forEach(input => {
-        input.addEventListener('focus', function () {
-            if (this.value === '0') {
-                this.value = '';
-            }
-        });
-
-        const debouncedUpdate = debounce(function () {
-            const row = input.closest('tr');
-            if (row) updateRowTotal(row);
-        }, 300);
-
-        input.addEventListener('input', debouncedUpdate);
-
-        input.addEventListener('blur', function () {
-            const value = parseFloat(this.value);
-            if (this.value === '') {
-                this.value = '';
-                this.classList.remove('is-invalid', 'is-valid');
-            } else if (isNaN(value) || value < 0 || value > 100) {
-                this.classList.add('is-invalid');
-                this.focus();
-            } else {
-                this.classList.remove('is-invalid');
-                this.classList.add('is-valid');
-            }
-        });
+    // Initialize Ctrl+S shortcut for saving scores
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            console.log('Ctrl+S pressed, triggering bulk save');
+            bulkSaveAllScores();
+        }
     });
 }
 
-// Init
-document.addEventListener("DOMContentLoaded", function () {
-    console.log("DOMContentLoaded, initializing scoresheet");
-    console.log("Initial window.broadsheets:", JSON.stringify(window.broadsheets, null, 2));
-    console.log("Initial window.is_senior:", window.is_senior);
-    if (!window.broadsheets) {
-        console.error("window.broadsheets is undefined");
-        Swal.fire({
-            icon: "error",
-            title: "Initialization Error",
-            text: "Broadsheet data is missing. Please reload the page or contact support.",
-            showConfirmButton: true
-        });
-        return;
-    }
+// Initialize everything on DOMContentLoaded
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded, initializing bulk actions');
     ensureBroadsheetsArray();
-    console.log("Broadsheets after ensureBroadsheetsArray:", JSON.stringify(window.broadsheets, null, 2));
-    initializeScoreInputs();
     initializeBulkActions();
-    document.querySelectorAll('#scoresheetTableBody tr:not(#noDataRow)').forEach(row => {
-        updateRowTotal(row);
-    });
     forceUpdatePositions();
-    console.log("Broadsheets after initialization:", JSON.stringify(window.broadsheets, null, 2));
 });
-
-window.bulkSaveAllScores = bulkSaveAllScores;
-window.deleteSelectedScores = deleteSelectedScores;
-window.updateRowTotal = updateRowTotal;
-window.forceUpdatePositions = forceUpdatePositions;
-window.populateScoresModal = populateScoresModal;

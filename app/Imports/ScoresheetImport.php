@@ -26,6 +26,7 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
     protected $data;
     protected $updatedBroadsheets = [];
     protected $failures = [];
+    protected $currentRow = 0;
 
     public function __construct($importData)
     {
@@ -161,6 +162,19 @@ class ScoresheetImport implements ToModel, WithStartRow, WithUpsertColumns, With
     public function model(array $row)
     {
         try {
+            $this->currentRow++;
+            $progressKey = 'import_progress_' . auth()->id();
+            $progress = session($progressKey);
+            if ($progress) {
+                $progress['progress'] = $this->currentRow;
+                session([$progressKey => $progress]);
+                Log::debug('ScoresheetImport: Updated progress', [
+                    'row' => $this->currentRow,
+                    'progress' => $progress['progress'],
+                    'total' => $progress['total'],
+                ]);
+            }
+
             $subjectclass_id = $this->data['subjectclass_id'];
             $staff_id = $this->data['staff_id'];
             $term_id = $this->data['term_id'];

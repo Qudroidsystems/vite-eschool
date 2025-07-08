@@ -1,7 +1,7 @@
 @extends('layouts.master')
 
 @section('content')
-<meta name="csrf-token" content="{{ csrf_token() }}">
+
 
 <style>
 /* Improve input field size and touch target on mobile */
@@ -141,11 +141,11 @@
                                 </a>
                                 <div>
                                     @if(session('subjectclass_id'))
-                                        <a href="{{ route('scoresheet.download-marks-sheet') }}" class="btn btn-warning">
+                                        <a href="{{ route('scoresheet.download-marks-sheet') }}" class="btn btn-warning" id="downloadMarksSheet">
                                             <i class="fas fa-file-pdf"></i> Download Marks Sheet
                                         </a>
                                     @endif
-                                    <a href="{{ route('subjectscoresheet.export') }}" class="btn btn-info me-2">
+                                    <a href="{{ route('subjectscoresheet.export') }}" class="btn btn-info me-2" id="downloadExcel">
                                         <i class="ri-download-line me-1"></i> Download Excel
                                     </a>
                                     <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#importModal" {{ !session('schoolclass_id') || !session('subjectclass_id') || !session('staff_id') || !session('term_id') || !session('session_id') ? 'disabled title="Please select a class, subject, term, and session first"' : '' }}>
@@ -156,6 +156,29 @@
                                             <i class="bi bi-table me-1"></i> View Scores
                                         </button>
                                     @endif
+                                </div>
+                            </div>
+
+                            <!-- Download Progress Indicator -->
+                            <div class="row mt-2" id="downloadProgressContainer" style="display: none;">
+                                <div class="col-12">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center">
+                                                <div class="me-3">
+                                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                                        <span class="visually-hidden">Downloading...</span>
+                                                    </div>
+                                                </div>
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-1">Downloading Excel...</h6>
+                                                    <div class="progress" style="height: 6px;">
+                                                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" id="downloadProgressBar"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -284,7 +307,7 @@
                                     </div>
                                 </div>
 
-                                <!-- Progress Indicator -->
+                                <!-- Progress Indicator for Saving Scores -->
                                 <div class="row mt-2" id="progressContainer" style="display: none;">
                                     <div class="col-12">
                                         <div class="card">
@@ -292,7 +315,7 @@
                                                 <div class="d-flex align-items-center">
                                                     <div class="me-3">
                                                         <div class="spinner-border spinner-border-sm text-primary" role="status">
-                                                            <span class="visually-hidden">Loading...</span>
+                                                            <span class="visually-hidden">Saving...</span>
                                                         </div>
                                                     </div>
                                                     <div class="flex-grow-1">
@@ -337,7 +360,12 @@
                                         <div class="spinner-border spinner-border-sm text-primary me-3" role="status">
                                             <span class="visually-hidden">Uploading...</span>
                                         </div>
-                                        <span>Uploading file...</span>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">Uploading File...</h6>
+                                            <div class="progress" style="height: 6px;">
+                                                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%" id="uploadProgressBar"></div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="text-center pt-10">
@@ -345,6 +373,7 @@
                                     <button type="submit" class="btn btn-primary" id="importSubmit">Upload</button>
                                 </div>
                             </form>
+                               
                         </div>
                     </div>
                 </div>
@@ -454,7 +483,11 @@
         bulkUpdate: '{{ route('subjectscoresheet.bulk-update') }}',
         destroy: '{{ route('subjectscoresheet.destroy', ['id' => '__ID__']) }}',
         import: '{{ route('subjectscoresheet.import') }}',
+        export: '{{ route('subjectscoresheet.export') }}',
+        downloadMarksSheet: '{{ route('scoresheet.download-marks-sheet') }}',
         gradePreview: '{{ route('subjectscoresheet.grade-preview') }}'
     };
 </script>
+{{-- 
+<script src="{{ asset('js/subjectscoresheet.init.js') }}"></script> --}}
 @endsection
