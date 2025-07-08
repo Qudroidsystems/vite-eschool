@@ -288,11 +288,13 @@
                     const b = window.broadsheets.find(b => String(b.id) === id);
                     if (b) {
                         row.querySelector('.score-input').value = b.exam ?? '';
-                        row.querySelector('.total-display span').textContent = (b.total || 0).toFixed(1);
-                        row.querySelector('.total-display span').classList.toggle('text-danger', b.total < 40 && b.total > 0);
+                        // Sanitize total to ensure it's a number
+                        const totalValue = isNaN(parseFloat(b.total)) ? 0 : parseFloat(b.total);
+                        row.querySelector('.total-display span').textContent = totalValue.toFixed(1);
+                        row.querySelector('.total-display span').classList.toggle('text-danger', totalValue < 40 && totalValue > 0);
                         row.querySelector('.grade-display span').textContent = b.grade || '-';
                         const remarksDisplay = row.querySelector('.remarks-display span');
-                        if (remarksDisplay) remarksDisplay.textContent = b.remarks || calculateRemarks(b.total || 0);
+                        if (remarksDisplay) remarksDisplay.textContent = b.remarks || calculateRemarks(totalValue);
                         row.querySelector('.position-display span').textContent =
                             b.subject_position_class ? getOrdinalSuffix(b.subject_position_class) : '-';
                         const image = row.querySelector('.student-image');
