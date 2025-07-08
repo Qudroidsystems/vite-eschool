@@ -2,6 +2,8 @@
 
 @section('content')
 
+
+
 <!-- Main content container -->
 <div class="main-content">
     <div class="page-content">
@@ -111,12 +113,12 @@
                                             <i class="fas fa-file-pdf"></i> Download Marks Sheet
                                         </a>
                                     @endif
-                                    <a href="{{ route('subjectscoresheet-mock.export') }}" class="btn btn-info me-2">
+                                    {{-- <a href="{{ route('subjectscoresheet-mock.export') }}" class="btn btn-info me-2">
                                         <i class="ri-download-line me-1"></i> Download Excel
                                     </a>
                                     <button class="btn btn-primary me-2" data-bs-toggle="modal" data-bs-target="#importModal" {{ !session('schoolclass_id') || !session('subjectclass_id') || !session('staff_id') || !session('term_id') || !session('session_id') ? 'disabled title="Please select a class, subject, term, and session first"' : '' }}>
                                         <i class="ri-upload-line me-1"></i> Bulk Excel Upload
-                                    </button>
+                                    </button> --}}
                                     @if ($broadsheets->isNotEmpty())
                                         <button class="btn btn-secondary me-2" data-bs-toggle="modal" data-bs-target="#scoresModal">
                                             <i class="bi bi-table me-1"></i> View Scores
@@ -145,11 +147,11 @@
                                             <th style="width: 50px;" class="sort cursor-pointer" data-sort="sn">SN</th>
                                             <th class="sort cursor-pointer" data-sort="admissionno">Admission No</th>
                                             <th class="sort cursor-pointer" data-sort="name">Name</th>
-                                            <th class="narrow-th">Exam</th>
-                                            <th class="narrow-th">Total</th>
-                                            <th class="narrow-th">Grade</th>
-                                            <th class="narrow-th">Position</th>
-                                            <th class="narrow-th">Remark</th>
+                                            <th>Exam</th>
+                                            <th>Total</th>
+                                            <th>Grade</th>
+                                            <th>Remarks</th>
+                                            <th>Position</th>
                                         </tr>
                                     </thead>
                                     <tbody id="scoresheetTableBody" class="list form-check-all">
@@ -163,11 +165,18 @@
                                                     </div>
                                                 </td>
                                                 <td class="sn">{{ ++$i }}</td>
-                                                <td class="admission-no" data-admissionno="{{ $broadsheet->admissionno ?? '-' }}">{{ $broadsheet->admissionno ?? '-' }}</td>
-                                                <td class="student-name" data-name="{{ ($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '') }}">
+                                                <td class="admissionno" data-admissionno="{{ $broadsheet->admissionno }}">{{ $broadsheet->admissionno ?? '-' }}</td>
+                                                <td class="name" data-name="{{ ($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '') }}">
                                                     <div class="d-flex align-items-center">
                                                         <div class="avatar-sm me-2">
-                                                            <img src="{{ $broadsheet->picture ? Storage::url('images/studentavatar/' . $broadsheet->picture) : Storage::url('images/studentavatar/avatar.jpg') }}" alt="{{ ($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '') }}" class="rounded-circle w-100" loading="lazy">
+                                                            <img src="{{ $broadsheet->picture ? asset('storage/student_avatars/' . basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
+                                                                alt="{{ ($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '') }}"
+                                                                class="rounded-circle w-100 student-image"
+                                                                data-bs-toggle="modal"
+                                                                data-bs-target="#imageViewModal"
+                                                                data-image="{{ $broadsheet->picture ? asset('storage/student_avatars/' . basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
+                                                                data-picture="{{ $broadsheet->picture ?? 'none' }}"
+                                                                onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'; console.log('Image failed to load for admissionno: {{ $broadsheet->admissionno ?? 'unknown' }}, picture: {{ $broadsheet->picture ?? 'none' }}');">
                                                         </div>
                                                         <div class="d-flex flex-column">
                                                             <span class="fw-bold">{{ $broadsheet->lname ?? '' }}</span> {{ $broadsheet->fname ?? '' }} {{ $broadsheet->mname ?? '' }}
@@ -175,24 +184,24 @@
                                                     </div>
                                                 </td>
                                                 <td class="exam">
-                                                    <input type="number" class="form-control form-control-sm score-input" data-field="exam" data-id="{{ $broadsheet->id }}" value="{{ $broadsheet->exam ?? '' }}" min="0" max="100" step="0.1" placeholder="0">
+                                                    <input type="number" class="form-control score-input" data-field="exam" data-id="{{ $broadsheet->id }}" value="{{ $broadsheet->exam ?? '' }}" min="0" max="100" step="0.1">
                                                 </td>
                                                 <td class="total-display text-center">
-                                                    <span class="badge bg-primary {{ ($broadsheet->total ?? 0) < 40 && ($broadsheet->total ?? 0) != 0 ? 'text-danger' : '' }}">{{ $broadsheet->total ? number_format($broadsheet->total, 1) : '0.0' }}</span>
+                                                    <span class="badge bg-primary">{{ $broadsheet->total ? number_format($broadsheet->total, 1) : '0.0' }}</span>
                                                 </td>
                                                 <td class="grade-display text-center">
                                                     <span class="badge bg-secondary">{{ $broadsheet->grade ?? '-' }}</span>
                                                 </td>
-                                                <td class="position-display text-center">
-                                                    <span class="badge bg-info">{{ $broadsheet->subjectpositionclass ?? '-' }}</span>
+                                                <td class="remarks-display text-center">
+                                                    <span class="badge bg-info">{{ $broadsheet->remarks ?? '-' }}</span>
                                                 </td>
-                                                <td class="remark-display text-center">
-                                                    <span class="badge bg-secondary">{{ $broadsheet->remark ?? '-' }}</span>
+                                                <td class="position-display text-center">
+                                                    <span class="badge bg-info">{{ $broadsheet->subject_position_class ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->subject_position_class) : '-' }}</span>
                                                 </td>
                                             </tr>
                                         @empty
                                             <tr id="noDataRow">
-                                                <td colspan="9" class="text-center">No mock scores available.</td>
+                                                <td colspan="9" class="text-center">No scores available.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -330,6 +339,22 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Add this modal at the bottom of the Blade view -->
+            <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Student Image</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body text-center">
+                            <img id="enlargedImage" src="" alt="Student Image" class="img-fluid" onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'; console.log('Enlarged image failed to load');">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
         </div>
     </div>
 </div>
@@ -357,10 +382,13 @@
     window.staff_id = {{ session('staff_id') ?? 0 }};
     window.routes = {
         bulkUpdate: '{{ route("scoresheet-mock.bulk-update") }}',
-        destroy: '{{ route("scoresheet-mock.destroy") }}'
+        destroy: '{{ route("scoresheet-mock.destroy") }}',
+        calculateGrade: '{{ route("subjectscoresheet-mock.calculate-grade") }}'
     };
     console.log('Broadsheet data:', window.broadsheets);
     console.log('Routes:', window.routes);
+    console.log('Schoolclass ID:', window.schoolclass_id);
+    console.log('CSRF Token:', document.querySelector('meta[name="csrf-token"]')?.content || 'Not found');
 
     // Populate Scores Modal
     document.addEventListener('DOMContentLoaded', function() {
@@ -376,7 +404,7 @@
                     <td>${broadsheet.exam ? Number(broadsheet.exam).toFixed(1) : '0.0'}</td>
                     <td>${broadsheet.total ? Number(broadsheet.total).toFixed(1) : '0.0'}</td>
                     <td>${broadsheet.grade || '-'}</td>
-                    <td>${broadsheet.subjectpositionclass || '-'}</td>
+                    <td>${broadsheet.subject_position_class || '-'}</td>
                     <td>${broadsheet.remark || '-'}</td>
                 `;
                 scoresBody.appendChild(row);
