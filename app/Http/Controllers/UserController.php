@@ -61,35 +61,39 @@ class UserController extends Controller
         return view('users.create', compact('roles', 'title'));
     }
 
-    public function store(Request $request): JsonResponse
+     public function store(Request $request): JsonResponse
     {
         \Log::debug("Creating user", $request->all());
 
-        if (!auth()->user()->hasPermissionTo('Create user')) {
-            \Log::warning("User ID " . auth()->user()->id . " attempted to create user without 'Create user' permission");
-            return response()->json([
-                'success' => false,
-                'message' => 'User does not have the right permissions',
-            ], 403);
-        }
-
         try {
+            if (!auth()->user()->hasPermissionTo('Create user')) {
+                \Log::warning("User ID " . auth()->user()->id . " attempted to create user without permission");
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User does not have the right permissions',
+                ], 403);
+            }
+
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
-                'email' => 'required|email:rfc,dns|unique:users,email',
-                'password' => 'required|string|min:8|confirmed',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|min:8|confirmed',
                 'roles' => 'required|array',
                 'roles.*' => 'exists:roles,name',
+                'phone_number' => 'nullable|string|regex:/^\+[1-9]\d{1,14}$/', // Optional E.164 phone number
             ]);
 
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($validated['password']),
-            ]);
-            $user->assignRole($validated['roles']);
+            \Log::info("Validated data for create:", $validated);
 
-            \Log::debug("User created successfully: ID {$user->id}");
+            $input = $request->all();
+            $plainPassword = $input['password']; // Store plain password for WhatsApp
+            $input['password'] = Hash::make($input['password']);
+
+            $user = User::create($input);
+            $user->syncRoles($request->input('roles'));
+
+            \Log::info("User ID: {$user->id} created successfully, roles:", $request->input('roles'));
+
             return response()->json([
                 'success' => true,
                 'message' => 'User created successfully',
@@ -98,6 +102,8 @@ class UserController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'roles' => $user->roles->pluck('name')->toArray(),
+                    'phone_number' => $user->phone_number,
+                    'password' => $plainPassword, // Include plain password for WhatsApp
                 ],
             ], 201);
         } catch (ValidationException $e) {
@@ -116,37 +122,32 @@ class UserController extends Controller
         }
     }
 
-    public function show($id): View
-    {
-        $pagetitle = "User Overview";
-        $user = User::find($id);
-        $userroles = $user->roles->all();
-        $userbio = $user->bio;
-        return view('users.useroverview', compact('user', 'userroles', 'userbio', 'pagetitle'));
-    }
-
-    public function edit($id): View
-    {
-        $user = User::find($id);
-        $roles = Role::pluck('name', 'name')->all();
-        $userRole = $user->roles->pluck('name', 'name')->all();
-        return view('users.edit', compact('user', 'roles', 'userRole'));
-    }
-
     public function update(Request $request, $id): JsonResponse
     {
         \Log::debug("Updating user ID: {$id}", $request->all());
 
         try {
+            if (!auth()->user()->hasPermissionTo('Update user')) {
+                \Log::warning("User ID " . auth()->user()->id . " attempted to update user without permission");
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User does not have the right permissions',
+                ], 403);
+            }
+
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email,' . $id,
                 'password' => 'nullable|min:8|confirmed',
                 'roles' => 'required|array',
                 'roles.*' => 'exists:roles,name',
+                'phone_number' => 'nullable|string|regex:/^\+[1-9]\d{1,14}$/', // Optional E.164 phone number
             ]);
 
+            \Log::info("Validated data for update:", $validated);
+
             $input = $request->all();
+            $plainPassword = !empty($input['password']) ? $input['password'] : null;
             if (!empty($input['password'])) {
                 $input['password'] = Hash::make($input['password']);
             } else {
@@ -155,12 +156,9 @@ class UserController extends Controller
 
             $user = User::findOrFail($id);
             $user->update($input);
-            \DB::table('model_has_roles')->where('model_id', $id)->delete();
+            $user->syncRoles($request->input('roles'));
 
-            \Log::debug("Roles to assign:", $request->input('roles'));
-            $user->assignRole($request->input('roles'));
-
-            \Log::debug("User ID: {$id} updated successfully");
+            \Log::info("User ID: {$id} updated successfully, roles:", $request->input('roles'));
 
             return response()->json([
                 'success' => true,
@@ -170,6 +168,8 @@ class UserController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                     'roles' => $user->roles->pluck('name')->toArray(),
+                    'phone_number' => $user->phone_number,
+                    'password' => $plainPassword, // Include plain password if updated
                 ],
             ], 200);
         } catch (ValidationException $e) {
@@ -187,6 +187,133 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+    // public function store(Request $request): JsonResponse
+    // {
+    //     \Log::debug("Creating user", $request->all());
+
+    //     if (!auth()->user()->hasPermissionTo('Create user')) {
+    //         \Log::warning("User ID " . auth()->user()->id . " attempted to create user without 'Create user' permission");
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'User does not have the right permissions',
+    //         ], 403);
+    //     }
+
+    //     try {
+    //         $validated = $request->validate([
+    //             'name' => 'required|string|max:255',
+    //             'email' => 'required|email:rfc,dns|unique:users,email',
+    //             'password' => 'required|string|min:8|confirmed',
+    //             'roles' => 'required|array',
+    //             'roles.*' => 'exists:roles,name',
+    //         ]);
+
+    //         $user = User::create([
+    //             'name' => $validated['name'],
+    //             'email' => $validated['email'],
+    //             'password' => Hash::make($validated['password']),
+    //         ]);
+    //         $user->assignRole($validated['roles']);
+
+    //         \Log::debug("User created successfully: ID {$user->id}");
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'User created successfully',
+    //             'user' => [
+    //                 'id' => $user->id,
+    //                 'name' => $user->name,
+    //                 'email' => $user->email,
+    //                 'roles' => $user->roles->pluck('name')->toArray(),
+    //             ],
+    //         ], 201);
+    //     } catch (ValidationException $e) {
+    //         \Log::error("Validation error creating user: " . json_encode($e->errors()));
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Validation failed',
+    //             'errors' => $e->errors(),
+    //         ], 422);
+    //     } catch (\Exception $e) {
+    //         \Log::error("Create user error: {$e->getMessage()}\nStack trace: {$e->getTraceAsString()}");
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Failed to create user: ' . $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
+
+    public function show($id): View
+    {
+        $pagetitle = "User Overview";
+        $user = User::find($id);
+        $userroles = $user->roles->all();
+        $userbio = $user->bio;
+        return view('users.useroverview', compact('user', 'userroles', 'userbio', 'pagetitle'));
+    }
+
+    public function edit($id): View
+    {
+        $user = User::find($id);
+        $roles = Role::pluck('name', 'name')->all();
+        $userRole = $user->roles->pluck('name', 'name')->all();
+        return view('users.edit', compact('user', 'roles', 'userRole'));
+    }
+
+    // public function update(Request $request, $id): JsonResponse
+    // {
+    //     \Log::debug("Updating user ID: {$id}", $request->all());
+
+    //     try {
+    //         $validated = $request->validate([
+    //             'name' => 'required|string|max:255',
+    //             'email' => 'required|email|unique:users,email,' . $id,
+    //             'password' => 'nullable|min:8|confirmed',
+    //             'roles' => 'required|array',
+    //             'roles.*' => 'exists:roles,name',
+    //         ]);
+
+    //         $input = $request->all();
+    //         if (!empty($input['password'])) {
+    //             $input['password'] = Hash::make($input['password']);
+    //         } else {
+    //             $input = Arr::except($input, ['password']);
+    //         }
+
+    //         $user = User::findOrFail($id);
+    //         $user->update($input);
+    //         \DB::table('model_has_roles')->where('model_id', $id)->delete();
+
+    //         \Log::debug("Roles to assign:", $request->input('roles'));
+    //         $user->assignRole($request->input('roles'));
+
+    //         \Log::debug("User ID: {$id} updated successfully");
+
+    //         return response()->json([
+    //             'success' => true,
+    //             'message' => 'User updated successfully',
+    //             'user' => [
+    //                 'id' => $user->id,
+    //                 'name' => $user->name,
+    //                 'email' => $user->email,
+    //                 'roles' => $user->roles->pluck('name')->toArray(),
+    //             ],
+    //         ], 200);
+    //     } catch (ValidationException $e) {
+    //         \Log::error("Validation error updating user ID {$id}: " . json_encode($e->errors()));
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Validation failed',
+    //             'errors' => $e->errors(),
+    //         ], 422);
+    //     } catch (\Exception $e) {
+    //         \Log::error("Update user error for ID {$id}: {$e->getMessage()}\nStack trace: {$e->getTraceAsString()}");
+    //         return response()->json([
+    //             'success' => false,
+    //             'message' => 'Failed to update user: ' . $e->getMessage(),
+    //         ], 500);
+    //     }
+    // }
 
     public function createFromStudentForm(): View
     {

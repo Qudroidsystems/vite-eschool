@@ -325,6 +325,41 @@ use Spatie\Permission\Models\Role;
                 </div>
             </div>
         </div>
+
+
+
+            <!-- Add or update this modal in your Blade template, e.g., resources/views/users.blade.php -->
+            <div class="modal fade" id="whatsappModal" tabindex="-1" aria-labelledby="whatsappModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="whatsappModalLabel">Send Credentials via WhatsApp</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Enter the phone number to send the username and password via WhatsApp.</p>
+                            <div class="mb-3">
+                                <label for="whatsapp-phone" class="form-label">Phone Number (e.g., +1234567890)</label>
+                                <input type="tel" class="form-control" id="whatsapp-phone" placeholder="Enter phone number" required>
+                                <input type="hidden" id="whatsapp-user-id" value="">
+                                <input type="hidden" id="whatsapp-email" value="">
+                                <input type="hidden" id="whatsapp-password" value="">
+                            </div>
+                            <div id="whatsapp-link-container" class="mb-3 d-none">
+                                <p>Click the link below to open WhatsApp with the pre-filled message:</p>
+                                <a href="#" id="whatsapp-link" target="_blank" class="btn btn-success">Open WhatsApp</a>
+                                <p class="mt-2"><strong>Preview:</strong> <span id="whatsapp-message-preview"></span></p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="generate-whatsapp-link">Generate Link</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            
     </div>
     <!-- End Page-content -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

@@ -45,6 +45,45 @@ document.addEventListener("DOMContentLoaded", function () {
     // Update pagination display
     document.getElementById("pagination-showing").innerText = Math.min(perPage, userList.items.length);
     document.getElementById("pagination-total").innerText = userList.items.length;
+
+    // Handle WhatsApp link generation
+    document.getElementById("generate-whatsapp-link").addEventListener("click", function () {
+        const phoneNumber = document.getElementById("whatsapp-phone").value;
+        const email = document.getElementById("whatsapp-email").value;
+        const password = document.getElementById("whatsapp-password").value;
+
+        if (!phoneNumber || !phoneNumber.match(/^\+[1-9]\d{1,14}$/)) {
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Please enter a valid phone number in E.164 format (e.g., +1234567890)",
+                showConfirmButton: true
+            });
+            return;
+        }
+
+        const message = encodeURIComponent(`Your account credentials to the school portal:\nUsername: ${email}\nPassword: ${password}\nPlease change your password after logging in.`);
+        const whatsappLink = `https://wa.me/${phoneNumber}?text=${message}`;
+
+        console.log("Generated WhatsApp link:", whatsappLink);
+
+        const linkContainer = document.getElementById("whatsapp-link-container");
+        const linkElement = document.getElementById("whatsapp-link");
+        const previewElement = document.getElementById("whatsapp-message-preview");
+
+        linkElement.href = whatsappLink;
+        previewElement.textContent = decodeURIComponent(message);
+        linkContainer.classList.remove("d-none");
+
+        Swal.fire({
+            position: "center",
+            icon: "success",
+            title: "WhatsApp link generated! Click the link to open WhatsApp.",
+            showConfirmButton: false,
+            timer: 2000,
+            showCloseButton: true
+        });
+    });
 });
 
 if (checkAll) {
@@ -237,6 +276,17 @@ function clearEditFields() {
     }
 }
 
+function clearWhatsAppFields() {
+    document.getElementById("whatsapp-user-id").value = "";
+    document.getElementById("whatsapp-email").value = "";
+    document.getElementById("whatsapp-password").value = "";
+    document.getElementById("whatsapp-phone").value = "";
+    const linkContainer = document.getElementById("whatsapp-link-container");
+    linkContainer.classList.add("d-none");
+    document.getElementById("whatsapp-link").href = "#";
+    document.getElementById("whatsapp-message-preview").textContent = "";
+}
+
 function deleteMultiple() {
     const ids_array = [];
     const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
@@ -361,6 +411,8 @@ document.getElementById("add-user-form").addEventListener("submit", function (e)
             role: response.data.user.roles.join(','),
             datereg: new Date().toISOString().slice(0, 10)
         });
+        userList.reIndex();
+        userList.update();
         Swal.fire({
             position: "center",
             icon: "success",
@@ -369,8 +421,16 @@ document.getElementById("add-user-form").addEventListener("submit", function (e)
             timer: 2000,
             showCloseButton: true
         });
-        var modal = bootstrap.Modal.getInstance(document.getElementById("showModal"));
-        modal.hide();
+        const addModal = bootstrap.Modal.getInstance(document.getElementById("showModal"));
+        addModal.hide();
+
+        // Show WhatsApp confirmation modal
+        const whatsappModal = new bootstrap.Modal(document.getElementById("whatsappModal"));
+        document.getElementById("whatsapp-user-id").value = response.data.user.id;
+        document.getElementById("whatsapp-email").value = response.data.user.email;
+        document.getElementById("whatsapp-password").value = response.data.user.password || "";
+        document.getElementById("whatsapp-phone").value = response.data.user.phone_number || "";
+        whatsappModal.show();
     }).catch(function (error) {
         console.error("Error adding user:", error);
         var message = error.response?.data?.message || "Error adding user";
@@ -383,14 +443,13 @@ document.getElementById("add-user-form").addEventListener("submit", function (e)
 
 document.getElementById("edit-user-form").addEventListener("submit", function (e) {
     e.preventDefault();
-    console.log("Edit form submitted"); // Debug: Confirm event listener is triggered
+    console.log("Edit form submitted");
     const updateBtn = document.getElementById("update-btn");
-    updateBtn.disabled = true; // Disable button to prevent double submission
+    updateBtn.disabled = true;
 
     const errorMsg = document.getElementById("alert-error-msg");
-    errorMsg.classList.add("d-none"); // Hide previous error messages
+    errorMsg.classList.add("d-none");
 
-    // Client-side validation
     if (!editNameField.value) {
         errorMsg.innerHTML = "Please enter a name";
         errorMsg.classList.remove("d-none");
@@ -420,7 +479,6 @@ document.getElementById("edit-user-form").addEventListener("submit", function (e
         return;
     }
 
-    // Ensure Axios is available
     if (!ensureAxios()) {
         errorMsg.innerHTML = "Axios library is missing";
         errorMsg.classList.remove("d-none");
@@ -429,7 +487,6 @@ document.getElementById("edit-user-form").addEventListener("submit", function (e
         return;
     }
 
-    // Prepare form data
     const roles = typeof Choices !== 'undefined' && editRoleVal 
         ? editRoleVal.getValue(true) 
         : Array.from(editRoleField.selectedOptions).map(option => option.value);
@@ -444,15 +501,13 @@ document.getElementById("edit-user-form").addEventListener("submit", function (e
         data.password_confirmation = editPasswordConfirmField.value;
     }
 
-    console.log("Submitting edit form with data:", data); // Debug: Log payload
+    console.log("Submitting edit form with data:", data);
 
-    // Send Axios request
     axios.put(`/users/${editIdField.value}`, data, {
         headers: { 'X-CSRF-TOKEN': data._token }
     })
     .then(function (response) {
-        console.log("Update successful:", response.data); // Debug: Log success response
-        // Update List.js table
+        console.log("Update successful:", response.data);
         userList.items.forEach(item => {
             if (item.values().id === response.data.user.id) {
                 item.values({
@@ -474,12 +529,22 @@ document.getElementById("edit-user-form").addEventListener("submit", function (e
             timer: 2000,
             showCloseButton: true
         });
-        const modal = bootstrap.Modal.getInstance(document.getElementById("editModal"));
-        modal.hide();
-        updateBtn.disabled = false; // Re-enable button
+        const editModal = bootstrap.Modal.getInstance(document.getElementById("editModal"));
+        editModal.hide();
+
+        // Show WhatsApp confirmation modal if password was updated
+        if (data.password) {
+            const whatsappModal = new bootstrap.Modal(document.getElementById("whatsappModal"));
+            document.getElementById("whatsapp-user-id").value = response.data.user.id;
+            document.getElementById("whatsapp-email").value = response.data.user.email;
+            document.getElementById("whatsapp-password").value = response.data.user.password || data.password;
+            document.getElementById("whatsapp-phone").value = response.data.user.phone_number || "";
+            whatsappModal.show();
+        }
+        updateBtn.disabled = false;
     })
     .catch(function (error) {
-        console.error("Error updating user:", error.response || error); // Debug: Log error
+        console.error("Error updating user:", error.response || error);
         let message = error.response?.data?.message || "Error updating user";
         if (error.response?.status === 422) {
             message = Object.values(error.response.data.errors || {}).flat().join(", ");
@@ -487,7 +552,7 @@ document.getElementById("edit-user-form").addEventListener("submit", function (e
         errorMsg.innerHTML = message;
         errorMsg.classList.remove("d-none");
         setTimeout(() => errorMsg.classList.add("d-none"), 3000);
-        updateBtn.disabled = false; // Re-enable button
+        updateBtn.disabled = false;
     });
 });
 
@@ -513,4 +578,9 @@ document.getElementById("showModal").addEventListener("hidden.bs.modal", functio
 document.getElementById("editModal").addEventListener("hidden.bs.modal", function () {
     console.log("editModal closed, clearing fields...");
     clearEditFields();
+});
+
+document.getElementById("whatsappModal").addEventListener("hidden.bs.modal", function () {
+    console.log("whatsappModal closed, clearing fields...");
+    clearWhatsAppFields();
 });
