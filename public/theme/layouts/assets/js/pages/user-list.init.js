@@ -1,4 +1,4 @@
-var perPage = 100,
+var perPage = 100, // Changed to 100 items per page
     editlist = false,
     checkAll = document.getElementById("checkAll"),
     options = {
@@ -175,23 +175,25 @@ function handleRemoveClick(e) {
 function handleEditClick(e) {
     e.preventDefault();
     try {
-        var itemId = e.target.closest("tr").querySelector(".id").getAttribute("data-id");
-        var tr = e.target.closest("tr");
+        const itemId = e.target.closest("tr").querySelector(".id").getAttribute("data-id");
+        const tr = e.target.closest("tr");
         console.log("Edit button clicked for ID:", itemId);
         editlist = true;
         editIdField.value = itemId;
-        editNameField.value = tr.querySelector(".name a").innerText;
-        editEmailField.value = tr.querySelector(".email").innerText;
-        var roles = tr.querySelector(".role").getAttribute("data-roles")?.split(",") || [];
+        editNameField.value = tr.querySelector(".name a").innerText || "";
+        editEmailField.value = tr.querySelector(".email").innerText || "";
+        const roles = tr.querySelector(".role").getAttribute("data-roles")?.split(",").filter(role => role.trim()) || [];
+        console.log("Populating roles:", roles);
         if (typeof Choices !== 'undefined' && editRoleVal) {
-            editRoleVal.setChoiceByValue(roles.filter(role => role.trim()));
+            editRoleVal.removeActiveItems();
+            editRoleVal.setChoiceByValue(roles);
         } else {
             console.warn("Choices.js not available, using native select");
             Array.from(editRoleField.options).forEach(option => {
                 option.selected = roles.includes(option.value);
             });
         }
-        var modal = new bootstrap.Modal(document.getElementById("editModal"));
+        const modal = new bootstrap.Modal(document.getElementById("editModal"));
         modal.show();
     } catch (error) {
         console.error("Error in edit-item-btn click:", error);
@@ -311,7 +313,7 @@ document.getElementById("add-user-form").addEventListener("submit", function (e)
     e.preventDefault();
     var errorMsg = document.getElementById("alert-error-msg");
     errorMsg.classList.remove("d-none");
-    setTimeout(() => errorMsg.classList.add("d-none"), 2000);
+    setTimeout(() => errorMsg.classList.add("d-none"), 3000);
 
     if (addNameField.value === "") {
         errorMsg.innerHTML = "Please enter a name";
@@ -376,68 +378,112 @@ document.getElementById("add-user-form").addEventListener("submit", function (e)
 
 document.getElementById("edit-user-form").addEventListener("submit", function (e) {
     e.preventDefault();
-    var errorMsg = document.getElementById("alert-error-msg");
-    errorMsg.classList.remove("d-none");
-    setTimeout(() => errorMsg.classList.add("d-none"), 2000);
+    console.log("Edit form submitted"); // Debug: Confirm event listener is triggered
+    const updateBtn = document.getElementById("update-btn");
+    updateBtn.disabled = true; // Disable button to prevent double submission
 
-    if (editNameField.value === "") {
+    const errorMsg = document.getElementById("alert-error-msg");
+    errorMsg.classList.add("d-none"); // Hide previous error messages
+
+    // Client-side validation
+    if (!editNameField.value) {
         errorMsg.innerHTML = "Please enter a name";
-        return false;
+        errorMsg.classList.remove("d-none");
+        setTimeout(() => errorMsg.classList.add("d-none"), 3000);
+        updateBtn.disabled = false;
+        return;
     }
-    if (editEmailField.value === "") {
+    if (!editEmailField.value) {
         errorMsg.innerHTML = "Please enter an email";
-        return false;
+        errorMsg.classList.remove("d-none");
+        setTimeout(() => errorMsg.classList.add("d-none"), 3000);
+        updateBtn.disabled = false;
+        return;
     }
     if (!editRoleField.selectedOptions.length) {
         errorMsg.innerHTML = "Please select at least one role";
-        return false;
+        errorMsg.classList.remove("d-none");
+        setTimeout(() => errorMsg.classList.add("d-none"), 3000);
+        updateBtn.disabled = false;
+        return;
     }
-    if (editPasswordField.value !== "" && editPasswordField.value !== editPasswordConfirmField.value) {
+    if (editPasswordField.value && editPasswordField.value !== editPasswordConfirmField.value) {
         errorMsg.innerHTML = "Passwords do not match";
-        return false;
+        errorMsg.classList.remove("d-none");
+        setTimeout(() => errorMsg.classList.add("d-none"), 3000);
+        updateBtn.disabled = false;
+        return;
     }
 
-    if (!ensureAxios()) return;
+    // Ensure Axios is available
+    if (!ensureAxios()) {
+        errorMsg.innerHTML = "Axios library is missing";
+        errorMsg.classList.remove("d-none");
+        setTimeout(() => errorMsg.classList.add("d-none"), 3000);
+        updateBtn.disabled = false;
+        return;
+    }
 
-    var roles = typeof Choices !== 'undefined' && editRoleVal 
+    // Prepare form data
+    const roles = typeof Choices !== 'undefined' && editRoleVal 
         ? editRoleVal.getValue(true) 
         : Array.from(editRoleField.selectedOptions).map(option => option.value);
-    var data = {
+    const data = {
         name: editNameField.value,
         email: editEmailField.value,
         roles: roles,
-        _token: document.querySelector('meta[name="csrf-token"]').content
+        _token: document.querySelector('meta[name="csrf-token"]')?.content || '',
     };
     if (editPasswordField.value) {
         data.password = editPasswordField.value;
         data.password_confirmation = editPasswordConfirmField.value;
     }
 
-    console.log("Submitting edit form with data:", data);
+    console.log("Submitting edit form with data:", data); // Debug: Log payload
 
-    axios.put(`/users/${editIdField.value}`, data)
-        .then(function (response) {
-            userList.update();
-            Swal.fire({
-                position: "center",
-                icon: "success",
-                title: "User updated successfully!",
-                showConfirmButton: false,
-                timer: 2000,
-                showCloseButton: true
-            });
-            var modal = bootstrap.Modal.getInstance(document.getElementById("editModal"));
-            modal.hide();
-        })
-        .catch(function (error) {
-            console.error("Error updating user:", error.response || error);
-            var message = error.response?.data?.message || "Error updating user";
-            if (error.response?.status === 422) {
-                console.log("Validation errors:", error.response.data.errors);
-                message = Object.values(error.response.data.errors || {}).flat().join(", ");
+    // Send Axios request
+    axios.put(`/users/${editIdField.value}`, data, {
+        headers: { 'X-CSRF-TOKEN': data._token }
+    })
+    .then(function (response) {
+        console.log("Update successful:", response.data); // Debug: Log success response
+        // Update List.js table
+        userList.items.forEach(item => {
+            if (item.values().id === response.data.user.id) {
+                item.values({
+                    id: response.data.user.id,
+                    name: response.data.user.name,
+                    email: response.data.user.email,
+                    role: response.data.user.roles.join(','),
+                    datereg: item.values().datereg
+                });
             }
-            errorMsg.innerHTML = message;
         });
+        userList.reIndex();
+        userList.update();
+        Swal.fire({
+            position: "center",
+            icon: "success",
+            title: "User updated successfully!",
+            showConfirmButton: false,
+            timer: 2000,
+            showCloseButton: true
+        });
+        const modal = bootstrap.Modal.getInstance(document.getElementById("editModal"));
+        modal.hide();
+        updateBtn.disabled = false; // Re-enable button
+    })
+    .catch(function (error) {
+        console.error("Error updating user:", error.response || error); // Debug: Log error
+        let message = error.response?.data?.message || "Error updating user";
+        if (error.response?.status === 422) {
+            message = Object.values(error.response.data.errors || {}).flat().join(", ");
+        }
+        errorMsg.innerHTML = message;
+        errorMsg.classList.remove("d-none");
+        setTimeout(() => errorMsg.classList.add("d-none"), 3000);
+        updateBtn.disabled = false; // Re-enable button
+    });
 });
 
 document.getElementById("showModal").addEventListener("show.bs.modal", function (e) {
