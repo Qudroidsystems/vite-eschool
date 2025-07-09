@@ -950,6 +950,7 @@
                                 </div>
                             </div>
                         </div>
+                     
                         <!-- Mock Report -->
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="mockReportHeader">
@@ -970,26 +971,17 @@
                                                         <table class="table table-bordered table-hover table-responsive-sm" style="border: 1px solid black;">
                                                             <thead style="border: 1px solid black;">
                                                                 <tr class="rt">
-                                                                    <th></th>
-                                                                    <th>Subjects</th>
-                                                                    <th>a</th>
-                                                                    <th>b</th>
-                                                                    <th>c</th>
-                                                                    <th>d</th>
-                                                                    <th>e</th>
-                                                                </tr>
-                                                                <tr class="rt">
                                                                     <th>S/N</th>
-                                                                    <th></th>
+                                                                    <th>Subjects</th>
                                                                     <th>Term Exam</th>
                                                                     <th>Grade</th>
-                                                                    <th>TPSN</th>
+                                                                    <th>Position</th>
                                                                     <th>Class Average</th>
                                                                     <th>Sign</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
-                                                                @forelse ($scores as $index => $score)
+                                                                @forelse ($mockScores as $index => $score)
                                                                     <tr>
                                                                         <td align="center" style="font-size: 16px; font-weight: bold;">{{ $index + 1 }}</td>
                                                                         <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->subject_name }}</td>
@@ -1001,7 +993,7 @@
                                                                     </tr>
                                                                 @empty
                                                                     <tr>
-                                                                        <td colspan="7" align="center">No scores available for this student.</td>
+                                                                        <td colspan="7" align="center">No mock scores available for this student.</td>
                                                                     </tr>
                                                                 @endforelse
                                                             </tbody>
@@ -1135,13 +1127,13 @@
                                                                     <td class="p-2 w-50">
                                                                         <div class="h6">Class Teacher's Remark Signature/Date</div>
                                                                         <div class="w-100">
-                                                                            <span class="text-space-on-dots">{{ $studentpp[0]->classteachercomment ?? 'aaa' }}</span>
+                                                                            <span class="text-space-on-dots">{{ $studentpp[0]->classteachercomment ?? 'N/A' }}</span>
                                                                         </div>
                                                                     </td>
                                                                     <td class="p-2 w-50">
                                                                         <div class="h6">Remark On Other Activities</div>
                                                                         <div class="">
-                                                                            <span class="text-space-on-dots">aaa</span>
+                                                                            <span class="text-space-on-dots">N/A</span>
                                                                         </div>
                                                                     </td>
                                                                 </tr>
@@ -1149,13 +1141,13 @@
                                                                     <td class="p-2 w-50">
                                                                         <div class="h6">Guidance Counselor's Remark Signature/Date</div>
                                                                         <div class="">
-                                                                            <span class="text-space-on-dots">aaa</span>
+                                                                            <span class="text-space-on-dots">N/A</span>
                                                                         </div>
                                                                     </td>
                                                                     <td class="p-2 w-50">
                                                                         <div class="h6">Principal's Remark Signature/Date</div>
                                                                         <div class="">
-                                                                            <span class="text-space-on-dots">{{ $studentpp[0]->principalscomment ?? 'aaa' }}</span>
+                                                                            <span class="text-space-on-dots">{{ $studentpp[0]->principalscomment ?? 'N/A' }}</span>
                                                                         </div>
                                                                     </td>
                                                                 </tr>
@@ -1167,11 +1159,11 @@
                                             <div class="row mb-2">
                                                 <div class="col-md bg-white rounded px-4">
                                                     <div class="d-flex flex-row justify-content-left align-items-center p-2 gap-4">
-                                                        <span>This Result was issued on<span class="m-2 text-dot-space2">abc</span></span>
-                                                        <span>and collected by<span class="m-2 text-dot-space2">abc</span></span>
+                                                        <span>This Result was issued on<span class="m-2 text-dot-space2">N/A</span></span>
+                                                        <span>and collected by<span class="m-2 text-dot-space2">N/A</span></span>
                                                     </div>
                                                     <div class="d-flex flex-row justify-content-left align-items-center p-2 gap-4">
-                                                        <span class="h6">NEXT TERM BEGINS<span class="m-2 text-dot-space2">abc</span></span>
+                                                        <span class="h6">NEXT TERM BEGINS<span class="m-2 text-dot-space2">N/A</span></span>
                                                     </div>
                                                 </div>
                                             </div>

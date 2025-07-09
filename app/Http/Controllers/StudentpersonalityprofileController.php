@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Broadsheets;
+use App\Models\BroadsheetsMock;
 use App\Models\Schoolclass;
 use App\Models\Schoolsession;
 use App\Models\Schoolterm;
@@ -14,32 +15,15 @@ use Illuminate\Support\Facades\Auth;
 class StudentpersonalityprofileController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display the student personality profile with terminal and mock reports.
      *
+     * @param int $id Student ID
+     * @param int $schoolclassid School Class ID
+     * @param int $sessionid School Session ID
+     * @param int $termid School Term ID
      * @return \Illuminate\Http\Response
      */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
-   public function studentpersonalityprofile($id, $schoolclassid, $sessionid, $termid)
+    public function studentpersonalityprofile($id, $schoolclassid, $sessionid, $termid)
     {
         $pagetitle = "Student Personality Profile";
 
@@ -66,7 +50,7 @@ class StudentpersonalityprofileController extends Controller
             ->where('termid', $termid)
             ->get();
 
-        // Fetch student's scores for all subjects
+        // Fetch terminal report scores
         $scores = Broadsheets::where('broadsheet_records.student_id', $id)
             ->where('broadsheets.term_id', $termid)
             ->where('broadsheet_records.session_id', $sessionid)
@@ -86,10 +70,23 @@ class StudentpersonalityprofileController extends Controller
                 'broadsheets.grade',
                 'broadsheets.subject_position_class as position',
                 'broadsheets.avg as class_average',
-                // 'classcategories.ca1score',
-                // 'classcategories.ca2score',
-                // 'classcategories.ca3score',
-                // 'classcategories.examscore',
+            ]);
+
+        // Fetch mock report scores
+        $mockScores = BroadsheetsMock::where('broadsheet_records_mock.student_id', $id)
+            ->where('broadsheetmock.term_id', $termid)
+            ->where('broadsheet_records_mock.session_id', $sessionid)
+            ->where('broadsheet_records_mock.schoolclass_id', $schoolclassid)
+            ->leftJoin('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
+            ->leftJoin('subject', 'subject.id', '=', 'broadsheet_records_mock.subject_id')
+            ->get([
+                'subject.subject as subject_name',
+                'subject.subject_code',
+                'broadsheetmock.exam',
+                'broadsheetmock.total',
+                'broadsheetmock.grade',
+                'broadsheetmock.subject_position_class as position',
+                'broadsheetmock.avg as class_average',
             ]);
 
         $schoolclass = Schoolclass::where('id', $schoolclassid)->first(['schoolclass', 'arm']);
@@ -99,7 +96,8 @@ class StudentpersonalityprofileController extends Controller
         return view('studentpersonalityprofile.edit')
             ->with('students', $students)
             ->with('studentpp', $studentpp)
-            ->with('scores', $scores) // Pass scores to the view
+            ->with('scores', $scores)
+            ->with('mockScores', $mockScores) // Pass mock scores to the view
             ->with('staffid', Auth::user()->id)
             ->with('studentid', $id)
             ->with('schoolclassid', $schoolclassid)
@@ -111,10 +109,16 @@ class StudentpersonalityprofileController extends Controller
             ->with('schoolsession', $schoolsession);
     }
 
+    /**
+     * Save or update the student personality profile.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
     public function save(Request $request)
     {
         $request->validate([
-            'studentid' => 'required|exists:studentregistration,id',
+            'studentid' => 'required|exists:studentRegistration,id',
             'schoolclassid' => 'required|exists:schoolclass,id',
             'termid' => 'required|exists:schoolterm,id',
             'sessionid' => 'required|exists:schoolsession,id',
@@ -142,102 +146,53 @@ class StudentpersonalityprofileController extends Controller
             'hand_writing' => 'nullable|in:Excellent,Very Good,Good,Fairly Good,Poor',
             'club' => 'nullable|in:Excellent,Very Good,Good,Fairly Good,Poor',
             'music' => 'nullable|in:Excellent,Very Good,Good,Fairly Good,Poor',
-            // 'principalscomment' => 'nullable|string|max:1000',
-            // 'classteacherscomment' => 'nullable|string|max:1000',
+            'classteachercomment' => 'nullable|string|max:1000',
+            'principalscomment' => 'nullable|string|max:1000',
         ]);
 
         $studentpp = Studentpersonalityprofile::where('studentid', $request->studentid)
             ->where('schoolclassid', $request->schoolclassid)
             ->where('termid', $request->termid)
             ->where('sessionid', $request->sessionid)
-            ->first();
+            ->firstOrNew();
 
-        if ($studentpp) {
-            try {
-                $input = $request->only([
-                    'studentid',
-                    'staffid',
-                    'schoolclassid',
-                    'termid',
-                    'sessionid',
-                    'punctuality',
-                    'neatness',
-                    'leadership',
-                    'attitude',
-                    'reading',
-                    'honesty',
-                    'cooperation',
-                    'selfcontrol',
-                    'politeness',
-                    'physicalhealth',
-                    'stability',
-                    'gamesandsports',
-                    'attendance',
-                    'attentiveness_in_class',
-                    'class_participation',
-                    'relationship_with_others',
-                    'doing_assignment',
-                    'writing_skill',
-                    'reading_skill',
-                    'spoken_english_communication',
-                    'hand_writing',
-                    'club',
-                    'music',
-                    // 'principalscomment',
-                    // 'classteacherscomment',
-                ]);
-                $studentpp->update($input);
-                return redirect()->back()->with('success', 'Student Personality Profile Updated successfully');
-            } catch (\Exception $e) {
-                return redirect()->back()->with('error', 'Failed to update profile: ' . $e->getMessage());
-            }
+        try {
+            $input = $request->only([
+                'studentid',
+                'staffid',
+                'schoolclassid',
+                'termid',
+                'sessionid',
+                'punctuality',
+                'neatness',
+                'leadership',
+                'attitude',
+                'reading',
+                'honesty',
+                'cooperation',
+                'selfcontrol',
+                'politeness',
+                'physicalhealth',
+                'stability',
+                'gamesandsports',
+                'attendance',
+                'attentiveness_in_class',
+                'class_participation',
+                'relationship_with_others',
+                'doing_assignment',
+                'writing_skill',
+                'reading_skill',
+                'spoken_english_communication',
+                'hand_writing',
+                'club',
+                'music',
+                'classteachercomment',
+                'principalscomment',
+            ]);
+            $studentpp->fill($input)->save();
+            return redirect()->back()->with('success', 'Student Personality Profile Updated successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to update profile: ' . $e->getMessage());
         }
-
-        return redirect()->back()->with('error', 'Student Personality Profile not found');
-    }
-
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function show($id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function edit($id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy($id)
-    {
-        //
     }
 }
