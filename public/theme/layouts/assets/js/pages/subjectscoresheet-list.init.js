@@ -879,7 +879,6 @@ function downloadMarksSheet() {
     });
 }
 
-// Handle bulk upload with server-side progress via SSE
 // Handle bulk upload with server-side progress
 function handleBulkUpload() {
     const importForm = document.getElementById('importForm');
@@ -1001,7 +1000,7 @@ function handleBulkUpload() {
                         const cumDisplay = row.querySelector('.cum-display span');
                         if (cumDisplay) {
                             cumDisplay.textContent = parseFloat(broadsheet.cum || 0).toFixed(2);
-                            cumDisplay.classList.add('bg-warning');
+                            totalDisplay.classList.add('bg-warning');
                             setTimeout(() => cumDisplay.classList.remove('bg-warning'), 500);
                         }
                         const gradeDisplay = row.querySelector('.grade-display span');
@@ -1228,6 +1227,15 @@ function initializeBulkActions() {
 
     // Initialize score input listeners
     document.querySelectorAll('.score-input').forEach(input => {
+        // Clear default '0' or '0.0' on focus
+        input.addEventListener('focus', () => {
+            if (input.value === '0' || input.value === '0.0') {
+                console.log(`Clearing default score for input with id=${input.dataset.id}, field=${input.dataset.field}`);
+                input.value = '';
+            }
+        });
+
+        // Handle score updates
         input.addEventListener('input', debounce(() => {
             const row = input.closest('tr');
             if (row) {
