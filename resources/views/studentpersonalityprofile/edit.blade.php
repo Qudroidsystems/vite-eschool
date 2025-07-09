@@ -1,149 +1,149 @@
 @extends('layouts.master')
 
 @section('content')
-   <style>
-      * {
-      /* box-sizing: border-box;
-      margin: 0;
-      padding: 0; */
-      }
-      .fraction {
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      font-family: Arial, sans-serif;
-      font-size: 10px;
-      }
-      .fraction .numerator {
-      border-bottom: 2px solid black;
-      padding: 0 5px;
-      }
-      .fraction .denominator {
-      padding-top: 5px;
-      }
-      tr.rt>th,
-      tr.rt>td {
-      text-align: center;
-      }
-      div.grade>span {
-      font-family: Arial, Helvetica, sans-serif;
-      font-size: 16px;
-      font-weight: bold;
-      }
-      span.text-space-on-dots {
-      position: relative;
-      width: 500px;
-      border-bottom-style: dotted;
-      }
-      span.text-dot-space2 {
-      position: relative;
-      width: 300px;
-      border-bottom-style: dotted;
-      }
-      @media print {
-      div.print-body {
-      background-color: white;
-      }
-      @page {
-      size: 940px;
-      margin: 0px;
-      }
-      div.print-body {
-      background-color: white;
-      }
-      html,
-      body {
-      width: 940px;
-      }
-      body {
-      margin: 0;
-      }
-      nav {
-      display: none;
-      }
-      }
-      p.school-name1 {
-      font-family: 'Times New Roman', Times, serif;
-      font-size: 40px;
-      font-weight: 500;
-      }
-      p.school-name2 {
-      font-family: 'Times New Roman', Times, serif;
-      font-size: 30px;
-      font-weight: bolder;
-      }
-      div.school-logo {
-      width: 80px;
-      height: 60px;
-      }
-      div.header-divider {
-      width: 100%;
-      height: 3px;
-      background-color: black;
-      margin-bottom: 3px;
-      }
-      div.header-divider2 {
-      width: 100%;
-      height: 1px;
-      background-color: black;
-      }
-      span.result-details {
-      font-size: 16px;
-      font-family: 'Times New Roman', Times, serif;
-      font-weight: lighter;
-      font-style: italic;
-      }
-      span.rd1 {
-      position: relative;
-      width: 86.1%;
-      border-bottom-style: dotted;
-      }
-      span.rd2 {
-      position: relative;
-      width: 30%;
-      border-bottom-style: dotted;
-      }
-      span.rd3 {
-      position: relative;
-      width: 30%;
-      border-bottom-style: dotted;
-      }
-      span.rd4 {
-      position: relative;
-      width: 30%;
-      border-bottom-style: dotted;
-      }
-      span.rd5 {
-      position: relative;
-      width: 25%;
-      border-bottom-style: dotted;
-      }
-      span.rd6 {
-      position: relative;
-      width: 28%;
-      border-bottom-style: dotted;
-      }
-      span.rd7 {
-      position: relative;
-      width: 17.2%;
-      border-bottom-style: dotted;
-      }
-      span.rd8 {
-      position: relative;
-      width: 12%;
-      border-bottom-style: dotted;
-      }
-      span.rd9 {
-      position: relative;
-      width: 11%;
-      border-bottom-style: dotted;
-      }
-      span.rd10 {
-      position: relative;
-      width: 11%;
-      border-bottom-style: dotted;
-      }
-    </style>
+<style>
+    * {
+        /* box-sizing: border-box;
+        margin: 0;
+        padding: 0; */
+    }
+    .fraction {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        font-family: Arial, sans-serif;
+        font-size: 10px;
+    }
+    .fraction .numerator {
+        border-bottom: 2px solid black;
+        padding: 0 5px;
+    }
+    .fraction .denominator {
+        padding-top: 5px;
+    }
+    tr.rt>th,
+    tr.rt>td {
+        text-align: center;
+    }
+    div.grade>span {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    span.text-space-on-dots {
+        position: relative;
+        width: 500px;
+        border-bottom-style: dotted;
+    }
+    span.text-dot-space2 {
+        position: relative;
+        width: 300px;
+        border-bottom-style: dotted;
+    }
+    @media print {
+        div.print-body {
+            background-color: white;
+        }
+        @page {
+            size: 940px;
+            margin: 0px;
+        }
+        div.print-body {
+            background-color: white;
+        }
+        html,
+        body {
+            width: 940px;
+        }
+        body {
+            margin: 0;
+        }
+        nav {
+            display: none;
+        }
+    }
+    p.school-name1 {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 40px;
+        font-weight: 500;
+    }
+    p.school-name2 {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 30px;
+        font-weight: bolder;
+    }
+    div.school-logo {
+        width: 80px;
+        height: 60px;
+    }
+    div.header-divider {
+        width: 100%;
+        height: 3px;
+        background-color: black;
+        margin-bottom: 3px;
+    }
+    div.header-divider2 {
+        width: 100%;
+        height: 1px;
+        background-color: black;
+    }
+    span.result-details {
+        font-size: 16px;
+        font-family: 'Times New Roman', Times, serif;
+        font-weight: lighter;
+        font-style: italic;
+    }
+    span.rd1 {
+        position: relative;
+        width: 86.1%;
+        border-bottom-style: dotted;
+    }
+    span.rd2 {
+        position: relative;
+        width: 30%;
+        border-bottom-style: dotted;
+    }
+    span.rd3 {
+        position: relative;
+        width: 30%;
+        border-bottom-style: dotted;
+    }
+    span.rd4 {
+        position: relative;
+        width: 30%;
+        border-bottom-style: dotted;
+    }
+    span.rd5 {
+        position: relative;
+        width: 25%;
+        border-bottom-style: dotted;
+    }
+    span.rd6 {
+        position: relative;
+        width: 28%;
+        border-bottom-style: dotted;
+    }
+    span.rd7 {
+        position: relative;
+        width: 17.2%;
+        border-bottom-style: dotted;
+    }
+    span.rd8 {
+        position: relative;
+        width: 12%;
+        border-bottom-style: dotted;
+    }
+    span.rd9 {
+        position: relative;
+        width: 11%;
+        border-bottom-style: dotted;
+    }
+    span.rd10 {
+        position: relative;
+        width: 11%;
+        border-bottom-style: dotted;
+    }
+</style>
 
 <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
     <div class="d-flex flex-column flex-column-fluid">
@@ -168,25 +168,6 @@
                 @endif
 
                 @if ($students->isNotEmpty())
-                 <div class="row">
-                        <div class="col-lg-12">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="row g-3">
-                                        <div class="d-flex flex-wrap flex-stack mb-4">
-                                            <!-- Student Avatar -->
-                                            
-                                           
-                                            <!-- Student Information -->
-                                            <div class="d-flex flex-column flex-grow-1 pe-8">
-                                               
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     <div class="row">
                         <div class="col-lg-12">
                             <div class="card">
@@ -194,12 +175,11 @@
                                     <div class="row g-3">
                                         <div class="d-flex flex-wrap flex-stack mb-4">
                                             <!-- Student Avatar -->
-                                            <div class="me Temer
                                             <div class="me-6 mb-3">
                                                 <?php
                                                 $picture = $students[0]->picture ? basename($students[0]->picture) : 'unnamed.jpg';
                                                 $imagePath = asset('storage/student_avatars/' . $picture);
-                                                $fileExists = file_exists(storage_path('app/public/stud ent_avatars/' . $picture));
+                                                $fileExists = file_exists(storage_path('app/public/student_avatars/' . $picture));
                                                 $defaultImageExists = file_exists(storage_path('app/public/student_avatars/unnamed.jpg'));
                                                 ?>
                                                 <img src="{{ $students[0]->picture ? asset('storage/student_avatars/' . basename($students[0]->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
@@ -221,7 +201,7 @@
                                                     <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
                                                         <div class="d-flex align-items-center">
                                                             <i class="bi bi-person fs-3 text-primary me-2"></i>
-                                                            <div class="fs-2 fw-bold text-success">{{ $students[0]->lastname }} {{ $students[0]->fname }} {{ $students[0]->othername }} </div>
+                                                            <div class="fs-2 fw-bold text-success">{{ $students[0]->lastname }} {{ $students[0]->fname }} {{ $students[0]->othername }}</div>
                                                         </div>
                                                         <div class="fw-semibold fs-6 text-gray-400">Student Name</div>
                                                     </div>
@@ -257,16 +237,16 @@
                             </div>
                         </div>
                     </div>
-                    <div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
-                        <div id="kt_app_toolbar_container" class="app-container container-xxl d-flex flex-stack">
-                            <div class="hstack gap-2 d-print-none">
-                                <a href="{{ route('viewstudent', [$schoolclassid, $termid, $sessionid]) }}" class="btn btn-success"><i class="ri-printer-line align-bottom me-1"></i> << Back</a>
-                            </div>
-                        </div>
-                    </div>
 
+                    <!-- Personality Profile -->
                     <div class="row">
                         <form action="{{ route('studentpersonalityprofile.save') }}" method="POST">
+                            @csrf
+                            <input type="hidden" name="studentid" value="{{ $studentid }}">
+                            <input type="hidden" name="schoolclassid" value="{{ $schoolclassid }}">
+                            <input type="hidden" name="staffid" value="{{ $staffid }}">
+                            <input type="hidden" name="termid" value="{{ $termid }}">
+                            <input type="hidden" name="sessionid" value="{{ $sessionid }}">
                             <div class="col-lg-12">
                                 <div class="card">
                                     <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_profile_details" aria-expanded="true" aria-controls="kt_account_profile_details">
@@ -276,13 +256,6 @@
                                     </div>
                                     <div id="kt_account_settings_profile_details" class="collapse show">
                                         <div class="card-body py-4">
-                                            @csrf
-                                            <input type="hidden" name="studentid" value="{{ $studentid }}">
-                                            <input type="hidden" name="schoolclassid" value="{{ $schoolclassid }}">
-                                            <input type="hidden" name="staffid" value="{{ $staffid }}">
-                                            <input type="hidden" name="termid" value="{{ $termid }}">
-                                            <input type="hidden" name="sessionid" value="{{ $sessionid }}">
-
                                             <div class="table-responsive">
                                                 <table class="table align-middle table-row-dashed fs-6 gy-5 mb-0" id="kt_roles_view_table">
                                                     <thead>
@@ -677,7 +650,7 @@
                                                                 </td>
                                                                 <td></td>
                                                             </tr>
-                                                            {{-- <tr>
+                                                            <tr>
                                                                 <td>24</td>
                                                                 <td>Teacher's Comment</td>
                                                                 <td>
@@ -692,7 +665,7 @@
                                                                     <input type="text" name="principalscomment" value="{{ $s->principalscomment }}" class="form-control">
                                                                 </td>
                                                                 <td></td>
-                                                            </tr> --}}
+                                                            </tr>
                                                             <tr>
                                                                 <td></td>
                                                                 <td></td>
@@ -711,316 +684,496 @@
                             </div>
                         </form>
                     </div>
-                @else
-                    <div class="alert alert-warning">
-                        No student data found.
-                    </div>
-                @endif
 
-                <!-- Image View Modal -->
-                <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Student Picture</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body text-center">
-                                <img id="enlargedImage" src="" alt="Student Picture" class="img-fluid" />
-                                <div class="placeholder-text">No image available</div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-
-
-<div class="app-main flex-column flex-row-fluid" id="kt_app_main">
-    <div class="d-flex flex-column flex-column-fluid">
-        <div id="kt_app_content" class="app-content flex-column-fluid">
-            <div id="kt_app_content_container" class="app-container container-xxl">
-               
-
-                @if ($students->isNotEmpty())
-                    <div class="row">
-                        <div class="col-lg-12">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="row g-3">
-                                        <div class="d-flex flex-wrap flex-stack mb-4">
-                                           
-                                            <div class="card">
-
-                                                <div class="print-body bg-light w-100 h-100">
-                                                    <div class="print-sect container-fluid border bg-white" style="width: 1200px;">
-
-                                                     
-
-                                                        <div class="row mb-2">
-                                                            <div class="col-sm bg-white">
-
-                                                                <div class="mt-3 result-table">
-                                                                    <table class="table table-bordered table-hover table-responsive-sm"
-                                                                        style="border: 1px solid black;">
-                                                                        <thead  style="border: 1px solid black;">
-                                                                            <tr class="rt">
-                                                                                <th></th>
-                                                                                <th>Subjects</th>
-                                                                                <th>a</th>
-                                                                                <th>b</th>
-                                                                                <th>c</th>
-                                                                                <th>d</th>
-                                                                                <th>e</th>
-                                                                                <th>f</th>
-                                                                                <th>g</th>
-                                                                                <th>h</th>
-                                                                                <th>i</th>
-                                                                                <th>j</th>
-                                                                                <th>k</th>
-                                                                                <th>l</th>
-                                                                            </tr>
-                                                                            <tr class="rt">
-                                                                                <th>S/N</th>
-                                                                                <th></th>
-                                                                                <th>T1</th>
-                                                                                <th>T2</th>
-                                                                                <th>T3</th>
-                                                                                <th>
-                                                                                    <div class="fraction">
-                                                                                        <div class="numerator">a + b + c</div>
-                                                                                        <div class="denominator">3</div>
-                                                                                    </div>
-                                                                                </th>
-                                                                                <th>Term Exams</th>
-                                                                                <th>
-                                                                                    <div class="fraction">
-                                                                                        <div class="numerator">d + f</div>
-                                                                                        <div class="denominator">2</div>
-                                                                                    </div>
-                                                                                </th>
-                                                                                <th>B/F</th>
-                                                                                <th><span class="d-block">Cum</span> (f/g)/2</th>
-                                                                                <th>Grade</th>
-                                                                                <th>PSN</th>
-                                                                                <th>Class Average</th>
-                                                                                <th>Sign</th>
-                                                                            </tr>
-                                                                        </thead>
-                                                                       <tbody>
-                                                                            @forelse ($scores as $index => $score)
-                                                                                <tr>
-                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $index + 1 }}</td>
-                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->subject_name }}</td>
-                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->ca1 ?? '-' }}</td>
-                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->ca2 ?? '-' }}</td>
-                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->ca3 ?? '-' }}</td>
-                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">
-                                                                                        {{ $score->ca1 && $score->ca2 && $score->ca3 ? round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) : '-' }}
-                                                                                    </td>
-                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->exam ?? '-' }}</td>
-                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->total ?? '-' }}</td>
-                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->bf ?? '-' }}</td>
-                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->cum ?? '-' }}</td>
-                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->grade ?? '-' }}</td>
-                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->position ?? '-' }}</td>
-                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->class_average ?? '-' }}</td>
-                                                                                    <td align="center" style="font-size: 16px; font-weight: bold;"></td>
-                                                                                </tr>
-                                                                            @empty
-                                                                                <tr>
-                                                                                    <td colspan="14" align="center">No scores available for this student.</td>
-                                                                                </tr>
-                                                                            @endforelse
-                                                                        </tbody>
-                                                                    </table>
-                                                                </div>
-
-                                                            </div>
-                                                        </div>
-
-
-                                                        <div class="row gap-2 mb-2 flex flex-row">
-                                                            <div class="col bg-white rounded">
-
-                                                                <div class="mt-2">
-                                                                    <div class="h5">Character Assessment</div>
-                                                                    <table class="table table-bordered table-hover table-responsive-sm"
-                                                                        style="border: 1px solid black;">
-                                                                        <thead  style="border: 1px solid black;">
-                                                                            <tr>
-                                                                                <th></th>
-                                                                                <th>Grade</th>
-                                                                                <th>Sign</th>
-                                                                            </tr>
-                                                                        </thead>
-                                                                        <tbody>
-                                                                            <tr>
-                                                                                <td>Class Attendance</td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <td>Attentiveness in Class</td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <td>Class Participation</td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <td>Self Control</td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <td>Relationship with Others</td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <td>Doing Assignment</td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <td>Neatness</td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                            </tr>
-                                                                        </tbody>
-                                                                    </table>
-                                                                </div>
-
-                                                            </div>
-                                                            <div class="col bg-white rounded">
-
-                                                                <div class="mt-2">
-                                                                    <div class="h5">Skill Development</div>
-                                                                    <table class="table table-bordered table-hover table-responsive-sm"
-                                                                        style="border: 1px solid black;">
-                                                                        <thead  style="border: 1px solid black;">
-                                                                            <tr>
-                                                                                <th></th>
-                                                                                <th>Grade</th>
-                                                                                <th>Sign</th>
-                                                                            </tr>
-                                                                        </thead>
-                                                                        <tbody>
-                                                                            <tr>
-                                                                                <td>Writing Skill</td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <td>Reading Skill</td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <td>Spoken English/Communication</td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <td>Hand Writing</td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <td>Sports/Games</td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <td>Club</td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                            </tr>
-                                                                            <tr>
-                                                                                <td>Music</td>
-                                                                                <td></td>
-                                                                                <td></td>
-                                                                            </tr>
-                                                                        </tbody>
-                                                                    </table>
-                                                                </div>
-
-                                                            </div>
-                                                        </div>
-                                                        <div class="row mb-2">
-                                                            <div class="col-md bg-white rounded grade d-flex justify-content-around align-items-center">
-                                                                <span>Grade: V.Good {VG}</span>
-                                                                <span>Good {G}</span>
-                                                                <span>Average {AVG}</span>
-                                                                <span>Below Average {BA}</span>
-                                                                <span>Poor {P}</span>
-                                                            </div>
-                                                        </div>
-                                                        <div class="row mb-2">
-                                                            <div class="col-md bg-white rounded">
-
-                                                                <div class="m-2">
-                                                                    <table class="w-100 table-bordered" style="border: 1px solid black;">
-                                                                        <tbody class="w-100">
-                                                                            <tr class="w-100">
-                                                                                <td class="p-2 w-50">
-                                                                                    <div class="h6">Class Teacher's Remark Signature/Date</div>
-                                                                                    <div class="w-100">
-                                                                                        <span class="text-space-on-dots">aaa</span>
-                                                                                    </div>
-                                                                                </td>
-                                                                                <td class="p-2 w-50">
-                                                                                    <div class="h6">Remark On Other Activities</div>
-                                                                                    <div class="">
-                                                                                        <span class="text-space-on-dots">aaa</span>
-                                                                                    </div>
-                                                                                </td>
-                                                                            </tr>
-                                                                            <tr class="w-50">
-                                                                                <td class="p-2 w-50">
-                                                                                    <div class="h6">Guidance Counselor's Remark Signature/Date</div>
-                                                                                    <div class="">
-                                                                                        <span class="text-space-on-dots">aaa</span>
-                                                                                    </div>
-                                                                                </td>
-                                                                                <td class="p-2 w-50">
-                                                                                    <div class="h6">Principal's Remark Signature/Date</div>
-                                                                                    <div class="">
-                                                                                        <span class="text-space-on-dots">aaa</span>
-                                                                                    </div>
-                                                                                </td>
-                                                                            </tr>
-                                                                        </tbody>
-                                                                    </table>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
-                                                        <div class="row mb-2">
-                                                            <div class="col-md bg-white rounded px-4">
-                                                                <div class=" d-flex flex-row justify-content-left align-items-center p-2  gap-4">
-                                                                    <span>This Result was issued on<span class="m-2 text-dot-space2">abc</span></span>
-                                                                    <span>and collected by<span class="m-2 text-dot-space2">abc</span></span>
-                                                                </div>
-                                                                <div class=" d-flex flex-row justify-content-left align-items-center p-2  gap-4">
-                                                                    <span class="h6">NEXT TERM BEGINS<span class="m-2 text-dot-space2">abc</span></span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-
+                    <!-- Accordions for Reports -->
+                    <div class="accordion custom-accordionwithicon-plus" id="studentReportsAccordion">
+                        <!-- Terminal Report -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="terminalReportHeader">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#terminalReportCollapse" aria-expanded="true" aria-controls="terminalReportCollapse">
+                                    Terminal Report
+                                </button>
+                            </h2>
+                            <div id="terminalReportCollapse" class="accordion-collapse collapse show" aria-labelledby="terminalReportHeader" data-bs-parent="#studentReportsAccordion">
+                                <div class="accordion-body">
+                                    <div class="print-body bg-light w-100 h-100">
+                                        <div class="print-sect container-fluid border bg-white" style="width: 1200px;">
+                                            <div class="card-title m-0">
+                                                <h3 class="fw-bold m-0">TERMINAL REPORT</h3>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-sm bg-white">
+                                                    <div class="mt-3 result-table">
+                                                        <table class="table table-bordered table-hover table-responsive-sm" style="border: 1px solid black;">
+                                                            <thead style="border: 1px solid black;">
+                                                                <tr class="rt">
+                                                                    <th></th>
+                                                                    <th>Subjects</th>
+                                                                    <th>a</th>
+                                                                    <th>b</th>
+                                                                    <th>c</th>
+                                                                    <th>d</th>
+                                                                    <th>e</th>
+                                                                    <th>f</th>
+                                                                    <th>g</th>
+                                                                    <th>h</th>
+                                                                    <th>i</th>
+                                                                    <th>j</th>
+                                                                    <th>k</th>
+                                                                    <th>l</th>
+                                                                </tr>
+                                                                <tr class="rt">
+                                                                    <th>S/N</th>
+                                                                    <th></th>
+                                                                    <th>T1</th>
+                                                                    <th>T2</th>
+                                                                    <th>T3</th>
+                                                                    <th>
+                                                                        <div class="fraction">
+                                                                            <div class="numerator">a + b + c</div>
+                                                                            <div class="denominator">3</div>
+                                                                        </div>
+                                                                    </th>
+                                                                    <th>Term Exams</th>
+                                                                    <th>
+                                                                        <div class="fraction">
+                                                                            <div class="numerator">d + f</div>
+                                                                            <div class="denominator">2</div>
+                                                                        </div>
+                                                                    </th>
+                                                                    <th>B/F</th>
+                                                                    <th><span class="d-block">Cum</span> (f/g)/2</th>
+                                                                    <th>Grade</th>
+                                                                    <th>PSN</th>
+                                                                    <th>Class Average</th>
+                                                                    <th>Sign</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @forelse ($scores as $index => $score)
+                                                                    <tr>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $index + 1 }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->subject_name }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->ca1 ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->ca2 ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->ca3 ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">
+                                                                            {{ $score->ca1 && $score->ca2 && $score->ca3 ? round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) : '-' }}
+                                                                        </td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->exam ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->total ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->bf ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->cum ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->grade ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->position ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->class_average ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;"></td>
+                                                                    </tr>
+                                                                @empty
+                                                                    <tr>
+                                                                        <td colspan="14" align="center">No scores available for this student.</td>
+                                                                    </tr>
+                                                                @endforelse
+                                                            </tbody>
+                                                        </table>
                                                     </div>
                                                 </div>
-
+                                            </div>
+                                            <div class="row gap-2 mb-2 flex flex-row">
+                                                <div class="col bg-white rounded">
+                                                    <div class="mt-2">
+                                                        <div class="h5">Character Assessment</div>
+                                                        <table class="table table-bordered table-hover table-responsive-sm" style="border: 1px solid black;">
+                                                            <thead style="border: 1px solid black;">
+                                                                <tr>
+                                                                    <th></th>
+                                                                    <th>Grade</th>
+                                                                    <th>Sign</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @foreach ($studentpp as $s)
+                                                                    <tr>
+                                                                        <td>Class Attendance</td>
+                                                                        <td>{{ $s->attendance ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Attentiveness in Class</td>
+                                                                        <td>{{ $s->attentiveness_in_class ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Class Participation</td>
+                                                                        <td>{{ $s->class_participation ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Self Control</td>
+                                                                        <td>{{ $s->selfcontrol ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Relationship with Others</td>
+                                                                        <td>{{ $s->relationship_with_others ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Doing Assignment</td>
+                                                                        <td>{{ $s->doing_assignment ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Neatness</td>
+                                                                        <td>{{ $s->neatness ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                @endforeach
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                                <div class="col bg-white rounded">
+                                                    <div class="mt-2">
+                                                        <div class="h5">Skill Development</div>
+                                                        <table class="table table-bordered table-hover table-responsive-sm" style="border: 1px solid black;">
+                                                            <thead style="border: 1px solid black;">
+                                                                <tr>
+                                                                    <th></th>
+                                                                    <th>Grade</th>
+                                                                    <th>Sign</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @foreach ($studentpp as $s)
+                                                                    <tr>
+                                                                        <td>Writing Skill</td>
+                                                                        <td>{{ $s->writing_skill ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Reading Skill</td>
+                                                                        <td>{{ $s->reading_skill ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Spoken English/Communication</td>
+                                                                        <td>{{ $s->spoken_english_communication ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Hand Writing</td>
+                                                                        <td>{{ $s->hand_writing ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Sports/Games</td>
+                                                                        <td>{{ $s->gamesandsports ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Club</td>
+                                                                        <td>{{ $s->club ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Music</td>
+                                                                        <td>{{ $s->music ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                @endforeach
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-md bg-white rounded grade d-flex justify-content-around align-items-center">
+                                                    <span>Grade: V.Good {VG}</span>
+                                                    <span>Good {G}</span>
+                                                    <span>Average {AVG}</span>
+                                                    <span>Below Average {BA}</span>
+                                                    <span>Poor {P}</span>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-md bg-white rounded">
+                                                    <div class="m-2">
+                                                        <table class="w-100 table-bordered" style="border: 1px solid black;">
+                                                            <tbody class="w-100">
+                                                                <tr class="w-100">
+                                                                    <td class="p-2 w-50">
+                                                                        <div class="h6">Class Teacher's Remark Signature/Date</div>
+                                                                        <div class="w-100">
+                                                                            <span class="text-space-on-dots">{{ $studentpp[0]->classteachercomment ?? 'aaa' }}</span>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td class="p-2 w-50">
+                                                                        <div class="h6">Remark On Other Activities</div>
+                                                                        <div class="">
+                                                                            <span class="text-space-on-dots">aaa</span>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr class="w-50">
+                                                                    <td class="p-2 w-50">
+                                                                        <div class="h6">Guidance Counselor's Remark Signature/Date</div>
+                                                                        <div class="">
+                                                                            <span class="text-space-on-dots">aaa</span>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td class="p-2 w-50">
+                                                                        <div class="h6">Principal's Remark Signature/Date</div>
+                                                                        <div class="">
+                                                                            <span class="text-space-on-dots">{{ $studentpp[0]->principalscomment ?? 'aaa' }}</span>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-md bg-white rounded px-4">
+                                                    <div class="d-flex flex-row justify-content-left align-items-center p-2 gap-4">
+                                                        <span>This Result was issued on<span class="m-2 text-dot-space2">abc</span></span>
+                                                        <span>and collected by<span class="m-2 text-dot-space2">abc</span></span>
+                                                    </div>
+                                                    <div class="d-flex flex-row justify-content-left align-items-center p-2 gap-4">
+                                                        <span class="h6">NEXT TERM BEGINS<span class="m-2 text-dot-space2">abc</span></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Mock Report -->
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="mockReportHeader">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#mockReportCollapse" aria-expanded="false" aria-controls="mockReportCollapse">
+                                    Mock Report
+                                </button>
+                            </h2>
+                            <div id="mockReportCollapse" class="accordion-collapse collapse" aria-labelledby="mockReportHeader" data-bs-parent="#studentReportsAccordion">
+                                <div class="accordion-body">
+                                    <div class="print-body bg-light w-100 h-100">
+                                        <div class="print-sect container-fluid border bg-white" style="width: 1200px;">
+                                            <div class="card-title m-0">
+                                                <h3 class="fw-bold m-0">MOCK REPORT</h3>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-sm bg-white">
+                                                    <div class="mt-3 result-table">
+                                                        <table class="table table-bordered table-hover table-responsive-sm" style="border: 1px solid black;">
+                                                            <thead style="border: 1px solid black;">
+                                                                <tr class="rt">
+                                                                    <th></th>
+                                                                    <th>Subjects</th>
+                                                                    <th>a</th>
+                                                                    <th>b</th>
+                                                                    <th>c</th>
+                                                                    <th>d</th>
+                                                                    <th>e</th>
+                                                                </tr>
+                                                                <tr class="rt">
+                                                                    <th>S/N</th>
+                                                                    <th></th>
+                                                                    <th>Term Exam</th>
+                                                                    <th>Grade</th>
+                                                                    <th>TPSN</th>
+                                                                    <th>Class Average</th>
+                                                                    <th>Sign</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @forelse ($scores as $index => $score)
+                                                                    <tr>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $index + 1 }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->subject_name }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->exam ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->grade ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->position ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->class_average ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;"></td>
+                                                                    </tr>
+                                                                @empty
+                                                                    <tr>
+                                                                        <td colspan="7" align="center">No scores available for this student.</td>
+                                                                    </tr>
+                                                                @endforelse
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row gap-2 mb-2 flex flex-row">
+                                                <div class="col bg-white rounded">
+                                                    <div class="mt-2">
+                                                        <div class="h5">Character Assessment</div>
+                                                        <table class="table table-bordered table-hover table-responsive-sm" style="border: 1px solid black;">
+                                                            <thead style="border: 1px solid black;">
+                                                                <tr>
+                                                                    <th></th>
+                                                                    <th>Grade</th>
+                                                                    <th>Sign</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @foreach ($studentpp as $s)
+                                                                    <tr>
+                                                                        <td>Class Attendance</td>
+                                                                        <td>{{ $s->attendance ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Attentiveness in Class</td>
+                                                                        <td>{{ $s->attentiveness_in_class ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Class Participation</td>
+                                                                        <td>{{ $s->class_participation ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Self Control</td>
+                                                                        <td>{{ $s->selfcontrol ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Relationship with Others</td>
+                                                                        <td>{{ $s->relationship_with_others ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Doing Assignment</td>
+                                                                        <td>{{ $s->doing_assignment ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Neatness</td>
+                                                                        <td>{{ $s->neatness ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                @endforeach
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                                <div class="col bg-white rounded">
+                                                    <div class="mt-2">
+                                                        <div class="h5">Skill Development</div>
+                                                        <table class="table table-bordered table-hover table-responsive-sm" style="border: 1px solid black;">
+                                                            <thead style="border: 1px solid black;">
+                                                                <tr>
+                                                                    <th></th>
+                                                                    <th>Grade</th>
+                                                                    <th>Sign</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @foreach ($studentpp as $s)
+                                                                    <tr>
+                                                                        <td>Writing Skill</td>
+                                                                        <td>{{ $s->writing_skill ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Reading Skill</td>
+                                                                        <td>{{ $s->reading_skill ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Spoken English/Communication</td>
+                                                                        <td>{{ $s->spoken_english_communication ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Hand Writing</td>
+                                                                        <td>{{ $s->hand_writing ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Sports/Games</td>
+                                                                        <td>{{ $s->gamesandsports ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Club</td>
+                                                                        <td>{{ $s->club ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                    <tr>
+                                                                        <td>Music</td>
+                                                                        <td>{{ $s->music ?? '-' }}</td>
+                                                                        <td></td>
+                                                                    </tr>
+                                                                @endforeach
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-md bg-white rounded grade d-flex justify-content-around align-items-center">
+                                                    <span>Grade: V.Good {VG}</span>
+                                                    <span>Good {G}</span>
+                                                    <span>Average {AVG}</span>
+                                                    <span>Below Average {BA}</span>
+                                                    <span>Poor {P}</span>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-md bg-white rounded">
+                                                    <div class="m-2">
+                                                        <table class="w-100 table-bordered" style="border: 1px solid black;">
+                                                            <tbody class="w-100">
+                                                                <tr class="w-100">
+                                                                    <td class="p-2 w-50">
+                                                                        <div class="h6">Class Teacher's Remark Signature/Date</div>
+                                                                        <div class="w-100">
+                                                                            <span class="text-space-on-dots">{{ $studentpp[0]->classteachercomment ?? 'aaa' }}</span>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td class="p-2 w-50">
+                                                                        <div class="h6">Remark On Other Activities</div>
+                                                                        <div class="">
+                                                                            <span class="text-space-on-dots">aaa</span>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr class="w-50">
+                                                                    <td class="p-2 w-50">
+                                                                        <div class="h6">Guidance Counselor's Remark Signature/Date</div>
+                                                                        <div class="">
+                                                                            <span class="text-space-on-dots">aaa</span>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td class="p-2 w-50">
+                                                                        <div class="h6">Principal's Remark Signature/Date</div>
+                                                                        <div class="">
+                                                                            <span class="text-space-on-dots">{{ $studentpp[0]->principalscomment ?? 'aaa' }}</span>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row mb-2">
+                                                <div class="col-md bg-white rounded px-4">
+                                                    <div class="d-flex flex-row justify-content-left align-items-center p-2 gap-4">
+                                                        <span>This Result was issued on<span class="m-2 text-dot-space2">abc</span></span>
+                                                        <span>and collected by<span class="m-2 text-dot-space2">abc</span></span>
+                                                    </div>
+                                                    <div class="d-flex flex-row justify-content-left align-items-center p-2 gap-4">
+                                                        <span class="h6">NEXT TERM BEGINS<span class="m-2 text-dot-space2">abc</span></span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1028,18 +1181,13 @@
                             </div>
                         </div>
                     </div>
+
                     <div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
                         <div id="kt_app_toolbar_container" class="app-container container-xxl d-flex flex-stack">
                             <div class="hstack gap-2 d-print-none">
                                 <a href="{{ route('viewstudent', [$schoolclassid, $termid, $sessionid]) }}" class="btn btn-success"><i class="ri-printer-line align-bottom me-1"></i> << Back</a>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="row">
-                       
-                        
-                        
                     </div>
                 @else
                     <div class="alert alert-warning">
@@ -1069,8 +1217,6 @@
         </div>
     </div>
 </div>
-
-
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
@@ -1172,6 +1318,18 @@
                     resolve(false);
                 };
                 img.src = url;
+            });
+        }
+
+        // Debug form submission
+        const form = document.querySelector('form[action="{{ route('studentpersonalityprofile.save') }}"]');
+        if (form) {
+            form.addEventListener('submit', function (event) {
+                console.log('Form submission triggered');
+                const formData = new FormData(form);
+                for (let [key, value] of formData.entries()) {
+                    console.log(`${key}: ${value}`);
+                }
             });
         }
     });
