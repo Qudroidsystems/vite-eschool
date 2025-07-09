@@ -40,6 +40,9 @@
         width: 300px;
         border-bottom-style: dotted;
     }
+    .highlight-red {
+        color: red;
+    }
     @media print {
         div.print-body {
             background-color: white;
@@ -149,6 +152,21 @@
     <div class="d-flex flex-column flex-column-fluid">
         <div id="kt_app_content" class="app-content flex-column-fluid">
             <div id="kt_app_content_container" class="app-container container-xxl">
+                 <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_profile_details" aria-expanded="true" aria-controls="kt_account_profile_details">
+                                        <div class="card-title m-0">
+                                            <h3 class="fw-bold m-0">Student Profile for {{ $students[0]->fname }} {{ $students[0]->lastname }}</h3>
+                                        </div>
+                </div>
+                 <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_profile_details" aria-expanded="true" aria-controls="kt_account_profile_details">
+                                        <div class="card-title m-0">
+                                            <h3 class="fw-bold m-0">Student Profile for {{ $students[0]->fname }} {{ $students[0]->lastname }}</h3>
+                                        </div>
+                </div>
+                 <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_profile_details" aria-expanded="true" aria-controls="kt_account_profile_details">
+                                        <div class="card-title m-0">
+                                            <h3 class="fw-bold m-0">Student Profile for {{ $students[0]->fname }} {{ $students[0]->lastname }}</h3>
+                                        </div>
+                </div>
                 @if ($errors->any())
                     <div class="alert alert-danger">
                         <strong>Whoops!</strong> There were some problems with your input.<br>
@@ -217,7 +235,7 @@
                                                     <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
                                                         <div class="d-flex align-items-center">
                                                             <i class="bi bi-building fs-3 text-success me-2"></i>
-                                                            <div class="fs-2 fw-bold text-success">{{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : 'N/A' }}</div>
+                                                            <div class="fs-2 fw-bold">{{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : 'N/A' }}</div>
                                                         </div>
                                                         <div class="fw-semibold fs-6 text-gray-400">Class</div>
                                                     </div>
@@ -242,7 +260,7 @@
                     <div class="row">
                         <form action="{{ route('studentpersonalityprofile.save') }}" method="POST">
                             @csrf
-                            <input type="hidden" name="studentid" value="{{ $studentid }}">
+                             <input type="hidden" name="studentid" value="{{ $studentid }}">
                             <input type="hidden" name="schoolclassid" value="{{ $schoolclassid }}">
                             <input type="hidden" name="staffid" value="{{ $staffid }}">
                             <input type="hidden" name="termid" value="{{ $termid }}">
@@ -251,7 +269,7 @@
                                 <div class="card">
                                     <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_profile_details" aria-expanded="true" aria-controls="kt_account_profile_details">
                                         <div class="card-title m-0">
-                                            <h3 class="fw-bold m-0">Personality Profile Details for {{ $students[0]->fname }} {{ $students[0]->lastname }}</h3>
+                                            <h3 class="fw-bold m-0">Student Profile for {{ $students[0]->fname }} {{ $students[0]->lastname }}</h3>
                                         </div>
                                     </div>
                                     <div id="kt_account_settings_profile_details" class="collapse show">
@@ -670,7 +688,7 @@
                                                                 <td></td>
                                                                 <td></td>
                                                                 <td>
-                                                                    <button type="submit" class="btn btn-primary" id="update-profile-btn">Update Profile</button>
+                                                                    <button type="submit" class="btn btn-primary">Update Profile</button>
                                                                 </td>
                                                                 <td></td>
                                                             </tr>
@@ -754,19 +772,19 @@
                                                                     <tr>
                                                                         <td align="center" style="font-size: 16px; font-weight: bold;">{{ $index + 1 }}</td>
                                                                         <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->subject_name }}</td>
-                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->ca1 ?? '-' }}</td>
-                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->ca2 ?? '-' }}</td>
-                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->ca3 ?? '-' }}</td>
-                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;" @if ($score->ca1 <= 50 && is_numeric($score->ca1)) class="highlight-red" @endif>{{ $score->ca1 ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;" @if ($score->ca2 <= 50 && is_numeric($score->ca2)) class="highlight-red" @endif>{{ $score->ca2 ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;" @if ($score->ca3 <= 50 && is_numeric($score->ca3)) class="highlight-red" @endif>{{ $score->ca3 ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;" @if ($score->ca1 && $score->ca2 && $score->ca3 && round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) <= 50) class="highlight-red" @endif>
                                                                             {{ $score->ca1 && $score->ca2 && $score->ca3 ? round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) : '-' }}
                                                                         </td>
-                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->exam ?? '-' }}</td>
-                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->total ?? '-' }}</td>
-                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->bf ?? '-' }}</td>
-                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->cum ?? '-' }}</td>
-                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->grade ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;" @if ($score->exam <= 50 && is_numeric($score->exam)) class="highlight-red" @endif>{{ $score->exam ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;" @if ($score->total <= 50 && is_numeric($score->total)) class="highlight-red" @endif>{{ $score->total ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;" @if ($score->bf <= 50 && is_numeric($score->bf)) class="highlight-red" @endif>{{ $score->bf ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;" @if ($score->cum <= 50 && is_numeric($score->cum)) class="highlight-red" @endif>{{ $score->cum ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;" @if (in_array($score->grade, ['F', 'F9','E','E8'])) class="highlight-red" @endif>{{ $score->grade ?? '-' }}</td>
                                                                         <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->position ?? '-' }}</td>
-                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->class_average ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;" @if ($score->class_average <= 50 && is_numeric($score->class_average)) class="highlight-red" @endif>{{ $score->class_average ?? '-' }}</td>
                                                                         <td align="center" style="font-size: 16px; font-weight: bold;"></td>
                                                                     </tr>
                                                                 @empty
@@ -905,13 +923,13 @@
                                                                     <td class="p-2 w-50">
                                                                         <div class="h6">Class Teacher's Remark Signature/Date</div>
                                                                         <div class="w-100">
-                                                                            <span class="text-space-on-dots">{{ $studentpp[0]->classteachercomment ?? 'aaa' }}</span>
+                                                                            <span class="text-space-on-dots">{{ $studentpp[0]->classteachercomment ?? 'N/A' }}</span>
                                                                         </div>
                                                                     </td>
                                                                     <td class="p-2 w-50">
                                                                         <div class="h6">Remark On Other Activities</div>
                                                                         <div class="">
-                                                                            <span class="text-space-on-dots">aaa</span>
+                                                                            <span class="text-space-on-dots">N/A</span>
                                                                         </div>
                                                                     </td>
                                                                 </tr>
@@ -919,13 +937,13 @@
                                                                     <td class="p-2 w-50">
                                                                         <div class="h6">Guidance Counselor's Remark Signature/Date</div>
                                                                         <div class="">
-                                                                            <span class="text-space-on-dots">aaa</span>
+                                                                            <span class="text-space-on-dots">N/A</span>
                                                                         </div>
                                                                     </td>
                                                                     <td class="p-2 w-50">
                                                                         <div class="h6">Principal's Remark Signature/Date</div>
                                                                         <div class="">
-                                                                            <span class="text-space-on-dots">{{ $studentpp[0]->principalscomment ?? 'aaa' }}</span>
+                                                                            <span class="text-space-on-dots">{{ $studentpp[0]->principalscomment ?? 'N/A' }}</span>
                                                                         </div>
                                                                     </td>
                                                                 </tr>
@@ -937,11 +955,11 @@
                                             <div class="row mb-2">
                                                 <div class="col-md bg-white rounded px-4">
                                                     <div class="d-flex flex-row justify-content-left align-items-center p-2 gap-4">
-                                                        <span>This Result was issued on<span class="m-2 text-dot-space2">abc</span></span>
-                                                        <span>and collected by<span class="m-2 text-dot-space2">abc</span></span>
+                                                        <span>This Result was issued on<span class="m-2 text-dot-space2">N/A</span></span>
+                                                        <span>and collected by<span class="m-2 text-dot-space2">N/A</span></span>
                                                     </div>
                                                     <div class="d-flex flex-row justify-content-left align-items-center p-2 gap-4">
-                                                        <span class="h6">NEXT TERM BEGINS<span class="m-2 text-dot-space2">abc</span></span>
+                                                        <span class="h6">NEXT TERM BEGINS<span class="m-2 text-dot-space2">N/A</span></span>
                                                     </div>
                                                 </div>
                                             </div>
@@ -985,10 +1003,10 @@
                                                                     <tr>
                                                                         <td align="center" style="font-size: 16px; font-weight: bold;">{{ $index + 1 }}</td>
                                                                         <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->subject_name }}</td>
-                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->exam ?? '-' }}</td>
-                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->grade ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;" @if ($score->exam <= 50 && is_numeric($score->exam)) class="highlight-red" @endif>{{ $score->exam ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;" @if (in_array($score->grade, ['F', 'F9','E','E8'])) class="highlight-red" @endif>{{ $score->grade ?? '-' }}</td>
                                                                         <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->position ?? '-' }}</td>
-                                                                        <td align="center" style="font-size: 16px; font-weight: bold;">{{ $score->class_average ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 16px; font-weight: bold;" @if ($score->class_average <= 50 && is_numeric($score->class_average)) class="highlight-red" @endif>{{ $score->class_average ?? '-' }}</td>
                                                                         <td align="center" style="font-size: 16px; font-weight: bold;"></td>
                                                                     </tr>
                                                                 @empty
@@ -1172,12 +1190,10 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <div id="kt_app_toolbar" class="app-toolbar py-3 py-lg-6">
-                        <div id="kt_app_toolbar_container" class="app-container container-xxl d-flex flex-stack">
+                    <div id="kt_app" class="toolbar py-3 py-lg-6">
+                        <div id="kt_app" class="toolbar_container">
                             <div class="hstack gap-2 d-print-none">
-                                <a href="{{ route('viewstudent', [$schoolclassid, $termid, $sessionid]) }}" class="btn btn-success"><i class="ri-printer-line align-bottom me-1"></i> << Back</a>
+                                <a href="{{ route('viewstudent', [$schoolclassid, $termid, $sessionid]) }}" class="btn btn-success"><i class="ri-pr bi-pr-arrow-left"></i> << Back</a>
                             </div>
                         </div>
                     </div>
@@ -1225,7 +1241,7 @@
                 const modalImage = this.querySelector('#enlargedImage');
                 const placeholderText = this.querySelector('.placeholder-text');
 
-                console.log(`Opening imageViewModal for admissionno: ${admissionNo}, picture: ${pictureName}, src: ${imageSrc}, fileExists: ${fileExists}, defaultImageExists: ${defaultImageExists}`);
+                console.log(`Opening image modal for admissionNo: ${admissionNo}, picture: ${pictureName}, src: ${imageSrc}, fileExists: ${fileExists}, defaultImageExists: ${defaultImageExists}`);
 
                 // Reset modal content
                 modalImage.src = '';
@@ -1234,12 +1250,12 @@
 
                 // Use server-side file existence check
                 if (!fileExists) {
-                    console.log(`Server-side check indicates image does not exist for admissionno: ${admissionNo}`);
+                    console.log(`Server-side check indicates image does not exist for admissionNo: ${admissionNo}`);
                     modalImage.src = '{{ asset('storage/student_avatars/unnamed.jpg') }}';
                     if (defaultImageExists) {
                         modalImage.style.display = 'block';
                     } else {
-                        console.error(`Default image /storage/student_avatars/unnamed.jpg does not exist for admissionno: ${admissionNo}`);
+                        console.error(`Default image /storage/student_avatars/unnamed.jpg does not exist for admissionNo: ${admissionNo}`);
                         placeholderText.textContent = `No image available for ${admissionNo}`;
                         placeholderText.style.display = 'block';
                     }
@@ -1249,14 +1265,14 @@
                     if (imageExists) {
                         modalImage.src = imageSrc;
                         modalImage.style.display = 'block';
-                        console.log(`Set enlarged image for admissionno: ${admissionNo}, src: ${imageSrc}`);
+                        console.log(`Set enlarged image for admissionNo: ${admissionNo}, src: ${imageSrc}`);
                     } else {
-                        console.error(`Image does not exist for admissionno: ${admissionNo}, picture: ${pictureName}, attempted URL: ${imageSrc}`);
+                        console.error(`Image does not exist for admissionNo: ${admissionNo}, picture: ${pictureName}, attempted URL: ${imageSrc}`);
                         modalImage.src = '{{ asset('storage/student_avatars/unnamed.jpg') }}';
                         if (defaultImageExists) {
                             modalImage.style.display = 'block';
                         } else {
-                            console.error(`Default image /storage/student_avatars/unnamed.jpg does not exist for admissionno: ${admissionNo}`);
+                            console.error(`Default image /storage/student_avatars/unnamed.jpg does not exist for admissionNo: ${admissionNo}`);
                             placeholderText.textContent = `No image available for ${admissionNo}`;
                             placeholderText.style.display = 'block';
                         }
@@ -1265,19 +1281,19 @@
 
                 // Handle image load success
                 modalImage.onload = () => {
-                    console.log(`Successfully loaded enlarged image for admissionno: ${admissionNo}, src: ${modalImage.src}`);
+                    console.log(`Successfully loaded enlarged image for admissionNo: ${admissionNo}, src: ${modalImage.src}`);
                     modalImage.style.display = 'block';
                     placeholderText.style.display = 'none';
                 };
 
                 // Handle image load failure
                 modalImage.onerror = () => {
-                    console.error(`Failed to load enlarged image for admissionno: ${admissionNo}, picture: ${pictureName}, attempted URL: ${imageSrc}`);
+                    console.error(`Failed to load enlarged image for admissionNo: ${admissionNo}, picture: ${pictureName}, attempted URL: ${imageSrc}`);
                     modalImage.src = '{{ asset('storage/student_avatars/unnamed.jpg') }}';
                     if (defaultImageExists) {
                         modalImage.style.display = 'block';
                     } else {
-                        console.error(`Default image /storage/student_avatars/unnamed.jpg failed to load for admissionno: ${admissionNo}`);
+                        console.error(`Default image /storage/student_avatars/unnamed.jpg failed to load for admissionNo: ${admissionNo}`);
                         placeholderText.textContent = `No image available for ${admissionNo}`;
                         placeholderText.style.display = 'block';
                     }
