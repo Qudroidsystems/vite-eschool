@@ -107,9 +107,9 @@
                                                                 <th class="sort cursor-pointer" data-sort="admissionno">Admission No</th>
                                                                 <th class="sort cursor-pointer" data-sort="name">Student Name</th>
                                                                 <th class="sort cursor-pointer" data-sort="gender">Gender</th>
-                                                                @foreach ($subjects as $subject)
+                                                                {{-- @foreach ($subjects as $subject)
                                                                     <th class="sort cursor-pointer" data-sort="subject-{{ \Illuminate\Support\Str::slug($subject->subject) }}">{{ $subject->subject }}</th>
-                                                                @endforeach
+                                                                @endforeach --}}
                                                                 <th class="sort cursor-pointer" data-sort="teacher-comment">Class Teacher's Comment</th>
                                                                 <th class="sort cursor-pointer" data-sort="guidance-comment">Guidance Counselor's Comment</th>
                                                             </tr>
@@ -149,7 +149,7 @@
                                                                         </div>
                                                                     </td>
                                                                     <td class="gender" data-gender="{{ $student->gender ?? 'N/A' }}">{{ $student->gender ?? 'N/A' }}</td>
-                                                                    @foreach ($subjects as $subject)
+                                                                    {{-- @foreach ($subjects as $subject)
                                                                         @php
                                                                             $score = $scores->where('student_id', $student->id)->where('subject_name', $subject->subject)->first();
                                                                         @endphp
@@ -159,7 +159,7 @@
                                                                             @if ($score && is_numeric($score->total) && $score->total <= 50) class="highlight-red" @endif>
                                                                             {{ $score ? $score->total : '-' }}
                                                                         </td>
-                                                                    @endforeach
+                                                                    @endforeach --}}
                                                                     <td class="teacher-comment">
                                                                         <input type="text" class="form-control teacher-comment-input"
                                                                                name="teacher_comments[{{ $student->id }}]"
