@@ -10,6 +10,7 @@ use App\Models\Schoolclass;
 use App\Models\Schoolterm;
 use App\Models\Schoolsession;
 use App\Models\Subject;
+use App\Models\Schoolarm;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -75,7 +76,11 @@ class ClassBroadsheetController extends Controller
                 'guidancescomment'
             ]);
 
-        $schoolclass = Schoolclass::where('id', $schoolclassid)->first(['schoolclass', 'arm']);
+        // Fetch schoolclass with arm
+        $schoolclass = Schoolclass::where('schoolclass.id', $schoolclassid)
+            ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
+            ->first(['schoolclass.schoolclass', 'schoolclass.arm', 'schoolarm.arm']);
+
         $schoolterm = Schoolterm::where('id', $termid)->value('term') ?? 'N/A';
         $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
 
@@ -112,7 +117,7 @@ class ClassBroadsheetController extends Controller
             ]);
 
             // Update comments (only if provided, to avoid overwriting with empty strings)
-            $profile->classteachercomment = $teacherComment ?: $profile->classteachercomment;
+            $profile->classteacherscomment = $teacherComment ?: $profile->classteacherscomment;
             $profile->guidancescomment = $guidanceComment ?: $profile->guidancescomment;
             $profile->save();
         }

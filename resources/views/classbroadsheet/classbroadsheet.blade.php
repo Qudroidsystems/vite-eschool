@@ -149,21 +149,21 @@
                                                                         </div>
                                                                     </td>
                                                                     <td class="gender" data-gender="{{ $student->gender ?? 'N/A' }}">{{ $student->gender ?? 'N/A' }}</td>
-                                                                    {{-- @foreach ($subjects as $subject)
+                                                                    @foreach ($subjects as $subject)
                                                                         @php
                                                                             $score = $scores->where('student_id', $student->id)->where('subject_name', $subject->subject)->first();
                                                                         @endphp
-                                                                        <td class="subject-{{ \Illuminate\Support\Str::slug($subject->subject) }}"
+                                                                        {{-- <td class="subject-{{ \Illuminate\Support\Str::slug($subject->subject) }}"
                                                                             data-subject-{{ \Illuminate\Support\Str::slug($subject->subject) }}="{{ $score ? $score->total : '-' }}"
                                                                             align="center" style="font-size: 14px;"
                                                                             @if ($score && is_numeric($score->total) && $score->total <= 50) class="highlight-red" @endif>
                                                                             {{ $score ? $score->total : '-' }}
-                                                                        </td>
-                                                                    @endforeach --}}
+                                                                        </td> --}}
+                                                                    @endforeach
                                                                     <td class="teacher-comment">
                                                                         <input type="text" class="form-control teacher-comment-input"
                                                                                name="teacher_comments[{{ $student->id }}]"
-                                                                               value="{{ $profile ? $profile->classteachercomment : '' }}"
+                                                                               value="{{ $profile ? $profile->classteacherscomment : '' }}"
                                                                                data-teacher-comment="{{ $profile ? $profile->classteachercomment : 'N/A' }}"
                                                                                placeholder="Enter teacher's comment">
                                                                     </td>
