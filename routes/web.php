@@ -4,6 +4,7 @@ use \App\Http\Controllers\SchoolInformationController;
 use App\Http\Controllers\AnalysisController;
 use App\Http\Controllers\BiodataController;
 use App\Http\Controllers\CBTController;
+use App\Http\Controllers\ClassBroadsheetController;
 use App\Http\Controllers\ClasscategoryController;
 use App\Http\Controllers\ClassOperationController;
 use App\Http\Controllers\ClassTeacherController;
@@ -43,6 +44,7 @@ use App\Http\Controllers\SubjectTeacherController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ViewStudentController;
 use Illuminate\Support\Facades\Route;
+
 
 
 
@@ -259,6 +261,9 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/studentpersonalityprofile/{id}/{schoolclassid}/{sessid}/{termid}', [StudentpersonalityprofileController::class, 'studentpersonalityprofile'])->name('myclass.studentpersonalityprofile');
     Route::post('save', [StudentpersonalityprofileController::class, 'save'])->name('studentpersonalityprofile.save');
 
+    Route::get('/classbroadsheet/{schoolclassid}/{sessionid}/{termid}', [ClassBroadsheetController::class, 'classBroadsheet'])->name('classbroadsheet');
+    Route::patch('/classbroadsheet/{schoolclassid}/{sessionid}/{termid}/comments', [ClassBroadsheetController::class, 'updateComments'])->name('classbroadsheet.updateComments');
+    
     //school information
     Route::resource('school-information', SchoolInformationController::class);
 

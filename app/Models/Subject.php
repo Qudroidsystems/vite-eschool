@@ -15,4 +15,9 @@ class Subject extends Model
         'subject_code',
         'remark',
     ];
+
+    public function broadsheetRecords()
+    {
+        return $this->hasMany(BroadsheetRecord::class, 'subject_id', 'id');
+    }
 }

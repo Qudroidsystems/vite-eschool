@@ -145,7 +145,10 @@
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
                                                             @can('View my-class')
                                                                 <li>
-                                                                    <a href="viewstudent/{{ $sc->schoolclassID }}/{{ $sc->termid }}/{{ $sc->sessionid }}" class=" btn btn-light btn-active-primary"  title="View Students in {{$sc->schoolclass}}  {{ $sc->schoolarm}} Class"" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a>
+                                                                    <a href="viewstudent/{{ $sc->schoolclassID }}/{{ $sc->termid }}/{{ $sc->sessionid }}"   title="View Students in {{$sc->schoolclass}}  {{ $sc->schoolarm}}"  class="btn btn-subtle-primary btn-icon "><i class="ph-eye"></i></a>
+                                                                </li>
+                                                                 <li>
+                                                                    <a href="{{ route('classbroadsheet', [$sc->schoolclassID, $sc->termid, $sc->sessionid]) }}" title="Broadsheet for students in  {{$sc->schoolclass}}  {{ $sc->schoolarm}}" class="btn btn-subtle-success btn-icon"><i class="ph-eye"></i></a>
                                                                 </li>
                                                             @endcan
                                                             @can('Update my-class')

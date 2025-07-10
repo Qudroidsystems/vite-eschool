@@ -1190,38 +1190,38 @@
                                 </div>
                             </div>
                         </div>
-                    <div id="kt_app" class="toolbar py-3 py-lg-6">
-                        <div id="kt_app" class="toolbar_container">
-                            <div class="hstack gap-2 d-print-none">
-                                <a href="{{ route('viewstudent', [$schoolclassid, $termid, $sessionid]) }}" class="btn btn-success"><i class="ri-pr bi-pr-arrow-left"></i> << Back</a>
-                            </div>
-                        </div>
-                    </div>
-                @else
-                    <div class="alert alert-warning">
-                        No student data found.
-                    </div>
-                @endif
+                                <div id="kt_app" class="toolbar py-3 py-lg-6">
+                                    <div id="kt_app" class="toolbar_container">
+                                        <div class="hstack gap-2 d-print-none">
+                                            <a href="{{ route('viewstudent', [$schoolclassid, $termid, $sessionid]) }}" class="btn btn-success"><i class="ri-pr bi-pr-arrow-left"></i> << Back</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                @else
+                                    <div class="alert alert-warning">
+                                        No student data found.
+                                    </div>
+                                @endif
 
-                <!-- Image View Modal -->
-                <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Student Picture</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body text-center">
-                                <img id="enlargedImage" src="" alt="Student Picture" class="img-fluid" />
-                                <div class="placeholder-text">No image available</div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                        <!-- Image View Modal -->
+                        <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">Student Picture</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body text-center">
+                                        <img id="enlargedImage" src="" alt="Student Picture" class="img-fluid" />
+                                        <div class="placeholder-text">No image available</div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
