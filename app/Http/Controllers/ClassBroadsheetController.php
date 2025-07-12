@@ -117,7 +117,7 @@ class ClassBroadsheetController extends Controller
             ]);
 
             // Update comments (only if provided, to avoid overwriting with empty strings)
-            $profile->classteacherscomment = $teacherComment ?: $profile->classteacherscomment;
+            $profile->classteachercomment = $teacherComment ?: $profile->classteachercomment;
             $profile->guidancescomment = $guidanceComment ?: $profile->guidancescomment;
             $profile->save();
         }
@@ -125,4 +125,5 @@ class ClassBroadsheetController extends Controller
         return redirect()->route('classbroadsheet', [$schoolclassid, $sessionid, $termid])
             ->with('success', 'Comments updated successfully.');
     }
+    
 }

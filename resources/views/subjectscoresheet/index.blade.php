@@ -1,10 +1,8 @@
 @extends('layouts.master')
 
 @section('content')
-
-
 <style>
-/* Improve input field size and touch target on mobile */
+/* Existing styles */
 @media (max-width: 768px) {
     .score-input {
         height: 48px; /* Increased height for better touch interaction */
@@ -24,10 +22,19 @@
         height: 40px !important;
     }
     /* Adjust table cell padding for better spacing */
-    td.ca1, td.ca2, td.ca3, td.exam {
+    td.ca1, td.ca2, td.ca3, td.exam, td.vetted-status {
         padding: 4px !important; /* Reduced padding to fit wider inputs */
     }
+    /* Ensure vetted status text is readable on mobile */
+    td.vetted-status {
+        font-size: 0.9rem;
+    }
 }
+
+/* Vetted status background colors */
+.bg-success-subtle { background-color: #d4edda !important; }
+.bg-danger-subtle { background-color: #f8d7da !important; }
+.bg-warning-subtle { background-color: #fff3cd !important; }
 </style>
 
 <!-- Main content container -->
@@ -211,12 +218,16 @@
                                             <th>Cum</th>
                                             <th>Grade</th>
                                             <th>Position</th>
+                                            <th>Vetted Status</th>
                                         </tr>
                                     </thead>
                                     <tbody id="scoresheetTableBody" class="list form-check-all">
                                         @php $i = 0; @endphp
                                         @forelse ($broadsheets as $broadsheet)
-                                            <tr>
+                                            <tr class="{{ $broadsheet->vettedstatus === '1' ? 'bg-success-subtle' : ($broadsheet->vettedstatus === '0' ? 'bg-danger-subtle' : 'bg-warning-subtle') }}"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top"
+                                                title="{{ $broadsheet->vettedstatus === '1' ? 'Scores vetted' : ($broadsheet->vettedstatus === '0' ? 'Scores not vetted' : 'Scores not vetted yet') }}">
                                                 <td>
                                                     <div class="form-check">
                                                         <input class="form-check-input score-checkbox" type="checkbox" name="chk_child" data-id="{{ $broadsheet->id }}">
@@ -260,7 +271,12 @@
                                                     <span class="badge bg-secondary">{{ $broadsheet->grade ?? '-' }}</span>
                                                 </td>
                                                 <td class="position-display text-center">
-                                                    <span class="badge bg-info">{{ $broadsheet->position ?? '-' }}</span>
+                                                    <span class="badge bg-info">{{ $broadsheet->position ? $broadsheet->position . \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position) : '-' }}</span>
+                                                </td>
+                                                <td class="vetted-status text-center">
+                                                    <span class="badge {{ $broadsheet->vettedstatus === '1' ? 'bg-success' : ($broadsheet->vettedstatus === '0' ? 'bg-danger' : 'bg-warning') }}">
+                                                        {{ $broadsheet->vettedstatus === '1' ? 'Scores vetted' : ($broadsheet->vettedstatus === '0' ? 'Scores not vetted' : 'Scores not vetted yet') }}
+                                                    </span>
                                                 </td>
                                             </tr>
                                         @empty
@@ -373,7 +389,6 @@
                                     <button type="submit" class="btn btn-primary" id="importSubmit">Upload</button>
                                 </div>
                             </form>
-                               
                         </div>
                     </div>
                 </div>
@@ -404,12 +419,16 @@
                                             <th>Cum</th>
                                             <th>Grade</th>
                                             <th>Position</th>
+                                            <th>Vetted Status</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @php $i = 0; @endphp
                                         @forelse ($broadsheets as $broadsheet)
-                                            <tr>
+                                            <tr class="{{ $broadsheet->vettedstatus === '1' ? 'bg-success-subtle' : ($broadsheet->vettedstatus === '0' ? 'bg-danger-subtle' : 'bg-warning-subtle') }}"
+                                                data-bs-toggle="tooltip" 
+                                                data-bs-placement="top"
+                                                title="{{ $broadsheet->vettedstatus === '1' ? 'Scores vetted' : ($broadsheet->vettedstatus === '0' ? 'Scores not vetted' : 'Scores not vetted yet') }}">
                                                 <td>{{ ++$i }}</td>
                                                 <td class="admissionno">{{ $broadsheet->admissionno ?? '-' }}</td>
                                                 <td class="name">
@@ -433,10 +452,15 @@
                                                 <td>
                                                     {{ $broadsheet->position ? $broadsheet->position . \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position) : '-' }}
                                                 </td>
+                                                <td class="vetted-status text-center">
+                                                    <span class="badge {{ $broadsheet->vettedstatus === '1' ? 'bg-success' : ($broadsheet->vettedstatus === '0' ? 'bg-danger' : 'bg-warning') }}">
+                                                        {{ $broadsheet->vettedstatus === '1' ? 'Scores vetted' : ($broadsheet->vettedstatus === '0' ? 'Scores not vetted' : 'Scores not vetted yet') }}
+                                                    </span>
+                                                </td>
                                             </tr>
                                         @empty
                                             <tr>
-                                                <td colspan="12" class="text-center">No scores available.</td>
+                                                <td colspan="13" class="text-center">No scores available.</td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -469,7 +493,54 @@
     </div>
 </div>
 
+
 <script>
+    // Initialize Bootstrap tooltips
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Existing search functionality
+        const searchInput = document.querySelector('#searchInput');
+        const clearSearch = document.querySelector('#clearSearch');
+        const tableRows = document.querySelectorAll('#scoresheetTableBody tr:not(#noDataRow)');
+        const noDataAlert = document.querySelector('#noDataAlert');
+        const scoreCount = document.querySelector('#scoreCount');
+
+        searchInput.addEventListener('input', function () {
+            const searchQuery = this.value.trim().toLowerCase();
+            let visibleRows = 0;
+
+            tableRows.forEach(row => {
+                const admissionNo = row.querySelector('.admissionno').dataset.admissionno.toLowerCase();
+                const name = row.querySelector('.name').dataset.name.toLowerCase();
+
+                if (searchQuery === '' || admissionNo.includes(searchQuery) || name.includes(searchQuery)) {
+                    row.style.display = '';
+                    visibleRows++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            noDataAlert.style.display = visibleRows === 0 ? 'block' : 'none';
+            if (scoreCount) {
+                scoreCount.textContent = visibleRows;
+            }
+        });
+
+        clearSearch.addEventListener('click', function () {
+            searchInput.value = '';
+            tableRows.forEach(row => row.style.display = '');
+            noDataAlert.style.display = tableRows.length === 0 ? 'block' : 'none';
+            if (scoreCount) {
+                scoreCount.textContent = tableRows.length;
+            }
+        });
+    });
+
     console.log('Raw broadsheets before normalization:', @json($broadsheets));
     window.broadsheets = @json($broadsheets);
     window.term_id = {{ session('term_id') }};
@@ -489,5 +560,6 @@
     };
 </script>
 {{-- 
-<script src="{{ asset('js/subjectscoresheet.init.js') }}"></script> --}}
+<script src="{{ asset('js/subjectscoresheet.init.js') }}"></script> 
+--}}
 @endsection

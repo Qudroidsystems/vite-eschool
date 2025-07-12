@@ -163,7 +163,7 @@
                                                                     <td class="teacher-comment">
                                                                         <input type="text" class="form-control teacher-comment-input"
                                                                                name="teacher_comments[{{ $student->id }}]"
-                                                                               value="{{ $profile ? $profile->classteacherscomment : '' }}"
+                                                                               value="{{ $profile ? $profile->classteachercomment : '' }}"
                                                                                data-teacher-comment="{{ $profile ? $profile->classteachercomment : 'N/A' }}"
                                                                                placeholder="Enter teacher's comment">
                                                                     </td>

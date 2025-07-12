@@ -28,6 +28,9 @@ class Broadsheets extends Model
         'cmax',
         'avg',
         'remark',
+        'submiitedby',
+        'vettedby',
+        'vettedstatus'
     ];
 
     public function broadsheetRecord()

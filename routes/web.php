@@ -8,6 +8,7 @@ use App\Http\Controllers\ClassBroadsheetController;
 use App\Http\Controllers\ClasscategoryController;
 use App\Http\Controllers\ClassOperationController;
 use App\Http\Controllers\ClassTeacherController;
+use App\Http\Controllers\CompulsorySubjectClassController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\HomeController;
@@ -16,9 +17,11 @@ use App\Http\Controllers\MyClassController;
 use App\Http\Controllers\MyresultroomController;
 use App\Http\Controllers\MyScoreSheetController;
 use App\Http\Controllers\MySubjectController;
+use App\Http\Controllers\MySubjectVettingsController;
 use App\Http\Controllers\OverviewController;
 use App\Http\Controllers\ParentController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\PrincipalsCommentController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\ResultController;
 use App\Http\Controllers\RoleController;
@@ -41,9 +44,14 @@ use App\Http\Controllers\SubjectClassController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\SubjectOperationController;
 use App\Http\Controllers\SubjectTeacherController;
+use App\Http\Controllers\SubjectVettingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ViewStudentController;
 use Illuminate\Support\Facades\Route;
+
+
+
+
 
 
 
@@ -264,6 +272,27 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/classbroadsheet/{schoolclassid}/{sessionid}/{termid}', [ClassBroadsheetController::class, 'classBroadsheet'])->name('classbroadsheet');
     Route::patch('/classbroadsheet/{schoolclassid}/{sessionid}/{termid}/comments', [ClassBroadsheetController::class, 'updateComments'])->name('classbroadsheet.updateComments');
     
+
+    // compulsory subject class
+    Route::resource('compulsorysubjectclass', CompulsorySubjectClassController::class);
+
+    //principal's comment
+    Route::resource('principalscomment', PrincipalsCommentController::class);
+
+    //subject vettings
+    Route::resource('subjectvetting', SubjectVettingController::class);
+
+
+    // my subject vettings
+    Route::get('/mysubjectvettings', [MySubjectVettingsController::class, 'index'])->name('mysubjectvettings.index');
+    Route::get('/mysubjectvettings/classbroadsheet/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MySubjectVettingsController::class, 'classBroadsheet'])->name('mysubjectvettings.classbroadsheet');
+    Route::get('/mysubjectvettings/classbroadsheetmock/{schoolclassid}/{sessionid}/{termid}', [MySubjectVettingsController::class, 'classBroadsheetMock'])->name('mysubjectvettings.classbroadsheetmock');
+    Route::put('/mysubjectvettings/{id}', [MySubjectVettingsController::class, 'update'])->name('mysubjectvettings.update');
+    Route::put('/mysubjectvettings/{id}', [MySubjectVettingsController::class, 'updateMock'])->name('mysubjectvettings.updatemock');
+
+
+    Route::post('/broadsheets/update-vetted-status', [MySubjectVettingsController::class, 'updateVettedStatus'])->name('broadsheets.update-vetted-status');
+
     //school information
     Route::resource('school-information', SchoolInformationController::class);
 

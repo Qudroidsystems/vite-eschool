@@ -172,6 +172,22 @@
     @if (Route::is('classbroadsheet'))
         @include('layouts.pages-assets.css.classbroadsheet-list-css')
     @endif
+
+    @if (Route::is('principalscomment.*'))
+        @include('layouts.pages-assets.css.principalscomment-list-css')
+    @endif
+
+    @if (Route::is('compulsorysubjectclass.*'))
+        @include('layouts.pages-assets.css.compulsorysubjectclass-list-css')
+    @endif
+
+    @if (Route::is('subjectvetting.*'))
+        @include('layouts.pages-assets.css.subjectvettings-list-css')
+    @endif
+
+    @if (Route::is('mysubjectvettings.*'))
+        @include('layouts.pages-assets.css.mysubjectvettings-list-css')
+    @endif
 </head>
 
 <body>
@@ -375,7 +391,13 @@
                                           <li class="nav-item">
                                               <a href="{{ route('mysubject.index') }}" class="nav-link" data-key="t-products">My Subject</a>
                                         </li>
-                                  @endcan                                  
+                                  @endcan       
+                                  
+                                   @can('View my-subject-vettings')
+                                          <li class="nav-item">
+                                              <a href="{{ route('mysubjectvettings.index') }}" class="nav-link" data-key="t-products">Subjects to Vet</a>
+                                        </li>
+                                  @endcan       
                                 </ul>
                             </div>
                         </li>
@@ -572,10 +594,49 @@
                                             <a href="{{ route('subjectclass.index') }}" class="nav-link" data-key="t-create-invoice">Assign Class Subject</a>
                                           </li>
                                     @endcan
+
+                                     @can('View compulsory-subject')
+                                          <li class="nav-item">
+                                            <a href="{{ route('compulsorysubjectclass.index') }}" class="nav-link" data-key="t-create-invoice">Assign Compulsory  Subject to classes</a>
+                                          </li>
+                                    @endcan
                                 
                                 </ul>
                             </div>
                         </li> 
+
+                        <li class="nav-item">
+                            <a href="#sidebarPrincipal" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSub">
+                                <i class="ph-file-text"></i> <span data-key="t-invoices">Principal's Comments</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarPrincipal">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View subjects')
+                                          <li class="nav-item">
+                                              <a href="{{ route('principalscomment.index') }}" class="nav-link" data-key="t-list-view">Assign Staff</a>
+                                          </li>
+                                    @endcan
+                                </ul>
+                            </div>
+                        </li> 
+
+                        <li class="nav-item">
+                            <a href="#sidebarSubjectvetting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSub">
+                                <i class="ph-file-text"></i> <span data-key="t-invoices">Subject Vettings</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarSubjectvetting">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View subjects')
+                                          <li class="nav-item">
+                                              <a href="{{ route('subjectvetting.index') }}" class="nav-link" data-key="t-list-view">Assign Subjects to Staff</a>
+                                          </li>
+                                    @endcan
+                                </ul>
+                            </div>
+                        </li> 
+
+
+                        
 
 
                         <li class="nav-item">
@@ -1943,8 +2004,25 @@
       @if (Route::is('cbt*'))
             @include('layouts.pages-assets.js.cbt-list-js')
       @endif
+
       @if (Route::is('classbroadsheet'))
             @include('layouts.pages-assets.js.classbroadsheet-list-js')
+      @endif
+
+      @if (Route::is('principalscomment.*'))
+            @include('layouts.pages-assets.js.principalscomment-list-js')
+      @endif
+
+      @if (Route::is('compulsorysubjectclass.*'))
+            @include('layouts.pages-assets.js.compulsorysubjectclass-list-js')
+      @endif
+
+      @if (Route::is('subjectvetting.*'))
+            @include('layouts.pages-assets.js.subjectvetting-list-js')
+      @endif
+
+      @if (Route::is('mysubjectvettings.*'))
+            @include('layouts.pages-assets.js.mysubjectvettings-list-js')
       @endif
 
       </body>

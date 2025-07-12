@@ -24,6 +24,9 @@ class BroadsheetsMock extends Model
         'cmax',
         'avg',
         'remark',
+        'submiitedby',
+        'vettedby',
+        'vettedstatus'
     ];
 
     /**

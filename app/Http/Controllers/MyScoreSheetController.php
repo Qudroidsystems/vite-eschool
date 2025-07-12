@@ -64,61 +64,7 @@ class MyScoreSheetController extends Controller
     }
 
 
-    // public function subjectscoresheet($schoolclassid, $subjectclassid, $staffid, $termid, $sessionid)
-    // {
-    //     Log::info('Subjectscoresheet parameters:', compact('schoolclassid', 'subjectclassid', 'staffid', 'termid', 'sessionid'));
-
-    //     session([
-    //         'schoolclass_id' => $schoolclassid,
-    //         'subjectclass_id' => $subjectclassid,
-    //         'staff_id' => $staffid,
-    //         'term_id' => $termid,
-    //         'session_id' => $sessionid,
-    //     ]);
-
-    //     $broadsheets = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
-
-    //     // Log detailed broadsheets data
-    //     Log::info('Subjectscoresheet broadsheets data:', [
-    //         'count' => $broadsheets->count(),
-    //         'data' => $broadsheets->toArray() // Log the raw data
-    //     ]);
-
-    //     $pagetitle = 'Subject Scoresheet';
-
-    //     if ($broadsheets->isNotEmpty()) {
-    //         $this->updateClassMetrics($subjectclassid, $staffid, $termid, $sessionid);
-    //         $this->updateSubjectPositions($subjectclassid, $staffid, $termid, $sessionid);
-    //         $this->updateClassPositions($schoolclassid, $termid, $sessionid);
-
-    //         $firstBroadsheet = $broadsheets->first();
-    //         $pagetitle = sprintf(
-    //             'Scoresheet for %s (%s) - %s %s - %s %s',
-    //             $firstBroadsheet->subject,
-    //             $firstBroadsheet->subject_code,
-    //             $firstBroadsheet->schoolclass,
-    //             $firstBroadsheet->arm,
-    //             $firstBroadsheet->term,
-    //             $firstBroadsheet->session
-    //         );
-    //     }
-
-    //     // Fetch the classcategory's is_senior flag
-    //     $schoolclass = Schoolclass::with('classcategory')->find($schoolclassid);
-    //     $is_senior = $schoolclass && $schoolclass->classcategory ? $schoolclass->classcategory->is_senior : false;
-
-    //     // Log is_senior flag details
-    //     Log::info('is_senior flag details:', [
-    //         'schoolclass_id' => $schoolclassid,
-    //         'schoolclass_found' => !empty($schoolclass),
-    //         'classcategory_found' => !empty($schoolclass->classcategory),
-    //         'is_senior' => $is_senior,
-    //         'classcategory_id' => $schoolclass && $schoolclass->classcategory ? $schoolclass->classcategory->id : null,
-    //         'classcategory_name' => $schoolclass && $schoolclass->classcategory ? $schoolclass->classcategory->name : null,
-    //     ]);
-
-    //     return view('subjectscoresheet.index', compact('broadsheets', 'pagetitle', 'is_senior'));
-    // }
+   
     public function subjectscoresheet($schoolclassid, $subjectclassid, $staffid, $termid, $sessionid)
     {
         Log::info('Subjectscoresheet parameters:', compact('schoolclassid', 'subjectclassid', 'staffid', 'termid', 'sessionid'));
@@ -245,6 +191,7 @@ class MyScoreSheetController extends Controller
             'broadsheets.grade',
             'broadsheets.subject_position_class as position',
             'broadsheets.remark',
+            'broadsheets.vettedstatus', // Added vettedstatus
         ])->sortBy('lastname');
 
         Log::debug('getBroadsheets: Retrieved broadsheets', [
@@ -261,7 +208,8 @@ class MyScoreSheetController extends Controller
                     'subject' => $item->subject,
                     'subject_id' => $item->subject_id,
                     'subjectclass_id' => $item->subjectclid,
-                    'position' => $item->position, // Added position to log
+                    'position' => $item->position,
+                    'vettedstatus' => $item->vettedstatus, // Added to log
                 ];
             })->toArray(),
             'subjects' => $results->pluck('subject')->unique()->values()->toArray(),
@@ -284,7 +232,6 @@ class MyScoreSheetController extends Controller
 
             $newCum = $termId == 1 ? $newTotal : round(($newBf + $newTotal) / 2, 2);
 
-            // Use Classcategory model for grading
             $schoolclass = Schoolclass::with('classcategory')->find($broadsheet->schoolclass_id);
             $newGrade = $schoolclass && $schoolclass->classcategory
                 ? $schoolclass->classcategory->calculateGrade($newCum)
@@ -313,6 +260,7 @@ class MyScoreSheetController extends Controller
                         'grade' => $broadsheet->grade,
                         'remark' => $broadsheet->remark,
                         'position' => $broadsheet->position,
+                        'vettedstatus' => $broadsheet->vettedstatus,
                     ],
                     'new_values' => [
                         'bf' => $newBf,
@@ -320,7 +268,8 @@ class MyScoreSheetController extends Controller
                         'cum' => $newCum,
                         'grade' => $newGrade,
                         'remark' => $newRemark,
-                        'position' => $broadsheet->position, // Log position
+                        'position' => $broadsheet->position,
+                        'vettedstatus' => $broadsheet->vettedstatus,
                     ],
                 ]);
 
