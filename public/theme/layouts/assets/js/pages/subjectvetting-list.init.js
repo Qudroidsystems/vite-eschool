@@ -94,8 +94,8 @@ function initializeVettingStatusChart() {
                         window.vettingStatusCounts.completed || 0,
                         window.vettingStatusCounts.rejected || 0
                     ],
-                    backgroundColor: ['#ffce56', '#36c6d3', '#ff6384'],
-                    borderColor: ['#e0b446', '#2aa8b3', '#e05574'],
+                    backgroundColor: ['#dc3545', '#28a745', '#ffc107'], // Red for Pending, Green for Completed, Yellow for Rejected
+                    borderColor: ['#c82333', '#218838', '#e0a800'], // Darker shades for borders
                     borderWidth: 1
                 }]
             },
@@ -550,7 +550,10 @@ function refreshTable() {
                     termname: item.termname,
                     sessionname: item.sessionname,
                     status: item.status,
-                    datereg: item.updated_at.split(' ')[0]
+                    datereg: item.updated_at.split(' ')[0],
+                    className: item.status === 'completed' ? 'table-success' :
+                               item.status === 'pending' ? 'table-danger' :
+                               item.status === 'rejected' ? 'table-warning' : ''
                 });
             });
             
