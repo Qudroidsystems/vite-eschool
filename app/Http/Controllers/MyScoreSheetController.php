@@ -341,41 +341,6 @@ class MyScoreSheetController extends Controller
         }
     }
 
-    // protected function getPreviousTermCum($studentId, $subjectId, $termId, $sessionId)
-    // {
-    //     if ($termId == 1) {
-    //         Log::info("Term ID is 1, setting bf to 0 for student_id: {$studentId}, subject_id: {$subjectId}");
-    //         return 0;
-    //     }
-
-    //     $previousTermCum = Broadsheets::where('broadsheet_records.student_id', $studentId)
-    //         ->where('broadsheet_records.subject_id', $subjectId)
-    //         ->where('broadsheets.term_id', $termId - 1)
-    //         ->where('broadsheet_records.session_id', $sessionId)
-    //         ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-    //         ->value('broadsheets.cum');
-
-    //     if (is_null($previousTermCum)) {
-    //         Log::warning("No cumulative score found for previous term", [
-    //             'student_id' => $studentId,
-    //             'subject_id' => $subjectId,
-    //             'term_id' => $termId - 1,
-    //             'session_id' => $sessionId,
-    //         ]);
-    //         return 0;
-    //     }
-
-    //     Log::info("Fetched previous term cumulative score", [
-    //         'student_id' => $studentId,
-    //         'subject_id' => $subjectId,
-    //         'term_id' => $termId - 1,
-    //         'cum' => $previousTermCum,
-    //     ]);
-
-    //     return round($previousTermCum, 2);
-    // }
-
-    
     protected function updateClassMetrics($subjectclassid, $staffid, $termid, $sessionid)
     {
         // Fetch the subjectclass to get the subject_id
@@ -399,7 +364,7 @@ class MyScoreSheetController extends Controller
 
         $subjectId = $subjectTeacher->subjectid;
 
-        // Calculate class metrics (min, max, avg) for the subject across all students linked to the subjectclass_id
+        // Calculate class metrics (min, max, avg) for the subject across all students
         $metrics = Broadsheets::where('broadsheets.subjectclass_id', $subjectclassid)
             ->where('broadsheets.staff_id', $staffid)
             ->where('broadsheets.term_id', $termid)
@@ -407,17 +372,16 @@ class MyScoreSheetController extends Controller
             ->where('broadsheet_records.session_id', $sessionid)
             ->where('broadsheet_records.subject_id', $subjectId)
             ->select([
-                DB::raw('MIN(broadsheets.total) as class_min'),
-                DB::raw('MAX(broadsheets.total) as class_max'),
-                DB::raw('AVG(broadsheets.total) as class_avg'),
-                DB::raw('COUNT(broadsheets.id) as student_count'),
-                DB::raw('SUM(broadsheets.total) as total_sum')
+                DB::raw('MIN(broadsheets.cum) as class_min'),
+                DB::raw('MAX(broadsheets.cum) as class_max'),
+                DB::raw('SUM(broadsheets.cum) as cum_sum'),
+                DB::raw('COUNT(broadsheets.id) as student_count')
             ])
             ->first();
 
         $classMin = $metrics->class_min ?? 0;
         $classMax = $metrics->class_max ?? 0;
-        $classAvg = $metrics->student_count > 0 ? round($metrics->class_avg, 1) : 0;
+        $classAvg = $metrics->student_count > 0 ? round($metrics->cum_sum / $metrics->student_count, 1) : 0;
 
         Log::info('Calculated class metrics', [
             'subjectclass_id' => $subjectclassid,
@@ -429,7 +393,7 @@ class MyScoreSheetController extends Controller
             'class_max' => $classMax,
             'class_avg' => $classAvg,
             'student_count' => $metrics->student_count,
-            'total_sum' => $metrics->total_sum,
+            'cum_sum' => $metrics->cum_sum,
         ]);
 
         // Update all relevant broadsheet records with the calculated metrics
@@ -453,8 +417,6 @@ class MyScoreSheetController extends Controller
             'subject_id' => $subjectId,
         ]);
     }
-
-
 
 protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
 {
@@ -969,81 +931,7 @@ protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id,
         ],
     ], 200);
 }
-  
-// public function import(Request $request)
-//     {
-//         Log::info('Import: Request received', [
-//             'user_id' => $request->user()->id,
-//             'has_file' => $request->hasFile('file'),
-//             'input' => $request->all(),
-//         ]);
 
-//         $request->validate([
-//             'file' => 'required|file|mimes:xlsx,xls',
-//             'schoolclass_id' => 'required|integer|exists:schoolclass,id',
-//             'subjectclass_id' => 'required|integer|exists:subjectclass,id',
-//             'staff_id' => 'required|integer|exists:users,id',
-//             'term_id' => 'required|integer|in:1,2,3',
-//             'session_id' => 'required|integer|exists:schoolsession,id',
-//         ]);
-
-//         try {
-//             $importData = [
-//                 'schoolclass_id' => $request->schoolclass_id,
-//                 'subjectclass_id' => $request->subjectclass_id,
-//                 'staff_id' => $request->staff_id,
-//                 'term_id' => $request->term_id,
-//                 'session_id' => $request->session_id,
-//             ];
-
-//             Log::debug('Import: Starting import', $importData);
-
-//             $import = new ScoresheetImport($importData);
-
-//             // Validate Excel metadata
-//             $filePath = $request->file('file')->getPathname();
-//             $import->validateExcelMetadata($filePath);
-
-//             // Proceed with import
-//             Excel::import($import, $request->file('file'));
-
-//             // After import, update class metrics and positions
-//             $this->updateClassMetrics($request->subjectclass_id, $request->staff_id, $request->term_id, $request->session_id);
-//             $this->updateSubjectPositions($request->subjectclass_id, $request->staff_id, $request->term_id, $request->session_id);
-//             $this->updateClassPositions($request->schoolclass_id, $request->term_id, $request->session_id);
-
-//             $updatedBroadsheets = $import->getUpdatedBroadsheets();
-//             $failures = $import->getFailures();
-
-//             Log::info('Import: Success', [
-//                 'updated_broadsheets_count' => count($updatedBroadsheets),
-//                 'failures_count' => count($failures),
-//             ]);
-
-//             $message = "Scores imported successfully! Updated " . count($updatedBroadsheets) . " records.";
-//             if ($failures) {
-//                 $message .= " Skipped " . count($failures) . " rows due to validation errors.";
-//             }
-
-//             return redirect()->back()->with('success', $message);
-
-//         } catch (\Exception $e) {
-//             Log::error('Import: Error', [
-//                 'message' => $e->getMessage(),
-//                 'trace' => $e->getTraceAsString(),
-//             ]);
-
-//             // Customize error message for metadata validation failures
-//             $errorMessage = $e->getMessage();
-//             if (str_contains($errorMessage, 'Excel file metadata does not match')) {
-//                 $errorMessage = 'The uploaded scoresheet does not match the selected class, subject, term, or session. Please check the scoresheet details and try again. Details: ' . $errorMessage;
-//             } else {
-//                 $errorMessage = 'Failed to import scores: ' . $errorMessage;
-//             }
-
-//             return redirect()->back()->with('error', $errorMessage);
-//         }
-//     }
 
 public function import(Request $request)
 {
@@ -1784,7 +1672,7 @@ public function importProgress(Request $request)
             'broadsheetmock.grade',
             'broadsheetmock.subject_position_class as position',
             'broadsheetmock.remark',
-        ])->sortBy('admissionno');
+        ])->sortBy('lname');
 
             foreach ($results as $broadsheet) {
             $exam = $broadsheet->exam ?? 0;

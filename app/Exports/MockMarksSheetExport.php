@@ -119,7 +119,7 @@ class MockMarksSheetExport
             ->where('broadsheets.staff_id', $this->staffid)
             ->where('broadsheets.term_id', $this->termid)
             ->where('broadsheet_records.session_id', $this->sessionid)
-            ->orderBy('studentRegistration.admissionNO')
+            ->orderBy('studentRegistration.lastname')
             ->select([
                 'studentRegistration.admissionNO as admissionno',
                 'studentRegistration.firstname as fname',
