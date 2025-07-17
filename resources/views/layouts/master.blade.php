@@ -397,7 +397,13 @@
                                           <li class="nav-item">
                                               <a href="{{ route('mysubjectvettings.index') }}" class="nav-link" data-key="t-products">Subjects to Vet</a>
                                         </li>
-                                  @endcan       
+                                  @endcan   
+                                  
+                                   {{-- @can('View principals-comment')
+                                          <li class="nav-item">
+                                              <a href="{{ route('mysubjectvettings.index') }}" class="nav-link" data-key="t-products">Subjects to Vet</a>
+                                        </li>
+                                  @endcan    --}}
                                 </ul>
                             </div>
                         </li>
@@ -611,7 +617,7 @@
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarPrincipal">
                                 <ul class="nav nav-sm flex-column">
-                                    @can('View subjects')
+                                    @can('View principals-comment')
                                           <li class="nav-item">
                                               <a href="{{ route('principalscomment.index') }}" class="nav-link" data-key="t-list-view">Assign Staff</a>
                                           </li>

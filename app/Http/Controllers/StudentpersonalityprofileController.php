@@ -23,7 +23,7 @@ class StudentpersonalityprofileController extends Controller
      * @param int $termid School Term ID
      * @return \Illuminate\Http\Response
      */
-    public function studentpersonalityprofile($id, $schoolclassid, $sessionid, $termid)
+    public function studentpersonalityprofile($id, $schoolclassid, $sessionid, $termid) 
     {
         $pagetitle = "Student Personality Profile";
 
@@ -57,6 +57,7 @@ class StudentpersonalityprofileController extends Controller
             ->where('broadsheet_records.schoolclass_id', $schoolclassid)
             ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
             ->leftJoin('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+            ->orderBy('subject.subject')
             ->get([
                 'subject.subject as subject_name',
                 'subject.subject_code',
