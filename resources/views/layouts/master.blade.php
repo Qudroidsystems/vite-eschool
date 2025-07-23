@@ -120,8 +120,8 @@
         @include('layouts.pages-assets.css.viewstudent-list-css')
     @endif 
 
-    @if (Route::is('studentreport.*'))
-        @include('layouts.pages-assets.css.studentreport-list-css')
+    @if (Route::is('studentreports.*'))
+            @include('layouts.pages-assets.css.studentreport-list-css')
     @endif 
 
 
@@ -436,16 +436,11 @@
                                               <a href="{{ route('myresultroom.index') }}" class="nav-link" data-key="t-products">Terminal & Mock Records</a>
                                         </li>
                                     @endcan
-                                    @can('View student-report')
-                                         <li class="nav-item">
-                                               <a href="{{ route('studentreport.index') }}" class="nav-link" data-key="t-products">Student ddddTerminal Reports</a>
-                                         </li>
-                                    @endcan
-
+                                  
                                  
                                    
                                     <li class="nav-item">
-                                        <a href="apps-ecommerce-products.html" class="nav-link" data-key="t-products">Subject Score Upload</a>
+                                        <a href="{{ route('studentreports.index') }}" class="nav-link" data-key="t-products">Subject Score Upload</a>
                                     </li>
                                     
                                 </ul>
@@ -2000,7 +1995,7 @@
           @include('layouts.pages-assets.js.viewstudent-list-js')
       @endif 
 
-       @if (Route::is('studentreport'))
+       @if (Route::is('studentreports.*'))
           @include('layouts.pages-assets.js.studentreport-list-js')
       @endif 
 

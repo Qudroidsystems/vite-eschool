@@ -257,9 +257,10 @@ Route::group(['middleware' => ['auth']], function () {
     // Route::get('/viewstudentreport/{id}/{termid}/{sessionid}', [ViewStudentReportController::class, 'show'])->name('viewstudentreport');
     // Route::get('/viewstudentmockreport/{id}/{termid}/{sessionid}', [ViewStudentMockReportController::class, 'show'])->name('viewstudentreport');
 
-    Route::get('/studentreport', [ViewStudentReportController::class, 'index'])->name('studentreport.index');
-    Route::get('/studentreport/registered-classes', [ViewStudentReportController::class, 'registeredClasses'])->name('studentreport.registered-classes');
-    Route::get('/classbroadsheet/{schoolclassid}/{sessionid}/{termid}', [ViewStudentReportController::class, 'classBroadsheet'])->name('classbroadsheet');
+    Route::get('/studentreports', [ViewStudentReportController::class, 'index'])->name('studentreports.index');
+    Route::get('/studentresult/{id}/{schoolclassid}/{sessionid}/{termid}', [ViewStudentReportController::class, 'studentresult'])->name('studentresult');
+    Route::get('/student-reports/registered-classes', [ViewStudentReportController::class, 'registeredClasses'])->name('studentreports.registeredClasses');
+    Route::get('/class-broadsheet/{schoolclassid}/{sessionid}/{termid}', [ViewStudentReportController::class, 'classBroadsheet'])->name('classbroadsheet');
 
    
 
@@ -271,7 +272,6 @@ Route::group(['middleware' => ['auth']], function () {
     
     Route::delete('/subjects/registered-classes', [SubjectOperationController::class, 'destroy'])->name('subjects.destroy');
     Route::get('/subjects/registered-classes', [SubjectOperationController::class, 'getRegisteredClasses'])->name('subjects.registered-classes');
-    
     // Route for batch unregistration
     Route::post('/subjectregistration/destroy', [SubjectOperationController::class, 'destroy'])->name('subjectregistration.destroy');
 

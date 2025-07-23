@@ -2,11 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Broadsheets;
+use App\Models\Schoolarm;
 use App\Models\Schoolclass;
 use App\Models\Schoolsession;
-use App\Models\Schoolarm;
+use App\Models\Schoolterm;
+use App\Models\Student;
 use App\Models\Studentclass;
+use App\Models\Studentpersonalityprofile;
+use function Pest\Laravel\json;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
@@ -20,65 +27,73 @@ class ViewStudentReportController extends Controller
         $this->middleware('permission:Delete student-report', ['only' => ['destroy']]);
     }
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse 
     {
         $pagetitle = "Student Terminal Report Management";
         $current = "Current";
+
+        // Initialize empty collection for students
+        $allstudents = new LengthAwarePaginator([], 0, 10);
+
+        // Fetch students only if class and session are selected
+        if ($request->filled('schoolclassid') && $request->filled('sessionid') && $request->input('schoolclassid') !== 'ALL' && $request->input('sessionid') !== 'ALL') {
+            $query = Studentclass::query()
+                ->where('schoolclassid', $request->input('schoolclassid'))
+                ->where('sessionid', $request->input('sessionid'))
+                ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
+                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
+                ->where('schoolsession.status', '=', $current);
+
+            // Apply search filter if provided
+            if ($search = $request->input('search')) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('studentRegistration.admissionNo', 'like', "%{$search}%")
+                      ->orWhere('studentRegistration.firstname', 'like', "%{$search}%")
+                      ->orWhere('studentRegistration.lastname', 'like', "%{$search}%")
+                      ->orWhere('studentRegistration.othername', 'like', "%{$search}%");
+                });
+            }
+
+            // Fetch students with pagination
+            $allstudents = $query->select([
+                'studentRegistration.admissionNo as admissionno',
+                'studentRegistration.firstname as firstname',
+                'studentRegistration.lastname as lastname',
+                'studentRegistration.othername as othername',
+                'studentRegistration.gender as gender',
+                'studentRegistration.id as stid',
+                'studentpicture.picture as picture',
+                'studentclass.schoolclassid as schoolclassID',
+                'studentclass.sessionid as sessionid',
+                'schoolclass.schoolclass as schoolclass',
+                'schoolarm.arm as schoolarm',
+                'schoolsession.session as session',
+            ])->latest('studentclass.created_at')->paginate(10);
+        }
 
         // Fetch data for filters
         $schoolsessions = Schoolsession::where('status', 'Current')->get();
         $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->get(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm']);
 
-        // Initialize $classes as null for non-AJAX requests to keep table empty
-        $classes = null;
-
-        // Handle AJAX requests for filtering
-        if ($request->ajax()) {
-            $query = Studentclass::query()
-                ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-                ->where('schoolsession.status', '=', $current);
-
-            // Apply filters
-            if ($request->has('search') && $request->input('search')) {
-                $search = $request->input('search');
-                $query->where(function ($q) use ($search) {
-                    $q->where('schoolclass.schoolclass', 'like', "%{$search}%")
-                      ->orWhere('schoolarm.arm', 'like', "%{$search}%");
-                });
-            }
-            if ($request->has('class_id') && $request->input('class_id') !== 'ALL') {
-                $query->where('schoolclass.id', $request->input('class_id'));
-            }
-            if ($request->has('session_id') && $request->input('session_id') !== 'ALL') {
-                $query->where('schoolsession.id', $request->input('session_id'));
-            }
-
-            // Paginate results with sorting
-            $classes = $query->distinct()->orderBy('schoolclass.schoolclass')->paginate(10, [
-                'schoolclass.schoolclass as schoolclass',
-                'studentclass.sessionid as sessionid',
-                'schoolarm.arm as schoolarm',
-                'schoolsession.session as session',
-                'studentclass.updated_at as updated_at',
-                'schoolclass.id as schoolclassID'
-            ]);
-
-            if (config('app.debug')) {
-                Log::info('Classes fetched:', $classes->toArray());
-            }
-
-            return view('studentreports.partials.class_rows', compact('classes'));
-        }
-
         if (config('app.debug')) {
             Log::info('Sessions for select:', $schoolsessions->toArray());
-            Log::info('School classes for select:', $schoolclasses->toArray());
+            Log::info('Students fetched:', $allstudents->toArray());
         }
 
-        return view('studentreports.index', compact('classes', 'schoolsessions', 'schoolclasses', 'pagetitle'));
+        // Check if the request is AJAX
+        if ($request->ajax()) {
+            return response()->json([
+                'tableBody' => view('studentreports.partials.student_rows', compact('allstudents'))->render(),
+                'pagination' => $allstudents->links('pagination::bootstrap-5')->render(),
+                'studentCount' => $allstudents->total(),
+            ]);
+        }
+
+        return view('studentreports.index', compact('allstudents', 'schoolsessions', 'schoolclasses', 'pagetitle'));
     }
 
     public function registeredClasses(Request $request)
@@ -117,14 +132,11 @@ class ViewStudentReportController extends Controller
 
     public function classBroadsheet($schoolclassid, $sessionid, $termid): View
     {
-        // Placeholder: Fetch broadsheet data for the given class, session, and term
         $class = Schoolclass::findOrFail($schoolclassid);
         $session = Schoolsession::findOrFail($sessionid);
         $term = $termid; // Assuming termid is 1, 2, or 3 for First, Second, Third Term
         $pagetitle = "Broadsheet for {$class->schoolclass} - {$session->session} - Term {$term}";
 
-        // Add logic to fetch broadsheet data (e.g., student scores)
-        // This is a placeholder; replace with actual query
         $data = [
             'class' => $class,
             'session' => $session,
@@ -132,6 +144,77 @@ class ViewStudentReportController extends Controller
             'pagetitle' => $pagetitle
         ];
 
-        return view('myclass.broadsheet', $data);
+        return view('studentreports.broadsheet', $data);
     }
+
+
+       public function studentresult($id, $schoolclassid, $sessionid, $termid) 
+    {
+        $pagetitle = "Student Personality Profile";
+
+        // Fetch student details
+        $students = Student::where('studentRegistration.id', $id)
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->get([
+                'studentRegistration.id as id',
+                'studentRegistration.admissionNo as admissionNo',
+                'studentRegistration.firstname as fname',
+                'studentRegistration.home_address as homeaddress',
+                'studentRegistration.lastname as lastname',
+                'studentRegistration.othername as othername',
+                'studentRegistration.dateofbirth as dateofbirth',
+                'studentRegistration.gender as gender',
+                'studentRegistration.updated_at as updated_at',
+                'studentpicture.picture as picture'
+            ]);
+
+        // Fetch personality profile
+        $studentpp = Studentpersonalityprofile::where('studentid', $id)
+            ->where('schoolclassid', $schoolclassid)
+            ->where('sessionid', $sessionid)
+            ->where('termid', $termid)
+            ->get();
+
+        // Fetch terminal report scores
+        $scores = Broadsheets::where('broadsheet_records.student_id', $id)
+            ->where('broadsheets.term_id', $termid)
+            ->where('broadsheet_records.session_id', $sessionid)
+            ->where('broadsheet_records.schoolclass_id', $schoolclassid)
+            ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+            ->leftJoin('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+            ->orderBy('subject.subject')
+            ->get([
+                'subject.subject as subject_name',
+                'subject.subject_code',
+                'broadsheets.ca1',
+                'broadsheets.ca2',
+                'broadsheets.ca3',
+                'broadsheets.exam',
+                'broadsheets.total',
+                'broadsheets.bf',
+                'broadsheets.cum',
+                'broadsheets.grade',
+                'broadsheets.subject_position_class as position',
+                'broadsheets.avg as class_average',
+            ]);
+
+      
+        $schoolclass = Schoolclass::where('id', $schoolclassid)->first(['schoolclass', 'arm']);
+        $schoolterm = Schoolterm::where('id', $termid)->value('term') ?? 'N/A';
+        $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
+
+        return view('studentreports.studentresult')
+            ->with('students', $students)
+            ->with('studentpp', $studentpp)
+            ->with('scores', $scores)
+            ->with('studentid', $id)
+            ->with('schoolclassid', $schoolclassid)
+            ->with('sessionid', $sessionid)
+            ->with('termid', $termid)
+            ->with('pagetitle', $pagetitle)
+            ->with('schoolclass', $schoolclass)
+            ->with('schoolterm', $schoolterm)
+            ->with('schoolsession', $schoolsession);
+    }
+
 }

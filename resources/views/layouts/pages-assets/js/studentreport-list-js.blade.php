@@ -1,4 +1,4 @@
-{{-- <!-- JAVASCRIPT -->
+<!-- JAVASCRIPT -->
 <script src="{{ asset('theme/layouts/assets/libs/bootstrap/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/libs/simplebar/simplebar.min.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/js/plugins.js') }}"></script>
@@ -15,9 +15,9 @@
 
 
 <!-- User list init js (load after list.js and dependencies) -->
-<script src="{{ asset('theme/layouts/assets/js/pages/viewstudent-list.init.js') }}"></script>
+<script src="{{ asset('theme/layouts/assets/js/pages/studentreports-list.init.js') }}"></script>
 <!-- App js -->
 <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script>
 
 {{-- <!-- Dashboard script (load last to minimize conflicts) -->
-<script src="{{ asset('theme/layouts/assets/js/pages/dashboard-real-estate.init.js') }}"></script> --}} --}}
+<script src="{{ asset('theme/layouts/assets/js/pages/dashboard-real-estate.init.js') }}"></script> --}}
