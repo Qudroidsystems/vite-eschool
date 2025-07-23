@@ -33,7 +33,7 @@
             user-select: none;
         }
 
-        /* Content wrapper to ensure content appears above watermark */
+        /* Content wrapper */
         .content-wrapper {
             position: relative;
             z-index: 2;
@@ -76,7 +76,7 @@
             display: inline-block;
         }
 
-        /* Enhanced print styles */
+        /* Print styles */
         @media print {
             .watermark {
                 position: absolute;
@@ -87,9 +87,6 @@
             @page {
                 size: A4;
                 margin: 15mm;
-            }
-            div.print-body {
-                background-color: white;
             }
             html, body {
                 width: 100%;
@@ -102,7 +99,7 @@
             }
         }
 
-        /* Enhanced header styles */
+        /* Header styles */
         p.school-name1 {
             font-family: 'Times New Roman', Times, serif;
             font-size: 42px;
@@ -138,7 +135,7 @@
             border-radius: 1px;
         }
 
-        /* Enhanced card styles */
+        /* Card styles */
         .main-card {
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             border-radius: 20px;
@@ -153,7 +150,7 @@
             border: 1px solid #e2e8f0;
         }
 
-        /* Enhanced result details */
+        /* Result details */
         span.result-details {
             font-size: 16px;
             font-family: 'Times New Roman', Times, serif;
@@ -163,9 +160,20 @@
         span.rd1, span.rd2, span.rd3, span.rd4, span.rd5, span.rd6, span.rd7, span.rd8, span.rd9, span.rd10 {
             border-bottom: 2px dotted #6b7280;
             margin-left: 8px;
+            min-width: 150px;
+            display: inline-block;
         }
 
-        /* Enhanced table styles */
+        /* Improved spacing for student info */
+        /* .student-info-row {
+            margin-bottom: 1rem;
+        }
+        .student-info-item {
+            min-width: 350px;
+            margin-bottom: 0.5rem;
+        } */
+
+        /* Table styles */
         .result-table table {
             border: 2px solid #1e40af;
             border-radius: 8px;
@@ -174,7 +182,7 @@
         }
         
         .result-table thead th {
-            background: linear-gradient(135deg, #1e40af, #3b82f6);
+            background: #1e40af;
             color: white;
             font-weight: 600;
             border: 1px solid #1d4ed8;
@@ -200,23 +208,33 @@
             background: #e0f2fe;
         }
 
-        /* Enhanced highlight class for scores less than 40 */
+        /* Subject column styling */
+        .result-table tbody td:nth-child(2) {
+            text-align: left !important;
+            font-weight: 600;
+        }
+
+        /* Highlight class for scores less than 40 */
         .highlight-red {
             color: #dc2626 !important;
             font-weight: bold;
-            background: rgba(239, 68, 68, 0.1) !important;
         }
 
-        /* Enhanced assessment tables */
+        /* Class average always black */
+        .result-table tbody td:last-child {
+            color: black !important;
+        }
+
+        /* Assessment tables */
         .assessment-table {
-            border: 2px solid #059669;
+            border: 2px solid #cbda77;
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
         
         .assessment-table thead th {
-            background: linear-gradient(135deg, #059669, #10b981);
+            background:linear-gradient(135deg, #fbbf24, #f59e0b);
             color: white;
             font-weight: 600;
             border: 1px solid #047857;
@@ -234,7 +252,7 @@
             background: #f0fdf4;
         }
 
-        /* Enhanced grade display */
+        /* Grade display */
         .grade-display {
             background: linear-gradient(135deg, #fbbf24, #f59e0b);
             color: white;
@@ -250,7 +268,7 @@
             text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
 
-        /* Enhanced remarks section */
+        /* Remarks section */
         .remarks-table {
             border: 2px solid #7c3aed;
             border-radius: 8px;
@@ -269,7 +287,7 @@
             margin-bottom: 10px;
         }
 
-        /* Enhanced photo frame */
+        /* Photo frame */
         .photo-frame {
             border: 4px solid #1e40af;
             border-radius: 10px;
@@ -279,7 +297,7 @@
             padding: 5px;
         }
 
-        /* Title enhancement */
+        /* Title */
         .report-title {
             background: linear-gradient(135deg, #111827, #374151);
             color: white;
@@ -292,7 +310,7 @@
             box-shadow: 0 6px 15px rgba(0,0,0,0.3);
         }
 
-        /* Footer enhancement */
+        /* Footer */
         .footer-section {
             background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
             border-radius: 10px;
@@ -343,23 +361,43 @@
                 <!-- Student Information Section -->
                 <div class="row mb-4">
                     <div class="col-lg-9 d-flex flex-column justify-content-center gap-3">
-                        <div class="d-flex flex-row flex-wrap align-items-center gap-2">
-                            <span class="result-details">Name of Student:</span><span class="rd1"></span>
+                        <div class="student-info-row d-flex flex-wrap align-items-center gap-4">
+                            <div class="student-info-item">
+                                <span class="result-details">Name of Student:</span><span class="rd1"></span>
+                            </div>
                         </div>
-                        <div class="d-flex flex-row flex-wrap align-items-center gap-3">
-                            <span class="result-details">Session:</span><span class="rd2"></span>
-                            <span class="result-details">Term:</span><span class="rd3"></span>
-                            <span class="result-details">Class:</span><span class="rd4"></span>
+                        <div class="student-info-row d-flex flex-wrap align-items-center gap-4">
+                            <div class="student-info-item">
+                                <span class="result-details">Session:</span><span class="rd2"></span>
+                            </div>
+                            <div class="student-info-item">
+                                <span class="result-details">Term:</span><span class="rd3"></span>
+                            </div>
+                            <div class="student-info-item">
+                                <span class="result-details">Class:</span><span class="rd4"></span>
+                            </div>
                         </div>
-                        <div class="d-flex flex-row flex-wrap align-items-center gap-3">
-                            <span class="result-details">Date of Birth:</span><span class="rd5"></span>
-                            <span class="result-details">Admission No:</span><span class="rd6"></span>
-                            <span class="result-details">Sex:</span><span class="rd7"></span>
+                        <div class="student-info-row d-flex flex-wrap align-items-center gap-4">
+                            <div class="student-info-item">
+                                <span class="result-details">Date of Birth:</span><span class="rd5"></span>
+                            </div>
+                            <div class="student-info-item">
+                                <span class="result-details">Admission No:</span><span class="rd6"></span>
+                            </div>
+                            <div class="student-info-item">
+                                <span class="result-details">Sex:</span><span class="rd7"></span>
+                            </div>
                         </div>
-                        <div class="d-flex flex-row flex-wrap align-items-center gap-3">
-                            <span class="result-details">No. of Times School Opened:</span><span class="rd8"></span>
-                            <span class="result-details">No. of Times School Absent:</span><span class="rd9"></span>
-                            <span class="result-details">No. of Student in Class:</span><span class="rd10"></span>
+                        <div class="student-info-row d-flex flex-wrap align-items-center gap-4">
+                            <div class="student-info-item">
+                                <span class="result-details">No. of Times School Opened:</span><span class="rd8"></span>
+                            </div>
+                            <div class="student-info-item">
+                                <span class="result-details">No. of Times School Absent:</span><span class="rd9"></span>
+                            </div>
+                            <div class="student-info-item">
+                                <span class="result-details">No. of Student in Class:</span><span class="rd10"></span>
+                            </div>
                         </div>
                     </div>
                     <div class="col-lg-3 d-flex justify-content-center align-items-center">
@@ -417,10 +455,10 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                     @forelse ($scores as $index => $score)
+                                    @forelse ($scores as $index => $score)
                                         <tr>
                                             <td align="center" style="font-size: 14px;">{{ $index + 1 }}</td>
-                                            <td align="center" style="font-size: 14px;">{{ $score->subject_name }}</td>
+                                            <td align="left" style="font-size: 14px;">{{ $score->subject_name }}</td>
                                             <td align="center" style="font-size: 14px;" @if ($score->ca1 <= 50 && is_numeric($score->ca1)) class="highlight-red" @endif>{{ $score->ca1 ?? '-' }}</td>
                                             <td align="center" style="font-size: 14px;" @if ($score->ca2 <= 50 && is_numeric($score->ca2)) class="highlight-red" @endif>{{ $score->ca2 ?? '-' }}</td>
                                             <td align="center" style="font-size: 14px;" @if ($score->ca3 <= 50 && is_numeric($score->ca3)) class="highlight-red" @endif>{{ $score->ca3 ?? '-' }}</td>
@@ -433,8 +471,7 @@
                                             <td align="center" style="font-size: 14px;" @if ($score->cum <= 50 && is_numeric($score->cum)) class="highlight-red" @endif>{{ $score->cum ?? '-' }}</td>
                                             <td align="center" style="font-size: 14px;" @if (in_array($score->grade, ['F', 'F9','E','E8'])) class="highlight-red" @endif>{{ $score->grade ?? '-' }}</td>
                                             <td align="center" style="font-size: 14px;">{{ $score->position ?? '-' }}</td>
-                                            <td align="center" style="font-size: 14px;" @if ($score->class_average <= 50 && is_numeric($score->class_average)) class="highlight-red" @endif>{{ $score->class_average ?? '-' }}</td>
-                                            
+                                            <td align="center" style="font-size: 14px;">{{ $score->class_average ?? '-' }}</td>
                                         </tr>
                                     @empty
                                         <tr>
