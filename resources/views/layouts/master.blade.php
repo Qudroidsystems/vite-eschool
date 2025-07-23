@@ -120,6 +120,10 @@
         @include('layouts.pages-assets.css.viewstudent-list-css')
     @endif 
 
+    @if (Route::is('studentreport.*'))
+        @include('layouts.pages-assets.css.studentreport-list-css')
+    @endif 
+
 
     @if (Route::is('subjectoperation.*'))
         @include('layouts.pages-assets.css.subjectoperation-list-css')
@@ -185,8 +189,16 @@
         @include('layouts.pages-assets.css.subjectvettings-list-css')
     @endif
 
+    @if (Route::is('mocksubjectvetting.*'))
+        @include('layouts.pages-assets.css.mocksubjectvettings-list-css')
+    @endif
+
     @if (Route::is('mysubjectvettings.*'))
         @include('layouts.pages-assets.css.mysubjectvettings-list-css')
+    @endif
+
+    @if (Route::is('mymocksubjectvettings.*'))
+        @include('layouts.pages-assets.css.mymocksubjectvettings-list-css')
     @endif
 </head>
 
@@ -398,6 +410,11 @@
                                               <a href="{{ route('mysubjectvettings.index') }}" class="nav-link" data-key="t-products">Subjects to Vet</a>
                                         </li>
                                   @endcan   
+                                  @can('View my-mock-subject-vettings')
+                                          <li class="nav-item">
+                                              <a href="{{ route('mymocksubjectvettings.index') }}" class="nav-link" data-key="t-products">Mock Subjects to Vet</a>
+                                        </li>
+                                  @endcan  
                                   
                                    {{-- @can('View principals-comment')
                                           <li class="nav-item">
@@ -416,12 +433,17 @@
                                 <ul class="nav nav-sm flex-column">
                                     @can('View myresult-room')
                                          <li class="nav-item">
-                                              <a href="{{ route('myresultroom.index') }}" class="nav-link" data-key="t-products">Terminal Records</a>
+                                              <a href="{{ route('myresultroom.index') }}" class="nav-link" data-key="t-products">Terminal & Mock Records</a>
                                         </li>
                                     @endcan
-                                    <li class="nav-item">
-                                        <a href="apps-ecommerce-products.html" class="nav-link" data-key="t-products">Student Reports</a>
-                                    </li>
+                                    @can('View student-report')
+                                         <li class="nav-item">
+                                               <a href="{{ route('studentreport.index') }}" class="nav-link" data-key="t-products">Student ddddTerminal Reports</a>
+                                         </li>
+                                    @endcan
+
+                                 
+                                   
                                     <li class="nav-item">
                                         <a href="apps-ecommerce-products.html" class="nav-link" data-key="t-products">Subject Score Upload</a>
                                     </li>
@@ -628,7 +650,7 @@
 
                         <li class="nav-item">
                             <a href="#sidebarSubjectvetting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSub">
-                                <i class="ph-file-text"></i> <span data-key="t-invoices">Subject Vettings</span>
+                                <i class="ph-file-text"></i> <span data-key="t-invoices">Terminal Subject Vettings</span>
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarSubjectvetting">
                                 <ul class="nav nav-sm flex-column">
@@ -641,6 +663,21 @@
                             </div>
                         </li> 
 
+
+                         <li class="nav-item">
+                            <a href="#mocksidebarSubjectvetting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSub">
+                                <i class="ph-file-text"></i> <span data-key="t-invoices">Mock Subject Vettings</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="mocksidebarSubjectvetting">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View subjects')
+                                          <li class="nav-item">
+                                              <a href="{{ route('mocksubjectvetting.index') }}" class="nav-link" data-key="t-list-view">Assign Subjects to Staff</a>
+                                          </li>
+                                    @endcan
+                                </ul>
+                            </div>
+                        </li> 
 
                         
 
@@ -1963,6 +2000,10 @@
           @include('layouts.pages-assets.js.viewstudent-list-js')
       @endif 
 
+       @if (Route::is('studentreport'))
+          @include('layouts.pages-assets.js.studentreport-list-js')
+      @endif 
+
       @if (Route::is('subjectoperation.*'))
           @include('layouts.pages-assets.js.subjectoperation-list-js')
       @endif 
@@ -2027,8 +2068,17 @@
             @include('layouts.pages-assets.js.subjectvetting-list-js')
       @endif
 
+      @if (Route::is('mocksubjectvetting.*'))
+            @include('layouts.pages-assets.js.mocksubjectvetting-list-js')
+      @endif
+
       @if (Route::is('mysubjectvettings.*'))
             @include('layouts.pages-assets.js.mysubjectvettings-list-js')
+      @endif
+
+
+      @if (Route::is('mymocksubjectvettings.*'))
+            @include('layouts.pages-assets.js.mymocksubjectvetting-list-js')
       @endif
 
       </body>

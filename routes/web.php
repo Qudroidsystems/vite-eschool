@@ -13,7 +13,9 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JobStatusController;
+use App\Http\Controllers\MockSubjectVettingController;
 use App\Http\Controllers\MyClassController;
+use App\Http\Controllers\MyMockSubjectVettingsController;
 use App\Http\Controllers\MyresultroomController;
 use App\Http\Controllers\MyScoreSheetController;
 use App\Http\Controllers\MySubjectController;
@@ -47,7 +49,13 @@ use App\Http\Controllers\SubjectTeacherController;
 use App\Http\Controllers\SubjectVettingController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ViewStudentController;
+use App\Http\Controllers\ViewStudentMockReportController;
+use App\Http\Controllers\ViewStudentReportController;
 use Illuminate\Support\Facades\Route;
+
+
+
+
 
 
 
@@ -245,16 +253,25 @@ Route::group(['middleware' => ['auth']], function () {
 
     // Route::get('viewstudent', [ViewStudentController::class]);
     Route::get('/viewstudent/{id}/{termid}/{sessionid}', [ViewStudentController::class, 'show'])->name('viewstudent');
-    //Route::get('/subjectscoresheet/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'subjectscoresheet'])->name('subjectscoresheet');
+    //Route::get('/studentreport', [ViewStudentReportController::class, 'index'])->name('studentreport.index');
+    // Route::get('/viewstudentreport/{id}/{termid}/{sessionid}', [ViewStudentReportController::class, 'show'])->name('viewstudentreport');
+    // Route::get('/viewstudentmockreport/{id}/{termid}/{sessionid}', [ViewStudentMockReportController::class, 'show'])->name('viewstudentreport');
+
+    Route::get('/studentreport', [ViewStudentReportController::class, 'index'])->name('studentreport.index');
+    Route::get('/studentreport/registered-classes', [ViewStudentReportController::class, 'registeredClasses'])->name('studentreport.registered-classes');
+    Route::get('/classbroadsheet/{schoolclassid}/{sessionid}/{termid}', [ViewStudentReportController::class, 'classBroadsheet'])->name('classbroadsheet');
+
+   
 
     Route::resource('subjectoperation', SubjectOperationController::class);
     Route::get('/subjects', [SubjectOperationController::class, 'index'])->name('subjects.index');
-    //Route::post('/subjects', [SubjectOperationController::class, 'store'])->name('subjects.store');
+
     Route::post('/subjectregistration', [SubjectOperationController::class, 'store'])->name('subjects.store');
     Route::get('/subjectoperation/subjectinfo/{id}/{schoolclassid}/{termid}/{sessionid}', [SubjectOperationController::class, 'subjectinfo'])->name('subjects.subjectinfo');
-    //Route::delete('/subjects/{id}', [SubjectOperationController::class, 'destroy'])->name('subjects.destroy');
+    
     Route::delete('/subjects/registered-classes', [SubjectOperationController::class, 'destroy'])->name('subjects.destroy');
     Route::get('/subjects/registered-classes', [SubjectOperationController::class, 'getRegisteredClasses'])->name('subjects.registered-classes');
+    
     // Route for batch unregistration
     Route::post('/subjectregistration/destroy', [SubjectOperationController::class, 'destroy'])->name('subjectregistration.destroy');
 
@@ -281,7 +298,7 @@ Route::group(['middleware' => ['auth']], function () {
 
     //subject vettings
     Route::resource('subjectvetting', SubjectVettingController::class);
-
+    Route::resource('mocksubjectvetting', MockSubjectVettingController::class);
 
     // my subject vettings
     Route::get('/mysubjectvettings', [MySubjectVettingsController::class, 'index'])->name('mysubjectvettings.index');
@@ -290,6 +307,14 @@ Route::group(['middleware' => ['auth']], function () {
     Route::put('/mysubjectvettings/{id}', [MySubjectVettingsController::class, 'update'])->name('mysubjectvettings.update');
     Route::put('/mysubjectvettings/{id}', [MySubjectVettingsController::class, 'updateMock'])->name('mysubjectvettings.updatemock');
 
+
+    Route::get('/mymocksubjectvettings', [MyMockSubjectVettingsController::class, 'index'])->name('mymocksubjectvettings.index');
+    Route::get('/mymocksubjectvettings/classbroadsheet/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyMockSubjectVettingsController::class, 'classBroadsheet'])->name('mymocksubjectvettings.classbroadsheet');
+    Route::post('/mymocksubjectvettings/update-vetted-status', [MyMockSubjectVettingsController::class, 'updateVettedStatus'])->name('mymocksubjectvettings.update-vetted-status');
+    Route::get('/mymocksubjectvettings/results', [MyMockSubjectVettingsController::class, 'results'])->name('mymocksubjectvettings.results');
+    Route::put('/mymocksubjectvettings/{id}', [MyMockSubjectVettingsController::class, 'update'])->name('mymocksubjectvettings.update');
+
+    
 
     Route::post('/broadsheets/update-vetted-status', [MySubjectVettingsController::class, 'updateVettedStatus'])->name('broadsheets.update-vetted-status');
 
