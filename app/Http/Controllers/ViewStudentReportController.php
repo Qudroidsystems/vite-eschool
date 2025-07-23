@@ -148,8 +148,13 @@ class ViewStudentReportController extends Controller
     }
 
 
-    public function studentresult($id, $schoolclassid, $sessionid, $termid) 
+   public function studentresult($id, $schoolclassid, $sessionid, $termid)
     {
+        // Validate input parameters
+        if (!is_numeric($id) || !is_numeric($schoolclassid) || !is_numeric($sessionid) || !is_numeric($termid)) {
+            abort(404, 'Invalid parameters');
+        }
+
         $pagetitle = "Student Personality Profile";
 
         // Fetch student details
@@ -198,10 +203,11 @@ class ViewStudentReportController extends Controller
                 'broadsheets.avg as class_average',
             ]);
 
-      
+        // Fetch class, term, session, and number of students
         $schoolclass = Schoolclass::where('id', $schoolclassid)->first(['schoolclass', 'arm']);
         $schoolterm = Schoolterm::where('id', $termid)->value('term') ?? 'N/A';
         $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
+        $numberOfStudents = Studentclass::where('schoolclassid', $schoolclassid)->count();
 
         return view('studentreports.studentresult')
             ->with('students', $students)
@@ -214,7 +220,8 @@ class ViewStudentReportController extends Controller
             ->with('pagetitle', $pagetitle)
             ->with('schoolclass', $schoolclass)
             ->with('schoolterm', $schoolterm)
-            ->with('schoolsession', $schoolsession);
+            ->with('schoolsession', $schoolsession)
+            ->with('numberOfStudents', $numberOfStudents);
     }
 
      public function studentmockresult($id, $schoolclassid, $sessionid, $termid) 
