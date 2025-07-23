@@ -28,13 +28,13 @@
                 <ul class="d-flex gap-2 list-unstyled mb-0">
                     @can('View student-report')
                         <li>
-                            <a href="{{ route('studentresult', [$student->stid, $student->schoolclassID, $student->sessionid, 1]) }}" title="Result Report for {{ $student->schoolclass }} {{ $student->schoolarm }} - First Term" class="btn btn-subtle-success btn-icon"><i class="ph-eye"></i> 1st</a>
+                            <a href="{{ route('studentresult', [$student->stid, $student->schoolclassID, $student->sessionid, 1]) }}" title="Result Report for {{ $student->schoolclass }} {{ $student->schoolarm }} - First Term" class="btn btn-subtle-success btn-icon" target="_blank"><i class="ph-eye"></i> 1st</a>
                         </li>
                         <li>
-                            <a href="{{ route('studentresult', [$student->stid, $student->schoolclassID, $student->sessionid, 2]) }}" title="Result Report for {{ $student->schoolclass }} {{ $student->schoolarm }} - Second Term" class="btn btn-subtle-success btn-icon"><i class="ph-eye"></i> 2nd</a>
+                            <a href="{{ route('studentresult', [$student->stid, $student->schoolclassID, $student->sessionid, 2]) }}" title="Result Report for {{ $student->schoolclass }} {{ $student->schoolarm }} - Second Term" class="btn btn-subtle-success btn-icon" target="_blank"><i class="ph-eye"></i> 2nd</a>
                         </li>
                         <li>
-                            <a href="{{ route('studentresult', [$student->stid, $student->schoolclassID, $student->sessionid, 3]) }}" title="Result Report for {{ $student->schoolclass }} {{ $student->schoolarm }} - Third Term" class="btn btn-subtle-success btn-icon"><i class="ph-eye"></i> 3rd</a>
+                            <a href="{{ route('studentresult', [$student->stid, $student->schoolclassID, $student->sessionid, 3]) }}" title="Result Report for {{ $student->schoolclass }} {{ $student->schoolarm }} - Third Term" class="btn btn-subtle-success btn-icon" target="_blank"><i class="ph-eye"></i> 3rd</a>
                         </li>
                     @endcan
                </ul>
