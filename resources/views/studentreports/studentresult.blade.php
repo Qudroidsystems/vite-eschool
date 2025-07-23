@@ -334,7 +334,7 @@
                         </div>
                         <div class="w-100 d-flex flex-column justify-content-center align-items-center mt-3">
                             <h1 class="report-title m-0">
-                                TERMINAL PROGRESS REPORT FOR SSS 1-3
+                                TERMINAL PROGRESS REPORT
                             </h1>
                         </div>
                     </div>
