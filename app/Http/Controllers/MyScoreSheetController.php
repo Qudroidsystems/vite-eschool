@@ -418,50 +418,50 @@ class MyScoreSheetController extends Controller
         ]);
     }
 
-protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
-{
-    Log::info('updateSubjectPositions called', compact('subjectclass_id', 'staff_id', 'term_id', 'session_id'));
-    $broadsheets = Broadsheets::where('subjectclass_id', $subjectclass_id)
-        ->where('staff_id', $staff_id)
-        ->where('term_id', $term_id)
-        ->where('broadsheet_records.session_id', $session_id)
-        ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-        ->orderByDesc('broadsheets.cum')
-        ->orderBy('broadsheets.id')
-        ->get();
+    protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
+    {
+        Log::info('updateSubjectPositions called', compact('subjectclass_id', 'staff_id', 'term_id', 'session_id'));
+        $broadsheets = Broadsheets::where('subjectclass_id', $subjectclass_id)
+            ->where('staff_id', $staff_id)
+            ->where('term_id', $term_id)
+            ->where('broadsheet_records.session_id', $session_id)
+            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+            ->orderByDesc('broadsheets.cum')
+            ->orderBy('broadsheets.id')
+            ->get();
 
-    if ($broadsheets->isEmpty()) {
-        Log::warning('No broadsheets found for position update', compact('subjectclass_id', 'staff_id', 'term_id', 'session_id'));
-        return;
-    }
-
-    $rank = 0;
-    $lastCum = null;
-    $lastPosition = 0;
-
-    foreach ($broadsheets as $broadsheet) {
-        $rank++;
-        if ($lastCum !== null && $broadsheet->cum == $lastCum) {
-            // Tied rank
-        } else {
-            $lastPosition = $rank;
-            $lastCum = $broadsheet->cum;
+        if ($broadsheets->isEmpty()) {
+            Log::warning('No broadsheets found for position update', compact('subjectclass_id', 'staff_id', 'term_id', 'session_id'));
+            return;
         }
-        if ($broadsheet->subject_position_class != $lastPosition) {
-            $broadsheet->subject_position_class = $lastPosition;
-            $broadsheet->save();
-            Log::info('Updated position', [
-                'broadsheet_id' => $broadsheet->id,
-                'student_id' => $broadsheet->student_id,
-                'admissionno' => $broadsheet->admissionno,
-                'cum' => $broadsheet->cum,
-                'subject_position_class' => $lastPosition,
-            ]);
-        }
-    }
 
-    Log::info('Subject positions updated', ['total_records' => $broadsheets->count()]);
-}
+        $rank = 0;
+        $lastCum = null;
+        $lastPosition = 0;
+
+        foreach ($broadsheets as $broadsheet) {
+            $rank++;
+            if ($lastCum !== null && $broadsheet->cum == $lastCum) {
+                // Tied rank
+            } else {
+                $lastPosition = $rank;
+                $lastCum = $broadsheet->cum;
+            }
+            if ($broadsheet->subject_position_class != $lastPosition) {
+                $broadsheet->subject_position_class = $lastPosition;
+                $broadsheet->save();
+                Log::info('Updated position', [
+                    'broadsheet_id' => $broadsheet->id,
+                    'student_id' => $broadsheet->student_id,
+                    'admissionno' => $broadsheet->admissionno,
+                    'cum' => $broadsheet->cum,
+                    'subject_position_class' => $lastPosition,
+                ]);
+            }
+        }
+
+        Log::info('Subject positions updated', ['total_records' => $broadsheets->count()]);
+    }
 
     protected function updateClassPositions($schoolclassid, $termid, $sessionid)
     {

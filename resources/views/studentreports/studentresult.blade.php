@@ -334,7 +334,7 @@
                         </div>
                         <div class="w-100 d-flex flex-column justify-content-center align-items-center mt-3">
                             <h1 class="report-title m-0">
-                                TERMINAL PROGRESS REPORT
+                                TERMINAL PROGRESS REPORT FOR SSS
                             </h1>
                         </div>
                     </div>
@@ -417,52 +417,30 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Sample data for demonstration -->
-                                    <tr>
-                                        <td>1</td>
-                                        <td>Mathematics</td>
-                                        <td>45</td>
-                                        <td>52</td>
-                                        <td>48</td>
-                                        <td>48.3</td>
-                                        <td>67</td>
-                                        <td>57.7</td>
-                                        <td>55</td>
-                                        <td>56.4</td>
-                                        <td>B3</td>
-                                        <td>12th</td>
-                                        <td>52.1</td>
-                                    </tr>
-                                    <tr>
-                                        <td>2</td>
-                                        <td>English Language</td>
-                                        <td class="highlight-red">32</td>
-                                        <td>42</td>
-                                        <td class="highlight-red">38</td>
-                                        <td class="highlight-red">37.3</td>
-                                        <td>45</td>
-                                        <td>41.2</td>
-                                        <td class="highlight-red">39</td>
-                                        <td>40.1</td>
-                                        <td>C6</td>
-                                        <td>25th</td>
-                                        <td>44.5</td>
-                                    </tr>
-                                    <tr>
-                                        <td>3</td>
-                                        <td>Physics</td>
-                                        <td>58</td>
-                                        <td>62</td>
-                                        <td>55</td>
-                                        <td>58.3</td>
-                                        <td>72</td>
-                                        <td>65.2</td>
-                                        <td>63</td>
-                                        <td>64.1</td>
-                                        <td>B2</td>
-                                        <td>8th</td>
-                                        <td>59.8</td>
-                                    </tr>
+                                     @forelse ($scores as $index => $score)
+                                        <tr>
+                                            <td align="center" style="font-size: 14px;">{{ $index + 1 }}</td>
+                                            <td align="center" style="font-size: 14px;">{{ $score->subject_name }}</td>
+                                            <td align="center" style="font-size: 14px;" @if ($score->ca1 <= 50 && is_numeric($score->ca1)) class="highlight-red" @endif>{{ $score->ca1 ?? '-' }}</td>
+                                            <td align="center" style="font-size: 14px;" @if ($score->ca2 <= 50 && is_numeric($score->ca2)) class="highlight-red" @endif>{{ $score->ca2 ?? '-' }}</td>
+                                            <td align="center" style="font-size: 14px;" @if ($score->ca3 <= 50 && is_numeric($score->ca3)) class="highlight-red" @endif>{{ $score->ca3 ?? '-' }}</td>
+                                            <td align="center" style="font-size: 14px;" @if ($score->ca1 && $score->ca2 && $score->ca3 && round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) <= 50) class="highlight-red" @endif>
+                                                {{ $score->ca1 && $score->ca2 && $score->ca3 ? round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) : '-' }}
+                                            </td>
+                                            <td align="center" style="font-size: 14px;" @if ($score->exam <= 50 && is_numeric($score->exam)) class="highlight-red" @endif>{{ $score->exam ?? '-' }}</td>
+                                            <td align="center" style="font-size: 14px;" @if ($score->total <= 50 && is_numeric($score->total)) class="highlight-red" @endif>{{ $score->total ?? '-' }}</td>
+                                            <td align="center" style="font-size: 14px;" @if ($score->bf <= 50 && is_numeric($score->bf)) class="highlight-red" @endif>{{ $score->bf ?? '-' }}</td>
+                                            <td align="center" style="font-size: 14px;" @if ($score->cum <= 50 && is_numeric($score->cum)) class="highlight-red" @endif>{{ $score->cum ?? '-' }}</td>
+                                            <td align="center" style="font-size: 14px;" @if (in_array($score->grade, ['F', 'F9','E','E8'])) class="highlight-red" @endif>{{ $score->grade ?? '-' }}</td>
+                                            <td align="center" style="font-size: 14px;">{{ $score->position ?? '-' }}</td>
+                                            <td align="center" style="font-size: 14px;" @if ($score->class_average <= 50 && is_numeric($score->class_average)) class="highlight-red" @endif>{{ $score->class_average ?? '-' }}</td>
+                                            
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="14" align="center">No scores available for this student.</td>
+                                        </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
