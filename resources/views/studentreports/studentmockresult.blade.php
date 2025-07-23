@@ -349,7 +349,7 @@
                         </div>
                         <div class="w-100 d-flex flex-column justify-content-center align-items-center mt-3">
                             <h1 class="mock-exam-title m-0">
-                                MOCK EXAMINATION RESULT FOR SSS 1-3
+                                MOCK EXAMINATION RESULT
                             </h1>
                         </div>
                     </div>
