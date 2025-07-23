@@ -21,7 +21,7 @@ class ViewStudentReportController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:View student-report', ['only' => ['index', 'show', 'registeredClasses', 'classBroadsheet']]);
+        $this->middleware('permission:View student-report', ['only' => ['index', 'show', 'registeredClasses', 'classBroadsheet','studentresult','studentmockresult']]);
         $this->middleware('permission:Create student-report', ['only' => ['create', 'store']]);
         $this->middleware('permission:Update student-report', ['only' => ['edit', 'update']]);
         $this->middleware('permission:Delete student-report', ['only' => ['destroy']]);
@@ -148,7 +148,7 @@ class ViewStudentReportController extends Controller
     }
 
 
-       public function studentresult($id, $schoolclassid, $sessionid, $termid) 
+    public function studentresult($id, $schoolclassid, $sessionid, $termid) 
     {
         $pagetitle = "Student Personality Profile";
 
@@ -207,6 +207,69 @@ class ViewStudentReportController extends Controller
             ->with('students', $students)
             ->with('studentpp', $studentpp)
             ->with('scores', $scores)
+            ->with('studentid', $id)
+            ->with('schoolclassid', $schoolclassid)
+            ->with('sessionid', $sessionid)
+            ->with('termid', $termid)
+            ->with('pagetitle', $pagetitle)
+            ->with('schoolclass', $schoolclass)
+            ->with('schoolterm', $schoolterm)
+            ->with('schoolsession', $schoolsession);
+    }
+
+     public function studentmockresult($id, $schoolclassid, $sessionid, $termid) 
+    {
+        $pagetitle = "Student Personality Profile";
+
+        // Fetch student details
+        $students = Student::where('studentRegistration.id', $id)
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->get([
+                'studentRegistration.id as id',
+                'studentRegistration.admissionNo as admissionNo',
+                'studentRegistration.firstname as fname',
+                'studentRegistration.home_address as homeaddress',
+                'studentRegistration.lastname as lastname',
+                'studentRegistration.othername as othername',
+                'studentRegistration.dateofbirth as dateofbirth',
+                'studentRegistration.gender as gender',
+                'studentRegistration.updated_at as updated_at',
+                'studentpicture.picture as picture'
+            ]);
+
+        // Fetch personality profile
+        $studentpp = Studentpersonalityprofile::where('studentid', $id)
+            ->where('schoolclassid', $schoolclassid)
+            ->where('sessionid', $sessionid)
+            ->where('termid', $termid)
+            ->get();
+
+         // Fetch mock report scores
+        $mockScores = BroadsheetsMock::where('broadsheet_records_mock.student_id', $id)
+            ->where('broadsheetmock.term_id', $termid)
+            ->where('broadsheet_records_mock.session_id', $sessionid)
+            ->where('broadsheet_records_mock.schoolclass_id', $schoolclassid)
+            ->leftJoin('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
+            ->leftJoin('subject', 'subject.id', '=', 'broadsheet_records_mock.subject_id')
+            ->get([
+                'subject.subject as subject_name',
+                'subject.subject_code',
+                'broadsheetmock.exam',
+                'broadsheetmock.total',
+                'broadsheetmock.grade',
+                'broadsheetmock.subject_position_class as position',
+                'broadsheetmock.avg as class_average',
+            ]);
+
+      
+        $schoolclass = Schoolclass::where('id', $schoolclassid)->first(['schoolclass', 'arm']);
+        $schoolterm = Schoolterm::where('id', $termid)->value('term') ?? 'N/A';
+        $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
+
+        return view('studentreports.studentresult')
+            ->with('students', $students)
+            ->with('studentpp', $studentpp)
+            ->with('mockScores', $mockScores)
             ->with('studentid', $id)
             ->with('schoolclassid', $schoolclassid)
             ->with('sessionid', $sessionid)

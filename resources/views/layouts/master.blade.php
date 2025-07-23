@@ -438,7 +438,9 @@
                                     @endcan
                                   
                                  
-                                   
+                                   @can('View s')
+                                       
+                                   @endcan
                                     <li class="nav-item">
                                         <a href="{{ route('studentreports.index') }}" class="nav-link" data-key="t-products">Subject Score Upload</a>
                                     </li>
