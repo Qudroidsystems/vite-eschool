@@ -441,6 +441,21 @@
                             <table class="table table-hover table-responsive">
                                 <thead>
                                     <tr class="rt">
+                                        <th></th>
+                                        <th>Subjects</th>
+                                        <th>a</th>
+                                        <th>b</th>
+                                        <th>c</th>
+                                        <th>d</th>
+                                        <th>e</th>
+                                        <th>f</th>
+                                        <th>g</th>
+                                        <th>h</th>
+                                        <th>i</th>
+                                        <th>j</th>
+                                        <th>k</th>
+                                    </tr>
+                                    <tr class="rt">
                                         <th>S/N</th>
                                         <th>Subjects</th>
                                         <th>T1</th>
