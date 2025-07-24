@@ -24,7 +24,7 @@ class AnalysisController extends Controller
      */
     public function index()
     {
-        $pagetitle = 'School bill Analysis';
+        $pagetitle = 'School Bill Analysis';
 
         $terms = Schoolterm::all();
         $sessions = Schoolsession::all();
@@ -45,7 +45,8 @@ class AnalysisController extends Controller
      */
     public function analysisClassTermSession(Request $request)
     {
-           $pagetitle = 'School bill Analysis';
+        $pagetitle = 'School Bill Analysis';
+
         // Validate input
         $validator = Validator::make($request->all(), [
             'class_id' => 'required|exists:schoolclass,id',
@@ -73,6 +74,10 @@ class AnalysisController extends Controller
                 'studentpicture.picture as picture'
             ])
             ->get();
+
+        if ($students->isEmpty()) {
+            return redirect()->back()->with('error', 'No students found for the selected class, term, and session.');
+        }
 
         // Fetch bill information
         $student_bill_info = SchoolBillTermSession::where('school_bill_class_term_session.class_id', $request->class_id)
@@ -150,7 +155,8 @@ class AnalysisController extends Controller
      */
     public function exportPDF($class_id, $termid_id, $session_id, $action = 'view')
     {
-           $pagetitle = 'School bill Analysis';
+        $pagetitle = 'School Bill Analysis';
+
         // Validate parameters
         $validator = Validator::make([
             'class_id' => $class_id,
@@ -166,7 +172,7 @@ class AnalysisController extends Controller
             return redirect()->route('analysis.index')->withErrors($validator);
         }
 
-        // Fetch data (same as analysisClassTermSession)
+        // Fetch data
         $students = Studentclass::where('schoolclassid', $class_id)
             ->where('termid', $termid_id)
             ->where('sessionid', $session_id)
@@ -182,6 +188,10 @@ class AnalysisController extends Controller
                 'studentpicture.picture as picture'
             ])
             ->get();
+
+        if ($students->isEmpty()) {
+            return redirect()->route('analysis.index')->with('error', 'No students found for the selected class, term, and session.');
+        }
 
         $student_bill_info = SchoolBillTermSession::where('school_bill_class_term_session.class_id', $class_id)
             ->where('school_bill_class_term_session.termid_id', $termid_id)
