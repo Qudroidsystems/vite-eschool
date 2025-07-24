@@ -12,10 +12,11 @@
         }
 
         body {
-            font-family: 'DejaVu Sans', sans-serif;
+            font-family: 'DejaVu Sans', Arial, sans-serif;
             font-size: 12px;
             line-height: 1.4;
             color: #333333;
+            background: #ffffff;
         }
 
         @page {
@@ -52,6 +53,12 @@
             border: 2px solid #1e40af;
             display: block;
             margin: 0 auto;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e40af;
+            font-weight: bold;
         }
 
         .school-name {
@@ -99,7 +106,12 @@
             flex: 0 0 30%;
             height: 120px;
             border: 2px solid #1e40af;
-            background: #ffffff;
+            background: #f8fafc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #1e40af;
+            font-size: 10px;
         }
 
         .student-photo-container img {
@@ -126,6 +138,7 @@
             font-size: 12px;
             display: inline-block;
             width: calc(100% - 130px);
+            min-height: 16px;
         }
 
         /* Results Table */
@@ -217,6 +230,7 @@
             border: 1px solid #c4b5fd;
             padding: 5px;
             font-size: 10px;
+            vertical-align: top;
         }
 
         .remarks-label {
@@ -224,6 +238,13 @@
             font-weight: bold;
             margin-bottom: 5px;
             display: block;
+        }
+
+        .remarks-content {
+            border-bottom: 1px dotted #666666;
+            display: block;
+            min-height: 20px;
+            padding-bottom: 2px;
         }
 
         /* Footer Section */
@@ -266,17 +287,12 @@
         <div class="content-wrapper">
             <!-- Header Section -->
             <div class="header-section">
-                @php
-                    $logoPath = public_path($data['schoolInfo']->getLogoUrlAttribute() ?? 'assets/tp.png');
-                @endphp
-                <img class="school-logo" src="{{ $logoPath }}" alt="School Logo" onerror="this.src='{{ public_path('assets/tp.png') }}';">
-                <div class="school-name">{{ $data['schoolInfo']->school_name ?? 'QUODOROID CODING ACADEMY' }}</div>
-                <div class="school-motto">{{ $data['schoolInfo']->school_motto ?? 'N/A' }}</div>
+                <div class="school-logo">LOGO</div>
+                <div class="school-name">QUODOROID CODING ACADEMY</div>
+                <div class="school-motto">Excellence in Education</div>
                 <div class="school-address">
-                    {{ $data['schoolInfo']->school_address ?? 'N/A' }}
-                    @if ($data['schoolInfo']->school_website)
-                        <br>{{ $data['schoolInfo']->school_website }}
-                    @endif
+                    123 Education Street, Lagos, Nigeria<br>
+                    www.quodoroid.edu.ng
                 </div>
                 <div class="header-divider"></div>
                 <div class="report-title">TERMINAL PROGRESS REPORT</div>
@@ -285,56 +301,41 @@
             <!-- Student Info Section -->
             <div class="student-info-section">
                 <div class="student-details">
-                    @if (!empty($data['students']) && $data['students']->isNotEmpty())
-                        @php $student = $data['students']->first(); @endphp
-                        <div class="info-item">
-                            <span class="info-label">Name of Student:</span>
-                            <span class="info-value">{{ $student->fname }} {{ $student->lastname }} {{ $student->othername ?? '' }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Session:</span>
-                            <span class="info-value">{{ $data['schoolsession'] }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Term:</span>
-                            <span class="info-value">{{ $data['schoolterm'] }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Class:</span>
-                            <span class="info-value">{{ $data['schoolclass']->schoolclass ?? 'N/A' }} {{ $data['schoolclass']->armRelation->arm ?? '' }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Date of Birth:</span>
-                            <span class="info-value">{{ $student->dateofbirth ? \Carbon\Carbon::parse($student->dateofbirth)->format('d/m/Y') : 'N/A' }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Admission No:</span>
-                            <span class="info-value">{{ $student->admissionNo ?? 'N/A' }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Sex:</span>
-                            <span class="info-value">{{ $student->gender ?? 'N/A' }}</span>
-                        </div>
-                        <div class="info-item">
-                            <span class="info-label">Students in Class:</span>
-                            <span class="info-value">{{ $data['numberOfStudents'] ?? 'N/A' }}</span>
-                        </div>
-                    @else
-                        <div class="info-item">
-                            <span class="info-label">Error:</span>
-                            <span class="info-value">No student data available for this report.</span>
-                        </div>
-                    @endif
+                    <div class="info-item">
+                        <span class="info-label">Name of Student:</span>
+                        <span class="info-value">John Doe Smith</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Session:</span>
+                        <span class="info-value">2024/2025</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Term:</span>
+                        <span class="info-value">First Term</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Class:</span>
+                        <span class="info-value">JSS 1A</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Date of Birth:</span>
+                        <span class="info-value">15/03/2010</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Admission No:</span>
+                        <span class="info-value">QCA/2024/001</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Sex:</span>
+                        <span class="info-value">Male</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Students in Class:</span>
+                        <span class="info-value">35</span>
+                    </div>
                 </div>
                 <div class="student-photo-container">
-                    @if (!empty($data['students']) && $data['students']->isNotEmpty() && $student->picture)
-                        @php
-                            $studentImagePath = public_path('storage/' . $student->picture);
-                        @endphp
-                        <img src="{{ $studentImagePath }}" alt="{{ $student->fname ?? 'Student' }}'s picture" onerror="this.src='{{ public_path('storage/student_avatars/unnamed.jpg') }}';">
-                    @else
-                        <img src="{{ public_path('storage/student_avatars/unnamed.jpg') }}" alt="Default Student Photo">
-                    @endif
+                    Student Photo
                 </div>
             </div>
 
@@ -356,24 +357,102 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($data['scores'] as $scoreIndex => $score)
-                            <tr>
-                                <td>{{ $scoreIndex + 1 }}</td>
-                                <td style="text-align: left;">{{ $score->subject_name }}</td>
-                                <td @if ($score->ca1 <= 50 && is_numeric($score->ca1)) class="highlight-red" @endif>{{ $score->ca1 ?? '-' }}</td>
-                                <td @if ($score->ca2 <= 50 && is_numeric($score->ca2)) class="highlight-red" @endif>{{ $score->ca2 ?? '-' }}</td>
-                                <td @if ($score->ca3 <= 50 && is_numeric($score->ca3)) class="highlight-red" @endif>{{ $score->ca3 ?? '-' }}</td>
-                                <td @if ($score->exam <= 50 && is_numeric($score->exam)) class="highlight-red" @endif>{{ $score->exam ?? '-' }}</td>
-                                <td @if ($score->total <= 50 && is_numeric($score->total)) class="highlight-red" @endif>{{ $score->total ?? '-' }}</td>
-                                <td @if (in_array($score->grade, ['F', 'F9', 'E', 'E8'])) class="highlight-red" @endif>{{ $score->grade ?? '-' }}</td>
-                                <td>{{ $score->position ?? '-' }}</td>
-                                <td>{{ $score->class_average ?? '-' }}</td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="10">No scores available for this student.</td>
-                            </tr>
-                        @endforelse
+                        <tr>
+                            <td>1</td>
+                            <td style="text-align: left;">Mathematics</td>
+                            <td>18</td>
+                            <td>17</td>
+                            <td>19</td>
+                            <td>65</td>
+                            <td>85</td>
+                            <td>A</td>
+                            <td>2nd</td>
+                            <td>72</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td style="text-align: left;">English Language</td>
+                            <td>16</td>
+                            <td>18</td>
+                            <td>17</td>
+                            <td>58</td>
+                            <td>78</td>
+                            <td>B</td>
+                            <td>5th</td>
+                            <td>69</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td style="text-align: left;">Basic Science</td>
+                            <td>15</td>
+                            <td>16</td>
+                            <td>18</td>
+                            <td>52</td>
+                            <td>72</td>
+                            <td>B</td>
+                            <td>8th</td>
+                            <td>65</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td style="text-align: left;">Social Studies</td>
+                            <td>12</td>
+                            <td class="highlight-red">8</td>
+                            <td>14</td>
+                            <td class="highlight-red">28</td>
+                            <td class="highlight-red">48</td>
+                            <td class="highlight-red">E</td>
+                            <td>25th</td>
+                            <td>55</td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td style="text-align: left;">Computer Studies</td>
+                            <td>19</td>
+                            <td>20</td>
+                            <td>18</td>
+                            <td>68</td>
+                            <td>92</td>
+                            <td>A</td>
+                            <td>1st</td>
+                            <td>78</td>
+                        </tr>
+                        <tr>
+                            <td>6</td>
+                            <td style="text-align: left;">French</td>
+                            <td>14</td>
+                            <td>15</td>
+                            <td>16</td>
+                            <td>45</td>
+                            <td>62</td>
+                            <td>C</td>
+                            <td>12th</td>
+                            <td>58</td>
+                        </tr>
+                        <tr>
+                            <td>7</td>
+                            <td style="text-align: left;">Physical Education</td>
+                            <td>17</td>
+                            <td>18</td>
+                            <td>19</td>
+                            <td>56</td>
+                            <td>75</td>
+                            <td>B</td>
+                            <td>6th</td>
+                            <td>71</td>
+                        </tr>
+                        <tr>
+                            <td>8</td>
+                            <td style="text-align: left;">Creative Arts</td>
+                            <td>16</td>
+                            <td>17</td>
+                            <td>15</td>
+                            <td>52</td>
+                            <td>68</td>
+                            <td>C</td>
+                            <td>10th</td>
+                            <td>63</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -391,15 +470,11 @@
                         <tr>
                             <td style="width: 50%;">
                                 <span class="remarks-label">Principal's Remark:</span>
-                                <span style="border-bottom: 1px dotted #666666; display: block;">
-                                    {{ $data['studentpp']->isNotEmpty() ? $data['studentpp']->first()->principalscomment ?? 'N/A' : 'N/A' }}
-                                </span>
+                                <span class="remarks-content">Good performance overall. Needs improvement in Social Studies.</span>
                             </td>
                             <td style="width: 50%;">
                                 <span class="remarks-label">Promotion Status:</span>
-                                <span style="border-bottom: 1px dotted #666666; display: block;">
-                                    {{ \App\Models\PromotionStatus::where('studentId', $data['studentid'])->where('schoolclassid', $data['schoolclassid'])->where('sessionid', $data['sessionid'])->where('termid', $data['termid'])->first()->promotionStatus ?? 'N/A' }}
-                                </span>
+                                <span class="remarks-content">Promoted to JSS 2</span>
                             </td>
                         </tr>
                     </tbody>
