@@ -303,7 +303,7 @@ class AnalysisController extends Controller
             'margin-bottom' => 5,
             'margin-left' => 5,
             'encoding' => 'UTF-8',
-            'isPhpEnabled' => true,
+            // 'isPhpEnabled' => true,
         ]);
 
         // Generate filename
