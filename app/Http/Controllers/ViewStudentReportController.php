@@ -355,6 +355,7 @@ class ViewStudentReportController extends Controller
                 [
                     'promotionStatus' => $promotionStatus,
                     'position' => null, // Update if position is available
+                    'classstatus'=>'CURRENT',
                 ]
             );
         }
