@@ -154,7 +154,7 @@
         span.result-details {
             font-size: 16px;
             font-family: 'Times New Roman', Times, serif;
-            font-weight: 600;
+            font-weight: 700; /* Increased from 600 to 700 for bolder text */
             color: #374151;
         }
         span.rd1, span.rd2, span.rd3, span.rd4, span.rd5, span.rd6, span.rd7, span.rd8, span.rd9, span.rd10 {
@@ -162,6 +162,7 @@
             margin-left: 8px;
             min-width: 150px;
             display: inline-block;
+            font-weight: 700; /* Added for bolder text */
         }
 
         /* Table styles */
@@ -323,22 +324,25 @@
         <div class="print-body w-100 h-100 content-wrapper">
             <div class="print-sect container-fluid" style="max-width: 1200px; margin: 0 auto; padding: 30px;">
                 <!-- Header Section -->
+                @php
+                    $schoolInfo = \App\Models\SchoolInformation::getActiveSchool();
+                @endphp
                 <div class="row mb-4">
                     <div class="col-md d-flex flex-column">
                         <div class="w-100 d-flex justify-content-center align-items-center pt-2">
                             <div class="school-logo me-3">
-                                <img src="{{ asset('print-main/public/assets/tp.png') }}" class="w-100 h-100" alt="School Logo">
+                                <img src="{{ $schoolInfo->getLogoUrlAttribute() ?? asset('print-main/public/assets/tp.png') }}" class="w-100 h-100" alt="School Logo">
                             </div>
-                            {{-- <div>
-                                <p class="school-name1 m-0">TCC</p>
-                            </div> --}}
                         </div>
                         <div class="w-100 d-flex justify-content-center align-items-center">
-                            <p class="school-name2 m-0">TOPCLASS COLLEGE</p>
+                            <p class="school-name2 m-0">{{ $schoolInfo->school_name  }}</p>
                         </div>
                         <div class="w-100 d-flex flex-column justify-content-center align-items-center mt-2">
-                            <p class="h5 m-0 text-secondary">Developing the total child</p>
-                            <p class="h6 m-0 text-muted">39, Okegbala Street off Odojomu Road, Ondo.</p>
+                            <p class="h5 m-0 text-secondary">{{ $schoolInfo->school_motto  }}</p>
+                            <p class="h6 m-0 text-muted">{{ $schoolInfo->school_address   }}</p>
+                            @if ($schoolInfo->school_website)
+                                <p class="h6 m-0 text-muted">{{ $schoolInfo->school_website }}</p>
+                            @endif
                         </div>
                         <div class="mt-3">
                             <div class="header-divider"></div>
@@ -346,7 +350,7 @@
                         </div>
                         <div class="w-100 d-flex flex-column justify-content-center align-items-center mt-3">
                             <h1 class="report-title m-0">
-                                TERMINAL PROGRESS REPORT FOR SSS
+                                TERMINAL PROGRESS REPORT
                             </h1>
                         </div>
                     </div>
@@ -374,7 +378,7 @@
                                 </div>
                                 <div class="student-info-item">
                                     <span class="result-details">Class:</span>
-                                    <span class="rd4">{{ $schoolclass->schoolclass ?? 'N/A' }} {{ $schoolclass->arm ?? '' }}</span>
+                                    <span class="rd4">{{ $schoolclass->schoolclass ?? 'N/A' }} {{ $schoolclass->armRelation->arm ?? '' }}</span>
                                 </div>
                             </div>
                             <div class="student-info-row d-flex flex-wrap align-items-center gap-4">
@@ -497,8 +501,8 @@
                                             <td align="center" style="font-size: 14px;" @if ($score->bf <= 50 && is_numeric($score->bf)) class="highlight-red" @elseif ($score->bf > 50 && is_numeric($score->bf)) class="highlight-bold" @endif>{{ $score->bf ?? '-' }}</td>
                                             <td align="center" style="font-size: 14px;" @if ($score->cum <= 50 && is_numeric($score->cum)) class="highlight-red" @elseif ($score->cum > 50 && is_numeric($score->cum)) class="highlight-bold" @endif>{{ $score->cum ?? '-' }}</td>
                                             <td align="center" style="font-size: 14px;" @if (in_array($score->grade, ['F', 'F9', 'E', 'E8'])) class="highlight-red" @elseif ($score->grade && !in_array($score->grade, ['F', 'F9', 'E', 'E8'])) class="highlight-bold" @endif>{{ $score->grade ?? '-' }}</td>
-                                            <td align="center" style="font-size: 14px;">{{ $score->position ?? '-' }}</td>
-                                            <td align="center" style="font-size: 14px;">{{ $score->class_average ?? '-' }}</td>
+                                            <td align="center" style="font-size: 14px;" class="highlight-bold">{{ $score->position ?? '-' }}</td>
+                                            <td align="center" style="font-size: 14px;" class="highlight-bold">{{ $score->class_average ?? '-' }}</td>
                                         </tr>
                                     @empty
                                         <tr>
@@ -638,7 +642,7 @@
     <script>
         function createWatermark() {
             const watermark = document.querySelector('.watermark');
-            const text = 'TOPCLASS COLLEGE, ONDO';
+            const text = '{{ $schoolInfo->school_name ?? "TOPCLASS COLLEGE" }}, ONDO';
             const windowHeight = window.innerHeight;
             const windowWidth = window.innerWidth;
             

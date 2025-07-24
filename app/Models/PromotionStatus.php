@@ -20,6 +20,7 @@ class PromotionStatus extends Model
         'termid',
         'sessionid',
         'promotionStatus',
+        'classstatus'
 
     ];
 }

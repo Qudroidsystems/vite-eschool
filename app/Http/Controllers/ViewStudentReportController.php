@@ -3,8 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Broadsheets;
+use App\Models\Classcategory;
+use App\Models\CompulsorySubjectClass;
+use App\Models\PromotionStatus;
 use App\Models\Schoolarm;
 use App\Models\Schoolclass;
+use App\Models\SchoolInformation;
 use App\Models\Schoolsession;
 use App\Models\Schoolterm;
 use App\Models\Student;
@@ -147,8 +151,7 @@ class ViewStudentReportController extends Controller
         return view('studentreports.broadsheet', $data);
     }
 
-
-   public function studentresult($id, $schoolclassid, $sessionid, $termid)
+     public function studentresult($id, $schoolclassid, $sessionid, $termid)
     {
         // Validate input parameters
         if (!is_numeric($id) || !is_numeric($schoolclassid) || !is_numeric($sessionid) || !is_numeric($termid)) {
@@ -189,6 +192,7 @@ class ViewStudentReportController extends Controller
             ->leftJoin('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
             ->orderBy('subject.subject')
             ->get([
+                'subject.id as subject_id',
                 'subject.subject as subject_name',
                 'subject.subject_code',
                 'broadsheets.ca1',
@@ -204,10 +208,156 @@ class ViewStudentReportController extends Controller
             ]);
 
         // Fetch class, term, session, and number of students
-        $schoolclass = Schoolclass::where('id', $schoolclassid)->first(['schoolclass', 'arm']);
+        $schoolclass = Schoolclass::where('id', $schoolclassid)->with('armRelation')->first(['schoolclass', 'arm', 'classcategoryid']);
         $schoolterm = Schoolterm::where('id', $termid)->value('term') ?? 'N/A';
         $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
         $numberOfStudents = Studentclass::where('schoolclassid', $schoolclassid)->count();
+        $schoolInfo = SchoolInformation::getActiveSchool();
+
+        // Automate principal's comment and promotion status for third term
+        if ($termid == 3) {
+            // Fetch class category
+            $classCategory = Classcategory::where('id', $schoolclass->classcategoryid)->first(['is_senior']);
+            $isSenior = $classCategory ? $classCategory->is_senior : false;
+
+            // Fetch compulsory subjects for the class with subject names
+            $compulsorySubjects = CompulsorySubjectClass::where('schoolclassid', $schoolclassid)
+                ->join('subject', 'compulsory_subject_classes.subjectId', '=', 'subject.id')
+                ->get(['compulsory_subject_classes.subjectId', 'subject.subject as subject_name']);
+
+            // Log compulsory subjects and their grades
+            $compulsorySubjectLog = [];
+            $compulsoryCreditCount = 0;
+            $creditCount = 0;
+            $failCount = 0;
+            $hasNonCompulsoryDOrF = false;
+            $nonCompulsorySubjectLog = [];
+
+            // Define credit and fail grades based on category
+            $creditGrades = $isSenior ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6'] : ['A', 'B', 'C'];
+            $failGrades = $isSenior ? ['F9', 'E8'] : ['F'];
+
+            // Analyze compulsory subjects
+            $compulsorySubjectIds = $compulsorySubjects->pluck('subjectId')->toArray();
+            foreach ($compulsorySubjects as $compulsorySubject) {
+                $subjectId = $compulsorySubject->subjectId;
+                $subjectName = $compulsorySubject->subject_name;
+                $score = $scores->firstWhere('subject_id', $subjectId);
+                $grade = $score ? $score->grade : 'N/A';
+                $compulsorySubjectLog[] = [
+                    'subject_id' => $subjectId,
+                    'subject_name' => $subjectName,
+                    'grade' => $grade,
+                ];
+                if ($score && in_array($grade, $creditGrades)) {
+                    $compulsoryCreditCount++;
+                }
+            }
+
+            // Analyze all scores for total credits and non-compulsory subjects
+            foreach ($scores as $score) {
+                $isCompulsory = in_array($score->subject_id, $compulsorySubjectIds);
+                $grade = $score->grade;
+
+                if (in_array($grade, $creditGrades)) {
+                    $creditCount++;
+                } elseif (in_array($grade, $failGrades)) {
+                    $failCount++;
+                    if (!$isCompulsory) {
+                        $hasNonCompulsoryDOrF = true;
+                    }
+                } elseif (!$isSenior && $grade === 'D' && !$isCompulsory) {
+                    $hasNonCompulsoryDOrF = true;
+                }
+
+                if (!$isCompulsory) {
+                    $nonCompulsorySubjectLog[] = [
+                        'subject_id' => $score->subject_id,
+                        'subject_name' => $score->subject_name,
+                        'grade' => $grade,
+                    ];
+                }
+            }
+
+            // Log detailed information
+            Log::info("Student Result Analysis for Student ID: {$id}, Class ID: {$schoolclassid}, Session ID: {$sessionid}, Term ID: {$termid}", [
+                'student_name' => $students->isNotEmpty() ? $students->first()->fname . ' ' . $students->first()->lastname : 'N/A',
+                'class_category' => $isSenior ? 'Senior' : 'Junior',
+                'total_compulsory_subjects' => count($compulsorySubjects),
+                'compulsory_subjects' => $compulsorySubjectLog,
+                'compulsory_credits' => $compulsoryCreditCount,
+                'total_credits' => $creditCount,
+                'total_failing_grades' => $failCount,
+                'non_compulsory_subjects' => $nonCompulsorySubjectLog,
+                'has_non_compulsory_d_or_f' => $hasNonCompulsoryDOrF,
+            ]);
+
+            // Determine principal's comment and promotion status
+            $principalComment = '';
+            $promotionStatus = '';
+
+            $totalCompulsorySubjects = count($compulsorySubjects);
+            if ($totalCompulsorySubjects > 0 && $compulsoryCreditCount === $totalCompulsorySubjects && $creditCount >= 5) {
+                // Credits in all compulsory subjects and at least 5 total credits
+                $principalComment = 'Excellent performance in all compulsory subjects. Promoted to the next class.';
+                $promotionStatus = 'PROMOTED';
+            } elseif ($creditCount >= 5 && $compulsoryCreditCount > 0) {
+                // At least 5 credits with at least one in compulsory subjects
+                if ($isSenior || !$hasNonCompulsoryDOrF) {
+                    $principalComment = 'Good performance but needs improvement in some compulsory subjects. Promoted on trial.';
+                    $promotionStatus = 'PROMOTED ON TRIAL';
+                } else {
+                    // Junior category with D/F in non-compulsory subjects
+                    $principalComment = 'Credits in compulsory subjects but poor performance in other subjects. Parents to see the Principal.';
+                    $promotionStatus = 'PARENTS TO SEE PRINCIPAL';
+                }
+            } elseif ($creditCount >= 5) {
+                // At least 5 credits but none in compulsory subjects
+                $principalComment = 'Achieved credits but none in compulsory subjects. Parents to see the Principal.';
+                $promotionStatus = 'PARENTS TO SEE PRINCIPAL';
+            } elseif ($failCount === count($scores)) {
+                // All subjects are failing grades
+                $principalComment = 'Poor performance across all subjects. Advice to repeat the class. Parents to see the Principal.';
+                $promotionStatus = 'ADVICE TO REPEAT/PARENTS TO SEE THE PRINCIPAL';
+            } else {
+                // Default case for other scenarios
+                $principalComment = 'Inconsistent performance. Parents to see the Principal for further discussion.';
+                $promotionStatus = 'PARENTS TO SEE PRINCIPAL';
+            }
+
+            // Log the final principal comment and promotion status
+            Log::info("Promotion Decision for Student ID: {$id}", [
+                'principal_comment' => $principalComment,
+                'promotion_status' => $promotionStatus,
+            ]);
+
+            // Update or create Studentpersonalityprofile
+            $studentProfile = Studentpersonalityprofile::updateOrCreate(
+                [
+                    'studentid' => $id,
+                    'schoolclassid' => $schoolclassid,
+                    'sessionid' => $sessionid,
+                    'termid' => $termid,
+                ],
+                [
+                    'principalscomment' => $principalComment,
+                ]
+            );
+
+            // Update or create PromotionStatus
+            PromotionStatus::updateOrCreate(
+                [
+                    'studentId' => $id,
+                    'schoolclassid' => $schoolclassid,
+                    'sessionid' => $sessionid,
+                    'termid' => $termid,
+                ],
+                [
+                    'promotionStatus' => $promotionStatus,
+                    'position' => null, // Update if position is available
+                ]
+            );
+        }
 
         return view('studentreports.studentresult')
             ->with('students', $students)
@@ -221,9 +371,9 @@ class ViewStudentReportController extends Controller
             ->with('schoolclass', $schoolclass)
             ->with('schoolterm', $schoolterm)
             ->with('schoolsession', $schoolsession)
-            ->with('numberOfStudents', $numberOfStudents);
+            ->with('numberOfStudents', $numberOfStudents)
+            ->with('schoolInfo', $schoolInfo);
     }
-
      public function studentmockresult($id, $schoolclassid, $sessionid, $termid) 
     {
         $pagetitle = "Student Personality Profile";
