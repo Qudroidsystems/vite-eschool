@@ -300,9 +300,14 @@
 <!--end::Main-->
 
 <!--begin::Scripts-->
+
 @section('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // Optional: Set global font if you want to apply to all charts
+    Chart.defaults.font.family = 'Poppins';
+    Chart.defaults.font.size = 14;
+
     const ctx = document.getElementById('paymentChart').getContext('2d');
     const paymentChart = new Chart(ctx, {
         type: 'bar',
@@ -327,6 +332,10 @@
         },
         options: {
             responsive: true,
+            font: {
+                family: 'Poppins',
+                size: 14
+            },
             scales: {
                 y: {
                     beginAtZero: true,
@@ -355,5 +364,5 @@
     });
 </script>
 @endsection
-<!--end::Scripts-->
+
 @endsection

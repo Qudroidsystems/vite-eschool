@@ -11,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\View\View;
 
 class MyClassController extends Controller
@@ -23,52 +24,49 @@ class MyClassController extends Controller
         $this->middleware('permission:Delete my-class', ['only' => ['destroy']]);
     }
 
-    public function index(Request $request): View
+    public function index(Request $request): View|JsonResponse
     {
         $pagetitle = "Class Management";
         $user = auth()->user();
         $current = "Current";
 
-        // Fetch classes for display
-        $query = ClassTeacher::where('staffid', $user->id)
-            ->leftJoin('users', 'users.id', '=', 'classteacher.staffid')
-            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'classteacher.schoolclassid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'classteacher.termid')
-            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'classteacher.sessionid')
-            ->where('schoolsession.status', '=', $current);
+        $myclass = new LengthAwarePaginator([], 0, 5);
 
-        // Apply filters
-        if ($request->has('search')) {
-            $search = $request->input('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('schoolclass.schoolclass', 'like', "%{$search}%")
-                  ->orWhere('schoolarm.arm', 'like', "%{$search}%");
-            });
-        }
-        if ($request->has('term') && $request->input('term') !== 'all') {
-            $query->where('schoolterm.term', $request->input('term'));
-        }
-        if ($request->has('session') && $request->input('session') !== 'all') {
-            $query->where('schoolsession.session', $request->input('session'));
+        if ($request->filled('schoolclassid') && $request->filled('sessionid') && $request->input('schoolclassid') !== 'ALL' && $request->input('sessionid') !== 'ALL') {
+            $query = ClassTeacher::where('staffid', $user->id)
+                ->leftJoin('users', 'users.id', '=', 'classteacher.staffid')
+                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'classteacher.schoolclassid')
+                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'classteacher.sessionid')
+                ->where('schoolsession.status', '=', $current)
+                ->where('schoolclass.id', $request->input('schoolclassid'))
+                ->where('schoolsession.id', $request->input('sessionid'));
+
+            if ($search = $request->input('search')) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('schoolclass.schoolclass', 'like', "%{$search}%")
+                      ->orWhere('schoolarm.arm', 'like', "%{$search}%");
+                });
+            }
+
+            $myclass = $query->select([
+                'classteacher.id as id',
+                'users.id as userid',
+                'users.name as staffname',
+                'schoolclass.schoolclass as schoolclass',
+                'classteacher.termid as termid',
+                'classteacher.sessionid as sessionid',
+                'schoolarm.arm as schoolarm',
+                'schoolclass.description as classcategory',
+                'schoolterm.term as term',
+                'schoolsession.session as session',
+                'classteacher.updated_at as updated_at',
+                'schoolclass.id as schoolclassID'
+            ])->leftJoin('schoolterm', 'schoolterm.id', '=', 'classteacher.termid')
+            ->latest('classteacher.created_at')
+            ->paginate(5);
         }
 
-        $myclass = $query->get([
-            'classteacher.id as id',
-            'users.id as userid',
-            'users.name as staffname',
-            'schoolclass.schoolclass as schoolclass',
-            'classteacher.termid as termid',
-            'classteacher.sessionid as sessionid',
-            'schoolarm.arm as schoolarm',
-            'schoolclass.description as classcategory',
-            'schoolterm.term as term',
-            'schoolsession.session as session',
-            'classteacher.updated_at as updated_at',
-            'schoolclass.id as schoolclassID'
-        ])->sortBy('schoolclass');
-
-        // Fetch data for filters and modals
         $terms = Schoolterm::all();
         $schoolsessions = Schoolsession::where('status', 'Current')->get();
         $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
@@ -88,6 +86,15 @@ class MyClassController extends Controller
         if (config('app.debug')) {
             Log::info('Terms for select:', $terms->toArray());
             Log::info('Sessions for select:', $schoolsessions->toArray());
+            Log::info('Classes fetched:', $myclass->toArray());
+        }
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tableBody' => view('myclass.partials.class_rows', compact('myclass'))->render(),
+                'pagination' => $myclass->links('pagination::bootstrap-5')->render(),
+                'classCount' => $myclass->total(),
+            ]);
         }
 
         return view('myclass.index', compact('myclass', 'terms', 'schoolsessions', 'schoolclasses', 'pagetitle', 'term_counts'))
