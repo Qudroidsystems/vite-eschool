@@ -438,12 +438,18 @@
                                     @endcan
                                   
                                  
-                                   @can('View s')
-                                       
-                                   @endcan
-                                    <li class="nav-item">
-                                        <a href="{{ route('studentreports.index') }}" class="nav-link" data-key="t-products">Subject Score Upload</a>
+                                   @can('View student-report')
+                                       <li class="nav-item">
+                                        <a href="{{ route('studentreports.index') }}" class="nav-link" data-key="t-products">Terminal Result Reports</a>
                                     </li>
+                                   @endcan
+
+                                   @can('View student-mock-report')
+                                       <li class="nav-item">
+                                        <a href="{{ route('studentmockreports.index') }}" class="nav-link" data-key="t-products">Terminal Result Reports</a>
+                                    </li>
+                                   @endcan
+                                    
                                     
                                 </ul>
                             </div>

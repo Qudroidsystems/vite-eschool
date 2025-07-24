@@ -43,7 +43,7 @@
                         <div class="card">
                             <div class="card-body">
                                 <div class="row g-3">
-                                    <div class="col-xxl-4 col-sm-6">
+                                    <div class="col-xxl-3 col-sm-6">
                                         <select class="form-control" id="idclass" name="schoolclassid">
                                             <option value="ALL">Select Class</option>
                                             @foreach ($schoolclasses as $class)
@@ -51,7 +51,7 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="col-xxl-4 col-sm-6">
+                                    <div class="col-xxl-3 col-sm-6">
                                         <select class="form-control" id="idsession" name="sessionid">
                                             <option value="ALL">Select Session</option>
                                             @foreach ($schoolsessions as $session)
@@ -59,14 +59,15 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="col-xxl-2 col-sm-6">
+                                    <div class="col-xxl-3 col-sm-6">
                                         <div class="search-box">
                                             <input type="text" class="form-control search" id="searchInput" name="search" placeholder="Search students...">
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
                                     </div>
-                                    <div class="col-xxl-2 col-sm-6">
-                                        <button type="button" class="btn btn-secondary w-100" onclick="filterData()"><i class="bi bi-search align-baseline me-1"></i> Search</button>
+                                    <div class="col-xxl-3 col-sm-6 d-flex gap-2">
+                                        <button type="button" class="btn btn-secondary w-50" onclick="filterData()"><i class="bi bi-search align-baseline me-1"></i> Search</button>
+                                        <button type="button" class="btn btn-primary w-50" id="printAllBtn" style="display: none;" onclick="printAllResults()"><i class="bi bi-printer align-baseline me-1"></i> Print All Results</button>
                                     </div>
                                 </div>
                             </div>
@@ -152,6 +153,7 @@
         const classSelect = document.getElementById("idclass");
         const sessionSelect = document.getElementById("idsession");
         const searchInput = document.getElementById("searchInput");
+        const printAllBtn = document.getElementById("printAllBtn");
 
         if (!classSelect || !sessionSelect) {
             console.error("Class or session select elements not found");
@@ -167,6 +169,13 @@
         const classValue = classSelect.value;
         const sessionValue = sessionSelect.value;
         const searchValue = searchInput ? searchInput.value.trim() : '';
+
+        // Show/hide Print All button based on valid class and session selection
+        if (classValue !== 'ALL' && sessionValue !== 'ALL') {
+            printAllBtn.style.display = 'block';
+        } else {
+            printAllBtn.style.display = 'none';
+        }
 
         if (classValue === 'ALL' || sessionValue === 'ALL') {
             document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="11" class="text-center">Select class and session to view students.</td></tr>';
@@ -225,6 +234,77 @@
                 icon: "error",
                 title: "Error",
                 text: error.response?.data?.message || "Failed to fetch student data.",
+                showConfirmButton: true
+            });
+        });
+    }
+
+    function printAllResults() {
+        const classSelect = document.getElementById("idclass");
+        const sessionSelect = document.getElementById("idsession");
+        const classValue = classSelect.value;
+        const sessionValue = sessionSelect.value;
+
+        if (classValue === 'ALL' || sessionValue === 'ALL') {
+            Swal.fire({
+                icon: "warning",
+                title: "Missing Selection",
+                text: "Please select a valid class and session.",
+                showConfirmButton: true
+            });
+            return;
+        }
+
+        Swal.fire({
+            title: 'Generating PDF...',
+            text: 'Please wait while the PDF is being generated.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        axios.get('{{ route("studentreports.exportClassResultsPdf") }}', {
+            params: {
+                schoolclassid: classValue,
+                sessionid: sessionValue,
+                termid: 3 // Assuming third term for promotion status
+            },
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            responseType: 'json'
+        }).then(function (response) {
+            Swal.close();
+            if (response.data.success && response.data.pdfBase64) {
+                // Create a blob from the base64 data
+                const byteCharacters = atob(response.data.pdfBase64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/pdf' });
+
+                // Create a URL for the blob and open in a new tab
+                const pdfUrl = URL.createObjectURL(blob);
+                window.open(pdfUrl, '_blank');
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: response.data.message || "Failed to generate PDF.",
+                    showConfirmButton: true
+                });
+            }
+        }).catch(function (error) {
+            Swal.close();
+            console.error("PDF generation error:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: error.response?.data?.message || "Failed to generate PDF.",
                 showConfirmButton: true
             });
         });
