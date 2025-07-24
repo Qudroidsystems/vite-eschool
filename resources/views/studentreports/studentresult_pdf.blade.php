@@ -6,12 +6,65 @@
     <title>Terminal Progress Report</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Same styles as studentresult_pdf, minus watermark and print-specific styles */
         * {
             box-sizing: border-box;
         }
 
+        /* Watermark styles */
+        .watermark {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .watermark-text {
+            position: absolute;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 14px;
+            color: rgba(255, 215, 0, 0.15);
+            font-weight: bold;
+            transform: rotate(-45deg);
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        /* CSS-based watermark for PDF */
+        .watermark-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .watermark-grid {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .watermark-text {
+            position: absolute;
+            font-family: 'DejaVu Sans', sans-serif;
+            font-size: 14px;
+            color: rgba(255, 215, 0, 0.15);
+            font-weight: bold;
+            transform: rotate(-45deg);
+            white-space: nowrap;
+            user-select: none;
+        }
+
+        /* Content wrapper */
         .content-wrapper {
+            position: relative;
+            z-index: 2;
             background: rgba(255, 255, 255, 0.98);
         }
 
@@ -51,16 +104,39 @@
             display: inline-block;
         }
 
+        /* Print styles */
+        @media print {
+            .watermark-container {
+                position: absolute;
+            }
+            div.print-body {
+                background-color: white;
+            }
+            @page {
+                size: A4;
+                margin: 15mm;
+            }
+            html, body {
+                width: 100%;
+            }
+            body {
+                margin: 0;
+            }
+            nav {
+                display: none;
+            }
+        }
+
         /* Header styles */
         p.school-name1 {
-            font-family: 'Times New Roman', Times, serif;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 42px;
             font-weight: 700;
             color: #1e3a8a;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
         p.school-name2 {
-            font-family: 'Times New Roman', Times, serif;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 32px;
             font-weight: 800;
             color: #1e40af;
@@ -105,7 +181,7 @@
         /* Result details */
         span.result-details {
             font-size: 16px;
-            font-family: 'Times New Roman', Times, serif;
+            font-family: 'DejaVu Sans', sans-serif;
             font-weight: 700;
             color: #374151;
         }
@@ -141,15 +217,10 @@
             text-align: center;
             font-size: 14px;
             background: white;
-            transition: background-color 0.2s;
         }
         
         .result-table tbody tr:nth-child(even) td {
             background: #f8fafc;
-        }
-        
-        .result-table tbody tr:hover td {
-            background: #e0f2fe;
         }
 
         .result-table tbody td:nth-child(2) {
@@ -205,10 +276,9 @@
         }
         
         .grade-display span {
-            font-family: 'Times New Roman', Times, serif;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 16px;
             font-weight: 600;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
         }
 
         .remarks-table {
@@ -243,7 +313,7 @@
             color: white;
             padding: 12px 24px;
             border-radius: 10px;
-            font-family: 'Times New Roman', Times, serif;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 24px;
             font-weight: 700;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
@@ -256,37 +326,34 @@
             padding: 20px;
             border: 1px solid #cbd5e1;
         }
-
-        .print-button {
-            background: linear-gradient(135deg, #1e40af, #3b82f6);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .print-button:hover {
-            background: linear-gradient(135deg, #3b82f6, #1e40af);
-        }
     </style>
 </head>
 <body>
-    <div class="card main-card">
-        <div class="w-100 h-100 content-wrapper">
-            <div class="print-sect container-fluid" style="max-width: 1200px; margin: 0 auto; padding: 30px;">
-                <!-- Print Button -->
-                <div class="row mb-3">
-                    <div class="col-12 text-end">
-                        <a href="{{ route('studentreports.exportStudentResultPdf', ['id' => $studentid, 'schoolclassid' => $schoolclassid, 'sessionid' => $sessionid, 'termid' => $termid]) }}" class="print-button">
-                            Download PDF
-                        </a>
-                    </div>
+    <!-- CSS-based Watermark -->
+    <div class="watermark-container">
+        <div class="watermark-grid">
+            @php
+                $watermarkText = $schoolInfo->school_name ?? 'TOPCLASS COLLEGE, ONDO';
+                $positions = [
+                    ['left' => '-50px', 'top' => '100px'],
+                    ['left' => '200px', 'top' => '300px'],
+                    ['left' => '450px', 'top' => '500px'],
+                    ['left' => '-50px', 'top' => '700px'],
+                    ['left' => '200px', 'top' => '900px'],
+                    ['left' => '450px', 'top' => '1100px'],
+                ];
+            @endphp
+            @foreach ($positions as $pos)
+                <div class="watermark-text" style="left: {{ $pos['left'] }}; top: {{ $pos['top'] }};">
+                    {{ $watermarkText }}
                 </div>
+            @endforeach
+        </div>
+    </div>
 
+    <div class="card main-card">
+        <div class="print-body w-100 h-100 content-wrapper">
+            <div class="print-sect container-fluid" style="max-width: 1200px; margin: 0 auto; padding: 30px;">
                 <!-- Header Section -->
                 @php
                     $schoolInfo = \App\Models\SchoolInformation::getActiveSchool();
@@ -294,7 +361,7 @@
                 <div class="row mb-4">
                     <div class="col-md d-flex flex-column">
                         <div class="w-100 d-flex justify-content-center align-items-center pt-2">
-                            <div>
+                            <div> 
                                 <img class="img-thumbnail" alt="200x200" width="150" src="{{ $schoolInfo->getLogoUrlAttribute() ?? asset('print-main/public/assets/tp.png') }}" class="w-100 h-100" alt="School Logo">
                             </div>
                         </div>
@@ -406,7 +473,7 @@
                 <div class="row mb-4">
                     <div class="col-12">
                         <div class="result-table">
-                            <table class="table table-hover table-responsive">
+                            <table class="table table-responsive">
                                 <thead>
                                     <tr class="rt">
                                         <th></th>

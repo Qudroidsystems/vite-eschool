@@ -261,7 +261,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/studentresult/{id}/{schoolclassid}/{sessionid}/{termid}', [ViewStudentReportController::class, 'studentresult'])->name('studentresult');
     Route::get('/student-reports/registered-classes', [ViewStudentReportController::class, 'registeredClasses'])->name('studentreports.registeredClasses');
     Route::get('/class-broadsheet/{schoolclassid}/{sessionid}/{termid}', [ViewStudentReportController::class, 'classBroadsheet'])->name('classbroadsheet');
-
+    Route::get('/studentreports/export/{id}/{schoolclassid}/{sessionid}/{termid}', [ViewStudentReportController::class, 'exportStudentResultPdf'])->name('studentreports.exportStudentResultPdf');
    
 
     Route::resource('subjectoperation', SubjectOperationController::class);
