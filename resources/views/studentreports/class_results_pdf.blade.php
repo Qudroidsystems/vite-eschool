@@ -3,371 +3,350 @@
 <head>
     <meta charset="UTF-8">
     <title>Class Results - {{ $metadata['class_name'] }} - {{ $metadata['session'] }} - {{ $metadata['term'] }}</title>
-    <style>
-        /* Basic reset and font setup */
-        * {
-            margin: 0;
-            padding: 0;
-        }
+  <style>
+    /* Basic reset and font setup */
+    * {
+        margin: 0;
+        padding: 0;
+        /* box-sizing: border-box; */
+    }
 
-        body {
-            font-family: 'Times New Roman', Times, serif;
-            font-size: 12px;
-            line-height: 1.4;
-            color: #000;
-            background: #fff;
-        }
+    body {
+        font-family: 'Times New Roman', Times, serif;
+        font-size: 12px;
+        line-height: 1.4;
+        color: #000;
+        background: #fff;
+    }
 
-        .page {
-            width: 210mm; /* A4 width */
-            margin: 0 auto;
-        }
+    .student-section {
+        width: 100%;
+        min-height: 277mm; /* A4 height minus margins */
+        page-break-after: always;
+        background: #ffffff;
+        border: 2px solid #1e40af;
+        margin: 20px 25px; /* Balanced margin */
+        padding: 10px 15px; /* Internal padding */
+        position: relative;
+        /* box-sizing: border-box; */
+    }
 
-        /* Student section - each takes full page */
-        .student-section {
-            width: 100%;
-            min-height: 277mm; /* A4 height minus margins */
-            page-break-after: always;
-            background: #ffffff;
-            border: 2px solid #1e40af;
-            padding: 15px;
-            margin-bottom: 20px;
-            position: relative;
-        }
+    .student-section:last-child {
+        page-break-after: avoid;
+    }
 
-        .student-section:last-child {
-            page-break-after: avoid;
-        }
+    .fraction {
+        display: inline-block;
+        font-family: Arial, sans-serif;
+        font-size: 10px;
+        text-align: center;
+    }
 
-        /* Fraction styles */
-        .fraction {
-            display: inline-block;
-            font-family: Arial, sans-serif;
-            font-size: 10px;
-            text-align: center;
-        }
-        .fraction .numerator {
-            border-bottom: 2px solid #333;
-            padding: 0 5px;
-            display: block;
-        }
-        .fraction .denominator {
-            padding-top: 5px;
-            display: block;
-        }
+    .fraction .numerator {
+        border-bottom: 2px solid #333;
+        padding: 0 5px;
+        display: block;
+    }
 
-        /* Dotted lines for forms */
-        span.text-space-on-dots {
-            position: relative;
-            width: 280px;
-            border-bottom: 1px dotted #666;
-            display: inline-block;
-            min-height: 16px;
-        }
-        
-        span.text-dot-space2 {
-            position: relative;
-            width: 180px;
-            border-bottom: 1px dotted #666;
-            display: inline-block;
-            min-height: 16px;
-        }
+    .fraction .denominator {
+        padding-top: 5px;
+        display: block;
+    }
 
-        /* Header styles */
-        .school-name1 {
-            font-family: 'Times New Roman', Times, serif;
-            font-size: 28px;
-            font-weight: 700;
-            color: #1e3a8a;
-            margin: 0;
-            text-align: center;
-        }
+    span.text-space-on-dots,
+    span.text-dot-space2 {
+        border-bottom: 1px dotted #666;
+        display: inline-block;
+        min-height: 16px;
+    }
 
-        .school-name2 {
-            font-family: 'Times New Roman', Times, serif;
-            font-size: 20px;
-            font-weight: 800;
-            color: #1e40af;
-            margin: 5px 0;
-            text-align: center;
-        }
+    span.text-space-on-dots {
+        width: 280px;
+    }
 
-        .school-logo {
-            width: 80px;
-            height: 60px;
-            border: 3px solid #1e40af;
-            border-radius: 40px;
-            overflow: hidden;
-            margin: 0 auto 10px auto;
-            text-align: center;
-        }
+    span.text-dot-space2 {
+        width: 180px;
+    }
 
-        .header-divider {
-            width: 100%;
-            height: 3px;
-            background: #1e40af;
-            margin: 6px 0;
-        }
+    .school-name1 {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1e3a8a;
+        text-align: center;
+    }
 
-        .header-divider2 {
-            width: 100%;
-            height: 2px;
-            background: #64748b;
-            margin: 3px 0;
-        }
+    .school-name2 {
+        font-size: 20px;
+        font-weight: 800;
+        color: #1e40af;
+        text-align: center;
+        margin: 5px 0;
+    }
 
-        .report-title {
-            background: #111827;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-family: 'Times New Roman', Times, serif;
-            font-size: 18px;
-            font-weight: 700;
-            text-align: center;
-            margin: 10px 0;
-        }
+    .school-logo {
+        width: 80px;
+        height: 60px;
+        border: 3px solid #1e40af;
+        border-radius: 40px;
+        overflow: hidden;
+        margin: 0 auto 10px;
+        text-align: center;
+    }
 
-        /* Header section */
-        .header {
-            text-align: center;
-            margin-bottom: 12px;
-        }
+    .header-divider {
+        width: 100%;
+        height: 3px;
+        background: #1e40af;
+        margin: 6px 0;
+    }
 
-        .header-img {
-            width: 100%;
-            height: 100%;
-            border-radius: 35px;
-        }
+    .header-divider2 {
+        width: 100%;
+        height: 2px;
+        background: #64748b;
+        margin: 3px 0;
+    }
 
-        .school-motto, .school-address, .school-website {
-            font-size: 11px;
-            color: #6b7280;
-            margin: 3px 0;
-        }
+    .report-title {
+        background: #111827;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 18px;
+        font-weight: 700;
+        text-align: center;
+        margin: 10px 0;
+    }
 
-        /* Student info styles */
-        .student-info-section {
-            margin-bottom: 12px;
-        }
+    .header {
+        text-align: center;
+        margin-bottom: 12px;
+    }
 
-        .result-details {
-            font-size: 12px;
-            font-family: 'Times New Roman', Times, serif;
-            font-weight: 700;
-            color: #374151;
-        }
+    .header-img {
+        width: 100%;
+        height: 100%;
+        border-radius: 35px;
+    }
 
-        .rd1, .rd2, .rd3, .rd4, .rd5, .rd6, .rd7, .rd8, .rd9, .rd10 {
-            border-bottom: 2px dotted #6b7280;
-            margin-left: 6px;
-            min-width: 100px;
-            display: inline-block;
-            font-weight: 700;
-            padding-bottom: 2px;
-        }
+    .school-motto, .school-address, .school-website {
+        font-size: 11px;
+        color: #6b7280;
+        margin: 3px 0;
+    }
 
-        .photo-frame {
-            border: 3px solid #1e40af;
-            border-radius: 8px;
-            overflow: hidden;
-            background: white;
-            padding: 3px;
-            width: 100px;
-            height: 120px;
-            margin: 0 auto;
-            text-align: center;
-        }
+    .student-info-section {
+        margin-bottom: 12px;
+    }
 
-        .photo-frame img {
-            width: 100%;
-            height: 100%;
-        }
+    .result-details {
+        font-size: 12px;
+        font-weight: 700;
+        color: #374151;
+    }
 
-        /* Results table */
-        .result-table table {
-            width: 100%;
-            border: 2px solid #1e40af;
-            border-collapse: collapse;
-            margin-bottom: 12px;
-        }
+    .rd1, .rd2, .rd3, .rd4, .rd5, .rd6, .rd7, .rd8, .rd9, .rd10 {
+        border-bottom: 2px dotted #6b7280;
+        margin-left: 6px;
+        min-width: 100px;
+        display: inline-block;
+        font-weight: 700;
+        padding-bottom: 2px;
+    }
 
-        .result-table thead th {
-            background: #243f99;
-            color: white;
-            font-weight: 600;
-            border: 1px solid #1d4ed8;
-            padding: 8px 4px;
-            text-align: center;
-            font-size: 10px;
-        }
+    .photo-frame {
+        border: 3px solid #1e40af;
+        border-radius: 8px;
+        overflow: hidden;
+        background: white;
+        padding: 3px;
+        width: 100px;
+        height: 120px;
+        margin: 0 auto;
+        text-align: center;
+    }
 
-        .result-table tbody td {
-            border: 1px solid #cbd5e1;
-            padding: 6px 4px;
-            text-align: center;
-            font-size: 10px;
-            background: white;
-        }
+    .photo-frame img {
+        width: 100%;
+        height: 100%;
+    }
 
-        .result-table tbody tr:nth-child(even) td {
-            background: #f8fafc;
-        }
+    .result-table table {
+        width: 100%;
+        border: 2px solid #1e40af;
+        border-collapse: collapse;
+        margin-bottom: 12px;
+    }
 
-        .result-table tbody td.subject-name {
-            text-align: left !important;
-            font-weight: 600;
-        }
+    .result-table thead th {
+        background: #243f99;
+        color: white;
+        font-weight: 600;
+        border: 1px solid #1d4ed8;
+        padding: 8px 4px;
+        text-align: center;
+        font-size: 10px;
+    }
 
-        .highlight-red {
-            color: #dc2626 !important;
-            font-weight: bold;
-        }
+    .result-table tbody td {
+        border: 1px solid #cbd5e1;
+        padding: 6px 4px;
+        text-align: center;
+        font-size: 10px;
+        background: white;
+    }
 
-        .highlight-bold {
-            font-weight: 700 !important;
-        }
+    .result-table tbody tr:nth-child(even) td {
+        background: #f8fafc;
+    }
 
-        /* Assessment tables */
-        .assessment-table {
-            width: 100%;
-            border: 2px solid #cbda77;
-            border-collapse: collapse;
-            margin-bottom: 8px;
-        }
+    .result-table tbody td.subject-name {
+        text-align: left !important;
+        font-weight: 600;
+    }
 
-        .assessment-table thead th {
-            background: #fbbf24;
-            color: white;
-            font-weight: 600;
-            border: 1px solid #047857;
-            padding: 6px;
-            text-align: center;
-            font-size: 10px;
-        }
+    .highlight-red {
+        color: #dc2626 !important;
+        font-weight: bold;
+    }
 
-        .assessment-table tbody td {
-            border: 1px solid #d1d5db;
-            padding: 4px 6px;
-            background: white;
-            font-size: 9px;
-        }
+    .highlight-bold {
+        font-weight: 700 !important;
+    }
 
-        .assessment-table tbody tr:nth-child(even) td {
-            background: #f0fdf4;
-        }
+    .assessment-table {
+        width: 100%;
+        border: 2px solid #cbda77;
+        border-collapse: collapse;
+        margin-bottom: 8px;
+    }
 
-        .grade-display {
-            background: #fbbf24;
-            color: white;
-            border-radius: 12px;
-            padding: 8px;
-            text-align: center;
-            margin-bottom: 10px;
-        }
+    .assessment-table thead th {
+        background: #fbbf24;
+        color: white;
+        font-weight: 600;
+        border: 1px solid #047857;
+        padding: 6px;
+        text-align: center;
+        font-size: 10px;
+    }
 
-        .grade-display span {
-            font-family: 'Times New Roman', Times, serif;
-            font-size: 11px;
-            font-weight: 600;
-            margin: 0 6px;
-        }
+    .assessment-table tbody td {
+        border: 1px solid #d1d5db;
+        padding: 4px 6px;
+        background: white;
+        font-size: 9px;
+    }
 
-        /* Remarks table */
-        .remarks-table {
-            width: 100%;
-            border: 2px solid #7c3aed;
-            border-collapse: collapse;
-            margin-bottom: 10px;
-        }
+    .assessment-table tbody tr:nth-child(even) td {
+        background: #f0fdf4;
+    }
 
-        .remarks-table td {
-            border: 1px solid #c4b5fd;
-            padding: 8px;
-            background: white;
-            vertical-align: top;
-        }
+    .grade-display {
+        background: #fbbf24;
+        color: white;
+        border-radius: 12px;
+        padding: 8px;
+        text-align: center;
+        margin-bottom: 10px;
+    }
 
-        .remarks-table .h6 {
-            color: #6d28d9;
-            font-weight: 600;
-            margin-bottom: 6px;
-            font-size: 10px;
-        }
+    .grade-display span {
+        font-size: 11px;
+        font-weight: 600;
+        margin: 0 6px;
+    }
 
-        /* Footer section */
-        .footer-section {
-            background: #f1f5f9;
-            border-radius: 8px;
-            padding: 10px;
-            border: 1px solid #cbd5e1;
-            text-align: center;
-            margin-top: 8px;
-        }
+    .remarks-table {
+        width: 100%;
+        border: 2px solid #7c3aed;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+    }
 
-        .h5 {
-            font-size: 11px;
-            font-weight: bold;
-            margin-bottom: 6px;
-            color: #047857;
-        }
+    .remarks-table td {
+        border: 1px solid #c4b5fd;
+        padding: 8px;
+        background: white;
+        vertical-align: top;
+    }
 
-        /* Layout tables for positioning */
-        .student-info-table {
-            width: 100%;
-            margin-bottom: 12px;
-        }
+    .remarks-table .h6 {
+        color: #6d28d9;
+        font-weight: 600;
+        margin-bottom: 6px;
+        font-size: 10px;
+    }
 
-        .student-info-table td {
-            padding: 4px;
-            vertical-align: top;
-        }
+    .footer-section {
+        background: #f1f5f9;
+        border-radius: 8px;
+        padding: 10px;
+        border: 1px solid #cbd5e1;
+        text-align: center;
+        margin-top: 8px;
+    }
 
-        .assessment-layout-table {
-            width: 100%;
-            margin-bottom: 10px;
-        }
+    .h5 {
+        font-size: 11px;
+        font-weight: bold;
+        margin-bottom: 6px;
+        color: #047857;
+    }
 
-        .assessment-layout-table td {
-            width: 48%;
-            vertical-align: top;
-            padding: 0 1%;
-        }
+    .student-info-table {
+        width: 100%;
+        margin-bottom: 12px;
+    }
 
-        .footer-layout-table {
-            width: 100%;
-        }
+    .student-info-table td {
+        padding: 4px;
+        vertical-align: top;
+    }
 
-        .footer-layout-table td {
-            padding: 4px;
-            text-align: center;
-        }
+    .assessment-layout-table {
+        width: 100%;
+        margin-bottom: 10px;
+    }
 
-        /* Info row styling */
-        .info-row {
-            margin-bottom: 6px;
-            line-height: 1.5;
-        }
+    .assessment-layout-table td {
+        width: 48%;
+        vertical-align: top;
+        padding: 0 1%;
+    }
 
-        /* Utilities */
-        .text-center {
-            text-align: center;
-        }
+    .footer-layout-table {
+        width: 100%;
+    }
 
-        .font-bold {
-            font-weight: bold;
-        }
+    .footer-layout-table td {
+        padding: 4px;
+        text-align: center;
+    }
 
-        .text-primary {
-            color: #1e40af;
-        }
+    .info-row {
+        margin-bottom: 6px;
+        line-height: 1.5;
+    }
 
-        /* Ensure content fits on one page */
-        .student-section-inner {
-            width: 100%;
-            height: auto;
-        }
-    </style>
+    .text-center {
+        text-align: center;
+    }
+
+    .font-bold {
+        font-weight: bold;
+    }
+
+    .text-primary {
+        color: #1e40af;
+    }
+
+    .student-section-inner {
+        width: 100%;
+        height: auto;
+    }
+</style>
+
 </head>
 <body>
     @foreach ($allStudentData as $index => $studentData)
@@ -413,7 +392,31 @@
                                     </div>
                                     <div class="info-row">
                                         <span class="result-details">Date of Birth:</span>
-                                        <span class="rd5">{{ $student->dateofbirth ? \Carbon\Carbon::parse($student->dateofbirth)->format('d/m/Y') : 'N/A' }}</span>
+                                        <span class="rd5">
+                                            @php
+                                                $dob = $student->dateofbirth;
+                                                $formattedDob = 'N/A';
+                                                
+                                                if ($dob) {
+                                                    try {
+                                                        // Check if it's a numeric value (Excel date serial)
+                                                        if (is_numeric($dob)) {
+                                                            // Convert Excel date serial to Unix timestamp
+                                                            // Excel epoch starts at 1900-01-01, but has a leap year bug
+                                                            $unixTimestamp = ($dob - 25569) * 86400;
+                                                            $formattedDob = date('d/m/Y', $unixTimestamp);
+                                                        } else {
+                                                            // Try to parse as regular date
+                                                            $formattedDob = \Carbon\Carbon::parse($dob)->format('d/m/Y');
+                                                        }
+                                                    } catch (\Exception $e) {
+                                                        // If all parsing fails, just display the raw value
+                                                        $formattedDob = $dob;
+                                                    }
+                                                }
+                                            @endphp
+                                            {{ $formattedDob }}
+                                        </span>
                                         <span class="result-details">Admission No:</span>
                                         <span class="rd6">{{ $student->admissionNo ?? 'N/A' }}</span>
                                         <span class="result-details">Sex:</span>
