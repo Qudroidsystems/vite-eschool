@@ -1063,7 +1063,7 @@ class ViewStudentReportController extends Controller
                 'schoolclass.schoolclass as schoolclass',
                 'schoolarm.arm as schoolarm',
                 'schoolsession.session as session',
-            ])->latest('studentclass.created_at')->paginate(10);
+            ])->latest('studentclass.created_at')->paginate(100);
         }
 
         $schoolsessions = Schoolsession::where('status', 'Current')->get();
