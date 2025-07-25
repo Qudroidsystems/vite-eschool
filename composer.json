@@ -12,10 +12,12 @@
         "php": "^8.2",
         "barryvdh/laravel-dompdf": "^3.1",
         "doctrine/dbal": "^4.2",
+        "fruitcake/laravel-weasyprint": "*",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "laravel/ui": "^4.6",
         "maatwebsite/excel": "^3.1",
+        "rockett/weasyprint": "*",
         "spatie/laravel-permission": "^6.17",
         "spatie/laravel-responsecache": "^7.6",
         "twilio/sdk": "^8.6"

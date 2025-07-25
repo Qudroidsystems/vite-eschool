@@ -673,26 +673,26 @@ class ViewStudentReportController extends Controller
 
             Log::info('Starting PDF generation with DomPDF');
 
-            $pdf = Pdf::loadView($viewName, $viewData)
-                ->setPaper('A4', 'portrait')
-                ->setOptions([
-                    'dpi' => 96,
-                    'defaultFont' => 'DejaVu Sans',
-                    'isRemoteEnabled' => false, // Disabled since using local paths
-                    'isHtml5ParserEnabled' => true,
-                    'isFontSubsettingEnabled' => true,
-                    'isPhpEnabled' => false,
-                    'chroot' => [public_path(), storage_path()], // Include storage path
-                    'tempDir' => storage_path('app/temp/'),
-                    'fontCache' => storage_path('fonts/'),
-                    'logOutputFile' => storage_path('logs/dompdf.log'),
-                    'isJavascriptEnabled' => false,
-                    'debugKeepTemp' => config('app.debug', false),
-                    'enable_css_float' => true,
-                    'debugCss' => config('app.debug', false),
-                    'debugLayout' => config('app.debug', false),
-                ])
-                ->setWarnings(true);
+           $pdf = Pdf::loadView($viewName, $viewData)
+        ->setPaper('A4', 'portrait')
+        ->setOptions([
+            'dpi' => 96,
+            'defaultFont' => 'DejaVu Sans',
+            'isRemoteEnabled' => false,
+            'isHtml5ParserEnabled' => true,
+            'isFontSubsettingEnabled' => true,
+            'isPhpEnabled' => false,
+            'chroot' => [public_path(), storage_path()],
+            'tempDir' => storage_path('app/temp/'),
+            'fontCache' => storage_path('fonts/'),
+            'logOutputFile' => storage_path('logs/dompdf.log'),
+            'isJavascriptEnabled' => false,
+            'enable_css_float' => true,
+            'debugLayout' => false, // Explicitly disable
+            'debugCss' => false,   // Explicitly disable
+            'debugKeepTemp' => false // Explicitly disable
+        ])
+        ->setWarnings(true);
 
             Log::info('PDF object created successfully');
 

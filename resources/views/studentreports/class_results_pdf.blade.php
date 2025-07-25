@@ -1,147 +1,209 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Class Results - {{ $metadata['class_name'] }} - {{ $metadata['session'] }} - {{ $metadata['term'] }}</title>
+    <title>Class Results - {{ $metadata['class_name'] ?? 'Unknown Class' }} - {{ $metadata['session'] ?? 'Unknown Session' }} - {{ $metadata['term'] ?? 'Unknown Term' }}</title>
     <style>
-        /* Basic reset */
+        /* Basic reset and font setup */
         * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'DejaVu Sans', sans-serif;
+            font-family: 'DejaVu Sans', 'Times New Roman', Times, serif;
             font-size: 12px;
-            line-height: 1.5;
+            line-height: 1.4;
             color: #000;
             background: #fff;
         }
 
         .page {
+            width: 210mm; /* A4 width */
+            min-height: 297mm; /* A4 height */
+            margin: 0 auto;
+            padding: 10mm;
+        }
+
+        /* Student section */
+        .student-section {
             width: 100%;
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 20px;
+            page-break-after: always;
+            background: #ffffff;
+            border: 2px solid #1e40af;
+            padding: 15px;
+            break-inside: avoid; /* Prevent splitting across pages */
+        }
+
+        .student-section:last-child {
+            page-break-after: auto;
+        }
+
+        /* Fraction styles */
+        .fraction {
+            display: inline-block;
+            font-size: 10px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        .fraction .numerator {
+            border-bottom: 1px solid #333;
+            padding: 0 3px;
+            display: block;
+        }
+        .fraction .denominator {
+            padding-top: 2px;
+            display: block;
+        }
+
+        /* Dotted lines for forms */
+        .text-space-on-dots {
+            width: 250px;
+            border-bottom: 1px dotted #666;
+            display: inline-block;
+        }
+        .text-dot-space2 {
+            width: 150px;
+            border-bottom: 1px dotted #666;
+            display: inline-block;
         }
 
         /* Header styles */
         .header {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
-        .header-img {
-            width: 150px;
-            height: auto;
-        }
-
-        .school-name {
-            font-family: 'DejaVu Sans', sans-serif;
-            font-size: 24px;
+        .school-name1 {
+            font-size: 28px;
             font-weight: bold;
             color: #1e3a8a;
-            margin: 10px 0;
         }
 
-        .school-motto, .school-address, .school-website {
-            font-size: 12px;
-            color: #555;
-            margin: 5px 0;
+        .school-name2 {
+            font-size: 22px;
+            font-weight: bold;
+            color: #1e40af;
+        }
+
+        .school-logo {
+            width: 80px;
+            height: 60px;
+            border: 2px solid #1e40af;
+            border-radius: 50%;
+            margin: 0 auto 5px;
+        }
+
+        .school-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
 
         .header-divider {
             width: 100%;
-            height: 4px;
+            height: 3px;
             background: #1e40af;
-            margin: 10px 0;
+            margin: 5px 0;
         }
 
         .header-divider2 {
             width: 100%;
-            height: 2px;
-            background: #555;
+            height: 1px;
+            background: #64748b;
         }
 
         .report-title {
-            font-size: 20px;
-            font-weight: bold;
-            color: #fff;
             background: #111827;
+            color: white;
             padding: 10px;
-            text-align: center;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
             margin: 10px 0;
         }
 
-        /* Student section */
-        .student-section {
-            margin-bottom: 30px;
-            page-break-after: always;
+        .school-motto, .school-address, .school-website {
+            font-size: 11px;
+            color: #6b7280;
+            margin: 2px 0;
+        }
+
+        /* Student info styles */
+        .student-info-section {
+            margin-bottom: 10px;
         }
 
         .student-info-table {
             width: 100%;
-            margin-bottom: 20px;
+            border-collapse: collapse;
         }
 
         .student-info-table td {
-            padding: 5px;
             vertical-align: top;
+            padding: 5px;
         }
 
         .result-details {
+            font-size: 12px;
             font-weight: bold;
-            font-size: 14px;
             color: #374151;
         }
 
-        .rd {
-            border-bottom: 2px dotted #6b7280;
+        .rd1, .rd2, .rd3, .rd4, .rd5, .rd6, .rd7, .rd8, .rd9, .rd10 {
+            border-bottom: 1px dotted #6b7280;
+            margin-left: 5px;
+            min-width: 100px;
             display: inline-block;
-            min-width: 150px;
-            font-weight: bold;
-            margin-left: 8px;
         }
 
         .photo-frame {
-            border: 4px solid #1e40af;
-            width: 150px;
-            height: 170px;
-            text-align: center;
+            border: 3px solid #1e40af;
+            border-radius: 8px;
+            padding: 3px;
+            width: 100px;
+            height: 120px;
+            margin: 0 auto;
         }
 
         .photo-frame img {
             width: 100%;
             height: 100%;
+            object-fit: cover;
         }
 
         /* Results table */
         .result-table table {
             width: 100%;
-            border-collapse: collapse;
             border: 2px solid #1e40af;
-            margin-bottom: 20px;
-        }
-
-        .result-table th, .result-table td {
-            border: 1px solid #cbd5e1;
-            padding: 8px;
-            text-align: center;
-            font-size: 12px;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 10px;
         }
 
         .result-table th {
-            background: #333;
-            color: #fff;
+            background: #243f99;
+            color: white;
             font-weight: bold;
+            border: 1px solid #1d4ed8;
+            padding: 6px;
+            text-align: center;
         }
 
-        .result-table tbody tr:nth-child(even) {
-            background: #f8f8f8;
+        .result-table td {
+            border: 1px solid #cbd5e1;
+            padding: 6px;
+            text-align: center;
+            background: white;
         }
 
-        .result-table td.subject {
-            text-align: left;
+        .result-table tr:nth-child(even) td {
+            background: #f8fafc;
+        }
+
+        .subject-name {
+            text-align: left !important;
             font-weight: bold;
         }
 
@@ -154,72 +216,72 @@
             font-weight: bold;
         }
 
-        /* Fraction styles */
-        .fraction {
-            display: inline-block;
-            text-align: center;
-            font-size: 10px;
-        }
-
-        .fraction .numerator {
-            border-bottom: 2px solid #333;
-            padding: 0 5px;
-            display: block;
-        }
-
-        .fraction .denominator {
-            padding-top: 5px;
-            display: block;
-        }
-
         /* Assessment tables */
         .assessment-table {
             width: 100%;
-            border-collapse: collapse;
             border: 2px solid #cbda77;
-            margin-bottom: 20px;
-        }
-
-        .assessment-table th, .assessment-table td {
-            border: 1px solid #d1d5db;
-            padding: 8px;
-            text-align: left;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 10px;
         }
 
         .assessment-table th {
-            background: #d4d41d;
-            color: #fff;
+            background: #fbbf24;
+            color: white;
             font-weight: bold;
+            border: 1px solid #047857;
+            padding: 6px;
+            text-align: center;
         }
 
-        .assessment-table tbody tr:nth-child(even) td {
+        .assessment-table td {
+            border: 1px solid #d1d5db;
+            padding: 6px;
+            background: white;
+        }
+
+        .assessment-table tr:nth-child(even) td {
             background: #f0fdf4;
         }
 
+        .assessment-layout-table {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .assessment-layout-table td {
+            width: 48%;
+            vertical-align: top;
+            padding: 0 1%;
+        }
+
         .grade-display {
-            background: #d4d41d;
-            color: #fff;
-            padding: 10px;
+            background: #fbbf24;
+            color: white;
+            border-radius: 10px;
+            padding: 8px;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
+            font-size: 11px;
         }
 
         .grade-display span {
-            font-size: 12px;
-            margin: 0 10px;
+            margin: 0 5px;
         }
 
         /* Remarks table */
         .remarks-table {
             width: 100%;
-            border-collapse: collapse;
             border: 2px solid #7c3aed;
-            margin-bottom: 20px;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            font-size: 10px;
         }
 
         .remarks-table td {
             border: 1px solid #c4b5fd;
-            padding: 10px;
+            padding: 8px;
+            background: white;
             vertical-align: top;
         }
 
@@ -227,45 +289,63 @@
             color: #6d28d9;
             font-weight: bold;
             margin-bottom: 5px;
+            font-size: 11px;
         }
 
-        .text-space-on-dots {
-            border-bottom: 1px dotted #666;
-            display: inline-block;
-            width: 300px;
-        }
-
-        /* Footer */
+        /* Footer section */
         .footer-section {
             background: #f1f5f9;
-            padding: 15px;
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
             text-align: center;
-            margin-top: 20px;
+            margin-top: 10px;
+            font-size: 10px;
         }
 
-        .text-dot-space2 {
-            border-bottom: 1px dotted #666;
-            display: inline-block;
-            width: 200px;
-            margin: 0 10px;
+        .footer-layout-table {
+            width: 100%;
+        }
+
+        .footer-layout-table td {
+            padding: 3px;
+            text-align: center;
+        }
+
+        .h5 {
+            font-size: 11px;
+            font-weight: bold;
+            color: #047857;
+            margin-bottom: 5px;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .font-bold {
+            font-weight: bold;
+        }
+
+        .text-primary {
+            color: #1e40af;
         }
     </style>
 </head>
 <body>
     <div class="page">
-        @foreach ($allStudentData as $studentData)
+        @foreach ($allStudentData as $index => $studentData)
             <div class="student-section">
                 <!-- Header Section -->
                 <div class="header">
-                    @php
-                        $schoolInfo = $studentData['schoolInfo'];
-                    @endphp
-                    <img class="header-img" src="{{ $studentData['school_logo_path'] ?? public_path('storage/school_logos/default.jpg') }}" alt="School Logo">
-                    <div class="school-name">{{ $schoolInfo->school_name ?? 'QUODOROID CODING ACADEMY' }}</div>
-                    <div class="school-motto">{{ $schoolInfo->school_motto ?? 'N/A' }}</div>
-                    <div class="school-address">{{ $schoolInfo->school_address ?? 'N/A' }}</div>
-                    @if ($schoolInfo->school_website)
-                        <div class="school-website">{{ $schoolInfo->school_website }}</div>
+                    <div class="school-logo">
+                        <img src="{{ $studentData['school_logo_path'] ?? public_path('storage/school_logos/default.jpg') }}" alt="School Logo">
+                    </div>
+                    <p class="school-name2">{{ $studentData['schoolInfo']['school_name'] ?? 'QUODOROID CODING ACADEMY' }}</p>
+                    <div class="school-motto">{{ $studentData['schoolInfo']['school_motto'] ?? 'N/A' }}</div>
+                    <div class="school-address">{{ $studentData['schoolInfo']['school_address'] ?? 'N/A' }}</div>
+                    @if (!empty($studentData['schoolInfo']['school_website']))
+                        <div class="school-website">{{ $studentData['schoolInfo']['school_website'] }}</div>
                     @endif
                     <div class="header-divider"></div>
                     <div class="header-divider2"></div>
@@ -273,85 +353,68 @@
                 </div>
 
                 <!-- Student Information Section -->
-                <table class="student-info-table">
-                    <tr>
-                        <td width="75%">
-                            @if ($studentData['students']->isNotEmpty())
-                                @php $student = $studentData['students']->first(); @endphp
-                                <div>
+                <div class="student-info-section">
+                    <table class="student-info-table">
+                        <tr>
+                            <td width="75%">
+                                <div class="info-row">
                                     <span class="result-details">Name of Student:</span>
-                                    <span class="rd">{{ $student->fname }} {{ $student->lastname }} {{ $student->othername ?? '' }}</span>
+                                    <span class="rd1">{{ $studentData['firstname'] ?? '' }} {{ $studentData['lastname'] ?? '' }} {{ $studentData['othername'] ?? '' }}</span>
                                 </div>
-                                <div>
+                                <div class="info-row">
                                     <span class="result-details">Session:</span>
-                                    <span class="rd">{{ $studentData['schoolsession'] }}</span>
+                                    <span class="rd2">{{ $metadata['session'] ?? 'N/A' }}</span>
                                     <span class="result-details">Term:</span>
-                                    <span class="rd">{{ $studentData['schoolterm'] }}</span>
+                                    <span class="rd3">{{ $metadata['term'] ?? 'N/A' }}</span>
                                     <span class="result-details">Class:</span>
-                                    <span class="rd">{{ $studentData['schoolclass']->schoolclass ?? 'N/A' }} {{ $studentData['schoolclass']->armRelation->arm ?? '' }}</span>
+                                    <span class="rd4">{{ $metadata['class_name'] ?? 'N/A' }}</span>
                                 </div>
-                                <div>
+                                <div class="info-row">
                                     <span class="result-details">Date of Birth:</span>
-                                    <span class="rd">{{ $student->dateofbirth ? \Carbon\Carbon::parse($student->dateofbirth)->format('d/m/Y') : 'N/A' }}</span>
+                                    <span class="rd5">{{ !empty($studentData['dateofbirth']) ? \Carbon\Carbon::parse($studentData['dateofbirth'])->format('d/m/Y') : 'N/A' }}</span>
                                     <span class="result-details">Admission No:</span>
-                                    <span class="rd">{{ $student->admissionNo ?? 'N/A' }}</span>
+                                    <span class="rd6">{{ $studentData['admission_no'] ?? 'N/A' }}</span>
                                     <span class="result-details">Sex:</span>
-                                    <span class="rd">{{ $student->gender ?? 'N/A' }}</span>
+                                    <span class="rd7">{{ $studentData['gender'] ?? 'N/A' }}</span>
                                 </div>
-                                <div>
-                                    @if ($studentData['studentpp']->isNotEmpty())
-                                        @php $profile = $studentData['studentpp']->first(); @endphp
-                                        <span class="result-details">No. of Times School Opened:</span>
-                                        <span class="rd">{{ $profile->attendance ?? 'N/A' }}</span>
-                                        <span class="result-details">No. of Times School Absent:</span>
-                                        <span class="rd">{{ $profile->attendance ? ($profile->attendance - ($profile->attendance ?? 0)) : 'N/A' }}</span>
-                                    @else
-                                        <span class="result-details">No. of Times School Opened:</span>
-                                        <span class="rd">N/A</span>
-                                        <span class="result-details">No. of Times School Absent:</span>
-                                        <span class="rd">N/A</span>
-                                    @endif
+                                <div class="info-row">
+                                    <span class="result-details">No. of Times School Opened:</span>
+                                    <span class="rd8">{{ $studentData['attendance'] ?? 'N/A' }}</span>
+                                    <span class="result-details">No. of Times School Absent:</span>
+                                    <span class="rd9">{{ isset($studentData['attendance']) ? ($studentData['attendance'] - ($studentData['attendance'] ?? 0)) : 'N/A' }}</span>
                                     <span class="result-details">No. of Students in Class:</span>
-                                    <span class="rd">{{ $studentData['numberOfStudents'] ?? 'N/A' }}</span>
+                                    <span class="rd10">{{ $metadata['student_count'] ?? 'N/A' }}</span>
                                 </div>
-                            @else
-                                <div>
-                                    <span class="result-details">No student data available.</span>
+                            </td>
+                            <td width="25%">
+                                <div class="photo-frame">
+                                    <img src="{{ $studentData['student_image_path'] ?? public_path('storage/student_avatars/unnamed.jpg') }}" alt="Student Photo">
                                 </div>
-                            @endif
-                        </td>
-                        <td width="25%" align="center">
-                            <div class="photo-frame">
-                                @if ($studentData['students']->isNotEmpty() && $student->picture)
-                                    <img src="{{ $studentData['student_image_path'] ?? public_path('storage/student_avatars/unnamed.jpg') }}" alt="{{ $student->fname }}'s picture">
-                                @else
-                                    <img src="{{ public_path('storage/student_avatars/unnamed.jpg') }}" alt="Default Photo">
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
-                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
 
                 <!-- Results Table -->
                 <div class="result-table">
                     <table>
                         <thead>
                             <tr>
-                                <th></th>
+                                <th>S/N</th>
                                 <th>Subjects</th>
                                 <th>T1</th>
                                 <th>T2</th>
                                 <th>T3</th>
                                 <th>
                                     <div class="fraction">
-                                        <div class="numerator">T1 + T2 + T3</div>
-                                        <div class="denominator">3</div>
+                                        <div class="numerator">(T1+T2+T3)/3</div>
+                                        <div class="denominator"></div>
                                     </div>
                                 </th>
                                 <th>Term Exams</th>
                                 <th>
                                     <div class="fraction">
-                                        <div class="numerator">d + f</div>
+                                        <div class="numerator">d + e</div>
                                         <div class="denominator">2</div>
                                     </div>
                                 </th>
@@ -363,23 +426,21 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($studentData['scores'] as $index => $score)
+                            @forelse ($studentData['subjects'] as $index => $subject)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
-                                    <td class="subject">{{ $score->subject_name }}</td>
-                                    <td @if ($score->ca1 <= 50 && is_numeric($score->ca1)) class="highlight-red" @elseif ($score->ca1 > 50 && is_numeric($score->ca1)) class="highlight-bold" @endif>{{ $score->ca1 ?? '-' }}</td>
-                                    <td @if ($score->ca2 <= 50 && is_numeric($score->ca2)) class="highlight-red" @elseif ($score->ca2 > 50 && is_numeric($score->ca2)) class="highlight-bold" @endif>{{ $score->ca2 ?? '-' }}</td>
-                                    <td @if ($score->ca3 <= 50 && is_numeric($score->ca3)) class="highlight-red" @elseif ($score->ca3 > 50 && is_numeric($score->ca3)) class="highlight-bold" @endif>{{ $score->ca3 ?? '-' }}</td>
-                                    <td @if ($score->ca1 && $score->ca2 && $score->ca3 && round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) <= 50) class="highlight-red" @elseif ($score->ca1 && $score->ca2 && $score->ca3 && round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) > 50) class="highlight-bold" @endif>
-                                        {{ $score->ca1 && $score->ca2 && $score->ca3 ? round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) : '-' }}
-                                    </td>
-                                    <td @if ($score->exam <= 50 && is_numeric($score->exam)) class="highlight-red" @elseif ($score->exam > 50 && is_numeric($score->exam)) class="highlight-bold" @endif>{{ $score->exam ?? '-' }}</td>
-                                    <td @if ($score->total <= 50 && is_numeric($score->total)) class="highlight-red" @elseif ($score->total > 50 && is_numeric($score->total)) class="highlight-bold" @endif>{{ $score->total ?? '-' }}</td>
-                                    <td @if ($score->bf <= 50 && is_numeric($score->bf)) class="highlight-red" @elseif ($score->bf > 50 && is_numeric($score->bf)) class="highlight-bold" @endif>{{ $score->bf ?? '-' }}</td>
-                                    <td @if ($score->cum <= 50 && is_numeric($score->cum)) class="highlight-red" @elseif ($score->cum > 50 && is_numeric($score->cum)) class="highlight-bold" @endif>{{ $score->cum ?? '-' }}</td>
-                                    <td @if (in_array($score->grade, ['F', 'F9', 'E', 'E8'])) class="highlight-red" @elseif ($score->grade && !in_array($score->grade, ['F', 'F9', 'E', 'E8'])) class="highlight-bold" @endif>{{ $score->grade ?? '-' }}</td>
-                                    <td class="highlight-bold">{{ $score->position ?? '-' }}</td>
-                                    <td class="highlight-bold">{{ $score->class_average ?? '-' }}</td>
+                                    <td class="subject-name">{{ $subject['name'] ?? '-' }}</td>
+                                    <td class="{{ ($subject['ca1'] ?? 0) <= 50 && is_numeric($subject['ca1']) ? 'highlight-red' : 'highlight-bold' }}">{{ $subject['ca1'] ?? '-' }}</td>
+                                    <td class="{{ ($subject['ca2'] ?? 0) <= 50 && is_numeric($subject['ca2']) ? 'highlight-red' : '' }}">{{ $subject['ca2'] ?? '-' }}</td>
+                                    <td class="{{ ($subject['ca3'] ?? 0) <= 50 && is_numeric($subject['ca3']) ? 'highlight-red' : '' }}">{{ $subject['ca3'] ?? '-' }}</td>
+                                    <td class="{{ ($subject['ca_avg'] ?? 0) <= 50 && is_numeric($subject['ca_avg']) ? 'highlight-red' : 'highlight-bold' }}">{{ $subject['ca_avg'] ?? '-' }}</td>
+                                    <td class="{{ ($subject['exam'] ?? 0) <= 50 && is_numeric($subject['exam']) ? 'highlight-red' : 'highlight-bold' }}">{{ $subject['exam'] ?? '-' }}</td>
+                                    <td class="{{ ($subject['total'] ?? 0) <= 50 && is_numeric($subject['total']) ? 'highlight-red' : 'highlight-bold' }}">{{ $subject['total'] ?? '-' }}</td>
+                                    <td class="{{ ($subject['bf'] ?? 0) <= 50 && is_numeric($subject['bf']) ? 'highlight-red' : 'highlight-bold' }}">{{ $subject['bf'] ?? '-' }}</td>
+                                    <td class="{{ ($subject['cum'] ?? 0) <= 50 && is_numeric($subject['cum']) ? 'highlight-red' : 'highlight-bold' }}">{{ $subject['cum'] ?? '-' }}</td>
+                                    <td class="{{ in_array($subject['grade'] ?? '', ['F', 'F9', 'E', 'E8']) ? 'highlight-red' : 'highlight-bold' }}">{{ $subject['grade'] ?? '-' }}</td>
+                                    <td class="highlight-bold">{{ $subject['position'] ?? '-' }}</td>
+                                    <td class="highlight-bold">{{ $subject['class_average'] ?? '-' }}</td>
                                 </tr>
                             @empty
                                 <tr>
@@ -390,10 +451,10 @@
                     </table>
                 </div>
 
-                <!-- Assessment Tables -->
-                <table width="100%">
+                <!-- Assessment Tables Section -->
+                <table class="assessment-layout-table">
                     <tr>
-                        <td width="50%" style="padding-right: 10px;">
+                        <td>
                             <div class="h5">Character Assessment</div>
                             <table class="assessment-table">
                                 <thead>
@@ -404,22 +465,17 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @if ($studentData['studentpp']->isNotEmpty())
-                                        @php $profile = $studentData['studentpp']->first(); @endphp
-                                        <tr><td>Class Attendance</td><td>{{ $profile->attendance ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Attentiveness in Class</td><td>{{ $profile->attentiveness_in_class ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Class Participation</td><td>{{ $profile->class_participation ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Self Control</td><td>{{ $profile->selfcontrol ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Relationship with Others</td><td>{{ $profile->relationship_with_others ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Doing Assignment</td><td>{{ $profile->doing_assignment ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Neatness</td><td>{{ $profile->neatness ?? 'N/A' }}</td><td></td></tr>
-                                    @else
-                                        <tr><td colspan="3">No character assessment data available.</td></tr>
-                                    @endif
+                                    <tr><td>Class Attendance</td><td>{{ $studentData['attendance'] ?? 'N/A' }}</td><td></td></tr>
+                                    <tr><td>Attentiveness in Class</td><td>{{ $studentData['attentiveness_in_class'] ?? 'N/A' }}</td><td></td></tr>
+                                    <tr><td>Class Participation</td><td>{{ $studentData['class_participation'] ?? 'N/A' }}</td><td></td></tr>
+                                    <tr><td>Self Control</td><td>{{ $studentData['selfcontrol'] ?? 'N/A' }}</td><td></td></tr>
+                                    <tr><td>Relationship with Others</td><td>{{ $studentData['relationship_with_others'] ?? 'N/A' }}</td><td></td></tr>
+                                    <tr><td>Doing Assignment</td><td>{{ $studentData['doing_assignment'] ?? 'N/A' }}</td><td></td></tr>
+                                    <tr><td>Neatness</td><td>{{ $studentData['neatness'] ?? 'N/A' }}</td><td></td></tr>
                                 </tbody>
                             </table>
                         </td>
-                        <td width="50%" style="padding-left: 10px;">
+                        <td>
                             <div class="h5">Skill Development</div>
                             <table class="assessment-table">
                                 <thead>
@@ -430,18 +486,13 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @if ($studentData['studentpp']->isNotEmpty())
-                                        @php $profile = $studentData['studentpp']->first(); @endphp
-                                        <tr><td>Writing Skill</td><td>{{ $profile->writing_skill ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Reading Skill</td><td>{{ $profile->reading_skill ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Spoken English/Communication</td><td>{{ $profile->spoken_english_communication ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Hand Writing</td><td>{{ $profile->hand_writing ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Sports/Games</td><td>{{ $profile->gamesandsports ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Club</td><td>{{ $profile->club ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Music</td><td>{{ $profile->music ?? 'N/A' }}</td><td></td></tr>
-                                    @else
-                                        <tr><td colspan="3">No skill development data available.</td></tr>
-                                    @endif
+                                    <tr><td>Writing Skill</td><td>{{ $studentData['writing_skill'] ?? 'N/A' }}</td><td></td></tr>
+                                    <tr><td>Reading Skill</td><td>{{ $studentData['reading_skill'] ?? 'N/A' }}</td><td></td></tr>
+                                    <tr><td>Spoken English/Communication</td><td>{{ $studentData['spoken_english_communication'] ?? 'N/A' }}</td><td></td></tr>
+                                    <tr><td>Hand Writing</td><td>{{ $studentData['hand_writing'] ?? 'N/A' }}</td><td></td></tr>
+                                    <tr><td>Sports/Games</td><td>{{ $studentData['gamesandsports'] ?? 'N/A' }}</td><td></td></tr>
+                                    <tr><td>Club</td><td>{{ $studentData['club'] ?? 'N/A' }}</td><td></td></tr>
+                                    <tr><td>Music</td><td>{{ $studentData['music'] ?? 'N/A' }}</td><td></td></tr>
                                 </tbody>
                             </table>
                         </td>
@@ -459,64 +510,48 @@
 
                 <!-- Remarks Section -->
                 <table class="remarks-table">
-                    <tr>
-                        <td width="50%">
-                            <div class="h6">Class Teacher's Remark Signature/Date</div>
-                            <span class="text-space-on-dots">
-                                @if ($studentData['studentpp']->isNotEmpty())
-                                    {{ $studentData['studentpp']->first()->classteachercomment ?? 'N/A' }}
-                                @else
-                                    N/A
-                                @endif
-                            </span>
-                        </td>
-                        <td width="50%">
-                            <div class="h6">Remark On Other Activities</div>
-                            <span class="text-space-on-dots">
-                                @if ($studentData['studentpp']->isNotEmpty())
-                                    {{ $studentData['studentpp']->first()->cooperation ?? 'N/A' }}
-                                @else
-                                    N/A
-                                @endif
-                            </span>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td width="50%">
-                            <div class="h6">Guidance Counselor's Remark Signature/Date</div>
-                            <span class="text-space-on-dots">
-                                @if ($studentData['studentpp']->isNotEmpty())
-                                    {{ $studentData['studentpp']->first()->guidancescomment ?? 'N/A' }}
-                                @else
-                                    N/A
-                                @endif
-                            </span>
-                        </td>
-                        <td width="50%">
-                            <div class="h6">Principal's Remark Signature/Date</div>
-                            <span class="text-space-on-dots">
-                                @if ($studentData['studentpp']->isNotEmpty())
-                                    {{ $studentData['studentpp']->first()->principalscomment ?? 'N/A' }}
-                                @else
-                                    N/A
-                                @endif
-                            </span>
-                        </td>
-                    </tr>
+                    <tbody>
+                        <tr>
+                            <td width="50%">
+                                <div class="h6">Class Teacher's Remark Signature/Date</div>
+                                <div><span class="text-space-on-dots">{{ $studentData['classteachercomment'] ?? 'N/A' }}</span></div>
+                            </td>
+                            <td width="50%">
+                                <div class="h6">Remark On Other Activities</div>
+                                <div><span class="text-space-on-dots">{{ $studentData['cooperation'] ?? 'N/A' }}</span></div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="50%">
+                                <div class="h6">Guidance Counselor's Remark Signature/Date</div>
+                                <div><span class="text-space-on-dots">{{ $studentData['guidancescomment'] ?? 'N/A' }}</span></div>
+                            </td>
+                            <td width="50%">
+                                <div class="h6">Principal's Remark Signature/Date</div>
+                                <div><span class="text-space-on-dots">{{ $studentData['principalscomment'] ?? 'N/A' }}</span></div>
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
 
                 <!-- Footer Section -->
                 <div class="footer-section">
-                    <div>
-                        <span class="fw-bold">This Result was issued on</span>
-                        <span class="text-dot-space2"></span>
-                        <span class="fw-bold">and collected by</span>
-                        <span class="text-dot-space2"></span>
-                    </div>
-                    <div>
-                        <span class="fw-bold">NEXT TERM BEGINS</span>
-                        <span class="text-dot-space2"></span>
-                    </div>
+                    <table class="footer-layout-table">
+                        <tr>
+                            <td>
+                                <span class="font-bold">This Result was issued on</span>
+                                <span class="text-dot-space2">........................</span>
+                                <span class="font-bold">and collected by</span>
+                                <span class="text-dot-space2">........................</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="font-bold text-primary">NEXT TERM BEGINS</span>
+                                <span class="text-dot-space2">........................</span>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
             </div>
         @endforeach

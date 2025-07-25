@@ -91,21 +91,21 @@
 
 
                     <div class="btn-group">
-    <a href="{{ route('school.wide.payment.analysis', ['termid_id' => 2, 'session_id' => 1, 'action' => 'view']) }}" 
+    <a href="{{ route('school.wide.payment.analysis', ['termid_id' => 3, 'session_id' => 1, 'action' => 'view']) }}" 
        class="btn btn-primary" target="_blank">
         <i class="fas fa-eye"></i> View School-Wide Analysis
     </a>
-    <a href="{{ route('school.wide.payment.analysis', ['termid_id' => 2, 'session_id' => 1, 'action' => 'download']) }}" 
+    <a href="{{ route('school.wide.payment.analysis', ['termid_id' => 3, 'session_id' => 1, 'action' => 'download']) }}" 
        class="btn btn-success">
         <i class="fas fa-download"></i> Download School-Wide Analysis
     </a>
     <!-- Single buttons -->
-<a href="{{ route('school.wide.payment.analysis', ['termid_id' => 2, 'session_id' => 1, 'action' => 'download', 'format' => 'pdf']) }}" 
+<a href="{{ route('school.wide.payment.analysis', ['termid_id' => 3, 'session_id' => 1, 'action' => 'download', 'format' => 'pdf']) }}" 
    class="btn btn-success">
     <i class="fas fa-download"></i> Download PDF
 </a>
 
-<a href="{{ route('school.wide.payment.analysis', ['termid_id' => 2, 'session_id' => 1, 'action' => 'download', 'format' => 'word']) }}" 
+<a href="{{ route('school.wide.payment.analysis', ['termid_id' => 3, 'session_id' => 1, 'action' => 'download', 'format' => 'word']) }}" 
    class="btn btn-success">
     <i class="fas fa-download"></i> Download Word
 </a>

@@ -233,11 +233,13 @@
         });
     }
 
-    function printAllResults() {
+   function printAllResults() {
     const classSelect = document.getElementById("idclass");
     const sessionSelect = document.getElementById("idsession");
     const classValue = classSelect.value;
     const sessionValue = sessionSelect.value;
+
+    console.log('Generating PDF with params:', { schoolclassid: classValue, sessionid: sessionValue, termid: 3 });
 
     if (classValue === 'ALL' || sessionValue === 'ALL') {
         Swal.fire({
@@ -271,10 +273,9 @@
         },
         responseType: 'json'
     }).then(function (response) {
-        console.log("PDF response:", response);
+        console.log("PDF response:", response.data);
         Swal.close();
         if (response.data.success && response.data.pdf_base64) {
-            console.log("Base64 data received, length:", response.data.pdf_base64.length);
             const byteCharacters = atob(response.data.pdf_base64);
             const byteNumbers = new Array(byteCharacters.length);
             for (let i = 0; i < byteCharacters.length; i++) {
@@ -286,7 +287,6 @@
             window.open(pdfUrl, '_blank');
             setTimeout(() => URL.revokeObjectURL(pdfUrl), 30000);
         } else {
-            console.error("Invalid response data:", response.data);
             Swal.fire({
                 icon: "error",
                 title: "Error",
@@ -300,12 +300,11 @@
         Swal.fire({
             icon: "error",
             title: "Error",
-            text: error.response?.data?.message || "Failed to generate PDF. Please try again.",
+            text: error.response?.data?.message || "Failed to generate PDF.",
             showConfirmButton: true
         });
     });
 }
-    
 
     function setupPaginationLinks() {
         const paginationLinks = document.querySelectorAll('#pagination-container a');
