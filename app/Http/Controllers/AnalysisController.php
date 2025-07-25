@@ -297,7 +297,7 @@ class AnalysisController extends Controller
 
         $pdf->setPaper('a3', 'landscape');
         $pdf->setOptions([
-            'defaultFont' => 'DejaVuSans',
+            //'defaultFont' => 'DejaVuSans',
             'margin-top' => 5,
             'margin-right' => 5,
             'margin-bottom' => 5,
@@ -496,7 +496,7 @@ class AnalysisController extends Controller
 
             $pdf->setPaper('a3', 'landscape');
             $pdf->setOptions([
-                'defaultFont' => 'DejaVuSans',
+                //'defaultFont' => 'DejaVuSans',
                 'margin-top' => 5,
                 'margin-right' => 5,
                 'margin-bottom' => 5,

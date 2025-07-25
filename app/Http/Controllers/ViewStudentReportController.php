@@ -457,6 +457,7 @@ class ViewStudentReportController extends Controller
         $pagetitle = "Student Personality Profile";
         $data = $this->getStudentResultData($id, $schoolclassid, $sessionid, $termid);
         
+        
         return view('studentreports.studentresult')->with($data)->with('pagetitle', $pagetitle);
     }
 

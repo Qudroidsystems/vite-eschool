@@ -20,13 +20,13 @@
     }
 
     .student-section {
-        width: 100%;
+        width: 210mm; /* A4 width */
         min-height: 277mm; /* A4 height minus margins */
         page-break-after: always;
         background: #ffffff;
         border: 2px solid #1e40af;
-        margin: 20px 25px; /* Balanced margin */
-        padding: 10px 15px; /* Internal padding */
+        margin: 20px auto; /* Center horizontally with auto margins */
+        padding: 15px; /* Consistent internal padding */
         position: relative;
         /* box-sizing: border-box; */
     }
@@ -85,9 +85,9 @@
 
     .school-logo {
         width: 80px;
-        height: 60px;
-        border: 3px solid #1e40af;
-        border-radius: 40px;
+        height: 80px;
+        border: 0px solid #1e40af;
+        border-radius: 5px;
         overflow: hidden;
         margin: 0 auto 10px;
         text-align: center;
@@ -155,7 +155,7 @@
     }
 
     .photo-frame {
-        border: 3px solid #1e40af;
+        border: 3px solid #e3e568;
         border-radius: 8px;
         overflow: hidden;
         background: white;
