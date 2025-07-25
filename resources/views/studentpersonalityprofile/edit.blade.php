@@ -2,11 +2,6 @@
 
 @section('content')
 <style>
-    * {
-        /* box-sizing: border-box;
-        margin: 0;
-        padding: 0; */
-    }
     .fraction {
         display: inline-flex;
         flex-direction: column;
@@ -28,7 +23,6 @@
     div.grade>span {
         font-family: Arial, Helvetica, sans-serif;
         font-size: 14px;
-    
     }
     span.text-space-on-dots {
         position: relative;
@@ -50,9 +44,6 @@
         @page {
             size: 940px;
             margin: 0px;
-        }
-        div.print-body {
-            background-color: white;
         }
         html,
         body {
@@ -101,72 +92,28 @@
         width: 86.1%;
         border-bottom-style: dotted;
     }
-    span.rd2 {
+    span.rd2, span.rd3, span.rd4, span.rd5, span.rd6, span.rd7, span.rd8, span.rd9, span.rd10 {
         position: relative;
-        width: 30%;
         border-bottom-style: dotted;
     }
-    span.rd3 {
-        position: relative;
-        width: 30%;
-        border-bottom-style: dotted;
-    }
-    span.rd4 {
-        position: relative;
-        width: 30%;
-        border-bottom-style: dotted;
-    }
-    span.rd5 {
-        position: relative;
-        width: 25%;
-        border-bottom-style: dotted;
-    }
-    span.rd6 {
-        position: relative;
-        width: 28%;
-        border-bottom-style: dotted;
-    }
-    span.rd7 {
-        position: relative;
-        width: 17.2%;
-        border-bottom-style: dotted;
-    }
-    span.rd8 {
-        position: relative;
-        width: 12%;
-        border-bottom-style: dotted;
-    }
-    span.rd9 {
-        position: relative;
-        width: 11%;
-        border-bottom-style: dotted;
-    }
-    span.rd10 {
-        position: relative;
-        width: 11%;
-        border-bottom-style: dotted;
-    }
+    span.rd2, span.rd3, span.rd4 { width: 30%; }
+    span.rd5 { width: 25%; }
+    span.rd6 { width: 28%; }
+    span.rd7 { width: 17.2%; }
+    span.rd8 { width: 12%; }
+    span.rd9, span.rd10 { width: 11%; }
 </style>
 
 <div class="app-main flex-column flex-row-fluid" id="kt_app_main">
     <div class="d-flex flex-column flex-column-fluid">
         <div id="kt_app_content" class="app-content flex-column-fluid">
             <div id="kt_app_content_container" class="app-container container-xxl">
-                 <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_profile_details" aria-expanded="true" aria-controls="kt_account_profile_details">
-                                        <div class="card-title m-0">
-                                            <h3 class="fw-bold m-0">Student Profile for {{ $students[0]->fname }} {{ $students[0]->lastname }}</h3>
-                                        </div>
+                <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_profile_details" aria-expanded="true" aria-controls="kt_account_profile_details">
+                    <div class="card-title m-0">
+                        <h3 class="fw-bold m-0">Student Profile for {{ $students[0]->fname }} {{ $students[0]->lastname }}</h3>
+                    </div>
                 </div>
-                 <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_profile_details" aria-expanded="true" aria-controls="kt_account_profile_details">
-                                        <div class="card-title m-0">
-                                            <h3 class="fw-bold m-0">Student Profile for {{ $students[0]->fname }} {{ $students[0]->lastname }}</h3>
-                                        </div>
-                </div>
-                 <div class="card-header border-0 cursor-pointer" role="button" data-bs-toggle="collapse" data-bs-target="#kt_account_profile_details" aria-expanded="true" aria-controls="kt_account_profile_details">
-                                        <div class="card-title m-0">
-                                            <h3 class="fw-bold m-0">Student Profile for {{ $students[0]->fname }} {{ $students[0]->lastname }}</h3>
-                                        </div>
-                </div>
+                
                 @if ($errors->any())
                     <div class="alert alert-danger">
                         <strong>Whoops!</strong> There were some problems with your input.<br>
@@ -235,7 +182,7 @@
                                                     <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
                                                         <div class="d-flex align-items-center">
                                                             <i class="bi bi-building fs-3 text-success me-2"></i>
-                                                            <div class="fs-2 fw-bold">{{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : 'N/A' }}</div>
+                                                            <div class="fs-2 fw-bold">{{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->armRelation->arm : 'N/A' }}</div>
                                                         </div>
                                                         <div class="fw-semibold fs-6 text-gray-400">Class</div>
                                                     </div>
@@ -260,7 +207,7 @@
                     <div class="row">
                         <form action="{{ route('studentpersonalityprofile.save') }}" method="POST">
                             @csrf
-                             <input type="hidden" name="studentid" value="{{ $studentid }}">
+                            <input type="hidden" name="studentid" value="{{ $studentid }}">
                             <input type="hidden" name="schoolclassid" value="{{ $schoolclassid }}">
                             <input type="hidden" name="staffid" value="{{ $staffid }}">
                             <input type="hidden" name="termid" value="{{ $termid }}">
@@ -680,7 +627,15 @@
                                                                 <td>25</td>
                                                                 <td>Principal's Comment</td>
                                                                 <td>
-                                                                    <input type="text" name="principalscomment" value="{{ $s->principalscomment }}" class="form-control">
+                                                                    <input type="text" name="principalscomment" value="{{ $s->principalscomment }}" class="form-control" readonly>
+                                                                </td>
+                                                                <td></td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td>26</td>
+                                                                <td>Remark on Other Activities</td>
+                                                                <td>
+                                                                    <input type="text" name="remark_on_other_activities" value="{{ $s->remark_on_other_activities }}" class="form-control">
                                                                 </td>
                                                                 <td></td>
                                                             </tr>
@@ -738,7 +693,6 @@
                                                                     <th>i</th>
                                                                     <th>j</th>
                                                                     <th>k</th>
-                                                                 
                                                                 </tr>
                                                                 <tr class="rt">
                                                                     <th>S/N</th>
@@ -764,7 +718,6 @@
                                                                     <th>Grade</th>
                                                                     <th>PSN</th>
                                                                     <th>Class Average</th>
-                                                                    
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
@@ -782,10 +735,9 @@
                                                                         <td align="center" style="font-size: 14px;" @if ($score->total <= 50 && is_numeric($score->total)) class="highlight-red" @endif>{{ $score->total ?? '-' }}</td>
                                                                         <td align="center" style="font-size: 14px;" @if ($score->bf <= 50 && is_numeric($score->bf)) class="highlight-red" @endif>{{ $score->bf ?? '-' }}</td>
                                                                         <td align="center" style="font-size: 14px;" @if ($score->cum <= 50 && is_numeric($score->cum)) class="highlight-red" @endif>{{ $score->cum ?? '-' }}</td>
-                                                                        <td align="center" style="font-size: 14px;" @if (in_array($score->grade, ['F', 'F9','E','E8'])) class="highlight-red" @endif>{{ $score->grade ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 14px;" @if (in_array($score->grade, ['F', 'F9', 'E', 'E8'])) class="highlight-red" @endif>{{ $score->grade ?? '-' }}</td>
                                                                         <td align="center" style="font-size: 14px;">{{ $score->position ?? '-' }}</td>
                                                                         <td align="center" style="font-size: 14px;" @if ($score->class_average <= 50 && is_numeric($score->class_average)) class="highlight-red" @endif>{{ $score->class_average ?? '-' }}</td>
-                                                                        
                                                                     </tr>
                                                                 @empty
                                                                     <tr>
@@ -797,7 +749,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="row gap-2 mb-2 flex flex-row">
+                                            <div class="row gap-2 mb-2 d-flex flex-row">
                                                 <div class="col bg-white rounded">
                                                     <div class="mt-2">
                                                         <div class="h5">Character Assessment</div>
@@ -929,7 +881,7 @@
                                                                     <td class="p-2 w-50">
                                                                         <div class="h6">Remark On Other Activities</div>
                                                                         <div class="">
-                                                                            <span class="text-space-on-dots">N/A</span>
+                                                                            <span class="text-space-on-dots">{{ $studentpp[0]->remark_on_other_activities ?? 'N/A' }}</span>
                                                                         </div>
                                                                     </td>
                                                                 </tr>
@@ -937,7 +889,7 @@
                                                                     <td class="p-2 w-50">
                                                                         <div class="h6">Guidance Counselor's Remark Signature/Date</div>
                                                                         <div class="">
-                                                                            <span class="text-space-on-dots">N/A</span>
+                                                                            <span class="text-space-on-dots">{{ $studentpp[0]->guidancescomment ?? 'N/A' }}</span>
                                                                         </div>
                                                                     </td>
                                                                     <td class="p-2 w-50">
@@ -968,7 +920,7 @@
                                 </div>
                             </div>
                         </div>
-                     
+
                         <!-- Mock Report -->
                         <div class="accordion-item">
                             <h2 class="accordion-header" id="mockReportHeader">
@@ -995,7 +947,6 @@
                                                                     <th>Grade</th>
                                                                     <th>Position</th>
                                                                     <th>Class Average</th>
-                                                                  
                                                                 </tr>
                                                             </thead>
                                                             <tbody>
@@ -1004,10 +955,9 @@
                                                                         <td align="center" style="font-size: 14px;">{{ $index + 1 }}</td>
                                                                         <td align="center" style="font-size: 14px;">{{ $score->subject_name }}</td>
                                                                         <td align="center" style="font-size: 14px;" @if ($score->exam <= 50 && is_numeric($score->exam)) class="highlight-red" @endif>{{ $score->exam ?? '-' }}</td>
-                                                                        <td align="center" style="font-size: 14px;" @if (in_array($score->grade, ['F', 'F9','E','E8'])) class="highlight-red" @endif>{{ $score->grade ?? '-' }}</td>
+                                                                        <td align="center" style="font-size: 14px;" @if (in_array($score->grade, ['F', 'F9', 'E', 'E8'])) class="highlight-red" @endif>{{ $score->grade ?? '-' }}</td>
                                                                         <td align="center" style="font-size: 14px;">{{ $score->position ?? '-' }}</td>
                                                                         <td align="center" style="font-size: 14px;" @if ($score->class_average <= 50 && is_numeric($score->class_average)) class="highlight-red" @endif>{{ $score->class_average ?? '-' }}</td>
-                                                                   
                                                                     </tr>
                                                                 @empty
                                                                     <tr>
@@ -1019,7 +969,7 @@
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="row gap-2 mb-2 flex flex-row">
+                                            <div class="row gap-2 mb-2 d-flex flex-row">
                                                 <div class="col bg-white rounded">
                                                     <div class="mt-2">
                                                         <div class="h5">Character Assessment</div>
@@ -1151,7 +1101,7 @@
                                                                     <td class="p-2 w-50">
                                                                         <div class="h6">Remark On Other Activities</div>
                                                                         <div class="">
-                                                                            <span class="text-space-on-dots">N/A</span>
+                                                                            <span class="text-space-on-dots">{{ $studentpp[0]->remark_on_other_activities ?? 'N/A' }}</span>
                                                                         </div>
                                                                     </td>
                                                                 </tr>
@@ -1159,7 +1109,7 @@
                                                                     <td class="p-2 w-50">
                                                                         <div class="h6">Guidance Counselor's Remark Signature/Date</div>
                                                                         <div class="">
-                                                                            <span class="text-space-on-dots">N/A</span>
+                                                                            <span class="text-space-on-dots">{{ $studentpp[0]->guidancescomment ?? 'N/A' }}</span>
                                                                         </div>
                                                                     </td>
                                                                     <td class="p-2 w-50">
@@ -1190,38 +1140,39 @@
                                 </div>
                             </div>
                         </div>
-                                <div id="kt_app" class="toolbar py-3 py-lg-6">
-                                    <div id="kt_app" class="toolbar_container">
-                                        <div class="hstack gap-2 d-print-none">
-                                            <a href="{{ route('viewstudent', [$schoolclassid, $termid, $sessionid]) }}" class="btn btn-success"><i class="ri-pr bi-pr-arrow-left"></i> << Back</a>
-                                        </div>
-                                    </div>
-                                </div>
-                                @else
-                                    <div class="alert alert-warning">
-                                        No student data found.
-                                    </div>
-                                @endif
-
-                        <!-- Image View Modal -->
-                        <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Student Picture</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body text-center">
-                                        <img id="enlargedImage" src="" alt="Student Picture" class="img-fluid" />
-                                        <div class="placeholder-text">No image available</div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                    </div>
+                        <div id="kt_app" class="toolbar py-3 py-lg-6">
+                            <div id="kt_app" class="toolbar_container">
+                                <div class="hstack gap-2 d-print-none">
+                                    <a href="{{ route('viewstudent', [$schoolclassid, $termid, $sessionid]) }}" class="btn btn-success"><i class="ri-pr bi-pr-arrow-left"></i> << Back</a>
                                 </div>
                             </div>
                         </div>
                     </div>
+                @else
+                    <div class="alert alert-warning">
+                        No student data found.
+                    </div>
+                @endif
+
+                <!-- Image View Modal -->
+                <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Student Picture</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <img id="enlargedImage" src="" alt="Student Picture" class="img-fluid" />
+                                <div class="placeholder-text">No image available</div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

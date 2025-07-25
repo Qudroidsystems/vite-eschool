@@ -297,13 +297,13 @@ class AnalysisController extends Controller
 
         $pdf->setPaper('a3', 'landscape');
         $pdf->setOptions([
-            // 'defaultFont' => 'DejaVuSans',
+            'defaultFont' => 'DejaVuSans',
             'margin-top' => 5,
             'margin-right' => 5,
             'margin-bottom' => 5,
             'margin-left' => 5,
             'encoding' => 'UTF-8',
-            // 'isPhpEnabled' => true,
+            'isPhpEnabled' => true,
         ]);
 
         // Generate filename

@@ -35,7 +35,7 @@ class ViewStudentController extends Controller
 
         $query = Studentclass::query()
             ->where('schoolclassid', $request->input('schoolclassid'))
-            ->where('termid', $request->input('termid'))
+            // ->where('termid', $request->input('termid'))
             ->where('sessionid', $request->input('sessionid'))
             ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
             ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id');

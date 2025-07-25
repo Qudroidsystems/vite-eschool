@@ -17,7 +17,7 @@ use App\Models\Student;
 use App\Models\StudentBatchModel;
 use App\Models\StudentBillPayment;
 use App\Models\StudentBillPaymentBook;
-use App\Models\Studentclass;
+use App\Models\Studentclass;  
 use App\Models\Studenthouse;
 use App\Models\Studentpersonalityprofile;
 use App\Models\Studentpicture;

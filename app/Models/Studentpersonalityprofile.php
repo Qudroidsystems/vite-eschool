@@ -31,6 +31,7 @@ class Studentpersonalityprofile extends Model
         'gamesandsports',
         'principalscomment',
         'classteachercomment',
+        'remark_on_other_activities',
         'guidancescomment',
         'termid',
         'sessionid',

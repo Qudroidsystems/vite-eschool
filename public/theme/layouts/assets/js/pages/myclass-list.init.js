@@ -53,9 +53,9 @@ function filterData() {
     const searchValue = searchInput ? searchInput.value.trim() : '';
 
     if (classValue === 'ALL' || sessionValue === 'ALL') {
-        document.getElementById('classTableBody').innerHTML = '<tr><td colspan="6" class="text-center">Select class and session to view classes.</td></tr>';
+        document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="12" class="text-center">Select class and session to view students.</td></tr>';
         document.getElementById('pagination-container').innerHTML = '';
-        document.getElementById('classcount').innerText = '0';
+        document.getElementById('studentcount').innerText = '0';
         Swal.fire({
             icon: "warning",
             title: "Missing Selection",
@@ -67,8 +67,8 @@ function filterData() {
 
     console.log("Sending AJAX request with:", { search: searchValue, schoolclassid: classValue, sessionid: sessionValue });
 
-    const tableBody = document.getElementById('classTableBody');
-    tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
+    const tableBody = document.getElementById('studentTableBody');
+    tableBody.innerHTML = '<tr><td colspan="12" class="text-center">Loading...</td></tr>';
 
     axios.get('/myclass', {
         params: {
@@ -82,25 +82,25 @@ function filterData() {
         }
     }).then(function (response) {
         console.log("AJAX response received:", response.data);
-        document.getElementById('classTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="6" class="text-center">No classes found.</td></tr>';
+        document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="12" class="text-center">No students found.</td></tr>';
         document.getElementById('pagination-container').innerHTML = response.data.pagination || '';
-        document.getElementById('classcount').innerText = response.data.classCount || '0';
+        document.getElementById('studentcount').innerText = response.data.classCount || '0';
         setupPaginationLinks();
-        if (response.data.tableBody.includes('No classes found') || response.data.tableBody.includes('Select class and session')) {
+        if (response.data.tableBody.includes('No students found') || response.data.tableBody.includes('Select class and session')) {
             Swal.fire({
                 icon: "info",
                 title: "No Results",
-                text: "No classes found for the selected class and session.",
+                text: "No students found for the selected class and session.",
                 showConfirmButton: true
             });
         }
     }).catch(function (error) {
         console.error("AJAX error:", error);
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="12" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
         Swal.fire({
             icon: "error",
             title: "Error",
-            text: error.response?.data?.message || "Failed to fetch class data.",
+            text: error.response?.data?.message || "Failed to fetch student data.",
             showConfirmButton: true
         });
     });
@@ -110,7 +110,7 @@ function filterData() {
 function setupPaginationLinks() {
     const paginationLinks = document.querySelectorAll('#pagination-container a');
     paginationLinks.forEach(link => {
-        link.removeEventListener('click', handlePaginationClick); // Prevent duplicate listeners
+        link.removeEventListener('click', handlePaginationClick);
         link.addEventListener('click', handlePaginationClick);
     });
 }
@@ -125,8 +125,8 @@ function handlePaginationClick(e) {
 
 function loadPage(url) {
     console.log("Loading page:", url);
-    const tableBody = document.getElementById('classTableBody');
-    tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Loading...</td></tr>';
+    const tableBody = document.getElementById('studentTableBody');
+    tableBody.innerHTML = '<tr><td colspan="12" class="text-center">Loading...</td></tr>';
 
     axios.get(url, {
         headers: {
@@ -135,17 +135,17 @@ function loadPage(url) {
         }
     }).then(function (response) {
         console.log("Page load response:", response.data);
-        document.getElementById('classTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="6" class="text-center">No classes found.</td></tr>';
+        document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="12" class="text-center">No students found.</td></tr>';
         document.getElementById('pagination-container').innerHTML = response.data.pagination || '';
-        document.getElementById('classcount').innerText = response.data.classCount || '0';
+        document.getElementById('studentcount').innerText = response.data.classCount || '0';
         setupPaginationLinks();
     }).catch(function (error) {
         console.error("Page load error:", error);
-        tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="12" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
         Swal.fire({
             icon: "error",
             title: "Error",
-            text: error.response?.data?.message || "Failed to fetch class data.",
+            text: error.response?.data?.message || "Failed to fetch student data.",
             showConfirmButton: true
         });
     });
@@ -369,19 +369,19 @@ function deleteMultiple() {
     }
 }
 
-// Initialize List.js
+// Initialize List.js and Event Listeners
 document.addEventListener("DOMContentLoaded", function () {
     const perPage = 5;
     const options = {
-        valueNames: ["id", "schoolclass", "schoolarm", "term", "session"],
+        valueNames: ["admission_no", "first_name", "last_name", "other_name", "gender", "schoolclass", "schoolarm", "term", "session"],
         page: perPage,
         pagination: true
     };
-    const classList = new List("classList", options);
-    console.log("Initial classList items:", classList.items.length);
+    const studentList = new List("studentList", options);
+    console.log("Initial studentList items:", studentList.items.length);
 
-    classList.on("updated", function (e) {
-        console.log("List.js updated, matching items:", e.matchingItems.length, "total items:", classList.items.length);
+    studentList.on("updated", function (e) {
+        console.log("List.js updated, matching items:", e.matchingItems.length, "total items:", studentList.items.length);
         const noResult = document.getElementsByClassName("noresult")[0];
         if (noResult) {
             noResult.style.display = e.matchingItems.length === 0 ? "block" : "none";

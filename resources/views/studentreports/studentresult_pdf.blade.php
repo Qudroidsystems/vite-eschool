@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terminal Progress Report</title>
     <style>
+        /* Reset for consistent rendering */
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
@@ -26,9 +25,8 @@
 
         .page {
             width: 100%;
-            min-height: 100%;
-            page-break-after: always;
             padding: 10px;
+            page-break-after: always;
         }
 
         .page:last-child {
@@ -51,14 +49,19 @@
             width: 80px;
             height: 80px;
             border: 2px solid #1e40af;
-            display: block;
-            margin: 0 auto;
+            margin: 0 auto 5px;
             background: #f8fafc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            text-align: center;
+            line-height: 80px;
             color: #1e40af;
             font-weight: bold;
+            font-size: 10px;
+        }
+
+        .school-logo img {
+            width: 100%;
+            height: 100%;
+            vertical-align: middle;
         }
 
         .school-name {
@@ -92,24 +95,25 @@
 
         /* Student Info Section */
         .student-info-section {
-            display: flex;
             width: 100%;
             margin-bottom: 10px;
+            overflow: hidden; /* Clearfix for floats */
         }
 
         .student-details {
-            flex: 0 0 70%;
+            float: left;
+            width: 70%;
             padding-right: 10px;
         }
 
         .student-photo-container {
-            flex: 0 0 30%;
+            float: left;
+            width: 30%;
             height: 120px;
             border: 2px solid #1e40af;
             background: #f8fafc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            text-align: center;
+            line-height: 120px;
             color: #1e40af;
             font-size: 10px;
         }
@@ -117,17 +121,17 @@
         .student-photo-container img {
             width: 100%;
             height: 100%;
-            object-fit: cover;
+            vertical-align: middle;
         }
 
         .info-item {
             margin-bottom: 5px;
+            overflow: hidden;
         }
 
         .info-label {
             font-weight: bold;
             color: #333333;
-            margin-right: 5px;
             font-size: 12px;
             display: inline-block;
             width: 120px;
@@ -167,7 +171,7 @@
             font-size: 10px;
         }
 
-        .results-table td:nth-child(2) {
+        .results-table td.subject-name {
             text-align: left !important;
             font-weight: bold;
         }
@@ -253,32 +257,22 @@
             padding: 5px;
             border: 1px solid #cccccc;
             font-size: 10px;
+            overflow: hidden; /* Clearfix for floats */
         }
 
         .signature-row {
-            display: flex;
             width: 100%;
+            overflow: hidden;
         }
 
         .signature-item {
-            flex: 0 0 50%;
+            float: left;
+            width: 50%;
         }
 
-        @media print {
-            body {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            .page {
-                page-break-inside: avoid;
-            }
-
-            .results-table,
-            .assessment-table,
-            .remarks-table {
-                page-break-inside: avoid;
-            }
+        /* Clearfix for floated elements */
+        .clear {
+            clear: both;
         }
     </style>
 </head>
@@ -287,12 +281,18 @@
         <div class="content-wrapper">
             <!-- Header Section -->
             <div class="header-section">
-                <div class="school-logo">LOGO</div>
-                <div class="school-name">QUODOROID CODING ACADEMY</div>
-                <div class="school-motto">Excellence in Education</div>
+                <div class="school-logo">
+                    @if (!empty($data['school_logo_path']) && file_exists($data['school_logo_path']))
+                        <img src="{{ $data['school_logo_path'] }}" alt="School Logo">
+                    @else
+                        LOGO
+                    @endif
+                </div>
+                <div class="school-name">{{ $data['schoolInfo']->school_name ?? 'QUODOROID CODING ACADEMY' }}</div>
+                <div class="school-motto">{{ $data['schoolInfo']->school_motto ?? 'Excellence in Education' }}</div>
                 <div class="school-address">
-                    123 Education Street, Lagos, Nigeria<br>
-                    www.quodoroid.edu.ng
+                    {{ $data['schoolInfo']->school_address ?? '123 Education Street, Lagos, Nigeria' }}<br>
+                    {{ $data['schoolInfo']->school_website ?? 'www.quodoroid.edu.ng' }}
                 </div>
                 <div class="header-divider"></div>
                 <div class="report-title">TERMINAL PROGRESS REPORT</div>
@@ -303,40 +303,52 @@
                 <div class="student-details">
                     <div class="info-item">
                         <span class="info-label">Name of Student:</span>
-                        <span class="info-value">John Doe Smith</span>
+                        <span class="info-value">
+                            {{ $data['students']->first()->firstname ?? '' }} 
+                            {{ $data['students']->first()->lastname ?? '' }} 
+                            {{ $data['students']->first()->othername ?? '' }}
+                        </span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Session:</span>
-                        <span class="info-value">2024/2025</span>
+                        <span class="info-value">{{ $data['schoolsession'] ?? 'N/A' }}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Term:</span>
-                        <span class="info-value">First Term</span>
+                        <span class="info-value">{{ $data['schoolterm'] ?? 'N/A' }}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Class:</span>
-                        <span class="info-value">JSS 1A</span>
+                        <span class="info-value">
+                            {{ $data['schoolclass']->schoolclass ?? 'N/A' }} 
+                            {{ $data['schoolclass']->armRelation->arm ?? '' }}
+                        </span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Date of Birth:</span>
-                        <span class="info-value">15/03/2010</span>
+                        <span class="info-value">{{ $data['students']->first()->dateofbirth ?? 'N/A' }}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Admission No:</span>
-                        <span class="info-value">QCA/2024/001</span>
+                        <span class="info-value">{{ $data['students']->first()->admissionNo ?? 'N/A' }}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Sex:</span>
-                        <span class="info-value">Male</span>
+                        <span class="info-value">{{ $data['students']->first()->gender ?? 'N/A' }}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Students in Class:</span>
-                        <span class="info-value">35</span>
+                        <span class="info-value">{{ $data['numberOfStudents'] ?? 'N/A' }}</span>
                     </div>
                 </div>
                 <div class="student-photo-container">
-                    Student Photo
+                    @if (!empty($data['student_image_path']) && file_exists($data['student_image_path']))
+                        <img src="{{ $data['student_image_path'] }}" alt="Student Photo">
+                    @else
+                        Student Photo
+                    @endif
                 </div>
+                <div class="clear"></div>
             </div>
 
             <!-- Results Table -->
@@ -357,102 +369,26 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td style="text-align: left;">Mathematics</td>
-                            <td>18</td>
-                            <td>17</td>
-                            <td>19</td>
-                            <td>65</td>
-                            <td>85</td>
-                            <td>A</td>
-                            <td>2nd</td>
-                            <td>72</td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td style="text-align: left;">English Language</td>
-                            <td>16</td>
-                            <td>18</td>
-                            <td>17</td>
-                            <td>58</td>
-                            <td>78</td>
-                            <td>B</td>
-                            <td>5th</td>
-                            <td>69</td>
-                        </tr>
-                        <tr>
-                            <td>3</td>
-                            <td style="text-align: left;">Basic Science</td>
-                            <td>15</td>
-                            <td>16</td>
-                            <td>18</td>
-                            <td>52</td>
-                            <td>72</td>
-                            <td>B</td>
-                            <td>8th</td>
-                            <td>65</td>
-                        </tr>
-                        <tr>
-                            <td>4</td>
-                            <td style="text-align: left;">Social Studies</td>
-                            <td>12</td>
-                            <td class="highlight-red">8</td>
-                            <td>14</td>
-                            <td class="highlight-red">28</td>
-                            <td class="highlight-red">48</td>
-                            <td class="highlight-red">E</td>
-                            <td>25th</td>
-                            <td>55</td>
-                        </tr>
-                        <tr>
-                            <td>5</td>
-                            <td style="text-align: left;">Computer Studies</td>
-                            <td>19</td>
-                            <td>20</td>
-                            <td>18</td>
-                            <td>68</td>
-                            <td>92</td>
-                            <td>A</td>
-                            <td>1st</td>
-                            <td>78</td>
-                        </tr>
-                        <tr>
-                            <td>6</td>
-                            <td style="text-align: left;">French</td>
-                            <td>14</td>
-                            <td>15</td>
-                            <td>16</td>
-                            <td>45</td>
-                            <td>62</td>
-                            <td>C</td>
-                            <td>12th</td>
-                            <td>58</td>
-                        </tr>
-                        <tr>
-                            <td>7</td>
-                            <td style="text-align: left;">Physical Education</td>
-                            <td>17</td>
-                            <td>18</td>
-                            <td>19</td>
-                            <td>56</td>
-                            <td>75</td>
-                            <td>B</td>
-                            <td>6th</td>
-                            <td>71</td>
-                        </tr>
-                        <tr>
-                            <td>8</td>
-                            <td style="text-align: left;">Creative Arts</td>
-                            <td>16</td>
-                            <td>17</td>
-                            <td>15</td>
-                            <td>52</td>
-                            <td>68</td>
-                            <td>C</td>
-                            <td>10th</td>
-                            <td>63</td>
-                        </tr>
+                        @if ($data['scores']->isNotEmpty())
+                            @foreach ($data['scores'] as $index => $score)
+                                <tr>
+                                    <td>{{ $index }}</td>
+                                    <td class="subject-name">{{ $data['score']}} $score->subject_name ?? 'N/A' }}</td>
+                                    <td>{{ $data['score']['ca1'] ?? '-' }}</td>
+                                    <td>{{ $data['score']['ca2'] ?? '-' }}</td>
+                                    <td>{{ $data['score']['ca3'] ?? '-' }}</td>
+                                    <td>{{ $data['score']['exam'] ?? '-' }}</td>
+                                    <td class="{{ $score['total'] < 40 ? 'highlight-red' : '' }}">{{ $data['score']['total'] ?? '-' }}</td>
+                                    <td class="{{ $score['grade'] == 'F' || $score['grade'] == 'F9' ? 'highlight-red' : '' }}">{{ $data['score']['grade'] ?? '-' }}</td>
+                                    <td>{{ $data['score']['position'] ?? '-' }}</td>
+                                    <td>{{ $data['score']['class_average'] ?? '-' }}</td>
+                                </tr>
+                            @endforeach
+                        @else
+                            <tr>
+                                <td colspan="10">No scores available</td>
+                            </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>
@@ -470,15 +406,40 @@
                         <tr>
                             <td style="width: 50%;">
                                 <span class="remarks-label">Principal's Remark:</span>
-                                <span class="remarks-content">Good performance overall. Needs improvement in Social Studies.</span>
+                                <span class="remarks-content">{{ $data['studentpp']->first()->principalscomment ?? 'N/A' }}</span>
                             </td>
                             <td style="width: 50%;">
                                 <span class="remarks-label">Promotion Status:</span>
-                                <span class="remarks-content">Promoted to JSS 2</span>
+                                <span class="remarks-content">
+                                    @php
+                                        $promotion = \App\Models\PromotionStatus::where([
+                                            'studentId' => $data['studentid'],
+                                            'schoolclassid' => $data['schoolclassid'],
+                                            'sessionid' => $data['sessionid'],
+                                            'termid' => $data['termid']
+                                        ])->first();
+                                    @endphp
+                                    {{ $promotion->promotionStatus ?? 'N/A' }}
+                                </span>
                             </td>
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Footer Section -->
+            <div class="footer-section">
+                <div class="signature-row">
+                    <div class="signature-item">
+                        <span class="remarks-label">Principal's Signature:</span>
+                        <span class="remarks-content">________________________</span>
+                    </div>
+                    <div class="signature-item">
+                        <span class="remarks-label">Date:</span>
+                        <span class="remarks-content">{{ now()->format('d/m/Y') }}</span>
+                    </div>
+                    <div class="clear"></div>
+                </div>
             </div>
         </div>
     </div>

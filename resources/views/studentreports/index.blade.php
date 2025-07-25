@@ -170,7 +170,6 @@
         const sessionValue = sessionSelect.value;
         const searchValue = searchInput ? searchInput.value.trim() : '';
 
-        // Show/hide Print All button based on valid class and session selection
         if (classValue !== 'ALL' && sessionValue !== 'ALL') {
             printAllBtn.style.display = 'block';
         } else {
@@ -208,13 +207,8 @@
         }).then(function (response) {
             console.log("AJAX response received:", response.data);
 
-            // Update table body
             document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="11" class="text-center">No students found.</td></tr>';
-
-            // Update pagination
             document.getElementById('pagination-container').innerHTML = response.data.pagination || '';
-
-            // Update student count
             document.getElementById('studentcount').innerText = response.data.studentCount || '0';
 
             setupPaginationLinks();
@@ -240,75 +234,78 @@
     }
 
     function printAllResults() {
-        const classSelect = document.getElementById("idclass");
-        const sessionSelect = document.getElementById("idsession");
-        const classValue = classSelect.value;
-        const sessionValue = sessionSelect.value;
+    const classSelect = document.getElementById("idclass");
+    const sessionSelect = document.getElementById("idsession");
+    const classValue = classSelect.value;
+    const sessionValue = sessionSelect.value;
 
-        if (classValue === 'ALL' || sessionValue === 'ALL') {
-            Swal.fire({
-                icon: "warning",
-                title: "Missing Selection",
-                text: "Please select a valid class and session.",
-                showConfirmButton: true
-            });
-            return;
-        }
-
+    if (classValue === 'ALL' || sessionValue === 'ALL') {
         Swal.fire({
-            title: 'Generating PDF...',
-            text: 'Please wait while the PDF is being generated.',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
+            icon: "warning",
+            title: "Missing Selection",
+            text: "Please select a valid class and session.",
+            showConfirmButton: true
         });
+        return;
+    }
 
-        axios.get('{{ route("studentreports.exportClassResultsPdf") }}', {
-            params: {
-                schoolclassid: classValue,
-                sessionid: sessionValue,
-                termid: 3 // Assuming third term for promotion status
-            },
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            responseType: 'json'
-        }).then(function (response) {
-            Swal.close();
-            if (response.data.success && response.data.pdfBase64) {
-                // Create a blob from the base64 data
-                const byteCharacters = atob(response.data.pdfBase64);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], { type: 'application/pdf' });
+    Swal.fire({
+        title: 'Generating PDF...',
+        text: 'Please wait while the PDF is being generated.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
 
-                // Create a URL for the blob and open in a new tab
-                const pdfUrl = URL.createObjectURL(blob);
-                window.open(pdfUrl, '_blank');
-            } else {
-                Swal.fire({
-                    icon: "error",
-                    title: "Error",
-                    text: response.data.message || "Failed to generate PDF.",
-                    showConfirmButton: true
-                });
+    axios.get('{{ route("studentreports.exportClassResultsPdf") }}', {
+        params: {
+            schoolclassid: classValue,
+            sessionid: sessionValue,
+            termid: 3,
+            response_method: 'base64'
+        },
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        responseType: 'json'
+    }).then(function (response) {
+        console.log("PDF response:", response);
+        Swal.close();
+        if (response.data.success && response.data.pdf_base64) {
+            console.log("Base64 data received, length:", response.data.pdf_base64.length);
+            const byteCharacters = atob(response.data.pdf_base64);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
             }
-        }).catch(function (error) {
-            Swal.close();
-            console.error("PDF generation error:", error);
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+            const pdfUrl = URL.createObjectURL(blob);
+            window.open(pdfUrl, '_blank');
+            setTimeout(() => URL.revokeObjectURL(pdfUrl), 30000);
+        } else {
+            console.error("Invalid response data:", response.data);
             Swal.fire({
                 icon: "error",
                 title: "Error",
-                text: error.response?.data?.message || "Failed to generate PDF.",
+                text: response.data.message || "Failed to generate PDF.",
                 showConfirmButton: true
             });
+        }
+    }).catch(function (error) {
+        Swal.close();
+        console.error("PDF generation error:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: error.response?.data?.message || "Failed to generate PDF. Please try again.",
+            showConfirmButton: true
         });
-    }
+    });
+}
+    
 
     function setupPaginationLinks() {
         const paginationLinks = document.querySelectorAll('#pagination-container a');
@@ -335,16 +332,9 @@
             }
         }).then(function (response) {
             console.log("Page load response:", response.data);
-
-            // Update table body
             document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="11" class="text-center">No students found.</td></tr>';
-
-            // Update pagination
             document.getElementById('pagination-container').innerHTML = response.data.pagination || '';
-
-            // Update student count
             document.getElementById('studentcount').innerText = response.data.studentCount || '0';
-
             setupPaginationLinks();
         }).catch(function (error) {
             console.error("Page load error:", error);
@@ -358,11 +348,8 @@
         });
     }
 
-    // Initialize checkboxes and image modal
     document.addEventListener("DOMContentLoaded", function () {
         console.log("DOM loaded");
-
-        // Checkbox handling
         const checkAll = document.getElementById("checkAll");
         if (checkAll) {
             checkAll.addEventListener("click", function () {
@@ -375,7 +362,6 @@
             });
         }
 
-        // Individual checkbox handling
         document.querySelectorAll('tbody input[name="chk_child"]').forEach(checkbox => {
             checkbox.addEventListener("change", function () {
                 const row = this.closest("tr");
@@ -386,7 +372,6 @@
             });
         });
 
-        // Image modal
         const modal = document.getElementById('imageViewModal');
         if (modal) {
             modal.addEventListener('show.bs.modal', function (event) {

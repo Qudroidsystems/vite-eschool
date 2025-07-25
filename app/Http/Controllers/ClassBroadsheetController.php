@@ -23,7 +23,7 @@ class ClassBroadsheetController extends Controller
         // Fetch students enrolled in the specified class, term, and session
         $students = Studentclass::where('studentclass.schoolclassid', $schoolclassid)
             ->where('studentclass.sessionid', $sessionid)
-            ->where('studentclass.termid', $termid)
+           // ->where('studentclass.termid', $termid)
             ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
             ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
             ->get([
@@ -35,6 +35,8 @@ class ClassBroadsheetController extends Controller
                 'studentRegistration.gender as gender',
                 'studentpicture.picture as picture'
             ])->sortBy('lastname');
+
+         
 
         // Fetch all subjects for the class
         $subjects = Subject::whereHas('broadsheetRecords', function ($query) use ($schoolclassid, $sessionid) {

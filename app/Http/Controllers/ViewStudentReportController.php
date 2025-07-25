@@ -39,12 +39,6 @@ class ViewStudentReportController extends Controller
         $this->middleware('permission:Delete student-report', ['only' => ['destroy']]);
     }
 
-    /**
-     * Format a number as an ordinal string (e.g., 1st, 2nd, 3rd, 4th).
-     *
-     * @param int $number
-     * @return string
-     */
     protected function formatOrdinal($number)
     {
         if (!is_numeric($number) || $number <= 0) {
@@ -66,14 +60,6 @@ class ViewStudentReportController extends Controller
         };
     }
 
-    /**
-     * Calculate subject positions and class averages for the entire class (all arms) for each subject.
-     *
-     * @param int $schoolclassid
-     * @param int $sessionid
-     * @param int $termid
-     * @return void
-     */
     protected function calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid)
     {
         $cacheKey = "class_metrics_{$schoolclassid}_{$sessionid}_{$termid}";
@@ -228,15 +214,6 @@ class ViewStudentReportController extends Controller
         ]);
     }
 
-    /**
-     * Get student result data for both view and PDF export
-     *
-     * @param int $id
-     * @param int $schoolclassid
-     * @param int $sessionid
-     * @param int $termid
-     * @return array
-     */
     private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
     {
         try {
@@ -323,7 +300,7 @@ class ViewStudentReportController extends Controller
                 'school_address' => 'N/A',
                 'school_website' => null,
                 'getLogoUrlAttribute' => function () {
-                    return public_path('assets/tp.png');
+                    return 'school_logos/LUYWInGbX6ypLQO4fEWue9jHx3VwaKJG5hPLsQmt.jpg';
                 }
             ];
 
@@ -332,8 +309,8 @@ class ViewStudentReportController extends Controller
                 $imagePath = public_path('storage/' . $students->first()->picture);
                 Log::info('Student image path', ['path' => $imagePath, 'exists' => file_exists($imagePath)]);
             }
-            $logoPath = public_path($schoolInfo->getLogoUrlAttribute() ?? 'assets/tp.png');
-            Log::info('School logo path', ['path' => $logoPath, 'exists' => file_exists($logoPath)]);
+            $logoPath = public_path('storage/' . $schoolInfo->getLogoUrlAttribute());
+            Log::info('School logo path:', ['path' => $logoPath, 'exists' => file_exists($logoPath)]);
 
             if ($termid == 3) {
                 $classCategory = Classcategory::find($schoolclass->classcategoryid, ['is_senior']);
@@ -475,15 +452,6 @@ class ViewStudentReportController extends Controller
         }
     }
 
-    /**
-     * Display the student's result for a specific class, session, and term.
-     *
-     * @param int $id
-     * @param int $schoolclassid
-     * @param int $sessionid
-     * @param int $termid
-     * @return View
-     */
     public function studentresult($id, $schoolclassid, $sessionid, $termid)
     {
         $pagetitle = "Student Personality Profile";
@@ -492,20 +460,11 @@ class ViewStudentReportController extends Controller
         return view('studentreports.studentresult')->with($data)->with('pagetitle', $pagetitle);
     }
 
-    /**
-     * Export single student result as PDF.
-     *
-     * @param int $id Student ID
-     * @param int $schoolclassid School class ID
-     * @param int $sessionid School session ID
-     * @param int $termid School term ID
-     * @return \Illuminate\Http\Response
-     */
     public function exportStudentResultPdf($id, $schoolclassid, $sessionid, $termid)
     {
         try {
-            ini_set('max_execution_time', 600); // Increased for complex PDFs
-            ini_set('memory_limit', '1024M'); // Increased memory limit
+            ini_set('max_execution_time', 600);
+            ini_set('memory_limit', '1024M');
 
             Log::info('Generating single student PDF', [
                 'student_id' => $id,
@@ -534,14 +493,16 @@ class ViewStudentReportController extends Controller
                 ->setPaper('A4', 'portrait')
                 ->setOptions([
                     'dpi' => 150,
-                    'defaultFont' => 'Times New Roman',
-                    'isRemoteEnabled' => true,
+                    'defaultFont' => 'DejaVu Sans',
+                    'isRemoteEnabled' => false, // Disabled since using local paths
                     'isHtml5ParserEnabled' => true,
                     'isFontSubsettingEnabled' => true,
                     'isPhpEnabled' => false,
-                    'chroot' => public_path(),
+                    'chroot' => [public_path(), storage_path()], // Include storage path
                     'fontCache' => storage_path('fonts/'),
-                    'logOutputFile' => storage_path('logs/dompdf.log'), // Log DomPDF errors
+                    'logOutputFile' => storage_path('logs/dompdf.log'),
+                    'debugCss' => config('app.debug', false),
+                    'debugLayout' => config('app.debug', false),
                 ]);
 
             return $pdf->download($filename);
@@ -561,113 +522,128 @@ class ViewStudentReportController extends Controller
         }
     }
 
- public function exportClassResultsPdf(Request $request): JsonResponse
-{
-    try {
-        // Set execution limits for large PDF generation
-        ini_set('max_execution_time', 1200); // 20 minutes
-        ini_set('memory_limit', '2048M'); // 2GB memory limit
+    public function exportClassResultsPdf(Request $request)
+    {
+        try {
+            ini_set('max_execution_time', 1200);
+            ini_set('memory_limit', '2048M');
 
-        // Validate and sanitize input parameters
-        $schoolclassid = $request->query('schoolclassid');
-        $sessionid = $request->query('sessionid');
-        $termid = $request->query('termid', 3);
+            $schoolclassid = $request->query('schoolclassid');
+            $sessionid = $request->query('sessionid');
+            $termid = $request->query('termid', 3);
 
-        Log::info('Starting class results PDF generation', [
-            'schoolclassid' => $schoolclassid,
-            'sessionid' => $sessionid,
-            'termid' => $termid,
-        ]);
-
-        // Validate parameters
-        if (!is_numeric($schoolclassid) || !is_numeric($sessionid) || !is_numeric($termid)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid parameters provided. All IDs must be numeric.'
-            ], 400);
-        }
-
-        // Get all students in the class for the session
-        $students = Studentclass::where('schoolclassid', $schoolclassid)
-            ->where('sessionid', $sessionid)
-            ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
-            ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-            ->where('schoolsession.status', '=', 'Current')
-            ->select('studentRegistration.id', 'studentRegistration.firstname', 'studentRegistration.lastname')
-            ->orderBy('studentRegistration.lastname', 'asc')
-            ->orderBy('studentRegistration.firstname', 'asc')
-            ->get();
-
-        if ($students->isEmpty()) {
-            Log::warning('No students found for class', [
+            Log::info('Starting class results PDF generation', [
                 'schoolclassid' => $schoolclassid,
-                'sessionid' => $sessionid
+                'sessionid' => $sessionid,
+                'termid' => $termid,
             ]);
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'No students found for the selected class and session.'
-            ], 404);
-        }
 
-        Log::info('Processing students for PDF', ['student_count' => $students->count()]);
+            if (!is_numeric($schoolclassid) || !is_numeric($sessionid) || !is_numeric($termid)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid parameters provided. All IDs must be numeric.'
+                ], 400);
+            }
 
-        // Collect all student data
-        $allStudentData = [];
-        $processedStudents = 0;
-        $skippedStudents = 0;
+            if (!Schoolclass::find($schoolclassid) || !Schoolsession::find($sessionid) || !Schoolterm::find($termid)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid class, session, or term ID.'
+                ], 400);
+            }
 
-        foreach ($students as $student) {
-            try {
-                $studentData = $this->getStudentResultData($student->id, $schoolclassid, $sessionid, $termid);
-                
-                if ($this->validateStudentData($studentData)) {
-                    $allStudentData[] = $studentData;
-                    $processedStudents++;
-                } else {
+            $students = Studentclass::where('schoolclassid', $schoolclassid)
+                ->where('sessionid', $sessionid)
+                ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+                ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
+                ->where('schoolsession.status', '=', 'Current')
+                ->select('studentRegistration.id', 'studentRegistration.firstname', 'studentRegistration.lastname')
+                ->orderBy('studentRegistration.lastname', 'asc')
+                ->orderBy('studentRegistration.firstname', 'asc')
+                ->get();
+
+            if ($students->isEmpty()) {
+                Log::warning('No students found for class', [
+                    'schoolclassid' => $schoolclassid,
+                    'sessionid' => $sessionid
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No students found for the selected class and session.'
+                ], 404);
+            }
+
+            Log::info('Processing students for PDF', ['student_count' => $students->count()]);
+
+            $allStudentData = [];
+            $processedStudents = 0;
+            $skippedStudents = 0;
+
+            foreach ($students as $student) {
+                try {
+                    $studentData = $this->getStudentResultData($student->id, $schoolclassid, $sessionid, $termid);
+                    if ($this->validateStudentData($studentData)) {
+                        $allStudentData[] = $studentData;
+                        $processedStudents++;
+                    } else {
+                        $skippedStudents++;
+                        Log::warning('Skipping student due to invalid/missing data', [
+                            'student_id' => $student->id,
+                            'student_name' => $student->firstname . ' ' . $student->lastname,
+                            'schoolclassid' => $schoolclassid,
+                            'sessionid' => $sessionid,
+                            'termid' => $termid,
+                        ]);
+                    }
+                } catch (Exception $e) {
                     $skippedStudents++;
-                    Log::warning('Skipping student due to invalid/missing data', [
+                    Log::error('Error processing student data', [
                         'student_id' => $student->id,
-                        'student_name' => $student->fname . ' ' . $student->lastname,
-                        'schoolclassid' => $schoolclassid,
-                        'sessionid' => $sessionid,
-                        'termid' => $termid,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
                     ]);
                 }
-            } catch (Exception $e) {
-                $skippedStudents++;
-                Log::error('Error processing student data', [
-                    'student_id' => $student->id,
-                    'error' => $e->getMessage()
-                ]);
             }
-        }
 
-        if (empty($allStudentData)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No valid student data found for PDF generation. All students were skipped due to missing data.'
-            ], 404);
-        }
+            if (empty($allStudentData)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No valid student data found for PDF generation.'
+                ], 404);
+            }
 
-        Log::info('Student data collection completed', [
-            'processed' => $processedStudents,
-            'skipped' => $skippedStudents,
-            'total' => $students->count()
-        ]);
+            Log::info('Student data collection completed', [
+                'processed' => $processedStudents,
+                'skipped' => $skippedStudents,
+                'total' => $students->count()
+            ]);
 
-        // Get class and session information for filename
-        $schoolclass = Schoolclass::where('id', $schoolclassid)->with('armRelation')->first(['schoolclass', 'arm']);
-        $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
-        $term = $this->getTermName($termid);
-        
-        // Generate clean filename
-        $className = $schoolclass ? ($schoolclass->schoolclass . ($schoolclass->armRelation ? $schoolclass->armRelation->arm : '')) : 'Class';
-        $filename = 'Class_Results_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $className) . '_' . 
-                   preg_replace('/[^A-Za-z0-9_-]/', '_', $schoolsession) . '_' . $term . '.pdf';
+            $this->fixImagePaths($allStudentData);
 
-        // Generate PDF with optimized settings
-        $pdf = Pdf::loadView('studentreports.class_results_pdf', [
+            $schoolclass = Schoolclass::where('id', $schoolclassid)->with('armRelation')->first(['schoolclass', 'arm']);
+            $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
+            $term = $this->getTermName($termid);
+            $className = $schoolclass ? ($schoolclass->schoolclass . ($schoolclass->armRelation ? $schoolclass->armRelation->arm : '')) : 'Class';
+            $filename = 'Class_Results_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $className) . '_' . 
+                        preg_replace('/[^A-Za-z0-9_-]/', '_', $schoolsession) . '_' . $term . '.pdf';
+
+            Log::info('Preparing PDF data', [
+                'filename' => $filename,
+                'class_name' => $className,
+                'session' => $schoolsession,
+                'term' => $term
+            ]);
+
+            $viewName = 'studentreports.class_results_pdf';
+            if (!view()->exists($viewName)) {
+                Log::error('PDF view not found', ['view' => $viewName]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'PDF template view not found: ' . $viewName
+                ], 500);
+            }
+
+            $viewData = [
                 'allStudentData' => $allStudentData,
                 'metadata' => [
                     'class_name' => $className,
@@ -676,142 +652,377 @@ class ViewStudentReportController extends Controller
                     'generation_date' => now()->format('Y-m-d H:i:s'),
                     'student_count' => count($allStudentData)
                 ]
-            ])
-            ->setPaper('A4', 'portrait')
-            ->setOptions([
-                'dpi' => 150,
-                'defaultFont' => 'DejaVu Sans',
-                'isRemoteEnabled' => true,
-                'isHtml5ParserEnabled' => true,
-                'isFontSubsettingEnabled' => true,
-                'isPhpEnabled' => false,
-                'chroot' => public_path(),
-                'fontCache' => storage_path('fonts/'),
-                'logOutputFile' => storage_path('logs/dompdf.log'),
-                'tempDir' => storage_path('app/temp/'),
-                'fontDir' => storage_path('fonts/'),
-                'fontCache' => storage_path('fonts/'),
-                'isJavascriptEnabled' => false,
-                'debugKeepTemp' => false,
-                'debugCss' => false,
-                'debugLayout' => false,
-                'debugLayoutLines' => false,
-                'debugLayoutBlocks' => false,
-                'debugLayoutInline' => false,
-                'debugLayoutPaddingBox' => false,
+            ];
+
+            try {
+                $viewContent = view($viewName, $viewData)->render();
+                Log::info('View rendered successfully', ['content_length' => strlen($viewContent)]);
+            } catch (Exception $e) {
+                Log::error('View rendering failed', [
+                    'view' => $viewName,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to render PDF template: ' . $e->getMessage()
+                ], 500);
+            }
+
+            $this->ensureDirectoriesExist();
+
+            Log::info('Starting PDF generation with DomPDF');
+
+            $pdf = Pdf::loadView($viewName, $viewData)
+                ->setPaper('A4', 'portrait')
+                ->setOptions([
+                    'dpi' => 96,
+                    'defaultFont' => 'DejaVu Sans',
+                    'isRemoteEnabled' => false, // Disabled since using local paths
+                    'isHtml5ParserEnabled' => true,
+                    'isFontSubsettingEnabled' => true,
+                    'isPhpEnabled' => false,
+                    'chroot' => [public_path(), storage_path()], // Include storage path
+                    'tempDir' => storage_path('app/temp/'),
+                    'fontCache' => storage_path('fonts/'),
+                    'logOutputFile' => storage_path('logs/dompdf.log'),
+                    'isJavascriptEnabled' => false,
+                    'debugKeepTemp' => config('app.debug', false),
+                    'enable_css_float' => true,
+                    'debugCss' => config('app.debug', false),
+                    'debugLayout' => config('app.debug', false),
+                ])
+                ->setWarnings(true);
+
+            Log::info('PDF object created successfully');
+
+            $pdfContent = $pdf->output();
+            Log::info('PDF content generated', ['size' => strlen($pdfContent)]);
+
+            if (empty($pdfContent)) {
+                Log::error('PDF content is empty');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Generated PDF content is empty',
+                    'error_code' => 'EMPTY_PDF_CONTENT'
+                ], 500);
+            }
+
+            if (!str_starts_with($pdfContent, '%PDF')) {
+                Log::error('Invalid PDF content generated', [
+                    'content_start' => substr($pdfContent, 0, 100)
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid PDF content generated',
+                    'error_code' => 'INVALID_PDF_CONTENT'
+                ], 500);
+            }
+
+            Log::info('PDF validation successful');
+
+            $responseMethod = $request->query('response_method', 'base64');
+
+            switch ($responseMethod) {
+                case 'save_and_redirect':
+                    return $this->saveAndRedirectResponse($pdfContent, $filename);
+                case 'base64':
+                    return $this->base64Response($pdfContent, $filename);
+                case 'chunked':
+                    return $this->chunkedResponse($pdfContent, $filename);
+                case 'download':
+                    return $this->downloadResponse($pdfContent, $filename);
+                case 'inline':
+                    return $this->inlineResponse($pdfContent, $filename);
+                default:
+                    return $this->base64Response($pdfContent, $filename);
+            }
+        } catch (Exception $e) {
+            Log::error('Class PDF Export Error', [
+                'schoolclassid' => $schoolclassid ?? 'N/A',
+                'sessionid' => $sessionid ?? 'N/A',
+                'termid' => $termid ?? 'N/A',
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
             ]);
 
-        Log::info('Starting PDF generation');
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate PDF: ' . $e->getMessage(),
+                'error_code' => 'PDF_EXPORT_FAILED'
+            ], 500);
+        }
+    }
+
+    private function inlineResponse($pdfContent, $filename)
+    {
+        Log::info('Sending inline PDF response', ['size' => strlen($pdfContent)]);
         
-        $pdfContent = $pdf->output();
+        try {
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            
+            Log::info('Output buffers cleared');
+            
+            if (headers_sent($headerFile, $headerLine)) {
+                Log::error('Headers already sent', [
+                    'file' => $headerFile,
+                    'line' => $headerLine
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Headers already sent. Cannot deliver PDF directly.',
+                    'error_code' => 'HEADERS_ALREADY_SENT'
+                ], 500);
+            }
+            
+            Log::info('Headers check passed, sending PDF response');
+            
+            return response($pdfContent, 200)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'inline; filename="' . $filename . '"')
+                ->header('Content-Length', strlen($pdfContent))
+                ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                ->header('Pragma', 'no-cache')
+                ->header('Expires', '0');
+        } catch (Exception $e) {
+            Log::error('Inline response failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send inline response: ' . $e->getMessage(),
+                'error_code' => 'INLINE_RESPONSE_FAILED'
+            ], 500);
+        }
+    }
+
+    private function downloadResponse($pdfContent, $filename)
+    {
+        Log::info('Sending download PDF response', ['size' => strlen($pdfContent)]);
         
-        if (!$pdfContent || strlen($pdfContent) < 1000) {
-            throw new Exception('Generated PDF content is empty or too small');
+        try {
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Content-Length' => strlen($pdfContent),
+            ]);
+        } catch (Exception $e) {
+            Log::error('Download response failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send download response: ' . $e->getMessage(),
+                'error_code' => 'DOWNLOAD_RESPONSE_FAILED'
+            ], 500);
+        }
+    }
+
+    private function saveAndRedirectResponse($pdfContent, $filename)
+    {
+        Log::info('Saving PDF and returning URL');
+        
+        try {
+            $publicPath = public_path('temp_pdfs');
+            if (!file_exists($publicPath)) {
+                mkdir($publicPath, 0755, true);
+            }
+            
+            $filePath = $publicPath . '/' . $filename;
+            file_put_contents($filePath, $pdfContent);
+            
+            $publicUrl = url('temp_pdfs/' . $filename);
+            
+            Log::info('PDF saved successfully', [
+                'file_path' => $filePath,
+                'public_url' => $publicUrl,
+                'file_size' => filesize($filePath)
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'PDF generated successfully',
+                'pdf_url' => $publicUrl,
+                'filename' => $filename,
+                'size' => strlen($pdfContent)
+            ]);
+        } catch (Exception $e) {
+            Log::error('Save and redirect failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save PDF: ' . $e->getMessage(),
+                'error_code' => 'SAVE_RESPONSE_FAILED'
+            ], 500);
+        }
+    }
+
+    private function base64Response($pdfContent, $filename)
+    {
+        Log::info('Sending base64 PDF response');
+        
+        try {
+            return response()->json([
+                'success' => true,
+                'pdf_base64' => base64_encode($pdfContent),
+                'filename' => $filename,
+                'size' => strlen($pdfContent),
+                'message' => 'PDF generated successfully as base64'
+            ]);
+        } catch (Exception $e) {
+            Log::error('Base64 response failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create base64 response: ' . $e->getMessage(),
+                'error_code' => 'BASE64_RESPONSE_FAILED'
+            ], 500);
+        }
+    }
+
+    private function chunkedResponse($pdfContent, $filename)
+    {
+        Log::info('Sending chunked PDF response', ['size' => strlen($pdfContent)]);
+        
+        try {
+            return response()->stream(function() use ($pdfContent) {
+                $chunkSize = 8192;
+                $length = strlen($pdfContent);
+                $offset = 0;
+                
+                while ($offset < $length) {
+                    echo substr($pdfContent, $offset, $chunkSize);
+                    $offset += $chunkSize;
+                    if (ob_get_level()) {
+                        ob_flush();
+                    }
+                    flush();
+                }
+            }, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $filename . '"',
+                'Content-Length' => strlen($pdfContent),
+                'Transfer-Encoding' => 'chunked',
+            ]);
+        } catch (Exception $e) {
+            Log::error('Chunked response failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send chunked response: ' . $e->getMessage(),
+                'error_code' => 'CHUNKED_RESPONSE_FAILED'
+            ], 500);
+        }
+    }
+
+    private function fixImagePaths(&$studentData)
+    {
+        foreach ($studentData as &$student) {
+            // Handle student image
+            if (isset($student['students']) && $student['students']->isNotEmpty() && $student['students']->first()->picture) {
+                $student['student_image_path'] = $this->sanitizeImagePath($student['students']->first()->picture);
+                Log::info('Student image path set', [
+                    'student_id' => $student['students']->first()->id,
+                    'path' => $student['student_image_path'],
+                    'exists' => file_exists($student['student_image_path'])
+                ]);
+            } else {
+                $student['student_image_path'] = public_path('storage/student_avatars/unnamed.jpg');
+                Log::info('Using default student image', ['path' => $student['student_image_path']]);
+            }
+            
+            // Handle school logo
+            if (isset($student['schoolInfo'])) {
+                $logoPath = $student['schoolInfo']->getLogoUrlAttribute();
+                $student['school_logo_path'] = $this->sanitizeImagePath($logoPath);
+                Log::info('School logo path set', [
+                    'path' => $student['school_logo_path'],
+                    'exists' => file_exists($student['school_logo_path'])
+                ]);
+            } else {
+                $student['school_logo_path'] = public_path('storage/school_logos/default.jpg');
+                Log::info('Using default school logo', ['path' => $student['school_logo_path']]);
+            }
+        }
+    }
+
+    private function sanitizeImagePath($path)
+    {
+        if (empty($path)) {
+            Log::warning('Empty image path provided');
+            return null;
         }
 
-        Log::info('PDF generated successfully', [
-            'size_bytes' => strlen($pdfContent),
-            'filename' => $filename
-        ]);
-
-        $base64Pdf = base64_encode($pdfContent);
-
-        return response()->json([
-            'success' => true,
-            'pdfBase64' => $base64Pdf,
-            'filename' => $filename,
-            'metadata' => [
-                'studentCount' => count($allStudentData),
-                'processedStudents' => $processedStudents,
-                'skippedStudents' => $skippedStudents,
-                'totalStudents' => $students->count(),
-                'className' => $className,
-                'session' => $schoolsession,
-                'term' => $term,
-                'fileSize' => strlen($pdfContent),
-                'generationTime' => now()->format('Y-m-d H:i:s')
-            ]
-        ]);
-
-    } catch (Exception $e) {
-        Log::error('Class PDF Export Error', [
-            'schoolclassid' => $schoolclassid ?? 'N/A',
-            'sessionid' => $sessionid ?? 'N/A',
-            'termid' => $termid ?? 'N/A',
-            'error' => $e->getMessage(),
-            'file' => $e->getFile(),
-            'line' => $e->getLine(),
-            'trace' => $e->getTraceAsString(),
-        ]);
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to generate PDF: ' . $e->getMessage(),
-            'error_code' => 'PDF_GENERATION_FAILED'
-        ], 500);
-    }
-}
-
-/**
- * Validate student data structure
- */
-private function validateStudentData($studentData): bool
-{
-    if (empty($studentData)) {
-        return false;
+        // Normalize path separators for Windows
+        $path = str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path);
+        
+        // Remove any URL prefixes
+        $path = preg_replace('/^(http:\/\/|https:\/\/|\/\/)[^\/]+/', '', $path);
+        
+        // Remove leading slashes and ensure storage prefix
+        $path = ltrim($path, DIRECTORY_SEPARATOR);
+        if (!preg_match('/^(storage|school_logos|student_avatars)/', $path)) {
+            $path = 'storage/' . $path;
+        }
+        
+        // Build absolute path
+        $fullPath = public_path($path);
+        
+        // Normalize path to prevent duplication
+        $fullPath = realpath($fullPath) ?: $fullPath;
+        
+        // Verify file existence
+        if (file_exists($fullPath)) {
+            Log::info('Sanitized image path', ['original' => $path, 'sanitized' => $fullPath]);
+            return $fullPath;
+        }
+        
+        Log::warning('Image file does not exist', ['path' => $fullPath]);
+        return null;
     }
 
-    // Check if required data exists
-    if (empty($studentData['students']) || !$studentData['students']->isNotEmpty()) {
-        return false;
+    private function ensureDirectoriesExist()
+    {
+        $directories = [
+            storage_path('app/temp'),
+            storage_path('fonts'),
+            storage_path('logs'),
+            public_path('temp_pdfs')
+        ];
+
+        foreach ($directories as $all) {
+            if (!file_exists($all)) {
+                mkdir($all, 0755, true);
+                Log::info('Created directory', ['path' => $all]);
+            }
+        }
     }
 
-    // Check if scores exist (optional but recommended)
-    if (!isset($studentData['scores'])) {
-        return false;
+    private function getTermName($termid)
+    {
+        $terms = [
+            1 => 'First_Term',
+            2 => 'Second_Term',
+            3 => 'Third_Term'
+        ];
+        
+        return $terms[$termid] ?? 'Unknown_Term';
     }
 
-    return true;
-}
+    private function validateStudentData($studentData): bool
+    {
+        if (empty($studentData)) {
+            return false;
+        }
 
-/**
- * Get term name from term ID
- */
-private function getTermName($termid): string
-{
-    $termNames = [
-        1 => 'First_Term',
-        2 => 'Second_Term',
-        3 => 'Third_Term'
-    ];
+        if (empty($studentData['students']) || !$studentData['students']) {
+            return false;
+        }
 
-    return $termNames[$termid] ?? 'Term_' . $termid;
-}
+        if (!isset($studentData['scores'])) {
+            return false;
+        }
 
-// /**
-//  * Alternative method to stream large PDFs directly (for very large classes)
-//  */
-// public function exportClassResultsPdfStream(Request $request)
-// {
-//     try {
-//         // Same validation and data collection as above...
-//         // ... (truncated for brevity)
+        return true;
+    }
 
-//         // For streaming large PDFs
-//         $pdf = Pdf::loadView('studentreports.class_results_pdf', [
-//             'allStudentData' => $allStudentData
-//         ])
-//         ->setPaper('A4', 'portrait');
-
-//         return $pdf->stream($filename, [
-//             'Attachment' => false // Set to true to force download
-//         ]);
-
-//     } catch (Exception $e) {
-//         Log::error('PDF Stream Error: ' . $e->getMessage());
-//         return response()->json(['error' => 'Failed to generate PDF'], 500);
-//     }
-// }
     public function index(Request $request): View|JsonResponse 
     {
         $pagetitle = "Student Terminal Report Management";
@@ -897,7 +1108,7 @@ private function getTermName($termid): string
             ->groupBy('schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm', 'schoolsession.session')
             ->selectRaw('
                 schoolclass.schoolclass as class_name,
-                schoolarm.arm as arm_name,
+                schoolarm.arm as name_arm,
                 schoolsession.session as session_name,
                 COUNT(DISTINCT studentclass.studentId) as student_count
             ')

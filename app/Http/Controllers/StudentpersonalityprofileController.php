@@ -43,7 +43,19 @@ class StudentpersonalityprofileController extends Controller
                 'studentpicture.picture as picture'
             ]);
 
-        // Fetch personality profile
+        // Create personality profile if it doesn't exist, then fetch
+        $studentpp = Studentpersonalityprofile::firstOrCreate(
+            [
+                'studentid' => $id,
+                'schoolclassid' => $schoolclassid,
+                'sessionid' => $sessionid,
+                'termid' => $termid
+            ],
+            [
+                'staffid' => Auth::user()->id,
+                // Add any default values for other fields if needed
+            ]
+        );
         $studentpp = Studentpersonalityprofile::where('studentid', $id)
             ->where('schoolclassid', $schoolclassid)
             ->where('sessionid', $sessionid)
@@ -98,7 +110,7 @@ class StudentpersonalityprofileController extends Controller
             ->with('students', $students)
             ->with('studentpp', $studentpp)
             ->with('scores', $scores)
-            ->with('mockScores', $mockScores) // Pass mock scores to the view
+            ->with('mockScores', $mockScores)
             ->with('staffid', Auth::user()->id)
             ->with('studentid', $id)
             ->with('schoolclassid', $schoolclassid)
@@ -149,6 +161,7 @@ class StudentpersonalityprofileController extends Controller
             'music' => 'nullable|in:Excellent,Very Good,Good,Fairly Good,Poor',
             'classteachercomment' => 'nullable|string|max:1000',
             'principalscomment' => 'nullable|string|max:1000',
+            'remark_on_other_activities' => 'nullable|string|max:1000',
         ]);
 
         $studentpp = Studentpersonalityprofile::where('studentid', $request->studentid)
@@ -189,6 +202,7 @@ class StudentpersonalityprofileController extends Controller
                 'music',
                 'classteachercomment',
                 'principalscomment',
+                'remark_on_other_activities',
             ]);
             $studentpp->fill($input)->save();
             return redirect()->back()->with('success', 'Student Personality Profile Updated successfully');

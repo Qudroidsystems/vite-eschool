@@ -145,7 +145,7 @@ return [
         Spatie\Permission\PermissionServiceProvider::class,
         Maatwebsite\Excel\ExcelServiceProvider::class,
         Barryvdh\DomPDF\ServiceProvider::class,
-        Barryvdh\Snappy\ServiceProvider::class,
+        // Barryvdh\Snappy\ServiceProvider::class,
 
         /*
         * Application Service Providers...
@@ -170,7 +170,8 @@ return [
 
     'aliases' => Facade::defaultAliases()->merge([
         'Excel' => Maatwebsite\Excel\Facades\Excel::class,
-        'PDF' => Barryvdh\Snappy\Facades\SnappyPdf::class, // Use Snappy OR DomPDF, not both
+        // 'PDF' => Barryvdh\Snappy\Facades\SnappyPdf::class, // Use Snappy OR DomPDF, not both
+        'PDF' => Barryvdh\DomPDF\Facade::class, // ✅ Using DomPDF
     ])->toArray(),
 
 ];
