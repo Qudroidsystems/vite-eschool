@@ -200,7 +200,7 @@ use Spatie\Permission\Models\Role;
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
                                                             @can('View student')
                                                                 <li>
-                                                                    <a href="{{ route('myclass.studentpersonalityprofile', [$student->stid, $schoolclassid, $termid, $sessionid]) }}" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a>
+                                                                    <a href="{{ route('myclass.studentpersonalityprofile', [$student->stid, $schoolclassid, $sessionid,$termid]) }}" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a>
                                                                 </li>
                                                             @endcan
                                                         </ul>

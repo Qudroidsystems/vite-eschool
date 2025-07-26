@@ -49,10 +49,11 @@ class StudentpersonalityprofileController extends Controller
                 'studentid' => $id,
                 'schoolclassid' => $schoolclassid,
                 'sessionid' => $sessionid,
-                'termid' => $termid
+                'termid' => $termid,
+                // 'staffid' => Auth::user()->id,
             ],
             [
-                'staffid' => Auth::user()->id,
+                
                 // Add any default values for other fields if needed
             ]
         );
@@ -60,6 +61,7 @@ class StudentpersonalityprofileController extends Controller
             ->where('schoolclassid', $schoolclassid)
             ->where('sessionid', $sessionid)
             ->where('termid', $termid)
+           // ->where('staffid', Auth::user()->id)
             ->get();
 
         // Fetch terminal report scores

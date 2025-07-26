@@ -252,7 +252,7 @@ Route::group(['middleware' => ['auth']], function () {
 
 
     // Route::get('viewstudent', [ViewStudentController::class]);
-    Route::get('/viewstudent/{id}/{termid}/{sessionid}', [ViewStudentController::class, 'show'])->name('viewstudent');
+    Route::get('/viewstudent/{schoolclassid}/{termid}/{sessionid}', [ViewStudentController::class, 'show'])->name('viewstudent');
     //Route::get('/studentreport', [ViewStudentReportController::class, 'index'])->name('studentreport.index');
     // Route::get('/viewstudentreport/{id}/{termid}/{sessionid}', [ViewStudentReportController::class, 'show'])->name('viewstudentreport');
     // Route::get('/viewstudentmockreport/{id}/{termid}/{sessionid}', [ViewStudentMockReportController::class, 'show'])->name('viewstudentreport');
@@ -286,7 +286,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/studentpersonalityprofile/{id}/{schoolclassid}/{sessid}/{termid}', [StudentpersonalityprofileController::class, 'studentpersonalityprofile'])->name('myclass.studentpersonalityprofile');
     Route::post('save', [StudentpersonalityprofileController::class, 'save'])->name('studentpersonalityprofile.save');
 
-    Route::get('/classbroadsheet/{schoolclassid}/{sessionid}/{termid}', [ClassBroadsheetController::class, 'classBroadsheet'])->name('classbroadsheet');
+    Route::get('/classbroadsheet/{schoolclassid}/{sessionid}/{termid}', [ClassBroadsheetController::class, 'classBroadsheet'])->name('classbroadsheet.viewcomments');
     Route::patch('/classbroadsheet/{schoolclassid}/{sessionid}/{termid}/comments', [ClassBroadsheetController::class, 'updateComments'])->name('classbroadsheet.updateComments');
     
 

@@ -8,8 +8,13 @@
     .table-centered th, .table-centered td { text-align: center; vertical-align: middle; }
     .table-nowrap th, .table-nowrap td { white-space: nowrap; }
     .sort.cursor-pointer:hover { background-color: #f5f5f5; }
-    .form-control.teacher-comment-input, .form-control.guidance-comment-input { width: 100%; min-width: 150px; }
+    .form-control.teacher-comment-input,
+    .form-control.guidance-comment-input,
+    .form-control.remark-input,
+    .form-control.absence-input { width: 100%; min-width: 150px; }
+    .form-control.signature-input { max-width: 300px; }
     .btn-primary { margin-top: 1rem; }
+    .signature-container { display: flex; align-items: center; gap: 10px; }
 
     /* Mobile-specific styles */
     @media (max-width: 991px) {
@@ -174,6 +179,11 @@
         .student-body {
             padding: 12px;
         }
+        
+        .signature-container {
+            flex-direction: column;
+            align-items: flex-end;
+        }
     }
     
     /* Search functionality styles */
@@ -293,7 +303,7 @@
 
                                 <div class="row mb-2">
                                     <div class="col-sm bg-white">
-                                        <form id="commentsForm" action="{{ route('classbroadsheet.updateComments', [$schoolclassid, $sessionid, $termid]) }}" method="POST">
+                                        <form id="commentsForm" action="{{ route('classbroadsheet.updateComments', [$schoolclassid, $sessionid, $termid]) }}" method="POST" enctype="multipart/form-data">
                                             @csrf
                                             @method('PATCH')
                                             
@@ -319,6 +329,8 @@
                                                                     @endforeach
                                                                     <th class="sort cursor-pointer" data-sort="teacher-comment">Class Teacher's Comment</th>
                                                                     <th class="sort cursor-pointer" data-sort="guidance-comment">Guidance Counselor's Comment</th>
+                                                                    <th class="sort cursor-pointer" data-sort="remark-other-activities">Remark on Other Activities</th>
+                                                                    <th class="sort cursor-pointer" data-sort="absence-count">No. of Times Absent</th>
                                                                 </tr>
                                                             </thead>
                                                             <tbody class="list">
@@ -381,10 +393,24 @@
                                                                                    data-guidance-comment="{{ $profile ? $profile->guidancescomment : 'N/A' }}"
                                                                                    placeholder="Enter guidance counselor's comment">
                                                                         </td>
+                                                                        <td class="remark-other-activities">
+                                                                            <input type="text" class="form-control remark-input"
+                                                                                   name="remarks_on_other_activities[{{ $student->id }}]"
+                                                                                   value="{{ $profile ? $profile->remark_on_other_activities : '' }}"
+                                                                                   data-remark-other-activities="{{ $profile ? $profile->remark_on_other_activities : 'N/A' }}"
+                                                                                   placeholder="Enter remark on other activities">
+                                                                        </td>
+                                                                        <td class="absence-count">
+                                                                            <input type="number" class="form-control absence-input"
+                                                                                   name="no_of_times_school_absent[{{ $student->id }}]"
+                                                                                   value="{{ $profile ? $profile->no_of_times_school_absent : '' }}"
+                                                                                   data-absence-count="{{ $profile ? $profile->no_of_times_school_absent : '0' }}"
+                                                                                   min="0" placeholder="Enter absence count">
+                                                                        </td>
                                                                     </tr>
                                                                 @empty
                                                                     <tr>
-                                                                        <td colspan="{{ 7 + count($subjects) }}" class="noresult" style="display: block;">
+                                                                        <td colspan="{{ 9 + count($subjects) }}" class="noresult" style="display: block;">
                                                                             <div class="text-center">
                                                                                 <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop"
                                                                                            colors="primary:#121331,secondary:#08a88a" style="width:75px;height:75px"></lord-icon>
@@ -412,7 +438,7 @@
                                                             $profile = $personalityProfiles->where('studentid', $student->id)->first();
                                                         @endphp
                                                         <div class="student-card" data-student-id="{{ $student->id }}" 
-                                                             data-search-content="{{ strtolower($student->lastname . ' ' . $student->firstname . ' ' . $student->othername . ' ' . $student->admissionNo . ' ' . ($profile ? $profile->classteachercomment : '') . ' ' . ($profile ? $profile->guidancescomment : '')) }}">
+                                                             data-search-content="{{ strtolower($student->lastname . ' ' . $student->firstname . ' ' . $student->othername . ' ' . $student->admissionNo . ' ' . ($profile ? $profile->classteachercomment : '') . ' ' . ($profile ? $profile->guidancescomment : '') . ' ' . ($profile ? $profile->remark_on_other_activities : '') . ' ' . ($profile ? $profile->no_of_times_school_absent : '0')) }}">
                                                             
                                                             <!-- Student Header -->
                                                             <div class="student-header">
@@ -476,6 +502,20 @@
                                                                                value="{{ $profile ? $profile->guidancescomment : '' }}"
                                                                                placeholder="Enter guidance counselor's comment">
                                                                     </div>
+                                                                    <div class="comment-group">
+                                                                        <div class="comment-label">Remark on Other Activities</div>
+                                                                        <input type="text" class="form-control mobile-comment remark-input"
+                                                                               name="remarks_on_other_activities[{{ $student->id }}]"
+                                                                               value="{{ $profile ? $profile->remark_on_other_activities : '' }}"
+                                                                               placeholder="Enter remark on other activities">
+                                                                    </div>
+                                                                    <div class="comment-group">
+                                                                        <div class="comment-label">No. of Times Absent</div>
+                                                                        <input type="number" class="form-control mobile-comment absence-input"
+                                                                               name="no_of_times_school_absent[{{ $student->id }}]"
+                                                                               value="{{ $profile ? $profile->no_of_times_school_absent : '' }}"
+                                                                               min="0" placeholder="Enter absence count">
+                                                                    </div>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -497,9 +537,13 @@
                                                 </div>
                                             </div>
 
-                                            <!-- Save Button -->
-                                            <div class="d-flex justify-content-end mt-3">
-                                                <button type="submit" class="btn btn-primary">Save Comments</button>
+                                            <!-- Save Button and Signature Input -->
+                                            <div class="d-flex justify-content-end mt-3 signature-container">
+                                                <div class="form-group">
+                                                    <label for="signature" class="comment-label">Upload Signature (JPG, PNG, or PDF)</label>
+                                                    <input type="file" class="form-control signature-input" name="signature" id="signature" accept=".jpg,.jpeg,.png,.pdf" required>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary">Save Data</button>
                                             </div>
 
                                             <!-- Desktop Pagination -->
@@ -570,6 +614,61 @@
         // Show content after DOM is loaded to prevent FOUC
         document.querySelector('.main-content').classList.add('loaded');
 
+        // Form submission handler to remove hidden inputs and validate signature
+        const form = document.getElementById('commentsForm');
+        form.addEventListener('submit', function (event) {
+            // Determine if mobile or desktop view is active
+            const isMobile = window.matchMedia("(max-width: 991px)").matches;
+            if (isMobile) {
+                // Remove desktop inputs
+                document.querySelectorAll('.desktop-table .teacher-comment-input, .desktop-table .guidance-comment-input, .desktop-table .remark-input, .desktop-table .absence-input').forEach(input => {
+                    input.remove();
+                });
+            } else {
+                // Remove mobile inputs
+                document.querySelectorAll('.mobile-cards .teacher-comment-input, .mobile-cards .guidance-comment-input, .mobile-cards .remark-input, .mobile-cards .absence-input').forEach(input => {
+                    input.remove();
+                });
+            }
+
+            // Log form data for debugging
+            const formData = new FormData(form);
+            console.log('Form data:', Object.fromEntries(formData));
+
+            // Client-side validation to prevent empty submission
+            const teacherInputs = document.querySelectorAll('.teacher-comment-input');
+            const guidanceInputs = document.querySelectorAll('.guidance-comment-input');
+            const remarkInputs = document.querySelectorAll('.remark-input');
+            const absenceInputs = document.querySelectorAll('.absence-input');
+            const signatureInput = document.getElementById('signature');
+            let hasInput = false;
+
+            teacherInputs.forEach(input => {
+                if (input.value.trim() !== '') hasInput = true;
+            });
+            guidanceInputs.forEach(input => {
+                if (input.value.trim() !== '') hasInput = true;
+            });
+            remarkInputs.forEach(input => {
+                if (input.value.trim() !== '') hasInput = true;
+            });
+            absenceInputs.forEach(input => {
+                if (input.value.trim() !== '') hasInput = true;
+            });
+
+            // Validate signature
+            if (!signatureInput.files.length) {
+                event.preventDefault();
+                alert('Please upload a signature file (JPG, PNG, or PDF) before submitting.');
+                return;
+            }
+
+            if (!hasInput) {
+                event.preventDefault();
+                alert('Please enter at least one field (comment, remark, or absence count) before submitting.');
+            }
+        });
+
         // Search functionality
         const searchInput = document.getElementById('searchInput');
         const resultsCount = document.getElementById('resultsCount');
@@ -585,10 +684,12 @@
                 desktopRows.forEach(row => {
                     const admissionNo = row.querySelector('.admissionno').textContent.toLowerCase();
                     const name = row.querySelector('.name').textContent.toLowerCase();
-                    const teacherComment = row.querySelector('.teacher-comment-input').value.toLowerCase();
-                    const guidanceComment = row.querySelector('.guidance-comment-input').value.toLowerCase();
+                    const teacherComment = row.querySelector('.teacher-comment-input')?.value.toLowerCase() || '';
+                    const guidanceComment = row.querySelector('.guidance-comment-input')?.value.toLowerCase() || '';
+                    const remarkActivity = row.querySelector('.remark-input')?.value.toLowerCase() || '';
+                    const absenceCount = row.querySelector('.absence-input')?.value.toLowerCase() || '';
                     
-                    const searchContent = `${admissionNo} ${name} ${teacherComment} ${guidanceComment}`;
+                    const searchContent = `${admissionNo} ${name} ${teacherComment} ${guidanceComment} ${remarkActivity} ${absenceCount}`;
                     
                     if (searchTerm === '' || searchContent.includes(searchTerm)) {
                         row.style.display = '';
@@ -619,7 +720,7 @@
                         
                         // Highlight search terms in mobile cards
                         if (searchTerm) {
-                            highlightSearchTermMobile(card, searchTerm);
+                            highlightSearchMobile(card, searchTerm);
                         } else {
                             removeHighlightsMobile(card);
                         }
@@ -634,7 +735,7 @@
                         noMobileResults.style.display = 'block';
                     } else {
                         noMobileResults.style.display = 'none';
-                                            }
+                    }
                 }
 
                 // Show results count
@@ -655,14 +756,10 @@
         // Highlight functions
         function highlightSearchTerm(element, term) {
             const highlightClass = 'search-highlight';
-            const tagsToSearch = ['.admissionno', '.name', '.teacher-comment-input', '.guidance-comment-input'];
+            const tagsToSearch = ['.admissionno', '.name'];
             tagsToSearch.forEach(selector => {
                 const el = element.querySelector(selector);
                 if (el) {
-                    if (el.tagName === 'INPUT') {
-                        // Do not modify input fields
-                        return;
-                    }
                     const originalText = el.textContent;
                     const regex = new RegExp(`(${term})`, 'gi');
                     el.innerHTML = originalText.replace(regex, `<span class="${highlightClass}">$1</span>`);
@@ -677,13 +774,12 @@
             });
         }
 
-        function highlightSearchTermMobile(card, term) {
-            // You may extend this to specific elements inside card
-            // For now, we avoid modifying the innerHTML of the card to prevent side effects
+        function highlightSearchMobile(card, term) {
+            // Extend if needed for mobile view
         }
 
         function removeHighlightsMobile(card) {
-            // Clear any previous highlights in mobile view (if implemented)
+            // Clear highlights in mobile view if implemented
         }
     });
 </script>

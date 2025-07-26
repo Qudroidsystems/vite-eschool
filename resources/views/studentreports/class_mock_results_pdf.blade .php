@@ -2,351 +2,350 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Class Results - {{ $metadata['class_name'] }} - {{ $metadata['session'] }} - {{ $metadata['term'] }}</title>
-  <style>
-    /* Basic reset and font setup */
-    * {
-        margin: 0;
-        padding: 0;
-        /* box-sizing: border-box; */
-    }
+    <title>Class Mock Results - {{ $metadata['class_name'] }} - {{ $metadata['session'] }} - {{ $metadata['term'] }}</title>
+    <style>
+        /* Basic reset and font setup */
+        * {
+            margin: 0;
+            padding: 0;
+            /* box-sizing: border-box; */
+        }
 
-    body {
-        font-family: 'Times New Roman', Times, serif;
-        font-size: 12px;
-        line-height: 1.4;
-        color: #000;
-        background: #fff;
-    }
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12px;
+            line-height: 1.4;
+            color: #000;
+            background: #fff;
+        }
 
-    .student-section {
-        width: 210mm; /* A4 width */
-        min-height: 277mm; /* A4 height minus margins */
-        page-break-after: always;
-        background: #ffffff;
-        border: 2px solid #1e40af;
-        margin: 20px auto; /* Center horizontally with auto margins */
-        padding: 15px; /* Consistent internal padding */
-        position: relative;
-        /* box-sizing: border-box; */
-    }
+        .student-section {
+            width: 210mm; /* A4 width */
+            min-height: 277mm; /* A4 height minus margins */
+            page-break-after: always;
+            background: #ffffff;
+            border: 2px solid #1e40af;
+            margin: 20px auto; /* Center horizontally with auto margins */
+            padding: 15px; /* Consistent internal padding */
+            position: relative;
+            /* box-sizing: border-box; */
+        }
 
-    .student-section:last-child {
-        page-break-after: avoid;
-    }
+        .student-section:last-child {
+            page-break-after: avoid;
+        }
 
-    .fraction {
-        display: inline-block;
-        font-family: Arial, sans-serif;
-        font-size: 10px;
-        text-align: center;
-    }
+        .fraction {
+            display: inline-block;
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            text-align: center;
+        }
 
-    .fraction .numerator {
-        border-bottom: 2px solid #333;
-        padding: 0 5px;
-        display: block;
-    }
+        .fraction .numerator {
+            border-bottom: 2px solid #333;
+            padding: 0 5px;
+            display: block;
+        }
 
-    .fraction .denominator {
-        padding-top: 5px;
-        display: block;
-    }
+        .fraction .denominator {
+            padding-top: 5px;
+            display: block;
+        }
 
-    span.text-space-on-dots,
-    span.text-dot-space2 {
-        border-bottom: 1px dotted #666;
-        display: inline-block;
-        min-height: 16px;
-    }
+        span.text-space-on-dots,
+        span.text-dot-space2 {
+            border-bottom: 1px dotted #666;
+            display: inline-block;
+            min-height: 16px;
+        }
 
-    span.text-space-on-dots {
-        width: 280px;
-    }
+        span.text-space-on-dots {
+            width: 280px;
+        }
 
-    span.text-dot-space2 {
-        width: 180px;
-    }
+        span.text-dot-space2 {
+            width: 180px;
+        }
 
-    .school-name1 {
-        font-size: 28px;
-        font-weight: 700;
-        color: #1e3a8a;
-        text-align: center;
-    }
+        .school-name1 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1e3a8a;
+            text-align: center;
+        }
 
-    .school-name2 {
-        font-size: 20px;
-        font-weight: 800;
-        color: #1e40af;
-        text-align: center;
-        margin: 5px 0;
-    }
+        .school-name2 {
+            font-size: 20px;
+            font-weight: 800;
+            color: #1e40af;
+            text-align: center;
+            margin: 5px 0;
+        }
 
-    .school-logo {
-        width: 80px;
-        height: 80px;
-        border: 0px solid #1e40af;
-        border-radius: 5px;
-        overflow: hidden;
-        margin: 0 auto 10px;
-        text-align: center;
-    }
+        .school-logo {
+            width: 80px;
+            height: 80px;
+            border: 0px solid #1e40af;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 0 auto 10px;
+            text-align: center;
+        }
 
-    .header-divider {
-        width: 100%;
-        height: 3px;
-        background: #1e40af;
-        margin: 6px 0;
-    }
+        .header-divider {
+            width: 100%;
+            height: 3px;
+            background: #1e40af;
+            margin: 6px 0;
+        }
 
-    .header-divider2 {
-        width: 100%;
-        height: 2px;
-        background: #64748b;
-        margin: 3px 0;
-    }
+        .header-divider2 {
+            width: 100%;
+            height: 2px;
+            background: #64748b;
+            margin: 3px 0;
+        }
 
-    .report-title {
-        background: #111827;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 8px;
-        font-size: 18px;
-        font-weight: 700;
-        text-align: center;
-        margin: 10px 0;
-    }
+        .report-title {
+            background: #111827;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 700;
+            text-align: center;
+            margin: 10px 0;
+        }
 
-    .header {
-        text-align: center;
-        margin-bottom: 12px;
-    }
+        .header {
+            text-align: center;
+            margin-bottom: 12px;
+        }
 
-    .header-img {
-        width: 100%;
-        height: 100%;
-        border-radius: 35px;
-    }
+        .header-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 35px;
+        }
 
-    .school-motto, .school-address, .school-website {
-        font-size: 11px;
-        color: #6b7280;
-        margin: 3px 0;
-    }
+        .school-motto, .school-address, .school-website {
+            font-size: 11px;
+            color: #6b7280;
+            margin: 3px 0;
+        }
 
-    .student-info-section {
-        margin-bottom: 12px;
-    }
+        .student-info-section {
+            margin-bottom: 12px;
+        }
 
-    .result-details {
-        font-size: 12px;
-        font-weight: 700;
-        color: #374151;
-    }
+        .result-details {
+            font-size: 12px;
+            font-weight: 700;
+            color: #374151;
+        }
 
-    .rd1, .rd2, .rd3, .rd4, .rd5, .rd6, .rd7, .rd8, .rd9, .rd10 {
-        border-bottom: 2px dotted #6b7280;
-        margin-left: 6px;
-        min-width: 100px;
-        display: inline-block;
-        font-weight: 700;
-        padding-bottom: 2px;
-    }
+        .rd1, .rd2, .rd3, .rd4, .rd5, .rd6, .rd7, .rd8, .rd9, .rd10 {
+            border-bottom: 2px dotted #6b7280;
+            margin-left: 6px;
+            min-width: 100px;
+            display: inline-block;
+            font-weight: 700;
+            padding-bottom: 2px;
+        }
 
-    .photo-frame {
-        border: 3px solid #e3e568;
-        border-radius: 8px;
-        overflow: hidden;
-        background: white;
-        padding: 3px;
-        width: 100px;
-        height: 120px;
-        margin: 0 auto;
-        text-align: center;
-    }
+        .photo-frame {
+            border: 3px solid #e3e568;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+            padding: 3px;
+            width: 100px;
+            height: 120px;
+            margin: 0 auto;
+            text-align: center;
+        }
 
-    .photo-frame img {
-        width: 100%;
-        height: 100%;
-    }
+        .photo-frame img {
+            width: 100%;
+            height: 100%;
+        }
 
-    .result-table table {
-        width: 100%;
-        border: 2px solid #1e40af;
-        border-collapse: collapse;
-        margin-bottom: 12px;
-    }
+        .result-table table {
+            width: 100%;
+            border: 2px solid #1e40af;
+            border-collapse: collapse;
+            margin-bottom: 12px;
+        }
 
-    .result-table thead th {
-        background: #243f99;
-        color: white;
-        font-weight: 600;
-        border: 1px solid #1d4ed8;
-        padding: 8px 4px;
-        text-align: center;
-        font-size: 10px;
-    }
+        .result-table thead th {
+            background: #243f99;
+            color: white;
+            font-weight: 600;
+            border: 1px solid #1d4ed8;
+            padding: 8px 4px;
+            text-align: center;
+            font-size: 10px;
+        }
 
-    .result-table tbody td {
-        border: 1px solid #cbd5e1;
-        padding: 6px 4px;
-        text-align: center;
-        font-size: 10px;
-        background: white;
-    }
+        .result-table tbody td {
+            border: 1px solid #cbd5e1;
+            padding: 6px 4px;
+            text-align: center;
+            font-size: 10px;
+            background: white;
+        }
 
-    .result-table tbody tr:nth-child(even) td {
-        background: #f8fafc;
-    }
+        .result-table tbody tr:nth-child(even) td {
+            background: #f8fafc;
+        }
 
-    .result-table tbody td.subject-name {
-        text-align: left !important;
-        font-weight: 600;
-    }
+        .result-table tbody td.subject-name {
+            text-align: left !important;
+            font-weight: 600;
+        }
 
-    .highlight-red {
-        color: #dc2626 !important;
-        font-weight: bold;
-    }
+        .highlight-red {
+            color: #dc2626 !important;
+            font-weight: bold;
+        }
 
-    .highlight-bold {
-        font-weight: 700 !important;
-    }
+        .highlight-bold {
+            font-weight: 700 !important;
+        }
 
-    .assessment-table {
-        width: 100%;
-        border: 2px solid #cbda77;
-        border-collapse: collapse;
-        margin-bottom: 8px;
-    }
+        .assessment-table {
+            width: 100%;
+            border: 2px solid #cbda77;
+            border-collapse: collapse;
+            margin-bottom: 8px;
+        }
 
-    .assessment-table thead th {
-        background: #fbbf24;
-        color: white;
-        font-weight: 600;
-        border: 1px solid #047857;
-        padding: 6px;
-        text-align: center;
-        font-size: 10px;
-    }
+        .assessment-table thead th {
+            background: #fbbf24;
+            color: white;
+            font-weight: 600;
+            border: 1px solid #047857;
+            padding: 6px;
+            text-align: center;
+            font-size: 10px;
+        }
 
-    .assessment-table tbody td {
-        border: 1px solid #d1d5db;
-        padding: 4px 6px;
-        background: white;
-        font-size: 9px;
-    }
+        .assessment-table tbody td {
+            border: 1px solid #d1d5db;
+            padding: 4px 6px;
+            background: white;
+            font-size: 9px;
+        }
 
-    .assessment-table tbody tr:nth-child(even) td {
-        background: #f0fdf4;
-    }
+        .assessment-table tbody tr:nth-child(even) td {
+            background: #f0fdf4;
+        }
 
-    .grade-display {
-        background: #fbbf24;
-        color: white;
-        border-radius: 12px;
-        padding: 8px;
-        text-align: center;
-        margin-bottom: 10px;
-    }
+        .grade-display {
+            background: #fbbf24;
+            color: white;
+            border-radius: 12px;
+            padding: 8px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
 
-    .grade-display span {
-        font-size: 11px;
-        font-weight: 600;
-        margin: 0 6px;
-    }
+        .grade-display span {
+            font-size: 11px;
+            font-weight: 600;
+            margin: 0 6px;
+        }
 
-    .remarks-table {
-        width: 100%;
-        border: 2px solid #7c3aed;
-        border-collapse: collapse;
-        margin-bottom: 10px;
-    }
+        .remarks-table {
+            width: 100%;
+            border: 2px solid #7c3aed;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
 
-    .remarks-table td {
-        border: 1px solid #c4b5fd;
-        padding: 8px;
-        background: white;
-        vertical-align: top;
-    }
+        .remarks-table td {
+            border: 1px solid #c4b5fd;
+            padding: 8px;
+            background: white;
+            vertical-align: top;
+        }
 
-    .remarks-table .h6 {
-        color: #6d28d9;
-        font-weight: 600;
-        margin-bottom: 6px;
-        font-size: 10px;
-    }
+        .remarks-table .h6 {
+            color: #6d28d9;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 10px;
+        }
 
-    .footer-section {
-        background: #f1f5f9;
-        border-radius: 8px;
-        padding: 10px;
-        border: 1px solid #cbd5e1;
-        text-align: center;
-        margin-top: 8px;
-    }
+        .footer-section {
+            background: #f1f5f9;
+            border-radius: 8px;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            text-align: center;
+            margin-top: 8px;
+        }
 
-    .h5 {
-        font-size: 11px;
-        font-weight: bold;
-        margin-bottom: 6px;
-        color: #047857;
-    }
+        .h5 {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #047857;
+        }
 
-    .student-info-table {
-        width: 100%;
-        margin-bottom: 12px;
-    }
+        .student-info-table {
+            width: 100%;
+            margin-bottom: 12px;
+        }
 
-    .student-info-table td {
-        padding: 4px;
-        vertical-align: top;
-    }
+        .student-info-table td {
+            padding: 4px;
+            vertical-align: top;
+        }
 
-    .assessment-layout-table {
-        width: 100%;
-        margin-bottom: 10px;
-    }
+        .assessment-layout-table {
+            width: 100%;
+            margin-bottom: 10px;
+        }
 
-    .assessment-layout-table td {
-        width: 48%;
-        vertical-align: top;
-        padding: 0 1%;
-    }
+        .assessment-layout-table td {
+            width: 48%;
+            vertical-align: top;
+            padding: 0 1%;
+        }
 
-    .footer-layout-table {
-        width: 100%;
-    }
+        .footer-layout-table {
+            width: 100%;
+        }
 
-    .footer-layout-table td {
-        padding: 4px;
-        text-align: center;
-    }
+        .footer-layout-table td {
+            padding: 4px;
+            text-align: center;
+        }
 
-    .info-row {
-        margin-bottom: 6px;
-        line-height: 1.5;
-    }
+        .info-row {
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
 
-    .text-center {
-        text-align: center;
-    }
+        .text-center {
+            text-align: center;
+        }
 
-    .font-bold {
-        font-weight: bold;
-    }
+        .font-bold {
+            font-weight: bold;
+        }
 
-    .text-primary {
-        color: #1e40af;
-    }
+        .text-primary {
+            color: #1e40af;
+        }
 
-    .student-section-inner {
-        width: 100%;
-        height: auto;
-    }
-</style>
-
+        .student-section-inner {
+            width: 100%;
+            height: auto;
+        }
+    </style>
 </head>
 <body>
     @foreach ($allStudentData as $index => $studentData)
@@ -368,7 +367,7 @@
                     @endif
                     <div class="header-divider"></div>
                     <div class="header-divider2"></div>
-                    <div class="report-title">TERMINAL PROGRESS REPORT</div>
+                    <div class="report-title">MOCK TERMINAL PROGRESS REPORT</div>
                 </div>
 
                 <!-- Student Information Section -->
@@ -462,31 +461,16 @@
                     <table>
                         <thead>
                             <tr>
-                                <th></th>
-                                <th>Subjects</th>
-                                <th>a</th>
-                                <th>b</th>
-                                <th>c</th>
-                                <th>d</th>
-                                <th>e</th>
-                                <th>f</th>
-                                <th>g</th>
-                                <th>h</th>
-                                <th>i</th>
-                                <th>j</th>
-                                <th>k</th>
-                            </tr>
-                            <tr>
                                 <th>S/N</th>
                                 <th>Subjects</th>
-                                <th>Term Exams</th>
+                                <th>Mock Exam</th>
                                 <th>Grade</th>
-                                <th>PSN</th>
+                                <th>Position</th>
                                 <th>Class Average</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($studentData['scores'] as $index => $score)
+                            @forelse ($studentData['mockScores'] as $index => $score)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td class="subject-name">{{ $score->subject_name }}</td>
@@ -497,7 +481,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="13">No scores available.</td>
+                                    <td colspan="6">No mock scores available.</td>
                                 </tr>
                             @endforelse
                         </tbody>

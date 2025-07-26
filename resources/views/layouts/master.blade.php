@@ -173,7 +173,7 @@
         @include('layouts.pages-assets.css.cbt-list-css')
     @endif
 
-    @if (Route::is('classbroadsheet'))
+    @if (Route::is('classbroadsheet.*'))
         @include('layouts.pages-assets.css.classbroadsheet-list-css')
     @endif
 
@@ -2055,7 +2055,7 @@
             @include('layouts.pages-assets.js.cbt-list-js')
       @endif
 
-      @if (Route::is('classbroadsheet'))
+      @if (Route::is('classbroadsheet.*'))
             @include('layouts.pages-assets.js.classbroadsheet-list-js')
       @endif
 

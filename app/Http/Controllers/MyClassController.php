@@ -23,22 +23,19 @@ class MyClassController extends Controller
         $this->middleware('permission:Update my-class', ['only' => ['edit', 'update']]);
         $this->middleware('permission:Delete my-class', ['only' => ['destroy']]);
     }
-
-   public function index(): View
+public function index(Request $request): View
 {
     $pagetitle = "Class Management";
     $user = auth()->user();
     $current = "Current";
 
-    // Current classes
-    $myclass = ClassTeacher::where('staffid', $user->id)
+    $query = ClassTeacher::where('staffid', $user->id)
         ->leftJoin('users', 'users.id', '=', 'classteacher.staffid')
         ->leftJoin('schoolclass', 'schoolclass.id', '=', 'classteacher.schoolclassid')
         ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
         ->leftJoin('schoolterm', 'schoolterm.id', '=', 'classteacher.termid')
         ->leftJoin('schoolsession', 'schoolsession.id', '=', 'classteacher.sessionid')
-        ->where('schoolsession.status', '=', $current)
-        ->get([
+        ->select([
             'classteacher.id as id',
             'users.id as userid',
             'users.name as staffname',
@@ -50,8 +47,33 @@ class MyClassController extends Controller
             'schoolterm.term as term',
             'schoolsession.session as session',
             'classteacher.updated_at as updated_at',
-            'schoolclass.id as schoolclassID'
-        ])->sortBy('schoolclass');
+            'schoolclass.id as schoolclassid'
+        ]);
+
+    // Apply filters
+    if ($request->has('search') && $request->search) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('schoolclass.schoolclass', 'like', "%{$search}%")
+              ->orWhere('schoolarm.arm', 'like', "%{$search}%")
+              ->orWhere('schoolterm.term', 'like', "%{$search}%")
+              ->orWhere('schoolsession.session', 'like', "%{$search}%")
+              ->orWhere('schoolclass.description', 'like', "%{$search}%");
+        });
+    }
+
+    if ($request->has('schoolclassid') && $request->schoolclassid !== 'ALL') {
+        $query->where('classteacher.schoolclassid', $request->schoolclassid);
+    }
+
+    if ($request->has('sessionid') && $request->sessionid !== 'ALL') {
+        $query->where('classteacher.sessionid', $request->sessionid);
+    }
+
+    $myclass = $query->where('schoolsession.status', '=', $current)
+        ->orderBy('schoolclass')
+        ->paginate(5)
+        ->appends($request->query());
 
     // Class history
     $myclasshistory = ClassTeacher::where('staffid', $user->id)
@@ -59,7 +81,7 @@ class MyClassController extends Controller
         ->leftJoin('schoolclass', 'schoolclass.id', '=', 'classteacher.schoolclassid')
         ->leftJoin('schoolterm', 'schoolterm.id', '=', 'classteacher.termid')
         ->leftJoin('schoolsession', 'schoolsession.id', '=', 'classteacher.sessionid')
-        ->get([
+        ->select([
             'classteacher.id as id',
             'users.id as userid',
             'users.name as staffname',
@@ -71,8 +93,10 @@ class MyClassController extends Controller
             'schoolterm.term as term',
             'schoolsession.session as session',
             'classteacher.updated_at as updated_at',
-            'schoolclass.id as schoolclassID'
-        ])->sortBy('session');
+            'schoolclass.id as schoolclassid'
+        ])
+        ->orderBy('session')
+        ->get();
 
     // Class settings
     $classsetting = Staffclasssetting::where('staffid', $user->id)
@@ -80,7 +104,7 @@ class MyClassController extends Controller
         ->leftJoin('schoolclass', 'schoolclass.id', '=', 'staffclasssettings.vschoolclassid')
         ->leftJoin('schoolterm', 'schoolterm.id', '=', 'staffclasssettings.termid')
         ->leftJoin('schoolsession', 'schoolsession.id', '=', 'staffclasssettings.sessionid')
-        ->get([
+        ->select([
             'users.id as userid',
             'users.name as staffname',
             'staffclasssettings.id as id',
@@ -91,11 +115,22 @@ class MyClassController extends Controller
             'staffclasssettings.nexttermbegins as nexttermbegins',
             'schoolterm.term as term',
             'schoolsession.session as session',
-        ]);
+        ])
+        ->get();
 
-    // Terms and sessions for dropdowns
     $terms = Schoolterm::all();
     $schoolsessions = Schoolsession::where('status', 'Current')->get();
+    $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm'])
+        ->get();
+
+    if ($request->ajax()) {
+        return response()->json([
+            'tableBody' => view('myclass.partials.table-body', compact('myclass'))->render(),
+            'pagination' => view('myclass.partials.pagination', compact('myclass'))->render(),
+            'classCount' => $myclass->total()
+        ]);
+    }
 
     return view('myclass.index', compact(
         'pagetitle',
@@ -103,10 +138,10 @@ class MyClassController extends Controller
         'myclasshistory',
         'classsetting',
         'terms',
-        'schoolsessions'
+        'schoolsessions',
+        'schoolclasses'
     ))->with('sfid', $user->id);
 }
-
     public function create(): View
     {
         $pagetitle = "Create my-Class Setting";

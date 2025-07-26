@@ -20,12 +20,13 @@ use App\Models\Studentpersonalityprofile;
 use App\Models\Subject;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\View\View;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ViewStudentMockReportController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:View student-mock-report', ['only' => ['index', 'show', 'registeredClasses', 'classBroadsheet', 'studentmockresult']]);
+        $this->middleware('permission:View student-mock-report', ['only' => ['index', 'show', 'registeredClasses', 'classBroadsheet', 'studentmockresult', 'exportStudentMockResultPdf', 'exportClassMockResultsPdf']]);
         $this->middleware('permission:Create student-mock-report', ['only' => ['create', 'store']]);
         $this->middleware('permission:Update student-mock-report', ['only' => ['edit', 'update']]);
         $this->middleware('permission:Delete student-mock-report', ['only' => ['destroy']]);
@@ -228,6 +229,137 @@ class ViewStudentMockReportController extends Controller
         ]);
     }
 
+    /**
+     * Fetch student mock result data for a specific student, class, session, and term.
+     *
+     * @param int $id
+     * @param int $schoolclassid
+     * @param int $sessionid
+     * @param int $termid
+     * @return array
+     */
+    private function getStudentMockResultData($id, $schoolclassid, $sessionid, $termid)
+    {
+        try {
+            if (!is_numeric($id) || !is_numeric($schoolclassid) || !is_numeric($sessionid) || !is_numeric($termid)) {
+                Log::error('Invalid parameters in getStudentMockResultData', [
+                    'student_id' => $id,
+                    'schoolclassid' => $schoolclassid,
+                    'sessionid' => $sessionid,
+                    'termid' => $termid,
+                ]);
+                return [];
+            }
+
+            $students = StudentRegistration::where('studentRegistration.id', $id)
+                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+                ->select([
+                    'studentRegistration.id as id',
+                    'studentRegistration.admissionNo as admissionNo',
+                    'studentRegistration.firstname as fname',
+                    'studentRegistration.home_address as homeaddress',
+                    'studentRegistration.lastname as lastname',
+                    'studentRegistration.othername as othername',
+                    'studentRegistration.dateofbirth as dateofbirth',
+                    'studentRegistration.gender as gender',
+                    'studentRegistration.updated_at as updated_at',
+                    'studentpicture.picture as picture'
+                ])->get();
+
+            if ($students->isEmpty()) {
+                Log::warning('No active student found for ID', [
+                    'student_id' => $id,
+                    'schoolclassid' => $schoolclassid,
+                    'sessionid' => $sessionid,
+                    'termid' => $termid,
+                ]);
+                $students = collect([]);
+            }
+
+            $this->calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid);
+
+            $studentpp = Studentpersonalityprofile::where('studentid', $id)
+                ->where('schoolclassid', $schoolclassid)
+                ->where('sessionid', $sessionid)
+                ->where('termid', $termid)
+                ->first();
+
+            $mockScores = BroadsheetsMock::where('broadsheet_records_mock.student_id', $id)
+                ->where('broadsheetmock.term_id', $termid)
+                ->where('broadsheet_records_mock.session_id', $sessionid)
+                ->where('broadsheet_records_mock.schoolclass_id', $schoolclassid)
+                ->join('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
+                ->join('subject', 'subject.id', '=', 'broadsheet_records_mock.subject_id')
+                ->orderBy('subject.subject')
+                ->select([
+                    'subject.id as subject_id',
+                    'subject.subject as subject_name',
+                    'subject.subject_code',
+                    'broadsheetmock.exam',
+                    'broadsheetmock.total',
+                    'broadsheetmock.cum',
+                    'broadsheetmock.grade',
+                    'broadsheetmock.subject_position_class as position',
+                    'broadsheetmock.avg as class_average',
+                ])->get();
+
+            $schoolclass = Schoolclass::with('armRelation')->find($schoolclassid, ['id', 'schoolclass', 'arm', 'classcategoryid']) ?? (object)[
+                'schoolclass' => 'N/A',
+                'armRelation' => (object)['arm' => 'N/A'],
+                'classcategoryid' => null
+            ];
+            $schoolterm = Schoolterm::where('id', $termid)->value('term') ?? 'N/A';
+            $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
+            $numberOfStudents = Studentclass::whereIn('schoolclassid', 
+                Schoolclass::where('schoolclass', $schoolclass->schoolclass ?? 'N/A')->pluck('id'))
+                ->where('sessionid', $sessionid)
+                ->count();
+            $schoolInfo = SchoolInformation::getActiveSchool() ?? (object)[
+                'school_name' => 'QUODOROID CODING ACADEMY',
+                'school_motto' => 'N/A',
+                'school_address' => 'N/A',
+                'school_website' => null,
+                'getLogoUrlAttribute' => function () {
+                    return 'school_logos/LUYWInGbX6ypLQO4fEWue9jHx3VwaKJG5hPLsQmt.jpg';
+                }
+            ];
+
+            // Log image paths for debugging
+            if ($students->isNotEmpty() && $students->first()->picture) {
+                $imagePath = public_path('storage/' . $students->first()->picture);
+                Log::info('Student image path', ['path' => $imagePath, 'exists' => file_exists($imagePath)]);
+            }
+            $logoPath = public_path('storage/' . $schoolInfo->getLogoUrlAttribute());
+            Log::info('School logo path:', ['path' => $logoPath, 'exists' => file_exists($logoPath)]);
+
+            return [
+                'students' => $students,
+                'studentpp' => collect([$studentpp]),
+                'mockScores' => $mockScores,
+                'studentid' => $id,
+                'schoolclassid' => $schoolclassid,
+                'sessionid' => $sessionid,
+                'termid' => $termid,
+                'schoolclass' => $schoolclass,
+                'schoolterm' => $schoolterm,
+                'schoolsession' => $schoolsession,
+                'numberOfStudents' => $numberOfStudents,
+                'schoolInfo' => $schoolInfo
+            ];
+        } catch (\Exception $e) {
+            Log::error('Error fetching student mock result data', [
+                'student_id' => $id,
+                'schoolclassid' => $schoolclassid,
+                'sessionid' => $sessionid,
+                'termid' => $termid,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ]);
+            return [];
+        }
+    }
+
     public function index(Request $request): View|JsonResponse 
     {
         $pagetitle = "Student Terminal Report Management";
@@ -348,6 +480,649 @@ class ViewStudentMockReportController extends Controller
         return view('studentreports.broadsheet', $data);
     }
 
+    
+    /**
+     * Export a single student's mock result as a PDF.
+     *
+     * @param int $id
+     * @param int $schoolclassid
+     * @param int $sessionid
+     * @param int $termid
+     * @return \Illuminate\Http\Response
+     */
+    public function exportStudentMockResultPdf($id, $schoolclassid, $sessionid, $termid)
+    {
+        try {
+            ini_set('max_execution_time', 600);
+            ini_set('memory_limit', '1024M');
+
+            Log::info('Generating single student mock PDF', [
+                'student_id' => $id,
+                'schoolclassid' => $schoolclassid,
+                'sessionid' => $sessionid,
+                'termid' => $termid,
+            ]);
+
+            $data = $this->getStudentMockResultData($id, $schoolclassid, $sessionid, $termid);
+
+            if (empty($data) || empty($data['students']) || $data['students']->isEmpty()) {
+                Log::error('No valid student data for mock PDF generation', [
+                    'student_id' => $id,
+                    'schoolclassid' => $schoolclassid,
+                    'sessionid' => $sessionid,
+                    'termid' => $termid,
+                ]);
+                return back()->with('error', 'No student data found for the provided parameters.');
+            }
+
+            $student = $data['students']->first();
+            $studentName = $student ? $student->fname . '_' . $student->lastname : 'Student';
+            $filename = 'Mock_Terminal_Report_' . $studentName . '_' . $data['schoolsession'] . '_Term_' . $data['termid'] . '.pdf';
+
+            $pdf = Pdf::loadView('studentreports.studentmockresult_pdf', ['data' => $data])
+                ->setPaper('A4', 'portrait')
+                ->setOptions([
+                    'dpi' => 150,
+                    'defaultFont' => 'DejaVu Sans',
+                    'isRemoteEnabled' => false,
+                    'isHtml5ParserEnabled' => true,
+                    'isFontSubsettingEnabled' => true,
+                    'isPhpEnabled' => false,
+                    'chroot' => [public_path(), storage_path()],
+                    'fontCache' => storage_path('fonts/'),
+                    'logOutputFile' => storage_path('logs/dompdf.log'),
+                    'debugCss' => config('app.debug', false),
+                    'debugLayout' => config('app.debug', false),
+                ]);
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            Log::error('Single Student Mock PDF Export Error', [
+                'student_id' => $id,
+                'schoolclassid' => $schoolclassid,
+                'sessionid' => $sessionid,
+                'termid' => $termid,
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->with('error', 'Failed to generate mock PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Export the entire class's mock results as a PDF.
+     *
+     * @param Request $request
+     * @return JsonResponse|\Illuminate\Http\Response
+     */
+    public function exportClassMockResultsPdf(Request $request)
+    {
+        try {
+            ini_set('max_execution_time', 1200);
+            ini_set('memory_limit', '2048M');
+
+            $schoolclassid = $request->query('schoolclassid');
+            $sessionid = $request->query('sessionid');
+            $termid = $request->query('termid', 3);
+
+            Log::info('Starting class mock results PDF generation', [
+                'schoolclassid' => $schoolclassid,
+                'sessionid' => $sessionid,
+                'termid' => $termid,
+            ]);
+
+            if (!is_numeric($schoolclassid) || !is_numeric($sessionid) || !is_numeric($termid)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid parameters provided. All IDs must be numeric.'
+                ], 400);
+            }
+
+            if (!Schoolclass::find($schoolclassid) || !Schoolsession::find($sessionid) || !Schoolterm::find($termid)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid class, session, or term ID.'
+                ], 400);
+            }
+
+            $students = Studentclass::where('schoolclassid', $schoolclassid)
+                ->where('sessionid', $sessionid)
+                ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+                ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
+                ->where('schoolsession.status', '=', 'Current')
+                ->select('studentRegistration.id', 'studentRegistration.firstname', 'studentRegistration.lastname')
+                ->orderBy('studentRegistration.lastname', 'asc')
+                ->orderBy('studentRegistration.firstname', 'asc')
+                ->get();
+
+            if ($students->isEmpty()) {
+                Log::warning('No students found for class', [
+                    'schoolclassid' => $schoolclassid,
+                    'sessionid' => $sessionid
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No students found for the selected class and session.'
+                ], 404);
+            }
+
+            Log::info('Processing students for mock PDF', ['student_count' => $students->count()]);
+
+            $allStudentData = [];
+            $processedStudents = 0;
+            $skippedStudents = 0;
+
+            foreach ($students as $student) {
+                try {
+                    $studentData = $this->getStudentMockResultData($student->id, $schoolclassid, $sessionid, $termid);
+                    if ($this->validateStudentData($studentData)) {
+                        $allStudentData[] = $studentData;
+                        $processedStudents++;
+                    } else {
+                        $skippedStudents++;
+                        Log::warning('Skipping student due to invalid/missing mock data', [
+                            'student_id' => $student->id,
+                            'student_name' => $student->firstname . ' ' . $student->lastname,
+                            'schoolclassid' => $schoolclassid,
+                            'sessionid' => $sessionid,
+                            'termid' => $termid,
+                        ]);
+                    }
+                } catch (\Exception $e) {
+                    $skippedStudents++;
+                    Log::error('Error processing student mock data', [
+                        'student_id' => $student->id,
+                        'error' => $e->getMessage(),
+                        'trace' => $e->getTraceAsString()
+                    ]);
+                }
+            }
+
+            if (empty($allStudentData)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No valid student mock data found for PDF generation.'
+                ], 404);
+            }
+
+            Log::info('Student mock data collection completed', [
+                'processed' => $processedStudents,
+                'skipped' => $skippedStudents,
+                'total' => $students->count()
+            ]);
+
+            $this->fixImagePaths($allStudentData);
+
+            $schoolclass = Schoolclass::where('id', $schoolclassid)->with('armRelation')->first(['schoolclass', 'arm']);
+            $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
+            $term = $this->getTermName($termid);
+            $className = $schoolclass ? ($schoolclass->schoolclass . ($schoolclass->armRelation ? $schoolclass->armRelation->arm : '')) : 'Class';
+            $filename = 'Class_Mock_Results_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $className) . '_' . 
+                        preg_replace('/[^A-Za-z0-9_-]/', '_', $schoolsession) . '_' . $term . '.pdf';
+
+            Log::info('Preparing mock PDF data', [
+                'filename' => $filename,
+                'class_name' => $className,
+                'session' => $schoolsession,
+                'term' => $term
+            ]);
+
+            $viewName = 'studentreports.class_mock_results_pdf';
+            if (!view()->exists($viewName)) {
+                Log::error('Mock PDF view not found', ['view' => $viewName]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'PDF template view not found: ' . $viewName
+                ], 500);
+            }
+
+            $viewData = [
+                'allStudentData' => $allStudentData,
+                'metadata' => [
+                    'class_name' => $className,
+                    'session' => $schoolsession,
+                    'term' => $term,
+                    'generation_date' => now()->format('Y-m-d H:i:s'),
+                    'student_count' => count($allStudentData)
+                ]
+            ];
+
+            try {
+                $viewContent = view($viewName, $viewData)->render();
+                Log::info('Mock view rendered successfully', ['content_length' => strlen($viewContent)]);
+            } catch (\Exception $e) {
+                Log::error('Mock view rendering failed', [
+                    'view' => $viewName,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to render mock PDF template: ' . $e->getMessage()
+                ], 500);
+            }
+
+            $this->ensureDirectoriesExist();
+
+            Log::info('Starting mock PDF generation with DomPDF');
+
+            $pdf = Pdf::loadView($viewName, $viewData)
+                ->setPaper('A4', 'portrait')
+                ->setOptions([
+                    'dpi' => 96,
+                    'defaultFont' => 'DejaVu Sans',
+                    'isRemoteEnabled' => false,
+                    'isHtml5ParserEnabled' => true,
+                    'isFontSubsettingEnabled' => true,
+                    'isPhpEnabled' => false,
+                    'chroot' => [public_path(), storage_path()],
+                    'tempDir' => storage_path('app/temp/'),
+                    'fontCache' => storage_path('fonts/'),
+                    'logOutputFile' => storage_path('logs/dompdf.log'),
+                    'isJavascriptEnabled' => false,
+                    'enable_css_float' => true,
+                    'debugLayout' => false,
+                    'debugCss' => false,
+                    'debugKeepTemp' => false
+                ])
+                ->setWarnings(true);
+
+            Log::info('Mock PDF object created successfully');
+
+            $pdfContent = $pdf->output();
+            Log::info('Mock PDF content generated', ['size' => strlen($pdfContent)]);
+
+            if (empty($pdfContent)) {
+                Log::error('Mock PDF content is empty');
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Generated mock PDF content is empty',
+                    'error_code' => 'EMPTY_PDF_CONTENT'
+                ], 500);
+            }
+
+            if (!str_starts_with($pdfContent, '%PDF')) {
+                Log::error('Invalid mock PDF content generated', [
+                    'content_start' => substr($pdfContent, 0, 100)
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Invalid mock PDF content generated',
+                    'error_code' => 'INVALID_PDF_CONTENT'
+                ], 500);
+            }
+
+            Log::info('Mock PDF validation successful');
+
+            $responseMethod = $request->query('response_method', 'base64');
+
+            switch ($responseMethod) {
+                case 'save_and_redirect':
+                    return $this->saveAndRedirectResponse($pdfContent, $filename);
+                case 'base64':
+                    return $this->base64Response($pdfContent, $filename);
+                case 'chunked':
+                    return $this->chunkedResponse($pdfContent, $filename);
+                case 'download':
+                    return $this->downloadResponse($pdfContent, $filename);
+                case 'inline':
+                    return $this->inlineResponse($pdfContent, $filename);
+                default:
+                    return $this->base64Response($pdfContent, $filename);
+            }
+        } catch (\Exception $e) {
+            Log::error('Class Mock PDF Export Error', [
+                'schoolclassid' => $schoolclassid ?? 'N/A',
+                'sessionid' => $sessionid ?? 'N/A',
+                'termid' => $termid ?? 'N/A',
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate mock PDF: ' . $e->getMessage(),
+                'error_code' => 'PDF_EXPORT_FAILED'
+            ], 500);
+        }
+    }
+
+    /**
+     * Send inline PDF response.
+     *
+     * @param string $pdfContent
+     * @param string $filename
+     * @return \Illuminate\Http\Response|JsonResponse
+     */
+    private function inlineResponse($pdfContent, $filename)
+    {
+        Log::info('Sending inline mock PDF response', ['size' => strlen($pdfContent)]);
+        
+        try {
+            while (ob_get_level()) {
+                ob_end_clean();
+            }
+            
+            Log::info('Output buffers cleared');
+            
+            if (headers_sent($headerFile, $headerLine)) {
+                Log::error('Headers already sent', [
+                    'file' => $headerFile,
+                    'line' => $headerLine
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Headers already sent. Cannot deliver mock PDF directly.',
+                    'error_code' => 'HEADERS_ALREADY_SENT'
+                ], 500);
+            }
+            
+            Log::info('Headers check passed, sending mock PDF response');
+            
+            return response($pdfContent, 200)
+                ->header('Content-Type', 'application/pdf')
+                ->header('Content-Disposition', 'inline; filename="' . $filename . '"')
+                ->header('Content-Length', strlen($pdfContent))
+                ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+                ->header('Pragma', 'no-cache')
+                ->header('Expires', '0');
+        } catch (\Exception $e) {
+            Log::error('Inline mock response failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send inline mock response: ' . $e->getMessage(),
+                'error_code' => 'INLINE_RESPONSE_FAILED'
+            ], 500);
+        }
+    }
+
+    /**
+     * Send download PDF response.
+     *
+     * @param string $pdfContent
+     * @param string $filename
+     * @return \Illuminate\Http\Response|JsonResponse
+     */
+    private function downloadResponse($pdfContent, $filename)
+    {
+        Log::info('Sending download mock PDF response', ['size' => strlen($pdfContent)]);
+        
+        try {
+            return response($pdfContent, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Content-Length' => strlen($pdfContent),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Download mock response failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send download mock response: ' . $e->getMessage(),
+                'error_code' => 'DOWNLOAD_RESPONSE_FAILED'
+            ], 500);
+        }
+    }
+
+    /**
+     * Save PDF and return a redirect URL.
+     *
+     * @param string $pdfContent
+     * @param string $filename
+     * @return JsonResponse
+     */
+    private function saveAndRedirectResponse($pdfContent, $filename)
+    {
+        Log::info('Saving mock PDF and returning URL');
+        
+        try {
+            $publicPath = public_path('temp_pdfs');
+            if (!file_exists($publicPath)) {
+                mkdir($publicPath, 0755, true);
+            }
+            
+            $filePath = $publicPath . '/' . $filename;
+            file_put_contents($filePath, $pdfContent);
+            
+            $publicUrl = url('temp_pdfs/' . $filename);
+            
+            Log::info('Mock PDF saved successfully', [
+                'file_path' => $filePath,
+                'public_url' => $publicUrl,
+                'file_size' => filesize($filePath)
+            ]);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Mock PDF generated successfully',
+                'pdf_url' => $publicUrl,
+                'filename' => $filename,
+                'size' => strlen($pdfContent)
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Save and redirect mock failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save mock PDF: ' . $e->getMessage(),
+                'error_code' => 'SAVE_RESPONSE_FAILED'
+            ], 500);
+        }
+    }
+
+    /**
+     * Send base64-encoded PDF response.
+     *
+     * @param string $pdfContent
+     * @param string $filename
+     * @return JsonResponse
+     */
+    private function base64Response($pdfContent, $filename)
+    {
+        Log::info('Sending base64 mock PDF response');
+        
+        try {
+            return response()->json([
+                'success' => true,
+                'pdf_base64' => base64_encode($pdfContent),
+                'filename' => $filename,
+                'size' => strlen($pdfContent),
+                'message' => 'Mock PDF generated successfully as base64'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Base64 mock response failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to create base64 mock response: ' . $e->getMessage(),
+                'error_code' => 'BASE64_RESPONSE_FAILED'
+            ], 500);
+        }
+    }
+
+    /**
+     * Send chunked PDF response.
+     *
+     * @param string $pdfContent
+     * @param string $filename
+     * @return \Illuminate\Http\Response|JsonResponse
+     */
+    private function chunkedResponse($pdfContent, $filename)
+    {
+        Log::info('Sending chunked mock PDF response', ['size' => strlen($pdfContent)]);
+        
+        try {
+            return response()->stream(function() use ($pdfContent) {
+                $chunkSize = 8192;
+                $length = strlen($pdfContent);
+                $offset = 0;
+                
+                while ($offset < $length) {
+                    echo substr($pdfContent, $offset, $chunkSize);
+                    $offset += $chunkSize;
+                    if (ob_get_level()) {
+                        ob_flush();
+                    }
+                    flush();
+                }
+            }, 200, [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'inline; filename="' . $filename . '"',
+                'Content-Length' => strlen($pdfContent),
+                'Transfer-Encoding' => 'chunked',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Chunked mock response failed', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send chunked mock response: ' . $e->getMessage(),
+                'error_code' => 'CHUNKED_RESPONSE_FAILED'
+            ], 500);
+        }
+    }
+
+    /**
+     * Fix image paths for students and school logo.
+     *
+     * @param array &$studentData
+     * @return void
+     */
+    private function fixImagePaths(&$studentData)
+    {
+        foreach ($studentData as &$student) {
+            // Handle student image
+            if (isset($student['students']) && $student['students']->isNotEmpty() && $student['students']->first()->picture) {
+                $student['student_image_path'] = $this->sanitizeImagePath($student['students']->first()->picture);
+                Log::info('Student image path set', [
+                    'student_id' => $student['students']->first()->id,
+                    'path' => $student['student_image_path'],
+                    'exists' => file_exists($student['student_image_path'])
+                ]);
+            } else {
+                $student['student_image_path'] = public_path('storage/student_avatars/unnamed.jpg');
+                Log::info('Using default student image', ['path' => $student['student_image_path']]);
+            }
+            
+            // Handle school logo
+            if (isset($student['schoolInfo'])) {
+                $logoPath = $student['schoolInfo']->getLogoUrlAttribute();
+                $student['school_logo_path'] = $this->sanitizeImagePath($logoPath);
+                Log::info('School logo path set', [
+                    'path' => $student['school_logo_path'],
+                    'exists' => file_exists($student['school_logo_path'])
+                ]);
+            } else {
+                $student['school_logo_path'] = public_path('storage/school_logos/default.jpg');
+                Log::info('Using default school logo', ['path' => $student['school_logo_path']]);
+            }
+        }
+    }
+
+    /**
+     * Sanitize image paths to ensure they are valid and exist.
+     *
+     * @param string|null $path
+     * @return string|null
+     */
+    private function sanitizeImagePath($path)
+    {
+        if (empty($path)) {
+            Log::warning('Empty image path provided');
+            return null;
+        }
+
+        // Normalize path separators for Windows
+        $path = str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path);
+        
+        // Remove any URL prefixes
+        $path = preg_replace('/^(http:\/\/|https:\/\/|\/\/)[^\/]+/', '', $path);
+        
+        // Remove leading slashes and ensure storage prefix
+        $path = ltrim($path, DIRECTORY_SEPARATOR);
+        if (!preg_match('/^(storage|school_logos|student_avatars)/', $path)) {
+            $path = 'storage/' . $path;
+        }
+        
+        // Build absolute path
+        $fullPath = public_path($path);
+        
+        // Normalize path to prevent duplication
+        $fullPath = realpath($fullPath) ?: $fullPath;
+        
+        // Verify file existence
+        if (file_exists($fullPath)) {
+            Log::info('Sanitized image path', ['original' => $path, 'sanitized' => $fullPath]);
+            return $fullPath;
+        }
+        
+        Log::warning('Image file does not exist', ['path' => $fullPath]);
+        return null;
+    }
+
+    /**
+     * Ensure required directories exist for PDF generation.
+     *
+     * @return void
+     */
+    private function ensureDirectoriesExist()
+    {
+        $directories = [
+            storage_path('app/temp'),
+            storage_path('fonts'),
+            storage_path('logs'),
+            public_path('temp_pdfs')
+        ];
+
+        foreach ($directories as $all) {
+            if (!file_exists($all)) {
+                mkdir($all, 0755, true);
+                Log::info('Created directory', ['path' => $all]);
+            }
+        }
+    }
+
+    /**
+     * Get term name based on term ID.
+     *
+     * @param int $termid
+     * @return string
+     */
+    private function getTermName($termid)
+    {
+        $terms = [
+            1 => 'First_Term',
+            2 => 'Second_Term',
+            3 => 'Third_Term'
+        ];
+        
+        return $terms[$termid] ?? 'Unknown_Term';
+    }
+
+    /**
+     * Validate student data for PDF generation.
+     *
+     * @param array $studentData
+     * @return bool
+     */
+    private function validateStudentData($studentData): bool
+    {
+        if (empty($studentData)) {
+            return false;
+        }
+
+        if (empty($studentData['students']) || !$studentData['students']) {
+            return false;
+        }
+
+        if (!isset($studentData['mockScores'])) {
+            return false;
+        }
+
+        return true;
+    }
+
     /**
      * Display the student's mock result for a specific class, session, and term.
      *
@@ -359,83 +1134,10 @@ class ViewStudentMockReportController extends Controller
      */
     public function studentmockresult($id, $schoolclassid, $sessionid, $termid)
     {
-        // Validate input parameters
-        if (!is_numeric($id) || !is_numeric($schoolclassid) || !is_numeric($sessionid) || !is_numeric($termid)) {
-            abort(404, 'Invalid parameters');
-        }
-
         $pagetitle = "Student Mock Result";
+        $data = $this->getStudentMockResultData($id, $schoolclassid, $sessionid, $termid);
 
-        // Fetch student details
-        $students = StudentRegistration::where('studentRegistration.id', $id)
-            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->get([
-                'studentRegistration.id as id',
-                'studentRegistration.admissionNo as admissionNo',
-                'studentRegistration.firstname as fname',
-                'studentRegistration.home_address as homeaddress',
-                'studentRegistration.lastname as lastname',
-                'studentRegistration.othername as othername',
-                'studentRegistration.dateofbirth as dateofbirth',
-                'studentRegistration.gender as gender',
-                'studentRegistration.updated_at as updated_at',
-                'studentpicture.picture as picture'
-            ]);
-
-        // Calculate subject positions and class averages for the entire class
-        $this->calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid);
-
-        // Fetch personality profile
-        $studentpp = Studentpersonalityprofile::where('studentid', $id)
-            ->where('schoolclassid', $schoolclassid)
-            ->where('sessionid', $sessionid)
-            ->where('termid', $termid)
-            ->get();
-
-        // Fetch mock report scores for the specific student and schoolclassid
-        $mockScores = BroadsheetsMock::where('broadsheet_records_mock.student_id', $id)
-            ->where('broadsheetmock.term_id', $termid)
-            ->where('broadsheet_records_mock.session_id', $sessionid)
-            ->where('broadsheet_records_mock.schoolclass_id', $schoolclassid)
-            ->leftJoin('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
-            ->leftJoin('subject', 'subject.id', '=', 'broadsheet_records_mock.subject_id')
-            ->orderBy('subject.subject')
-            ->get([
-                'subject.id as subject_id',
-                'subject.subject as subject_name',
-                'subject.subject_code',
-                'broadsheetmock.exam',
-                'broadsheetmock.total',
-                'broadsheetmock.cum',
-                'broadsheetmock.grade',
-                'broadsheetmock.subject_position_class as position',
-                'broadsheetmock.avg as class_average',
-            ]);
-
-        // Fetch class, term, session, and number of students
-        $schoolclass = Schoolclass::where('id', $schoolclassid)->with('armRelation')->first(['schoolclass', 'arm']);
-        $schoolterm = Schoolterm::where('id', $termid)->value('term') ?? 'N/A';
-        $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
-        $numberOfStudents = Studentclass::whereIn('schoolclassid', 
-            Schoolclass::where('schoolclass', $schoolclass->schoolclass)->pluck('id'))
-            ->where('sessionid', $sessionid)
-            ->count();
-        $schoolInfo = SchoolInformation::getActiveSchool();
-
-        return view('studentreports.studentmockresult')
-            ->with('students', $students)
-            ->with('studentpp', $studentpp)
-            ->with('mockScores', $mockScores)
-            ->with('studentid', $id)
-            ->with('schoolclassid', $schoolclassid)
-            ->with('sessionid', $sessionid)
-            ->with('termid', $termid)
-            ->with('pagetitle', $pagetitle)
-            ->with('schoolclass', $schoolclass)
-            ->with('schoolterm', $schoolterm)
-            ->with('schoolsession', $schoolsession)
-            ->with('numberOfStudents', $numberOfStudents)
-            ->with('schoolInfo', $schoolInfo);
+        return view('studentreports.studentmockresult')->with($data)->with('pagetitle', $pagetitle);
     }
 
     /**
