@@ -251,12 +251,8 @@ Route::group(['middleware' => ['auth']], function () {
     
 
 
-    // Route::get('viewstudent', [ViewStudentController::class]);
     Route::get('/viewstudent/{schoolclassid}/{termid}/{sessionid}', [ViewStudentController::class, 'show'])->name('viewstudent');
-    //Route::get('/studentreport', [ViewStudentReportController::class, 'index'])->name('studentreport.index');
-    // Route::get('/viewstudentreport/{id}/{termid}/{sessionid}', [ViewStudentReportController::class, 'show'])->name('viewstudentreport');
-    // Route::get('/viewstudentmockreport/{id}/{termid}/{sessionid}', [ViewStudentMockReportController::class, 'show'])->name('viewstudentreport');
-
+ 
     Route::get('/studentreports', [ViewStudentReportController::class, 'index'])->name('studentreports.index');
     Route::get('/studentresult/{id}/{schoolclassid}/{sessionid}/{termid}', [ViewStudentReportController::class, 'studentresult'])->name('studentresult');
     Route::get('/student-reports/registered-classes', [ViewStudentReportController::class, 'registeredClasses'])->name('studentreports.registeredClasses');

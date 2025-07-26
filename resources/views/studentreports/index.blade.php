@@ -60,6 +60,14 @@
                                         </select>
                                     </div>
                                     <div class="col-xxl-3 col-sm-6">
+                                        <select class="form-control" id="idterm" name="termid">
+                                            <option value="ALL">Select Term</option>
+                                            <option value="1">First Term</option>
+                                            <option value="2">Second Term</option>
+                                            <option value="3">Third Term</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-3 col-sm-6">
                                         <div class="search-box">
                                             <input type="text" class="form-control search" id="searchInput" name="search" placeholder="Search students...">
                                             <i class="ri-search-line search-icon"></i>
@@ -152,11 +160,12 @@
 
         const classSelect = document.getElementById("idclass");
         const sessionSelect = document.getElementById("idsession");
+        const termSelect = document.getElementById("idterm");
         const searchInput = document.getElementById("searchInput");
         const printAllBtn = document.getElementById("printAllBtn");
 
-        if (!classSelect || !sessionSelect) {
-            console.error("Class or session select elements not found");
+        if (!classSelect || !sessionSelect || !termSelect) {
+            console.error("Class, session, or term select elements not found");
             Swal.fire({
                 icon: "error",
                 title: "Error",
@@ -168,28 +177,29 @@
 
         const classValue = classSelect.value;
         const sessionValue = sessionSelect.value;
+        const termValue = termSelect.value;
         const searchValue = searchInput ? searchInput.value.trim() : '';
 
-        if (classValue !== 'ALL' && sessionValue !== 'ALL') {
+        if (classValue !== 'ALL' && sessionValue !== 'ALL' && termValue !== 'ALL') {
             printAllBtn.style.display = 'block';
         } else {
             printAllBtn.style.display = 'none';
         }
 
-        if (classValue === 'ALL' || sessionValue === 'ALL') {
-            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="11" class="text-center">Select class and session to view students.</td></tr>';
+        if (classValue === 'ALL' || sessionValue === 'ALL' || termValue === 'ALL') {
+            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="11" class="text-center">Select class, session, and term to view students.</td></tr>';
             document.getElementById('pagination-container').innerHTML = '';
             document.getElementById('studentcount').innerText = '0';
             Swal.fire({
                 icon: "warning",
                 title: "Missing Selection",
-                text: "Please select a valid class and session.",
+                text: "Please select a valid class, session, and term.",
                 showConfirmButton: true
             });
             return;
         }
 
-        console.log("Sending AJAX request with:", { search: searchValue, schoolclassid: classValue, sessionid: sessionValue });
+        console.log("Sending AJAX request with:", { search: searchValue, schoolclassid: classValue, sessionid: sessionValue, termid: termValue });
 
         const tableBody = document.getElementById('studentTableBody');
         tableBody.innerHTML = '<tr><td colspan="11" class="text-center">Loading...</td></tr>';
@@ -198,7 +208,8 @@
             params: {
                 search: searchValue,
                 schoolclassid: classValue,
-                sessionid: sessionValue
+                sessionid: sessionValue,
+                termid: termValue
             },
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -217,7 +228,7 @@
                 Swal.fire({
                     icon: "info",
                     title: "No Results",
-                    text: "No students found for the selected class and session.",
+                    text: "No students found for the selected class, session, and term.",
                     showConfirmButton: true
                 });
             }
@@ -233,78 +244,80 @@
         });
     }
 
-   function printAllResults() {
-    const classSelect = document.getElementById("idclass");
-    const sessionSelect = document.getElementById("idsession");
-    const classValue = classSelect.value;
-    const sessionValue = sessionSelect.value;
+    function printAllResults() {
+        const classSelect = document.getElementById("idclass");
+        const sessionSelect = document.getElementById("idsession");
+        const termSelect = document.getElementById("idterm");
+        const classValue = classSelect.value;
+        const sessionValue = sessionSelect.value;
+        const termValue = termSelect.value;
 
-    console.log('Generating PDF with params:', { schoolclassid: classValue, sessionid: sessionValue, termid: 3 });
+        console.log('Generating PDF with params:', { schoolclassid: classValue, sessionid: sessionValue, termid: termValue });
 
-    if (classValue === 'ALL' || sessionValue === 'ALL') {
-        Swal.fire({
-            icon: "warning",
-            title: "Missing Selection",
-            text: "Please select a valid class and session.",
-            showConfirmButton: true
-        });
-        return;
-    }
-
-    Swal.fire({
-        title: 'Generating PDF...',
-        text: 'Please wait while the PDF is being generated.',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
+        if (classValue === 'ALL' || sessionValue === 'ALL' || termValue === 'ALL') {
+            Swal.fire({
+                icon: "warning",
+                title: "Missing Selection",
+                text: "Please select a valid class, session, and term.",
+                showConfirmButton: true
+            });
+            return;
         }
-    });
 
-    axios.get('{{ route("studentreports.exportClassResultsPdf") }}', {
-        params: {
-            schoolclassid: classValue,
-            sessionid: sessionValue,
-            termid: 3,
-            response_method: 'base64'
-        },
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        responseType: 'json'
-    }).then(function (response) {
-        console.log("PDF response:", response.data);
-        Swal.close();
-        if (response.data.success && response.data.pdf_base64) {
-            const byteCharacters = atob(response.data.pdf_base64);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
+        Swal.fire({
+            title: 'Generating PDF...',
+            text: 'Please wait while the PDF is being generated.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
             }
-            const byteArray = new Uint8Array(byteNumbers);
-            const blob = new Blob([byteArray], { type: 'application/pdf' });
-            const pdfUrl = URL.createObjectURL(blob);
-            window.open(pdfUrl, '_blank');
-            setTimeout(() => URL.revokeObjectURL(pdfUrl), 30000);
-        } else {
+        });
+
+        axios.get('{{ route("studentreports.exportClassResultsPdf") }}', {
+            params: {
+                schoolclassid: classValue,
+                sessionid: sessionValue,
+                termid: termValue,
+                response_method: 'base64'
+            },
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            responseType: 'json'
+        }).then(function (response) {
+            console.log("PDF response:", response.data);
+            Swal.close();
+            if (response.data.success && response.data.pdf_base64) {
+                const byteCharacters = atob(response.data.pdf_base64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/pdf' });
+                const pdfUrl = URL.createObjectURL(blob);
+                window.open(pdfUrl, '_blank');
+                setTimeout(() => URL.revokeObjectURL(pdfUrl), 30000);
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: response.data.message || "Failed to generate PDF.",
+                    showConfirmButton: true
+                });
+            }
+        }).catch(function (error) {
+            Swal.close();
+            console.error("PDF generation error:", error);
             Swal.fire({
                 icon: "error",
                 title: "Error",
-                text: response.data.message || "Failed to generate PDF.",
+                text: error.response?.data?.message || "Failed to generate PDF.",
                 showConfirmButton: true
             });
-        }
-    }).catch(function (error) {
-        Swal.close();
-        console.error("PDF generation error:", error);
-        Swal.fire({
-            icon: "error",
-            title: "Error",
-            text: error.response?.data?.message || "Failed to generate PDF.",
-            showConfirmButton: true
         });
-    });
-}
+    }
 
     function setupPaginationLinks() {
         const paginationLinks = document.querySelectorAll('#pagination-container a');
