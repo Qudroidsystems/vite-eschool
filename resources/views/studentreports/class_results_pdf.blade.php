@@ -16,15 +16,15 @@
             line-height: 1.4;
             color: #000;
             background: #fff;
-            margin: 0;
+            margin: 10mm 0 0 0; /* Add top margin */
             padding: 0;
             display: block;
             text-align: center; /* Center all content */
         }
 
         .student-section {
-            width: 180mm; /* Reduced width to create more balanced margins */
-            max-height: 293mm; /* A4 height minus border (297mm - 4mm for 2px borders) */
+            width: 190mm; /* Adjusted width for better balance */
+            max-height: 287mm; /* Adjusted height accounting for top margin */
             page-break-after: always;
             background: #ffffff;
             border: 2px solid #1e40af;
@@ -49,8 +49,8 @@
             }
             
             .student-section {
-                width: 180mm;
-                max-height: 293mm;
+                width: 190mm;
+                max-height: 287mm;
                 margin: 0 auto;
                 padding: 10mm;
                 page-break-after: always;
@@ -184,7 +184,7 @@
         }
 
         .photo-frame {
-            border: 3px solid #e3e568;
+            border: 3px solid #1e40af; /* Changed to blue border */
             border-radius: 8px;
             overflow: hidden;
             background: white;
@@ -356,8 +356,22 @@
         }
 
         .info-row {
-            margin-bottom: 4px; /* Reduced margin */
-            line-height: 1.4;
+            margin-bottom: 8px; /* Increased margin for better spacing */
+            line-height: 1.6; /* Increased line height */
+        }
+
+        .info-row .result-details {
+            margin-right: 8px;
+        }
+
+        .info-row .rd1, .info-row .rd2, .info-row .rd3, .info-row .rd4, 
+        .info-row .rd5, .info-row .rd6, .info-row .rd7, .info-row .rd8, 
+        .info-row .rd9, .info-row .rd10 {
+            margin-right: 20px; /* Add space between elements */
+        }
+
+        .info-row.students-count {
+            margin-top: 8px; /* Add space before "No. of Students in Class" */
         }
 
         .text-center {
@@ -465,6 +479,8 @@
                                             <span class="result-details">No. of Times School Absent:</span>
                                             <span class="rd9">N/A</span>
                                         @endif
+                                    </div>
+                                    <div class="info-row students-count">
                                         <span class="result-details">No. of Students in Class:</span>
                                         <span class="rd10">{{ $studentData['numberOfStudents'] ?? 'N/A' }}</span>
                                     </div>
