@@ -9,79 +9,32 @@
         transform: translateX(-50%);
         width: 80%;
         max-width: 600px;
-        z-index: 1050;
+        z-index: 1050; /* Ensure it stays above other content */
     }
     #alertContainer .alert {
         margin-bottom: 0;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
-    /* Improved Select2 styling to match Bootstrap 5 */
-    .select2-container {
-        width: 100% !important;
-    }
+    /* Ensure Select2 dropdown works with Bootstrap */
     .select2-container--default .select2-selection--single {
-        height: calc(1.5em + 0.75rem + 2px); /* Match Bootstrap form-control */
-        padding: 0.375rem 2.25rem 0.375rem 0.75rem; /* Match padding, account for arrow */
-        font-size: 1rem; /* Match Bootstrap font size */
-        line-height: 1.5;
-        color: #495057; /* Bootstrap text color */
-        background-color: #fff;
-        border: 1px solid #ced4da; /* Bootstrap border */
-        border-radius: 0.25rem; /* Bootstrap border-radius */
-        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-    }
-    .select2-container--default .select2-selection--single:focus {
-        border-color: #86b7fe; /* Bootstrap focus border */
-        outline: 0;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); /* Bootstrap focus shadow */
+        height: calc(1.5em + 0.94rem + 2px);
+        padding: 0.47rem 0.75rem;
+        font-size: 0.8125rem;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
     }
     .select2-container--default .select2-selection--single .select2-selection__rendered {
-        color: #495057;
         line-height: 1.5;
-        padding-left: 0;
     }
     .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: calc(1.5em + 0.75rem); /* Match height */
-        right: 0.75rem; /* Align arrow */
-    }
-    .select2-container--default .select2-selection--single .select2-selection__arrow b {
-        border-color: #495057 transparent transparent transparent; /* Arrow color */
-    }
-    /* Style the dropdown menu */
-    .select2-container--default .select2-dropdown {
-        border: 1px solid #ced4da;
-        border-radius: 0.25rem;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); /* Match Bootstrap dropdown shadow */
-        background-color: #fff;
-    }
-    .select2-container--default .select2-results__option {
-        padding: 0.375rem 0.75rem;
-        font-size: 1rem;
-        color: #495057;
-    }
-    .select2-container--default .select2-results__option--highlighted[aria-selected] {
-        background-color: #0d6efd; /* Bootstrap primary */
-        color: #fff;
-    }
-    /* Style the search input within the dropdown */
-    .select2-container--default .select2-search--dropdown .select2-search__field {
-        padding: 0.375rem 0.75rem;
-        font-size: 1rem;
-        border: 1px solid #ced4da;
-        border-radius: 0.25rem;
-        width: 100%;
-        box-sizing: border-box;
-    }
-    .select2-container--default .select2-search--dropdown .select2-search__field:focus {
-        border-color: #86b7fe;
-        outline: 0;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        height: calc(1.5em + 0.94rem);
     }
 </style>
 
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
+            <!-- Start page title -->
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box d-sm-flex align-items-center justify-content-between">
@@ -94,6 +47,7 @@
                     </div>
                 </div>
             </div>
+            <!-- End page title -->
 
             @if ($errors->any())
                 <div class="alert alert-danger">
@@ -122,7 +76,7 @@
                             <div class="card-body">
                                 <div class="row g-3">
                                     <div class="col-xxl-3 col-sm-6">
-                                        <select  id="idclass" name="schoolclassid">
+                                        <select class="form-control" id="idclass" name="schoolclassid">
                                             <option value="ALL">Select Class</option>
                                             @foreach ($schoolclasses as $class)
                                                 <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->arm }}</option>
@@ -174,11 +128,11 @@
                                             <tr>
                                                 <th><div class="form-check"><input class="form-check-input" type="checkbox" id="checkAll"><label class="form-check-label" for="checkAll"></label></div></th>
                                                 <th>Admission No</th>
-                                                 <th>Picture</th>
-                                                <th>Last Name</th>
                                                 <th>First Name</th>
+                                                <th>Last Name</th>
                                                 <th>Other Name</th>
                                                 <th>Gender</th>
+                                                <th>Picture</th>
                                                 <th>Class</th>
                                                 <th>Arm</th>
                                                 <th>Session</th>
@@ -197,6 +151,7 @@
                     </div>
                 </div>
 
+                <!-- Image View Modal -->
                 <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered modal-lg">
                         <div class="modal-content">
@@ -215,7 +170,6 @@
     </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
@@ -224,6 +178,7 @@
 <script>
     console.log("Script loaded at", new Date().toISOString());
 
+    // Debounce function to limit rapid AJAX calls
     function debounce(func, wait) {
         let timeout;
         return function (...args) {
@@ -266,11 +221,14 @@
             </div>
         `;
 
+        // Remove existing alert
         const existingAlert = document.getElementById(alertId);
         if (existingAlert) existingAlert.remove();
 
+        // Append new alert
         alertContainer.innerHTML = alertHtml;
 
+        // Auto-dismiss after 10 seconds
         setTimeout(() => {
             const alert = document.getElementById(alertId);
             if (alert) {
@@ -289,7 +247,7 @@
     }
 
     function filterData() {
-        console.log("filterData called at", new Date().toISOString());
+        console.log("filterData called");
         if (typeof axios === 'undefined') {
             console.error("Axios is not defined");
             Swal.fire({
@@ -306,8 +264,8 @@
         const termSelect = document.getElementById("idterm");
         const searchInput = document.getElementById("searchInput");
 
-        if (!classSelect || !sessionSelect || !termSelect || !searchInput) {
-            console.error("Required elements not found:", { classSelect, sessionSelect, termSelect, searchInput });
+        if (!classSelect || !sessionSelect || !termSelect) {
+            console.error("Class, session, or term select elements not found");
             Swal.fire({
                 icon: "error",
                 title: "Error",
@@ -320,9 +278,7 @@
         const classValue = classSelect.value;
         const sessionValue = sessionSelect.value;
         const termValue = termSelect.value;
-        const searchValue = searchInput.value.trim();
-
-        console.log("Sending AJAX request with:", { search: searchValue, schoolclassid: classValue, sessionid: sessionValue, termid: termValue });
+        const searchValue = searchInput ? searchInput.value.trim() : '';
 
         if (classValue === 'ALL' || sessionValue === 'ALL' || termValue === 'ALL') {
             document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="10" class="text-center">Select class, session, and term to view students.</td></tr>';
@@ -338,6 +294,8 @@
             });
             return;
         }
+
+        console.log("Sending AJAX request with:", { search: searchValue, schoolclassid: classValue, sessionid: sessionValue, termid: termValue });
 
         const tableBody = document.getElementById('studentTableBody');
         tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Loading...</td></tr>';
@@ -355,9 +313,6 @@
             }
         }).then(function (response) {
             console.log("AJAX response received:", response.data);
-            if (!response.data || typeof response.data !== 'object') {
-                throw new Error("Invalid response format");
-            }
 
             document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="10" class="text-center">No students found.</td></tr>';
             document.getElementById('pagination-container').innerHTML = response.data.pagination || '';
@@ -369,26 +324,27 @@
             updatePrintButtonVisibility();
             updateSelectionAlert();
 
-            if (response.data.tableBody.includes('No students found')) {
+            if (response.data.tableBody.includes('No students found') || response.data.tableBody.includes('Select class and session')) {
                 Swal.fire({
                     icon: "info",
                     title: "No Results",
-                    text: "No students found for the selected filters.",
+                    text: "No students found for the selected class, session, and term.",
                     showConfirmButton: true
                 });
             }
         }).catch(function (error) {
             console.error("AJAX error:", error);
-            tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data: ' + (error.message || 'Unknown error') + '</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
             Swal.fire({
                 icon: "error",
                 title: "Error",
-                text: error.response?.data?.message || "Failed to fetch student data. Check console for details.",
+                text: error.response?.data?.message || "Failed to fetch student data.",
                 showConfirmButton: true
             });
         });
     }
 
+    // Debounced filterData for search input
     const debouncedFilterData = debounce(filterData, 500);
 
     function printAllResults() {
@@ -534,9 +490,6 @@
             }
         }).then(function (response) {
             console.log("Page load response:", response.data);
-            if (!response.data || typeof response.data !== 'object') {
-                throw new Error("Invalid response format");
-            }
             document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="10" class="text-center">No students found.</td></tr>';
             document.getElementById('pagination-container').innerHTML = response.data.pagination || '';
             document.getElementById('studentcount').innerText = response.data.studentCount || '0';
@@ -547,7 +500,7 @@
             updateSelectionAlert();
         }).catch(function (error) {
             console.error("Page load error:", error);
-            tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data: ' + (error.message || 'Unknown error') + '</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
             Swal.fire({
                 icon: "error",
                 title: "Error",
@@ -590,10 +543,7 @@
         const termSelect = document.getElementById("idterm");
 
         if (classSelect) {
-            classSelect.addEventListener("change", function() {
-                console.log("Native class select changed to:", classSelect.value);
-                updateSelectionAlert();
-            });
+            classSelect.addEventListener("change", updateSelectionAlert);
         }
         if (sessionSelect) {
             sessionSelect.addEventListener("change", updateSelectionAlert);
@@ -604,38 +554,34 @@
     }
 
     document.addEventListener("DOMContentLoaded", function () {
-        console.log("DOM loaded at", new Date().toISOString());
+        console.log("DOM loaded");
 
-        if (jQuery && jQuery.fn && jQuery.fn.select2) {
+        // Initialize Select2 for class dropdown
+        if (jQuery && jQuery.fn.select2) {
             jQuery('#idclass').select2({
                 placeholder: "Select Class",
                 allowClear: true,
-                width: '100%',
-                minimumResultsForSearch: 1
+                width: '100%'
             });
+            // Update alert when Select2 selection changes
             jQuery('#idclass').on('select2:select select2:unselect', function () {
-                console.log("Select2 class changed to:", jQuery('#idclass').val());
                 updateSelectionAlert();
-                filterData();
+                filterData(); // Trigger filterData on class change
             });
         } else {
-            console.error("Select2 or jQuery is not defined");
+            console.error("Select2 is not defined");
             Swal.fire({
                 icon: "error",
                 title: "Configuration Error",
-                text: "Select2 or jQuery library is missing.",
+                text: "Select2 library is missing.",
                 showConfirmButton: true
             });
         }
 
+        // Add input event listener for search with debounce
         const searchInput = document.getElementById("searchInput");
         if (searchInput) {
-            searchInput.addEventListener("input", function () {
-                console.log("Search input changed to:", searchInput.value);
-                debouncedFilterData();
-            });
-        } else {
-            console.error("Search input element not found");
+            searchInput.addEventListener("input", debouncedFilterData);
         }
 
         setupCheckboxListeners();
