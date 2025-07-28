@@ -15,26 +15,25 @@
         margin-bottom: 0;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     }
-    /* Select2 styling to match Bootstrap 5 form-control */
+    /* Improved Select2 styling to match Bootstrap 5 */
     .select2-container {
         width: 100% !important;
     }
     .select2-container--default .select2-selection--single {
-        height: calc(1.5em + 0.75rem + 2px); /* Bootstrap form-control height */
-        padding: 0.375rem 2.25rem 0.375rem 0.75rem; /* Match padding, space for arrow */
-        font-size: 1rem; /* Bootstrap font size */
-        font-weight: 400; /* Match form-control */
+        height: calc(1.5em + 0.75rem + 2px); /* Match Bootstrap form-control */
+        padding: 0.375rem 2.25rem 0.375rem 0.75rem; /* Match padding, account for arrow */
+        font-size: 1rem; /* Match Bootstrap font size */
         line-height: 1.5;
-        color: #495057;
+        color: #495057; /* Bootstrap text color */
         background-color: #fff;
-        border: 1px solid #ced4da;
-        border-radius: 0.25rem;
+        border: 1px solid #ced4da; /* Bootstrap border */
+        border-radius: 0.25rem; /* Bootstrap border-radius */
         transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
     }
     .select2-container--default .select2-selection--single:focus {
-        border-color: #86b7fe;
+        border-color: #86b7fe; /* Bootstrap focus border */
         outline: 0;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25); /* Bootstrap focus shadow */
     }
     .select2-container--default .select2-selection--single .select2-selection__rendered {
         color: #495057;
@@ -42,24 +41,18 @@
         padding-left: 0;
     }
     .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: calc(1.5em + 0.75rem);
-        right: 0.75rem;
-        top: 50%;
-        transform: translateY(-50%);
+        height: calc(1.5em + 0.75rem); /* Match height */
+        right: 0.75rem; /* Align arrow */
     }
     .select2-container--default .select2-selection--single .select2-selection__arrow b {
-        border-color: #495057 transparent transparent transparent;
+        border-color: #495057 transparent transparent transparent; /* Arrow color */
     }
-    .select2-container--default .select2-selection--single .select2-selection__placeholder {
-        color: #6c757d; /* Bootstrap placeholder color */
-    }
-    /* Dropdown menu */
+    /* Style the dropdown menu */
     .select2-container--default .select2-dropdown {
         border: 1px solid #ced4da;
         border-radius: 0.25rem;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); /* Match Bootstrap dropdown shadow */
         background-color: #fff;
-        margin-top: 0.25rem;
     }
     .select2-container--default .select2-results__option {
         padding: 0.375rem 0.75rem;
@@ -67,10 +60,10 @@
         color: #495057;
     }
     .select2-container--default .select2-results__option--highlighted[aria-selected] {
-        background-color: #0d6efd;
+        background-color: #0d6efd; /* Bootstrap primary */
         color: #fff;
     }
-    /* Search input in dropdown */
+    /* Style the search input within the dropdown */
     .select2-container--default .select2-search--dropdown .select2-search__field {
         padding: 0.375rem 0.75rem;
         font-size: 1rem;
@@ -83,11 +76,6 @@
         border-color: #86b7fe;
         outline: 0;
         box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-    }
-    /* Ensure buttons align to the right */
-    .button-group {
-        display: flex;
-        gap: 0.5rem;
     }
 </style>
 
@@ -128,40 +116,48 @@
             <div id="alertContainer" aria-live="polite"></div>
 
             <div id="studentList">
-                <div class="row g-3 align-items-end">
-                    <div class="col-xxl-3 col-sm-6">
-                        <select class="form-control" id="idclass" name="schoolclassid">
-                            <option value="ALL">Select Class</option>
-                            @foreach ($schoolclasses as $class)
-                                <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->arm }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-xxl-3 col-sm-6">
-                        <select class="form-control" id="idsession" name="sessionid">
-                            <option value="ALL">Select Session</option>
-                            @foreach ($schoolsessions as $session)
-                                <option value="{{ $session->id }}">{{ $session->session }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-xxl-3 col-sm-6">
-                        <select class="form-control" id="idterm" name="termid">
-                            <option value="ALL">Select Term</option>
-                            <option value="1">First Term</option>
-                            <option value="2">Second Term</option>
-                            <option value="3">Third Term</option>
-                        </select>
-                    </div>
-                    <div class="col-xxl-3 col-sm-6">
-                        <div class="search-box">
-                            <input type="text" class="form-control search" id="searchInput" name="search" placeholder="Search students...">
-                            <i class="ri-search-line search-icon"></i>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-xxl-3 col-sm-6">
+                                        <select  id="idclass" name="schoolclassid">
+                                            <option value="ALL">Select Class</option>
+                                            @foreach ($schoolclasses as $class)
+                                                <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->arm }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-3 col-sm-6">
+                                        <select class="form-control" id="idsession" name="sessionid">
+                                            <option value="ALL">Select Session</option>
+                                            @foreach ($schoolsessions as $session)
+                                                <option value="{{ $session->id }}">{{ $session->session }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-3 col-sm-6">
+                                        <select class="form-control" id="idterm" name="termid">
+                                            <option value="ALL">Select Term</option>
+                                            <option value="1">First Term</option>
+                                            <option value="2">Second Term</option>
+                                            <option value="3">Third Term</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-3 col-sm-6">
+                                        <div class="search-box">
+                                            <input type="text" class="form-control search" id="searchInput" name="search" placeholder="Search students...">
+                                            <i class="ri-search-line search-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col-xxl-3 col-sm-6 d-flex gap-2">
+                                        <button type="button" class="btn btn-secondary w-50" onclick="filterData()"><i class="bi bi-search align-baseline me-1"></i> Search</button>
+                                        <button type="button" class="btn btn-primary w-50" id="printAllBtn" style="display: none;" onclick="printAllResults()"><i class="bi bi-printer align-baseline me-1"></i> Print Selected Results</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="col-auto ms-auto button-group">
-                        <button type="button" class="btn btn-secondary" onclick="filterData()"><i class="bi bi-search align-baseline me-1"></i> Search</button>
-                        <button type="button" class="btn btn-primary" id="printAllBtn" style="display: none;" onclick="printAllResults()"><i class="bi bi-printer align-baseline me-1"></i> Print Selected Results</button>
                     </div>
                 </div>
 
@@ -179,7 +175,7 @@
                                                 <th><div class="form-check"><input class="form-check-input" type="checkbox" id="checkAll"><label class="form-check-label" for="checkAll"></label></div></th>
                                                 <th>Admission No</th>
                                                  <th>Picture</th>
-                                                 <th>Last Name</th>
+                                                <th>Last Name</th>
                                                 <th>First Name</th>
                                                 <th>Other Name</th>
                                                 <th>Gender</th>
@@ -600,16 +596,10 @@
             });
         }
         if (sessionSelect) {
-            sessionSelect.addEventListener("change", function() {
-                console.log("Native session select changed to:", sessionSelect.value);
-                updateSelectionAlert();
-            });
+            sessionSelect.addEventListener("change", updateSelectionAlert);
         }
         if (termSelect) {
-            termSelect.addEventListener("change", function() {
-                console.log("Native term select changed to:", termSelect.value);
-                updateSelectionAlert();
-            });
+            termSelect.addEventListener("change", updateSelectionAlert);
         }
     }
 
@@ -617,39 +607,14 @@
         console.log("DOM loaded at", new Date().toISOString());
 
         if (jQuery && jQuery.fn && jQuery.fn.select2) {
-            // Initialize Select2 for all selects
             jQuery('#idclass').select2({
                 placeholder: "Select Class",
                 allowClear: true,
                 width: '100%',
                 minimumResultsForSearch: 1
             });
-            jQuery('#idsession').select2({
-                placeholder: "Select Session",
-                allowClear: true,
-                width: '100%',
-                minimumResultsForSearch: 1
-            });
-            jQuery('#idterm').select2({
-                placeholder: "Select Term",
-                allowClear: true,
-                width: '100%',
-                minimumResultsForSearch: 1
-            });
-
-            // Trigger filterData on select changes
             jQuery('#idclass').on('select2:select select2:unselect', function () {
                 console.log("Select2 class changed to:", jQuery('#idclass').val());
-                updateSelectionAlert();
-                filterData();
-            });
-            jQuery('#idsession').on('select2:select select2:unselect', function () {
-                console.log("Select2 session changed to:", jQuery('#idsession').val());
-                updateSelectionAlert();
-                filterData();
-            });
-            jQuery('#idterm').on('select2:select select2:unselect', function () {
-                console.log("Select2 term changed to:", jQuery('#idterm').val());
                 updateSelectionAlert();
                 filterData();
             });
