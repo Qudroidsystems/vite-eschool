@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers;
 
+
+use App\Models\BroadsheetsMock;
 use App\Models\MockSubjectVetting;
 use App\Models\Schoolclass;
+use App\Models\Schoolsession;
+use App\Models\Schoolterm;
 use App\Models\Subjectclass;
 use App\Models\SubjectTeacher;
-use App\Models\Schoolterm;
-use App\Models\Schoolsession;
 use App\Models\User;
-use App\Models\BroadsheetsMock;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class MockSubjectVettingController extends Controller
 {
