@@ -33,7 +33,7 @@ class Studentpersonalityprofile extends Model
         'classteachercomment',
         'remark_on_other_activities',
         'no_of_times_school_absent',
-        's',
+        'signature',
         'guidancescomment',
         'termid',
         'sessionid',

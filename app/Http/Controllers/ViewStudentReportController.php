@@ -523,239 +523,250 @@ class ViewStudentReportController extends Controller
         }
     }
 
+
     public function exportClassResultsPdf(Request $request)
-    {
-        try {
-            ini_set('max_execution_time', 1200);
-            ini_set('memory_limit', '2048M');
+{
+    try {
+        ini_set('max_execution_time', 1200);
+        ini_set('memory_limit', '2048M');
 
-            $schoolclassid = $request->query('schoolclassid');
-            $sessionid = $request->query('sessionid');
-            $termid = $request->query('termid', 3);
+        $schoolclassid = $request->input('schoolclassid');
+        $sessionid = $request->input('sessionid');
+        $termid = $request->input('termid', 3);
+        $studentIds = $request->input('studentIds', []); // Get student IDs from request
 
-            Log::info('Starting class results PDF generation', [
-                'schoolclassid' => $schoolclassid,
-                'sessionid' => $sessionid,
-                'termid' => $termid,
-            ]);
+        Log::info('Starting class results PDF generation', [
+            'schoolclassid' => $schoolclassid,
+            'sessionid' => $sessionid,
+            'termid' => $termid,
+            'studentIds' => $studentIds,
+        ]);
 
-            if (!is_numeric($schoolclassid) || !is_numeric($sessionid) || !is_numeric($termid)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid parameters provided. All IDs must be numeric.'
-                ], 400);
-            }
-
-            if (!Schoolclass::find($schoolclassid) || !Schoolsession::find($sessionid) || !Schoolterm::find($termid)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid class, session, or term ID.'
-                ], 400);
-            }
-
-            $students = Studentclass::where('schoolclassid', $schoolclassid)
-                ->where('sessionid', $sessionid)
-                ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
-                ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-                ->where('schoolsession.status', '=', 'Current')
-                ->select('studentRegistration.id', 'studentRegistration.firstname', 'studentRegistration.lastname')
-                ->orderBy('studentRegistration.lastname', 'asc')
-                ->orderBy('studentRegistration.firstname', 'asc')
-                ->get();
-
-            if ($students->isEmpty()) {
-                Log::warning('No students found for class', [
-                    'schoolclassid' => $schoolclassid,
-                    'sessionid' => $sessionid
-                ]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No students found for the selected class and session.'
-                ], 404);
-            }
-
-            Log::info('Processing students for PDF', ['student_count' => $students->count()]);
-
-            $allStudentData = [];
-            $processedStudents = 0;
-            $skippedStudents = 0;
-
-            foreach ($students as $student) {
-                try {
-                    $studentData = $this->getStudentResultData($student->id, $schoolclassid, $sessionid, $termid);
-                    if ($this->validateStudentData($studentData)) {
-                        $allStudentData[] = $studentData;
-                        $processedStudents++;
-                    } else {
-                        $skippedStudents++;
-                        Log::warning('Skipping student due to invalid/missing data', [
-                            'student_id' => $student->id,
-                            'student_name' => $student->firstname . ' ' . $student->lastname,
-                            'schoolclassid' => $schoolclassid,
-                            'sessionid' => $sessionid,
-                            'termid' => $termid,
-                        ]);
-                    }
-                } catch (Exception $e) {
-                    $skippedStudents++;
-                    Log::error('Error processing student data', [
-                        'student_id' => $student->id,
-                        'error' => $e->getMessage(),
-                        'trace' => $e->getTraceAsString()
-                    ]);
-                }
-            }
-
-            if (empty($allStudentData)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No valid student data found for PDF generation.'
-                ], 404);
-            }
-
-            Log::info('Student data collection completed', [
-                'processed' => $processedStudents,
-                'skipped' => $skippedStudents,
-                'total' => $students->count()
-            ]);
-
-            $this->fixImagePaths($allStudentData);
-
-            $schoolclass = Schoolclass::where('id', $schoolclassid)->with('armRelation')->first(['schoolclass', 'arm']);
-            $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
-            $term = $this->getTermName($termid);
-            $className = $schoolclass ? ($schoolclass->schoolclass . ($schoolclass->armRelation ? $schoolclass->armRelation->arm : '')) : 'Class';
-            $filename = 'Class_Results_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $className) . '_' . 
-                        preg_replace('/[^A-Za-z0-9_-]/', '_', $schoolsession) . '_' . $term . '.pdf';
-
-            Log::info('Preparing PDF data', [
-                'filename' => $filename,
-                'class_name' => $className,
-                'session' => $schoolsession,
-                'term' => $term
-            ]);
-
-            $viewName = 'studentreports.class_results_pdf';
-            if (!view()->exists($viewName)) {
-                Log::error('PDF view not found', ['view' => $viewName]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'PDF template view not found: ' . $viewName
-                ], 500);
-            }
-
-            $viewData = [
-                'allStudentData' => $allStudentData,
-                'metadata' => [
-                    'class_name' => $className,
-                    'session' => $schoolsession,
-                    'term' => $term,
-                    'generation_date' => now()->format('Y-m-d H:i:s'),
-                    'student_count' => count($allStudentData)
-                ]
-            ];
-
-            try {
-                $viewContent = view($viewName, $viewData)->render();
-                Log::info('View rendered successfully', ['content_length' => strlen($viewContent)]);
-            } catch (Exception $e) {
-                Log::error('View rendering failed', [
-                    'view' => $viewName,
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to render PDF template: ' . $e->getMessage()
-                ], 500);
-            }
-
-            $this->ensureDirectoriesExist();
-
-            Log::info('Starting PDF generation with DomPDF');
-
-           $pdf = Pdf::loadView($viewName, $viewData)
-        ->setPaper('A4', 'portrait')
-        ->setOptions([
-            'dpi' => 96,
-            'defaultFont' => 'DejaVu Sans',
-            'isRemoteEnabled' => false,
-            'isHtml5ParserEnabled' => true,
-            'isFontSubsettingEnabled' => true,
-            'isPhpEnabled' => false,
-            'chroot' => [public_path(), storage_path()],
-            'tempDir' => storage_path('app/temp/'),
-            'fontCache' => storage_path('fonts/'),
-            'logOutputFile' => storage_path('logs/dompdf.log'),
-            'isJavascriptEnabled' => false,
-            'enable_css_float' => true,
-            'debugLayout' => false, // Explicitly disable
-            'debugCss' => false,   // Explicitly disable
-            'debugKeepTemp' => false // Explicitly disable
-        ])
-        ->setWarnings(true);
-
-            Log::info('PDF object created successfully');
-
-            $pdfContent = $pdf->output();
-            Log::info('PDF content generated', ['size' => strlen($pdfContent)]);
-
-            if (empty($pdfContent)) {
-                Log::error('PDF content is empty');
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Generated PDF content is empty',
-                    'error_code' => 'EMPTY_PDF_CONTENT'
-                ], 500);
-            }
-
-            if (!str_starts_with($pdfContent, '%PDF')) {
-                Log::error('Invalid PDF content generated', [
-                    'content_start' => substr($pdfContent, 0, 100)
-                ]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Invalid PDF content generated',
-                    'error_code' => 'INVALID_PDF_CONTENT'
-                ], 500);
-            }
-
-            Log::info('PDF validation successful');
-
-            $responseMethod = $request->query('response_method', 'base64');
-
-            switch ($responseMethod) {
-                case 'save_and_redirect':
-                    return $this->saveAndRedirectResponse($pdfContent, $filename);
-                case 'base64':
-                    return $this->base64Response($pdfContent, $filename);
-                case 'chunked':
-                    return $this->chunkedResponse($pdfContent, $filename);
-                case 'download':
-                    return $this->downloadResponse($pdfContent, $filename);
-                case 'inline':
-                    return $this->inlineResponse($pdfContent, $filename);
-                default:
-                    return $this->base64Response($pdfContent, $filename);
-            }
-        } catch (Exception $e) {
-            Log::error('Class PDF Export Error', [
-                'schoolclassid' => $schoolclassid ?? 'N/A',
-                'sessionid' => $sessionid ?? 'N/A',
-                'termid' => $termid ?? 'N/A',
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-
+        if (!is_numeric($schoolclassid) || !is_numeric($sessionid) || !is_numeric($termid)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to generate PDF: ' . $e->getMessage(),
-                'error_code' => 'PDF_EXPORT_FAILED'
+                'message' => 'Invalid parameters provided. All IDs must be numeric.'
+            ], 400);
+        }
+
+        if (!Schoolclass::find($schoolclassid) || !Schoolsession::find($sessionid) || !Schoolterm::find($termid)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid class, session, or term ID.'
+            ], 400);
+        }
+
+        // Fetch students based on provided studentIds or all students in the class
+        $query = Studentclass::where('schoolclassid', $schoolclassid)
+            ->where('sessionid', $sessionid)
+            ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+            ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
+            ->where('schoolsession.status', '=', 'Current')
+            ->select('studentRegistration.id', 'studentRegistration.firstname', 'studentRegistration.lastname')
+            ->orderBy('studentRegistration.lastname', 'asc')
+            ->orderBy('studentRegistration.firstname', 'asc');
+
+        if (!empty($studentIds)) {
+            $query->whereIn('studentRegistration.id', $studentIds);
+        }
+
+        $students = $query->get();
+
+        if ($students->isEmpty()) {
+            Log::warning('No students found for class or selected students', [
+                'schoolclassid' => $schoolclassid,
+                'sessionid' => $sessionid,
+                'studentIds' => $studentIds,
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'No students found for the selected class, session, or selected students.'
+            ], 404);
+        }
+
+        Log::info('Processing students for PDF', ['student_count' => $students->count()]);
+
+        $allStudentData = [];
+        $processedStudents = 0;
+        $skippedStudents = 0;
+
+        foreach ($students as $student) {
+            try {
+                $studentData = $this->getStudentResultData($student->id, $schoolclassid, $sessionid, $termid);
+                if ($this->validateStudentData($studentData)) {
+                    $allStudentData[] = $studentData;
+                    $processedStudents++;
+                } else {
+                    $skippedStudents++;
+                    Log::warning('Skipping student due to invalid/missing data', [
+                        'student_id' => $student->id,
+                        'student_name' => $student->firstname . ' ' . $student->lastname,
+                        'schoolclassid' => $schoolclassid,
+                        'sessionid' => $sessionid,
+                        'termid' => $termid,
+                    ]);
+                }
+            } catch (Exception $e) {
+                $skippedStudents++;
+                Log::error('Error processing student data', [
+                    'student_id' => $student->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+            }
+        }
+
+        if (empty($allStudentData)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No valid student data found for PDF generation.'
+            ], 404);
+        }
+
+        Log::info('Student data collection completed', [
+            'processed' => $processedStudents,
+            'skipped' => $skippedStudents,
+            'total' => $students->count(),
+        ]);
+
+        $this->fixImagePaths($allStudentData);
+
+        $schoolclass = Schoolclass::where('id', $schoolclassid)->with('armRelation')->first(['schoolclass', 'arm']);
+        $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
+        $term = $this->getTermName($termid);
+        $className = $schoolclass ? ($schoolclass->schoolclass . ($schoolclass->armRelation ? $schoolclass->armRelation->arm : '')) : 'Class';
+        $filename = 'Class_Results_' . preg_replace('/[^A-Za-z0-9_-]/', '_', $className) . '_' . 
+                    preg_replace('/[^A-Za-z0-9_-]/', '_', $schoolsession) . '_' . $term . '.pdf';
+
+        Log::info('Preparing PDF data', [
+            'filename' => $filename,
+            'class_name' => $className,
+            'session' => $schoolsession,
+            'term' => $term,
+        ]);
+
+        $viewName = 'studentreports.class_results_pdf';
+        if (!view()->exists($viewName)) {
+            Log::error('PDF view not found', ['view' => $viewName]);
+            return response()->json([
+                'success' => false,
+                'message' => 'PDF template view not found: ' . $viewName,
             ], 500);
         }
+
+        $viewData = [
+            'allStudentData' => $allStudentData,
+            'metadata' => [
+                'class_name' => $className,
+                'session' => $schoolsession,
+                'term' => $term,
+                'generation_date' => now()->format('Y-m-d H:i:s'),
+                'student_count' => count($allStudentData),
+            ],
+        ];
+
+        try {
+            $viewContent = view($viewName, $viewData)->render();
+            Log::info('View rendered successfully', ['content_length' => strlen($viewContent)]);
+        } catch (Exception $e) {
+            Log::error('View rendering failed', [
+                'view' => $viewName,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to render PDF template: ' . $e->getMessage(),
+            ], 500);
+        }
+
+        $this->ensureDirectoriesExist();
+
+        Log::info('Starting PDF generation with DomPDF');
+
+        $pdf = Pdf::loadView($viewName, $viewData)
+            ->setPaper('A4', 'portrait')
+            ->setOptions([
+                'dpi' => 96,
+                'defaultFont' => 'DejaVu Sans',
+                'isRemoteEnabled' => false,
+                'isHtml5ParserEnabled' => true,
+                'isFontSubsettingEnabled' => true,
+                'isPhpEnabled' => false,
+                'chroot' => [public_path(), storage_path()],
+                'tempDir' => storage_path('app/temp/'),
+                'fontCache' => storage_path('fonts/'),
+                'logOutputFile' => storage_path('logs/dompdf.log'),
+                'isJavascriptEnabled' => false,
+                'enable_css_float' => true,
+                'debugLayout' => false,
+                'debugCss' => false,
+                'debugKeepTemp' => false,
+            ])
+            ->setWarnings(true);
+
+        Log::info('PDF object created successfully');
+
+        $pdfContent = $pdf->output();
+        Log::info('PDF content generated', ['size' => strlen($pdfContent)]);
+
+        if (empty($pdfContent)) {
+            Log::error('PDF content is empty');
+            return response()->json([
+                'success' => false,
+                'message' => 'Generated PDF content is empty',
+                'error_code' => 'EMPTY_PDF_CONTENT',
+            ], 500);
+        }
+
+        if (!str_starts_with($pdfContent, '%PDF')) {
+            Log::error('Invalid PDF content generated', [
+                'content_start' => substr($pdfContent, 0, 100),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid PDF content generated',
+                'error_code' => 'INVALID_PDF_CONTENT',
+            ], 500);
+        }
+
+        Log::info('PDF validation successful');
+
+        $responseMethod = $request->input('response_method', 'base64');
+
+        switch ($responseMethod) {
+            case 'save_and_redirect':
+                return $this->saveAndRedirectResponse($pdfContent, $filename);
+            case 'base64':
+                return $this->base64Response($pdfContent, $filename);
+            case 'chunked':
+                return $this->chunkedResponse($pdfContent, $filename);
+            case 'download':
+                return $this->downloadResponse($pdfContent, $filename);
+            case 'inline':
+                return $this->inlineResponse($pdfContent, $filename);
+            default:
+                return $this->base64Response($pdfContent, $filename);
+        }
+    } catch (Exception $e) {
+        Log::error('Class PDF Export Error', [
+            'schoolclassid' => $schoolclassid ?? 'N/A',
+            'sessionid' => $sessionid ?? 'N/A',
+            'termid' => $termid ?? 'N/A',
+            'studentIds' => $studentIds ?? [],
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to generate PDF: ' . $e->getMessage(),
+            'error_code' => 'PDF_EXPORT_FAILED',
+        ], 500);
     }
+}
 
     private function inlineResponse($pdfContent, $filename)
     {

@@ -75,7 +75,7 @@
                                     </div>
                                     <div class="col-xxl-3 col-sm-6 d-flex gap-2">
                                         <button type="button" class="btn btn-secondary w-50" onclick="filterData()"><i class="bi bi-search align-baseline me-1"></i> Search</button>
-                                        <button type="button" class="btn btn-primary w-50" id="printAllBtn" style="display: none;" onclick="printAllResults()"><i class="bi bi-printer align-baseline me-1"></i> Print All Results</button>
+                                        <button type="button" class="btn btn-primary w-50" id="printAllBtn" style="display: none;" onclick="printAllResults()"><i class="bi bi-printer align-baseline me-1"></i> Print Selected Results</button>
                                     </div>
                                 </div>
                             </div>
@@ -145,6 +145,12 @@
 <script>
     console.log("Script loaded at", new Date().toISOString());
 
+    function updatePrintButtonVisibility() {
+        const printAllBtn = document.getElementById("printAllBtn");
+        const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+        printAllBtn.style.display = checkedCheckboxes.length > 0 ? 'block' : 'none';
+    }
+
     function filterData() {
         console.log("filterData called");
         if (typeof axios === 'undefined') {
@@ -162,7 +168,6 @@
         const sessionSelect = document.getElementById("idsession");
         const termSelect = document.getElementById("idterm");
         const searchInput = document.getElementById("searchInput");
-        const printAllBtn = document.getElementById("printAllBtn");
 
         if (!classSelect || !sessionSelect || !termSelect) {
             console.error("Class, session, or term select elements not found");
@@ -180,16 +185,11 @@
         const termValue = termSelect.value;
         const searchValue = searchInput ? searchInput.value.trim() : '';
 
-        if (classValue !== 'ALL' && sessionValue !== 'ALL' && termValue !== 'ALL') {
-            printAllBtn.style.display = 'block';
-        } else {
-            printAllBtn.style.display = 'none';
-        }
-
         if (classValue === 'ALL' || sessionValue === 'ALL' || termValue === 'ALL') {
             document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="11" class="text-center">Select class, session, and term to view students.</td></tr>';
             document.getElementById('pagination-container').innerHTML = '';
             document.getElementById('studentcount').innerText = '0';
+            document.getElementById('printAllBtn').style.display = 'none';
             Swal.fire({
                 icon: "warning",
                 title: "Missing Selection",
@@ -223,6 +223,8 @@
             document.getElementById('studentcount').innerText = response.data.studentCount || '0';
 
             setupPaginationLinks();
+            setupCheckboxListeners();
+            updatePrintButtonVisibility();
 
             if (response.data.tableBody.includes('No students found') || response.data.tableBody.includes('Select class and session')) {
                 Swal.fire({
@@ -252,13 +254,26 @@
         const sessionValue = sessionSelect.value;
         const termValue = termSelect.value;
 
-        console.log('Generating PDF with params:', { schoolclassid: classValue, sessionid: sessionValue, termid: termValue });
+        const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+        const selectedStudentIds = Array.from(checkedCheckboxes).map(checkbox => checkbox.value);
+
+        console.log('Generating PDF with params:', { schoolclassid: classValue, sessionid: sessionValue, termid: termValue, studentIds: selectedStudentIds });
 
         if (classValue === 'ALL' || sessionValue === 'ALL' || termValue === 'ALL') {
             Swal.fire({
                 icon: "warning",
                 title: "Missing Selection",
                 text: "Please select a valid class, session, and term.",
+                showConfirmButton: true
+            });
+            return;
+        }
+
+        if (selectedStudentIds.length === 0) {
+            Swal.fire({
+                icon: "warning",
+                title: "No Students Selected",
+                text: "Please select at least one student to generate the PDF.",
                 showConfirmButton: true
             });
             return;
@@ -273,13 +288,13 @@
             }
         });
 
-        axios.get('{{ route("studentreports.exportClassResultsPdf") }}', {
-            params: {
-                schoolclassid: classValue,
-                sessionid: sessionValue,
-                termid: termValue,
-                response_method: 'base64'
-            },
+        axios.post('{{ route("studentreports.exportClassResultsPdf") }}', {
+            schoolclassid: classValue,
+            sessionid: sessionValue,
+            termid: termValue,
+            studentIds: selectedStudentIds,
+            response_method: 'base64'
+        }, {
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                 'X-Requested-With': 'XMLHttpRequest'
@@ -348,6 +363,8 @@
             document.getElementById('pagination-container').innerHTML = response.data.pagination || '';
             document.getElementById('studentcount').innerText = response.data.studentCount || '0';
             setupPaginationLinks();
+            setupCheckboxListeners();
+            updatePrintButtonVisibility();
         }).catch(function (error) {
             console.error("Page load error:", error);
             tableBody.innerHTML = '<tr><td colspan="11" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
@@ -360,29 +377,36 @@
         });
     }
 
-    document.addEventListener("DOMContentLoaded", function () {
-        console.log("DOM loaded");
+    function setupCheckboxListeners() {
         const checkAll = document.getElementById("checkAll");
+        const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
+
         if (checkAll) {
-            checkAll.addEventListener("click", function () {
-                const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
+            checkAll.addEventListener("change", function () {
                 checkboxes.forEach((checkbox) => {
                     checkbox.checked = this.checked;
                     const row = checkbox.closest("tr");
                     row.classList.toggle("table-active", this.checked);
                 });
+                updatePrintButtonVisibility();
             });
         }
 
-        document.querySelectorAll('tbody input[name="chk_child"]').forEach(checkbox => {
+        checkboxes.forEach(checkbox => {
             checkbox.addEventListener("change", function () {
                 const row = this.closest("tr");
                 row.classList.toggle("table-active", this.checked);
-                const allCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]');
                 const checkedCount = document.querySelectorAll('tbody input[name="chk_child"]:checked').length;
-                document.getElementById("checkAll").checked = allCheckboxes.length === checkedCount && allCheckboxes.length > 0;
+                const allCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]').length;
+                document.getElementById("checkAll").checked = checkedCount === allCheckboxes && allCheckboxes > 0;
+                updatePrintButtonVisibility();
             });
         });
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        console.log("DOM loaded");
+        setupCheckboxListeners();
 
         const modal = document.getElementById('imageViewModal');
         if (modal) {

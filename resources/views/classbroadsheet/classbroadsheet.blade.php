@@ -541,7 +541,7 @@
                                             <div class="d-flex justify-content-end mt-3 signature-container">
                                                 <div class="form-group">
                                                     <label for="signature" class="comment-label">Upload Signature (JPG, PNG, or PDF)</label>
-                                                    <input type="file" class="form-control signature-input" name="signature" id="signature" accept=".jpg,.jpeg,.png,.pdf" required>
+                                                    <input type="file" class="form-control signature-input" name="signature" id="signature" accept=".jpg,.jpeg,.png,.pdf" >
                                                 </div>
                                                 <button type="submit" class="btn btn-primary">Save Data</button>
                                             </div>

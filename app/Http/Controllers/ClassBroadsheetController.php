@@ -188,7 +188,7 @@ class ClassBroadsheetController extends Controller
             'guidance_comments.*' => 'nullable|string|max:1000',
             'remarks_on_other_activities.*' => 'nullable|string|max:1000',
             'no_of_times_school_absent.*' => 'nullable|integer|min:0',
-            'signature' => 'required|file|mimes:jpg,png,pdf|max:2048', // 2MB max
+            'signature' => 'mimes:jpg,png,pdf|max:5048', // 2MB max
         ]);
 
         $teacherComments = $request->input('teacher_comments', []);
