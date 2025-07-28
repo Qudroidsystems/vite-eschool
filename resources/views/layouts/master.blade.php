@@ -24,6 +24,8 @@
         .pagination-wrap .active .page-link { background-color: #007bff; color: white; }
         .pagination-wrap .disabled .page-link { pointer-events: none; opacity: 0.5; }
     </style>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
      
  
     @if (Route::is('dashboard'))

@@ -1,5 +1,7 @@
 @extends('layouts.master')
 
+
+
 @section('content')
 <div class="main-content">
     <div class="page-content">
@@ -225,7 +227,7 @@
                                     <input type="hidden" id="add-id-field" name="id">
                                     <div class="mb-3">
                                         <label for="userid" class="form-label">Vetting Staff</label>
-                                        <select name="userid" id="userid" class="form-control" required>
+                                        <select name="userid" id="userid" class="form-control select2" required>
                                             <option value="">Select Staff</option>
                                             @foreach ($staff as $staff_member)
                                                 <option value="{{ $staff_member->id }}">{{ $staff_member->name }}</option>
@@ -291,7 +293,7 @@
                                     <input type="hidden" id="edit-id-field" name="id">
                                     <div class="mb-3">
                                         <label for="edit-userid" class="form-label">Vetting Staff</label>
-                                        <select name="userid" id="edit-userid" class="form-control" required>
+                                        <select name="userid" id="edit-userid" class="form-control select2" required>
                                             <option value="">Select Staff</option>
                                             @foreach ($staff as $staff_member)
                                                 <option value="{{ $staff_member->id }}">{{ $staff_member->name }}</option>
@@ -384,12 +386,38 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-<script src="{{ asset('js/mocksubjectvetting.init.js') }}"></script>
-<script>
-    // Pass status counts to JavaScript
-    window.mockVettingStatusCounts = @json($statusCounts);
-    console.log('Initial mockVettingStatusCounts:', window.mockVettingStatusCounts);
-</script>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="{{ asset('js/mocksubjectvetting.init.js') }}"></script>
+    <script>
+        // Pass status counts to JavaScript
+        window.mockVettingStatusCounts = @json($statusCounts);
+        console.log('Initial mockVettingStatusCounts:', window.mockVettingStatusCounts);
+
+        // Initialize Select2 for Vetting Staff dropdowns
+        $(document).ready(function () {
+            $('#userid').select2({
+                placeholder: "Select Staff",
+                allowClear: true,
+                width: '100%'
+            });
+
+            $('#edit-userid').select2({
+                placeholder: "Select Staff",
+                allowClear: true,
+                width: '100%'
+            });
+
+            // Ensure Select2 works within Bootstrap modals
+            $('#addMockSubjectVettingModal, #editMockModal').on('shown.bs.modal', function () {
+                $('#userid, #edit-userid').select2({
+                    dropdownParent: $(this),
+                    placeholder: "Select Staff",
+                    allowClear: true,
+                    width: '100%'
+                });
+            });
+        });
+    </script>
 @endsection
