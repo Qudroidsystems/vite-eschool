@@ -178,11 +178,11 @@
                                             <tr>
                                                 <th><div class="form-check"><input class="form-check-input" type="checkbox" id="checkAll"><label class="form-check-label" for="checkAll"></label></div></th>
                                                 <th>Admission No</th>
+                                                 <th>Picture</th>
+                                                 <th>Last Name</th>
                                                 <th>First Name</th>
-                                                <th>Last Name</th>
                                                 <th>Other Name</th>
                                                 <th>Gender</th>
-                                                <th>Picture</th>
                                                 <th>Class</th>
                                                 <th>Arm</th>
                                                 <th>Session</th>
