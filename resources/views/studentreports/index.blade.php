@@ -4,8 +4,14 @@
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
+            <!-- Dismissible Alert Notification -->
+            <div id="selectionAlert" class="alert alert-info alert-dismissible fade show" role="alert" style="display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 1050; margin: 0 auto; max-width: 90%;">
+                <span id="selectionAlertText">No selections made.</span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+
             <!-- Start page title -->
-            <div class="row">
+            <div class="row" style="margin-top: 60px;">
                 <div class="col-12">
                     <div class="page-title-box d-sm-flex align-items-center justify-content-between">
                         <h4 class="mb-sm-0">{{ $pagetitle }}</h4>
@@ -144,24 +150,65 @@
 <script>
     console.log("Script loaded at", new Date().toISOString());
 
+    function updateSelectionAlert() {
+        const classSelect = document.getElementById("idclass");
+        const sessionSelect = document.getElementById("idsession");
+        const termSelect = document.getElementById("idterm");
+        const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+        const selectionAlert = document.getElementById("selectionAlert");
+        const selectionAlertText = document.getElementById("selectionAlertText");
+
+        let alertText = [];
+        if (classSelect.value !== 'ALL') {
+            alertText.push(`Class: ${classSelect.options[classSelect.selectedIndex].text}`);
+        }
+        if (sessionSelect.value !== 'ALL') {
+            alertText.push(`Session: ${sessionSelect.options[sessionSelect.selectedIndex].text}`);
+        }
+        if (termSelect.value !== 'ALL') {
+            alertText.push(`Term: ${termSelect.options[termSelect.selectedIndex].text}`);
+        }
+        alertText.push(`Students Selected: ${checkedCheckboxes.length}`);
+
+        if (classSelect.value !== 'ALL' && sessionSelect.value !== 'ALL') {
+            selectionAlert.style.display = 'block';
+            selectionAlertText.innerText = alertText.join(' | ');
+        } else {
+            selectionAlert.style.display = 'none';
+            selectionAlertText.innerText = 'No selections made.';
+        }
+    }
+
     function updateSearchButtonVisibility() {
         const classSelect = document.getElementById("idclass");
         const sessionSelect = document.getElementById("idsession");
         const searchBtn = document.getElementById("searchBtn");
+        const termSelectContainer = document.getElementById("termSelectContainer");
+        const printAllBtn = document.getElementById("printAllBtn");
+
         searchBtn.style.display = (classSelect.value !== 'ALL' && sessionSelect.value !== 'ALL') ? 'block' : 'none';
+        termSelectContainer.style.display = 'none';
+        printAllBtn.style.display = 'none';
+        updateSelectionAlert();
     }
 
     function updateTermSelectVisibility() {
         const termSelectContainer = document.getElementById("termSelectContainer");
+        const printAllBtn = document.getElementById("printAllBtn");
         const studentCount = parseInt(document.getElementById("studentcount").innerText);
+
         termSelectContainer.style.display = studentCount > 0 ? 'block' : 'none';
+        printAllBtn.style.display = 'none';
+        updateSelectionAlert();
     }
 
     function updatePrintButtonVisibility() {
         const termSelect = document.getElementById("idterm");
         const printAllBtn = document.getElementById("printAllBtn");
         const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+
         printAllBtn.style.display = (termSelect.value !== 'ALL' && checkedCheckboxes.length > 0) ? 'block' : 'none';
+        updateSelectionAlert();
     }
 
     function filterData() {
@@ -204,6 +251,7 @@
             document.getElementById('studentcount').innerText = '0';
             document.getElementById('printAllBtn').style.display = 'none';
             document.getElementById('termSelectContainer').style.display = 'none';
+            updateSelectionAlert();
             Swal.fire({
                 icon: "warning",
                 title: "Missing Selection",
@@ -268,11 +316,8 @@
         const classValue = classSelect.value;
         const sessionValue = sessionSelect.value;
         const termValue = termSelect.value;
-
         const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
         const selectedStudentIds = Array.from(checkedCheckboxes).map(checkbox => checkbox.value);
-
-        console.log('Generating PDF with params:', { schoolclassid: classValue, sessionid: sessionValue, termid: termValue, studentIds: selectedStudentIds });
 
         if (classValue === 'ALL' || sessionValue === 'ALL' || termValue === 'ALL') {
             Swal.fire({
@@ -294,58 +339,78 @@
             return;
         }
 
+        // Show SweetAlert confirmation
         Swal.fire({
-            title: 'Generating PDF...',
-            text: 'Please wait while the PDF is being generated.',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-
-        axios.post('{{ route("studentreports.exportClassResultsPdf") }}', {
-            schoolclassid: classValue,
-            sessionid: sessionValue,
-            termid: termValue,
-            studentIds: selectedStudentIds,
-            response_method: 'base64'
-        }, {
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            responseType: 'json'
-        }).then(function (response) {
-            console.log("PDF response:", response.data);
-            Swal.close();
-            if (response.data.success && response.data.pdf_base64) {
-                const byteCharacters = atob(response.data.pdf_base64);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], { type: 'application/pdf' });
-                const pdfUrl = URL.createObjectURL(blob);
-                window.open(pdfUrl, '_blank');
-                setTimeout(() => URL.revokeObjectURL(pdfUrl), 30000);
-            } else {
+            title: 'Confirm Print',
+            html: `
+                <p><strong>Class:</strong> ${classSelect.options[classSelect.selectedIndex].text}</p>
+                <p><strong>Session:</strong> ${sessionSelect.options[sessionSelect.selectedIndex].text}</p>
+                <p><strong>Term:</strong> ${termSelect.options[termSelect.selectedIndex].text}</p>
+                <p><strong>Students Selected:</strong> ${selectedStudentIds.length}</p>
+                <p>Do you want to proceed with printing the results?</p>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Print',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
                 Swal.fire({
-                    icon: "error",
-                    title: "Error",
-                    text: response.data.message || "Failed to generate PDF.",
-                    showConfirmButton: true
+                    title: 'Generating PDF...',
+                    text: 'Please wait while the PDF is being generated.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                console.log('Generating PDF with params:', { schoolclassid: classValue, sessionid: sessionValue, termid: termValue, studentIds: selectedStudentIds });
+
+                axios.post('{{ route("studentreports.exportClassResultsPdf") }}', {
+                    schoolclassid: classValue,
+                    sessionid: sessionValue,
+                    termid: termValue,
+                    studentIds: selectedStudentIds,
+                    response_method: 'base64'
+                }, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    responseType: 'json'
+                }).then(function (response) {
+                    console.log("PDF response:", response.data);
+                    Swal.close();
+                    if (response.data.success && response.data.pdf_base64) {
+                        const byteCharacters = atob(response.data.pdf_base64);
+                        const byteNumbers = new Array(byteCharacters.length);
+                        for (let i = 0; i < byteCharacters.length; i++) {
+                            byteNumbers[i] = byteCharacters.charCodeAt(i);
+                        }
+                        const byteArray = new Uint8Array(byteNumbers);
+                        const blob = new Blob([byteArray], { type: 'application/pdf' });
+                        const pdfUrl = URL.createObjectURL(blob);
+                        window.open(pdfUrl, '_blank');
+                        setTimeout(() => URL.revokeObjectURL(pdfUrl), 30000);
+                    } else {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Error",
+                            text: response.data.message || "Failed to generate PDF.",
+                            showConfirmButton: true
+                        });
+                    }
+                }).catch(function (error) {
+                    Swal.close();
+                    console.error("PDF generation error:", error);
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: error.response?.data?.message || "Failed to generate PDF.",
+                        showConfirmButton: true
+                    });
                 });
             }
-        }).catch(function (error) {
-            Swal.close();
-            console.error("PDF generation error:", error);
-            Swal.fire({
-                icon: "error",
-                title: "Error",
-                text: error.response?.data?.message || "Failed to generate PDF.",
-                showConfirmButton: true
-            });
         });
     }
 
@@ -428,12 +493,26 @@
         const sessionSelect = document.getElementById("idsession");
         const termSelect = document.getElementById("idterm");
 
-        classSelect.addEventListener("change", updateSearchButtonVisibility);
-        sessionSelect.addEventListener("change", updateSearchButtonVisibility);
+        classSelect.addEventListener("change", function () {
+            updateSearchButtonVisibility();
+            termSelect.value = 'ALL';
+            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="11" class="text-center">Select class and session to view students.</td></tr>';
+            document.getElementById('pagination-container').innerHTML = '';
+            document.getElementById('studentcount').innerText = '0';
+        });
+
+        sessionSelect.addEventListener("change", function () {
+            updateSearchButtonVisibility();
+            termSelect.value = 'ALL';
+            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="11" class="text-center">Select class and session to view students.</td></tr>';
+            document.getElementById('pagination-container').innerHTML = '';
+            document.getElementById('studentcount').innerText = '0';
+        });
+
         termSelect.addEventListener("change", function () {
             updatePrintButtonVisibility();
             if (this.value !== 'ALL') {
-                filterData(); // Re-filter data when term changes
+                filterData();
             }
         });
 

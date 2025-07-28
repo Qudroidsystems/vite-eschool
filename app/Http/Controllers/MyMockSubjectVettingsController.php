@@ -230,7 +230,7 @@ class MyMockSubjectVettingsController extends Controller
             'broadsheetmock.exam',
             'broadsheetmock.total',
             'broadsheetmock.grade',
-            'broadsheetmock.subjectpositionclass as position',
+            'broadsheetmock.subject_position_class as position',
             'broadsheetmock.remark',
             'broadsheetmock.vettedstatus',
         ])->sortBy('lastname');
@@ -435,7 +435,7 @@ class MyMockSubjectVettingsController extends Controller
                     'broadsheetmock.exam',
                     'broadsheetmock.total',
                     'broadsheetmock.grade',
-                    'broadsheetmock.subjectpositionclass as position',
+                    'broadsheetmock.subject_position_class as position',
                     'broadsheetmock.term_id',
                 ]);
 
@@ -556,15 +556,15 @@ class MyMockSubjectVettingsController extends Controller
                 $lastPosition = $rank;
                 $lastTotal = $broadsheet->total;
             }
-            if ($broadsheet->subjectpositionclass != $lastPosition) {
-                $broadsheet->subjectpositionclass = $lastPosition;
+            if ($broadsheet->subject_position_class != $lastPosition) {
+                $broadsheet->subject_position_class = $lastPosition;
                 $broadsheet->save();
                 Log::info('Updated position', [
                     'broadsheet_id' => $broadsheet->id,
                     'student_id' => $broadsheet->student_id,
                     'admissionno' => $broadsheet->admissionno,
                     'total' => $broadsheet->total,
-                    'subjectpositionclass' => $lastPosition,
+                    'subject_position_class' => $lastPosition,
                 ]);
             }
         }

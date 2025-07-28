@@ -259,6 +259,13 @@ class ViewStudentReportController extends Controller
                 ->where('sessionid', $sessionid)
                 ->where('termid', $termid)
                 ->first();
+            
+            $promotionStatus = PromotionStatus::where('studentId', $id)
+                ->where('schoolclassid', $schoolclassid)
+                ->where('sessionid', $sessionid)
+                ->where('termid', $termid)
+                ->first();
+            
 
             $scores = Broadsheets::where('broadsheet_records.student_id', $id)
                 ->where('broadsheets.term_id', $termid)
@@ -376,22 +383,22 @@ class ViewStudentReportController extends Controller
                 $promotionStatus = '';
                 $totalCompulsorySubjects = count($compulsorySubjects);
                 if ($totalCompulsorySubjects > 0 && $compulsoryCreditCount === $totalCompulsorySubjects && $creditCount >= 5) {
-                    $principalComment = 'Excellent performance in all compulsory subjects. Promoted to the next class.';
+                    $principalComment = 'Excellent performance. Promoted to the next class.';
                     $promotionStatus = 'PROMOTED';
                 } elseif ($creditCount >= 5 && $compulsoryCreditCount > 0) {
                     $principalComment = $isSenior || !$hasNonCompulsoryDOrF 
                         ? 'Good performance but needs improvement in some compulsory subjects. Promoted on trial.'
                         : 'Credits in compulsory subjects but poor performance in other subjects. Parents to see the Principal.';
-                    $promotionStatus = $isSenior || !$hasNonCompulsoryDOrF ? 'PROMOTED ON TRIAL' : 'PARENTS TO SEE PRINCIPAL';
+                    $promotionStatus = $isSenior || !$hasNonCompulsoryDOrF ? 'PROMOTED ' : 'PROMOTED';
                 } elseif ($creditCount >= 5) {
                     $principalComment = 'Achieved credits but none in compulsory subjects. Parents to see the Principal.';
                     $promotionStatus = 'PARENTS TO SEE PRINCIPAL';
                 } elseif ($failCount === count($scores) && count($scores) > 0) {
                     $principalComment = 'Poor performance across all subjects. Advice to repeat the class. Parents to see the Principal.';
-                    $promotionStatus = 'ADVICE TO REPEAT/PARENTS TO SEE PRINCIPAL';
+                    $promotionStatus = 'REPEAT';
                 } else {
                     $principalComment = 'Inconsistent performance or incomplete grades. Parents to see the Principal for further discussion.';
-                    $promotionStatus = 'PARENTS TO SEE PRINCIPAL';
+                    $promotionStatus = 'REPEAT';
                 }
 
                 Log::info("Promotion Decision for Student ID: {$id}", [
@@ -436,7 +443,8 @@ class ViewStudentReportController extends Controller
                 'schoolterm' => $schoolterm,
                 'schoolsession' => $schoolsession,
                 'numberOfStudents' => $numberOfStudents,
-                'schoolInfo' => $schoolInfo
+                'schoolInfo' => $schoolInfo,
+                'promotionStatus'=> $promotionStatus
             ];
         } catch (Exception $e) {
             Log::error('Error fetching student result data', [

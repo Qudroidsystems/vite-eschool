@@ -395,6 +395,23 @@
             color: #6b7280;
             margin-top: 6px;
         }
+
+        .promotion-status {
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .promotion-promoted {
+            color: #22c55e; /* Green for PROMOTED */
+        }
+
+        .promotion-repeat {
+            color: #dc2626; /* Red for REPEAT */
+        }
+
+        .promotion-parents {
+            color: #f97316; /* Orange for PARENTS TO SEE PRINCIPAL */
+        }
     </style>
 </head>
 <body>
@@ -404,16 +421,18 @@
                 <!-- Header Section -->
                 <div class="header">
                     @php
-                        $schoolInfo = $studentData['schoolInfo'];
+                        $schoolInfo = $studentData['schoolInfo'] ?? null;
                     @endphp
                     <div class="school-logo">
                         <img class="header-img" src="{{ $studentData['school_logo_path'] ?? public_path('storage/school_logos/default.jpg') }}" alt="School Logo">
                     </div>
                     <p class="school-name2">{{ $schoolInfo->school_name ?? 'QUODOROID CODING ACADEMY' }}</p>
-                    <div class="school-motto">{{ $schoolInfo->school_motto ?? 'N/A' }}</div>
-                    <div class="school-address">{{ $schoolInfo->school_address ?? 'N/A' }}</div>
-                    @if ($schoolInfo->school_website)
+                    <div class="school-motto">{{ $schoolInfo->school_motto ?? 'NO INFO' }}</div>
+                    <div class="school-address">{{ $schoolInfo->school_address ?? 'NO INFO' }}</div>
+                    @if ($schoolInfo && $schoolInfo->school_website)
                         <div class="school-website">{{ $schoolInfo->school_website }}</div>
+                    @else
+                        <div class="school-website">NO INFO</div>
                     @endif
                     <div class="header-divider"></div>
                     <div class="header-divider2"></div>
@@ -425,26 +444,26 @@
                     <table class="student-info-table">
                         <tr>
                             <td width="75%">
-                                @if ($studentData['students']->isNotEmpty())
+                                @if ($studentData['students'] && $studentData['students']->isNotEmpty())
                                     @php $student = $studentData['students']->first(); @endphp
                                     <div class="info-row">
                                         <span class="result-details">Name of Student:</span>
-                                        <span class="rd1">{{ $student->fname }} {{ $student->lastname }} {{ $student->othername ?? '' }}</span>
+                                        <span class="rd1">{{ $student->fname ?? 'NO INFO' }} {{ $student->lastname ?? 'NO INFO' }} {{ $student->othername ?? '' }}</span>
                                     </div>
                                     <div class="info-row">
                                         <span class="result-details">Session:</span>
-                                        <span class="rd2">{{ $studentData['schoolsession'] }}</span>
+                                        <span class="rd2">{{ $studentData['schoolsession'] ?? 'NO INFO' }}</span>
                                         <span class="result-details">Term:</span>
-                                        <span class="rd3">{{ $studentData['schoolterm'] }}</span>
+                                        <span class="rd3">{{ $studentData['schoolterm'] ?? 'NO INFO' }}</span>
                                         <span class="result-details">Class:</span>
-                                        <span class="rd4">{{ $studentData['schoolclass']->schoolclass ?? 'N/A' }} {{ $studentData['schoolclass']->armRelation->arm ?? '' }}</span>
+                                        <span class="rd4">{{ $studentData['schoolclass']->schoolclass ?? 'NO INFO' }} {{ $studentData['schoolclass']->armRelation->arm ?? 'NO INFO' }}</span>
                                     </div>
                                     <div class="info-row">
                                         <span class="result-details">Date of Birth:</span>
                                         <span class="rd5">
                                             @php
-                                                $dob = $student->dateofbirth;
-                                                $formattedDob = 'N/A';
+                                                $dob = $student->dateofbirth ?? null;
+                                                $formattedDob = 'NO INFO';
                                                 
                                                 if ($dob) {
                                                     try {
@@ -462,27 +481,22 @@
                                             {{ $formattedDob }}
                                         </span>
                                         <span class="result-details">Admission No:</span>
-                                        <span class="rd6">{{ $student->admissionNo ?? 'N/A' }}</span>
+                                        <span class="rd6">{{ $student->admissionNo ?? 'NO INFO' }}</span>
                                         <span class="result-details">Sex:</span>
-                                        <span class="rd7">{{ $student->gender ?? 'N/A' }}</span>
+                                        <span class="rd7">{{ $student->gender ?? 'NO INFO' }}</span>
                                     </div>
                                     <div class="info-row">
-                                        @if ($studentData['studentpp']->isNotEmpty())
-                                            @php $profile = $studentData['studentpp']->first(); @endphp
-                                            <span class="result-details">No. of Times School Opened:</span>
-                                            <span class="rd8">{{ $profile->attendance ?? 'N/A' }}</span>
-                                            <span class="result-details">No. of Times School Absent:</span>
-                                            <span class="rd9">{{ $profile->attendance ? ($profile->attendance - ($profile->attendance ?? 0)) : 'N/A' }}</span>
-                                        @else
-                                            <span class="result-details">No. of Times School Opened:</span>
-                                            <span class="rd8">N/A</span>
-                                            <span class="result-details">No. of Times School Absent:</span>
-                                            <span class="rd9">N/A</span>
-                                        @endif
+                                        @php
+                                            $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
+                                        @endphp
+                                        <span class="result-details">No. of Times School Opened:</span>
+                                        <span class="rd8">{{ $profile ? ($profile->attendance ?? 'NO INFO') : 'NO INFO' }}</span>
+                                        <span class="result-details">No. of Times School Absent:</span>
+                                        <span class="rd9">{{ $profile && $profile->attendance ? ($profile->attendance - ($profile->attendance ?? 0)) : 'NO INFO' }}</span>
                                     </div>
                                     <div class="info-row students-count">
                                         <span class="result-details">No. of Students in Class:</span>
-                                        <span class="rd10">{{ $studentData['numberOfStudents'] ?? 'N/A' }}</span>
+                                        <span class="rd10">{{ $studentData['numberOfStudents'] ?? 'NO INFO' }}</span>
                                     </div>
                                 @else
                                     <div class="info-row">
@@ -492,8 +506,8 @@
                             </td>
                             <td width="25%">
                                 <div class="photo-frame">
-                                    @if ($studentData['students']->isNotEmpty() && $student->picture)
-                                        <img src="{{ $studentData['student_image_path'] ?? public_path('storage/student_avatars/unnamed.jpg') }}" alt="{{ $student->fname }}'s picture">
+                                    @if ($studentData['students'] && $studentData['students']->isNotEmpty() && $student->picture)
+                                        <img src="{{ $studentData['student_image_path'] ?? public_path('storage/student_avatars/unnamed.jpg') }}" alt="{{ $student->fname ?? 'Student' }}'s picture">
                                     @else
                                         <img src="{{ public_path('storage/student_avatars/unnamed.jpg') }}" alt="Default Photo">
                                     @endif
@@ -552,7 +566,7 @@
                             @forelse ($studentData['scores'] as $index => $score)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
-                                    <td class="subject-name">{{ $score->subject_name }}</td>
+                                    <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td>
                                     <td class="@if ($score->ca1 <= 50 && is_numeric($score->ca1)) highlight-red @elseif ($score->ca1 > 50 && is_numeric($score->ca1)) highlight-bold @endif">{{ $score->ca1 ?? '-' }}</td>
                                     <td class="@if ($score->ca2 <= 50 && is_numeric($score->ca2)) highlight-red @elseif ($score->ca2 > 50 && is_numeric($score->ca2)) highlight-bold @endif">{{ $score->ca2 ?? '-' }}</td>
                                     <td class="@if ($score->ca3 <= 50 && is_numeric($score->ca3)) highlight-red @elseif ($score->ca3 > 50 && is_numeric($score->ca3)) highlight-bold @endif">{{ $score->ca3 ?? '-' }}</td>
@@ -563,7 +577,7 @@
                                     <td class="@if ($score->total <= 50 && is_numeric($score->total)) highlight-red @elseif ($score->total > 50 && is_numeric($score->total)) highlight-bold @endif">{{ $score->total ?? '-' }}</td>
                                     <td class="@if ($score->bf <= 50 && is_numeric($score->bf)) highlight-red @elseif ($score->bf > 50 && is_numeric($score->bf)) highlight-bold @endif">{{ $score->bf ?? '-' }}</td>
                                     <td class="@if ($score->cum <= 50 && is_numeric($score->cum)) highlight-red @elseif ($score->cum > 50 && is_numeric($score->cum)) highlight-bold @endif">{{ $score->cum ?? '-' }}</td>
-                                    <td class="@if (in_array($score->grade, ['F', 'F9', 'E', 'E8'])) highlight-red @elseif ($score->grade && !in_array($score->grade, ['F', 'F9', 'E', 'E8'])) highlight-bold @endif">{{ $score->grade ?? '-' }}</td>
+                                    <td class="@if (in_array($score->grade ?? '', ['F', 'F9', 'E', 'E8'])) highlight-red @elseif ($score->grade && !in_array($score->grade, ['F', 'F9', 'E', 'E8'])) highlight-bold @endif">{{ $score->grade ?? '-' }}</td>
                                     <td class="highlight-bold">{{ $score->position ?? '-' }}</td>
                                     <td class="highlight-bold">{{ $score->class_average ?? '-' }}</td>
                                 </tr>
@@ -590,18 +604,16 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @if ($studentData['studentpp']->isNotEmpty())
-                                        @php $profile = $studentData['studentpp']->first(); @endphp
-                                        <tr><td>Class Attendance</td><td>{{ $profile->attendance ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Attentiveness in Class</td><td>{{ $profile->attentiveness_in_class ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Class Participation</td><td>{{ $profile->class_participation ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Self Control</td><td>{{ $profile->selfcontrol ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Relationship with Others</td><td>{{ $profile->relationship_with_others ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Doing Assignment</td><td>{{ $profile->doing_assignment ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Neatness</td><td>{{ $profile->neatness ?? 'N/A' }}</td><td></td></tr>
-                                    @else
-                                        <tr><td colspan="3">No character assessment data available.</td></tr>
-                                    @endif
+                                    @php
+                                        $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
+                                    @endphp
+                                    <tr><td>Class Attendance</td><td>{{ $profile ? ($profile->attendance ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
+                                    <tr><td>Attentiveness in Class</td><td>{{ $profile ? ($profile->attentiveness_in_class ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
+                                    <tr><td>Class Participation</td><td>{{ $profile ? ($profile->class_participation ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
+                                    <tr><td>Self Control</td><td>{{ $profile ? ($profile->selfcontrol ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
+                                    <tr><td>Relationship with Others</td><td>{{ $profile ? ($profile->relationship_with_others ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
+                                    <tr><td>Doing Assignment</td><td>{{ $profile ? ($profile->doing_assignment ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
+                                    <tr><td>Neatness</td><td>{{ $profile ? ($profile->neatness ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
                                 </tbody>
                             </table>
                         </td>
@@ -616,18 +628,13 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @if ($studentData['studentpp']->isNotEmpty())
-                                        @php $profile = $studentData['studentpp']->first(); @endphp
-                                        <tr><td>Writing Skill</td><td>{{ $profile->writing_skill ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Reading Skill</td><td>{{ $profile->reading_skill ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Spoken English/Communication</td><td>{{ $profile->spoken_english_communication ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Hand Writing</td><td>{{ $profile->hand_writing ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Sports/Games</td><td>{{ $profile->gamesandsports ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Club</td><td>{{ $profile->club ?? 'N/A' }}</td><td></td></tr>
-                                        <tr><td>Music</td><td>{{ $profile->music ?? 'N/A' }}</td><td></td></tr>
-                                    @else
-                                        <tr><td colspan="3">No skill development data available.</td></tr>
-                                    @endif
+                                    <tr><td>Writing Skill</td><td>{{ $profile ? ($profile->writing_skill ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
+                                    <tr><td>Reading Skill</td><td>{{ $profile ? ($profile->reading_skill ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
+                                    <tr><td>Spoken English/Communication</td><td>{{ $profile ? ($profile->spoken_english_communication ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
+                                    <tr><td>Hand Writing</td><td>{{ $profile ? ($profile->hand_writing ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
+                                    <tr><td>Sports/Games</td><td>{{ $profile ? ($profile->gamesandsports ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
+                                    <tr><td>Club</td><td>{{ $profile ? ($profile->club ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
+                                    <tr><td>Music</td><td>{{ $profile ? ($profile->music ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
                                 </tbody>
                             </table>
                         </td>
@@ -650,25 +657,13 @@
                             <td width="50%">
                                 <div class="h6">Class Teacher's Remark Signature/Date</div>
                                 <div>
-                                    <span class="text-space-on-dots">
-                                        @if ($studentData['studentpp']->isNotEmpty())
-                                            {{ $studentData['studentpp']->first()->classteachercomment ?? 'N/A' }}
-                                        @else
-                                            N/A
-                                        @endif
-                                    </span>
+                                    <span class="text-space-on-dots">{{ $profile ? ($profile->classteachercomment ?? 'NO INFO') : 'NO INFO' }}</span>
                                 </div>
                             </td>
                             <td width="50%">
                                 <div class="h6">Remark On Other Activities</div>
                                 <div>
-                                    <span class="text-space-on-dots">
-                                        @if ($studentData['studentpp']->isNotEmpty())
-                                            {{ $studentData['studentpp']->first()->cooperation ?? 'N/A' }}
-                                        @else
-                                            N/A
-                                        @endif
-                                    </span>
+                                    <span class="text-space-on-dots">{{ $profile ? ($profile->cooperation ?? 'NO INFO') : 'NO INFO' }}</span>
                                 </div>
                             </td>
                         </tr>
@@ -676,23 +671,20 @@
                             <td width="50%">
                                 <div class="h6">Guidance Counselor's Remark Signature/Date</div>
                                 <div>
-                                    <span class="text-space-on-dots">
-                                        @if ($studentData['studentpp']->isNotEmpty())
-                                            {{ $studentData['studentpp']->first()->guidancescomment ?? 'N/A' }}
-                                        @else
-                                            N/A
-                                        @endif
-                                    </span>
+                                    <span class="text-space-on-dots">{{ $profile ? ($profile->guidancescomment ?? 'NO INFO') : 'NO INFO' }}</span>
                                 </div>
                             </td>
                             <td width="50%">
-                                <div class="h6">Principal's Remark Signature/Date</div>
+                                <div class="h6">Principal's Remark & Promotion Status</div>
                                 <div>
                                     <span class="text-space-on-dots">
-                                        @if ($studentData['studentpp']->isNotEmpty())
-                                            {{ $studentData['studentpp']->first()->principalscomment ?? 'N/A' }}
+                                        {{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}
+                                        @if ($profile && $profile->promotionStatus)
+                                            | <span class="promotion-status @if ($profile->promotionStatus === 'PROMOTED') promotion-promoted @elseif ($profile->promotionStatus === 'REPEAT') promotion-repeat @elseif ($profile->promotionStatus === 'PARENTS TO SEE PRINCIPAL') promotion-parents @endif">
+                                                Promotion Status: {{ $profile->promotionStatus }}
+                                            </span>
                                         @else
-                                            N/A
+                                            | <span class="promotion-status">Promotion Status: NO INFO</span>
                                         @endif
                                     </span>
                                 </div>
