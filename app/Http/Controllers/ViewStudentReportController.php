@@ -39,78 +39,6 @@ class ViewStudentReportController extends Controller
         $this->middleware('permission:Delete student-report', ['only' => ['destroy']]);
     }
 
-
-    public function index(Request $request): View|JsonResponse 
-    {
-        $pagetitle = "Student Terminal Report Management";
-        $current = "Current";
-
-        $allstudents = new LengthAwarePaginator([], 0, 10);
-
-        if ($request->filled('schoolclassid') && 
-            $request->filled('sessionid') && 
-            $request->filled('termid') && 
-            $request->input('schoolclassid') !== 'ALL' && 
-            $request->input('sessionid') !== 'ALL' && 
-            $request->input('termid') !== 'ALL') {
-            
-            $query = Studentclass::query()
-                ->where('schoolclassid', $request->input('schoolclassid'))
-                ->where('sessionid', $request->input('sessionid'))
-                ->where('termid', $request->input('termid')) // Added termid filter
-                ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
-                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-                ->where('schoolsession.status', '=', $current);
-
-            if ($search = $request->input('search')) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('studentRegistration.admissionNo', 'like', "%{$search}%")
-                      ->orWhere('studentRegistration.firstname', 'like', "%{$search}%")
-                      ->orWhere('studentRegistration.lastname', 'like', "%{$search}%")
-                      ->orWhere('studentRegistration.othername', 'like', "%{$search}%");
-                });
-            }
-
-            $allstudents = $query->select([
-                'studentRegistration.admissionNo as admissionno',
-                'studentRegistration.firstname as firstname',
-                'studentRegistration.lastname as lastname',
-                'studentRegistration.othername as othername',
-                'studentRegistration.gender as gender',
-                'studentRegistration.id as stid',
-                'studentpicture.picture as picture',
-                'studentclass.schoolclassid as schoolclassID',
-                'studentclass.sessionid as sessionid',
-                'schoolclass.schoolclass as schoolclass',
-                'schoolarm.arm as schoolarm',
-                'schoolsession.session as session',
-            ])->latest('studentclass.created_at')->paginate(100);
-        }
-
-        $schoolsessions = Schoolsession::where('status', 'Current')->get();
-        $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->get(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm']);
-
-        if (config('app.debug')) {
-            Log::info('Request parameters:', $request->all());
-            Log::info('Sessions for select:', $schoolsessions->toArray());
-            Log::info('Students fetched:', $allstudents->toArray());
-        }
-
-        if ($request->ajax()) {
-            return response()->json([
-                'tableBody' => view('studentreports.partials.student_rows', compact('allstudents'))->render(),
-                'pagination' => $allstudents->links('pagination::bootstrap-5')->render(),
-                'studentCount' => $allstudents->total(),
-            ]);
-        }
-
-        return view('studentreports.index', compact('allstudents', 'schoolsessions', 'schoolclasses', 'pagetitle'));
-    }
-
     protected function formatOrdinal($number)
     {
         if (!is_numeric($number) || $number <= 0) {
@@ -1107,7 +1035,68 @@ class ViewStudentReportController extends Controller
         return true;
     }
 
+    public function index(Request $request): View|JsonResponse 
+    {
+        $pagetitle = "Student Terminal Report Management";
+        $current = "Current";
 
+        $allstudents = new LengthAwarePaginator([], 0, 10);
+
+        if ($request->filled('schoolclassid') && $request->filled('sessionid') && $request->input('schoolclassid') !== 'ALL' && $request->input('sessionid') !== 'ALL') {
+            $query = Studentclass::query()
+                ->where('schoolclassid', $request->input('schoolclassid'))
+                ->where('sessionid', $request->input('sessionid'))
+                ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
+                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
+                ->where('schoolsession.status', '=', $current);
+
+            if ($search = $request->input('search')) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('studentRegistration.admissionNo', 'like', "%{$search}%")
+                      ->orWhere('studentRegistration.firstname', 'like', "%{$search}%")
+                      ->orWhere('studentRegistration.lastname', 'like', "%{$search}%")
+                      ->orWhere('studentRegistration.othername', 'like', "%{$search}%");
+                });
+            }
+
+            $allstudents = $query->select([
+                'studentRegistration.admissionNo as admissionno',
+                'studentRegistration.firstname as firstname',
+                'studentRegistration.lastname as lastname',
+                'studentRegistration.othername as othername',
+                'studentRegistration.gender as gender',
+                'studentRegistration.id as stid',
+                'studentpicture.picture as picture',
+                'studentclass.schoolclassid as schoolclassID',
+                'studentclass.sessionid as sessionid',
+                'schoolclass.schoolclass as schoolclass',
+                'schoolarm.arm as schoolarm',
+                'schoolsession.session as session',
+            ])->latest('studentclass.created_at')->paginate(100);
+        }
+
+        $schoolsessions = Schoolsession::where('status', 'Current')->get();
+        $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->get(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm']);
+
+        if (config('app.debug')) {
+            Log::info('Sessions for select:', $schoolsessions->toArray());
+            Log::info('Students fetched:', $allstudents->toArray());
+        }
+
+        if ($request->ajax()) {
+            return response()->json([
+                'tableBody' => view('studentreports.partials.student_rows', compact('allstudents'))->render(),
+                'pagination' => $allstudents->links('pagination::bootstrap-5')->render(),
+                'studentCount' => $allstudents->total(),
+            ]);
+        }
+
+        return view('studentreports.index', compact('allstudents', 'schoolsessions', 'schoolclasses', 'pagetitle'));
+    }
 
     public function registeredClasses(Request $request)
     {

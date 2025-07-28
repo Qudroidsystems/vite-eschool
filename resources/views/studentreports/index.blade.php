@@ -59,7 +59,7 @@
                                             @endforeach
                                         </select>
                                     </div>
-                                    <div class="col-xxl-3 col-sm-6">
+                                    <div class="col-xxl-3 col-sm-6" id="termSelectContainer" style="display: none;">
                                         <select class="form-control" id="idterm" name="termid">
                                             <option value="ALL">Select Term</option>
                                             <option value="1">First Term</option>
@@ -74,7 +74,7 @@
                                         </div>
                                     </div>
                                     <div class="col-xxl-3 col-sm-6 d-flex gap-2">
-                                        <button type="button" class="btn btn-secondary w-50" onclick="filterData()"><i class="bi bi-search align-baseline me-1"></i> Search</button>
+                                        <button type="button" class="btn btn-secondary w-50" id="searchBtn" style="display: none;" onclick="filterData()"><i class="bi bi-search align-baseline me-1"></i> Search</button>
                                         <button type="button" class="btn btn-primary w-50" id="printAllBtn" style="display: none;" onclick="printAllResults()"><i class="bi bi-printer align-baseline me-1"></i> Print Selected Results</button>
                                     </div>
                                 </div>
@@ -97,14 +97,13 @@
                                                 <th><div class="form-check"><input class="form-check-input" type="checkbox" id="checkAll"><label class="form-check-label" for="checkAll"></label></div></th>
                                                 <th>Admission No</th>
                                                 <th>Picture</th>
-                                                 <th>Last Name</th>
+                                                <th>Last Name</th>
                                                 <th>First Name</th>
                                                 <th>Other Name</th>
                                                 <th>Gender</th>
                                                 <th>Class</th>
                                                 <th>Arm</th>
                                                 <th>Session</th>
-                                               
                                             </tr>
                                         </thead>
                                         <tbody id="studentTableBody">
@@ -145,10 +144,24 @@
 <script>
     console.log("Script loaded at", new Date().toISOString());
 
+    function updateSearchButtonVisibility() {
+        const classSelect = document.getElementById("idclass");
+        const sessionSelect = document.getElementById("idsession");
+        const searchBtn = document.getElementById("searchBtn");
+        searchBtn.style.display = (classSelect.value !== 'ALL' && sessionSelect.value !== 'ALL') ? 'block' : 'none';
+    }
+
+    function updateTermSelectVisibility() {
+        const termSelectContainer = document.getElementById("termSelectContainer");
+        const studentCount = parseInt(document.getElementById("studentcount").innerText);
+        termSelectContainer.style.display = studentCount > 0 ? 'block' : 'none';
+    }
+
     function updatePrintButtonVisibility() {
+        const termSelect = document.getElementById("idterm");
         const printAllBtn = document.getElementById("printAllBtn");
         const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
-        printAllBtn.style.display = checkedCheckboxes.length > 0 ? 'block' : 'none';
+        printAllBtn.style.display = (termSelect.value !== 'ALL' && checkedCheckboxes.length > 0) ? 'block' : 'none';
     }
 
     function filterData() {
@@ -185,15 +198,16 @@
         const termValue = termSelect.value;
         const searchValue = searchInput ? searchInput.value.trim() : '';
 
-        if (classValue === 'ALL' || sessionValue === 'ALL' || termValue === 'ALL') {
-            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="11" class="text-center">Select class, session, and term to view students.</td></tr>';
+        if (classValue === 'ALL' || sessionValue === 'ALL') {
+            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="11" class="text-center">Select class and session to view students.</td></tr>';
             document.getElementById('pagination-container').innerHTML = '';
             document.getElementById('studentcount').innerText = '0';
             document.getElementById('printAllBtn').style.display = 'none';
+            document.getElementById('termSelectContainer').style.display = 'none';
             Swal.fire({
                 icon: "warning",
                 title: "Missing Selection",
-                text: "Please select a valid class, session, and term.",
+                text: "Please select a valid class and session.",
                 showConfirmButton: true
             });
             return;
@@ -224,13 +238,14 @@
 
             setupPaginationLinks();
             setupCheckboxListeners();
+            updateTermSelectVisibility();
             updatePrintButtonVisibility();
 
             if (response.data.tableBody.includes('No students found') || response.data.tableBody.includes('Select class and session')) {
                 Swal.fire({
                     icon: "info",
                     title: "No Results",
-                    text: "No students found for the selected class, session, and term.",
+                    text: "No students found for the selected class and session.",
                     showConfirmButton: true
                 });
             }
@@ -364,6 +379,7 @@
             document.getElementById('studentcount').innerText = response.data.studentCount || '0';
             setupPaginationLinks();
             setupCheckboxListeners();
+            updateTermSelectVisibility();
             updatePrintButtonVisibility();
         }).catch(function (error) {
             console.error("Page load error:", error);
@@ -407,6 +423,19 @@
     document.addEventListener("DOMContentLoaded", function () {
         console.log("DOM loaded");
         setupCheckboxListeners();
+
+        const classSelect = document.getElementById("idclass");
+        const sessionSelect = document.getElementById("idsession");
+        const termSelect = document.getElementById("idterm");
+
+        classSelect.addEventListener("change", updateSearchButtonVisibility);
+        sessionSelect.addEventListener("change", updateSearchButtonVisibility);
+        termSelect.addEventListener("change", function () {
+            updatePrintButtonVisibility();
+            if (this.value !== 'ALL') {
+                filterData(); // Re-filter data when term changes
+            }
+        });
 
         const modal = document.getElementById('imageViewModal');
         if (modal) {
