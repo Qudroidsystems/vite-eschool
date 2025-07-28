@@ -2,13 +2,12 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Class Mock Results - {{ $metadata['class_name'] }} - {{ $metadata['session'] }} - {{ $metadata['term'] }}</title>
+    <title>Class Results - {{ $metadata['class_name'] }} - {{ $metadata['session'] }} - {{ $metadata['term'] }}</title>
     <style>
         /* Basic reset and font setup */
         * {
             margin: 0;
             padding: 0;
-            /* box-sizing: border-box; */
         }
 
         body {
@@ -17,39 +16,67 @@
             line-height: 1.4;
             color: #000;
             background: #fff;
+            margin: 10mm 0 0 0;
+            padding: 0;
+            display: block;
+            text-align: center;
         }
 
         .student-section {
-            width: 210mm; /* A4 width */
-            min-height: 277mm; /* A4 height minus margins */
+            width: 190mm;
+            max-height: 287mm;
             page-break-after: always;
             background: #ffffff;
             border: 2px solid #1e40af;
-            margin: 20px auto; /* Center horizontally with auto margins */
-            padding: 15px; /* Consistent internal padding */
+            margin: 0 auto;
+            padding: 12px;
             position: relative;
-            /* box-sizing: border-box; */
+            overflow: hidden;
+            text-align: left;
+            display: block;
         }
 
         .student-section:last-child {
             page-break-after: avoid;
         }
 
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+                text-align: center;
+            }
+            
+            .student-section {
+                width: 190mm;
+                max-height: 287mm;
+                margin: 0 auto;
+                padding: 10mm;
+                page-break-after: always;
+                text-align: left;
+                display: block;
+            }
+            
+            .student-section:last-child {
+                page-break-after: avoid;
+            }
+        }
+
         .fraction {
             display: inline-block;
             font-family: Arial, sans-serif;
-            font-size: 10px;
+            font-size: 9px;
             text-align: center;
         }
 
         .fraction .numerator {
             border-bottom: 2px solid #333;
-            padding: 0 5px;
+            padding: 0 3px;
             display: block;
         }
 
         .fraction .denominator {
-            padding-top: 5px;
+            padding-top: 3px;
             display: block;
         }
 
@@ -57,70 +84,70 @@
         span.text-dot-space2 {
             border-bottom: 1px dotted #666;
             display: inline-block;
-            min-height: 16px;
+            min-height: 14px;
         }
 
         span.text-space-on-dots {
-            width: 280px;
+            width: 250px;
         }
 
         span.text-dot-space2 {
-            width: 180px;
+            width: 150px;
         }
 
         .school-name1 {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: 700;
             color: #1e3a8a;
             text-align: center;
         }
 
         .school-name2 {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 800;
             color: #1e40af;
             text-align: center;
-            margin: 5px 0;
+            margin: 3px 0;
         }
 
         .school-logo {
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
             border: 0px solid #1e40af;
             border-radius: 5px;
             overflow: hidden;
-            margin: 0 auto 10px;
+            margin: 0 auto 8px;
             text-align: center;
         }
 
         .header-divider {
             width: 100%;
-            height: 3px;
+            height: 2px;
             background: #1e40af;
-            margin: 6px 0;
+            margin: 4px 0;
         }
 
         .header-divider2 {
             width: 100%;
-            height: 2px;
+            height: 1px;
             background: #64748b;
-            margin: 3px 0;
+            margin: 2px 0;
         }
 
         .report-title {
             background: #111827;
             color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 18px;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 16px;
             font-weight: 700;
             text-align: center;
-            margin: 10px 0;
+            margin: 8px 0;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         .header-img {
@@ -130,17 +157,17 @@
         }
 
         .school-motto, .school-address, .school-website {
-            font-size: 11px;
+            font-size: 10px;
             color: #6b7280;
-            margin: 3px 0;
+            margin: 2px 0;
         }
 
         .student-info-section {
-            margin-bottom: 12px;
+            margin-bottom: 10px;
         }
 
         .result-details {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             color: #374151;
         }
@@ -148,20 +175,21 @@
         .rd1, .rd2, .rd3, .rd4, .rd5, .rd6, .rd7, .rd8, .rd9, .rd10 {
             border-bottom: 2px dotted #6b7280;
             margin-left: 6px;
-            min-width: 100px;
+            min-width: 80px;
             display: inline-block;
             font-weight: 700;
             padding-bottom: 2px;
+            font-size: 11px;
         }
 
         .photo-frame {
-            border: 3px solid #e3e568;
+            border: 3px solid #1e40af;
             border-radius: 8px;
             overflow: hidden;
             background: white;
-            padding: 3px;
-            width: 100px;
-            height: 120px;
+            padding: 2px;
+            width: 80px;
+            height: 100px;
             margin: 0 auto;
             text-align: center;
         }
@@ -175,7 +203,7 @@
             width: 100%;
             border: 2px solid #1e40af;
             border-collapse: collapse;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
 
         .result-table thead th {
@@ -183,16 +211,16 @@
             color: white;
             font-weight: 600;
             border: 1px solid #1d4ed8;
-            padding: 8px 4px;
+            padding: 6px 3px;
             text-align: center;
-            font-size: 10px;
+            font-size: 9px;
         }
 
         .result-table tbody td {
             border: 1px solid #cbd5e1;
-            padding: 6px 4px;
+            padding: 4px 3px;
             text-align: center;
-            font-size: 10px;
+            font-size: 9px;
             background: white;
         }
 
@@ -218,7 +246,7 @@
             width: 100%;
             border: 2px solid #cbda77;
             border-collapse: collapse;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .assessment-table thead th {
@@ -226,16 +254,16 @@
             color: white;
             font-weight: 600;
             border: 1px solid #047857;
-            padding: 6px;
+            padding: 4px;
             text-align: center;
-            font-size: 10px;
+            font-size: 9px;
         }
 
         .assessment-table tbody td {
             border: 1px solid #d1d5db;
-            padding: 4px 6px;
+            padding: 3px 4px;
             background: white;
-            font-size: 9px;
+            font-size: 8px;
         }
 
         .assessment-table tbody tr:nth-child(even) td {
@@ -245,28 +273,28 @@
         .grade-display {
             background: #fbbf24;
             color: white;
-            border-radius: 12px;
-            padding: 8px;
+            border-radius: 10px;
+            padding: 6px;
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .grade-display span {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 600;
-            margin: 0 6px;
+            margin: 0 4px;
         }
 
         .remarks-table {
             width: 100%;
             border: 2px solid #7c3aed;
             border-collapse: collapse;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .remarks-table td {
             border: 1px solid #c4b5fd;
-            padding: 8px;
+            padding: 6px;
             background: white;
             vertical-align: top;
         }
@@ -274,43 +302,45 @@
         .remarks-table .h6 {
             color: #6d28d9;
             font-weight: 600;
-            margin-bottom: 6px;
-            font-size: 10px;
+            margin-bottom: 4px;
+            font-size: 9px;
         }
 
         .footer-section {
             background: #f1f5f9;
-            border-radius: 8px;
-            padding: 10px;
+            border-radius: 6px;
+            padding: 8px;
             border: 1px solid #cbd5e1;
             text-align: center;
-            margin-top: 8px;
+            margin-top: 6px;
         }
 
         .h5 {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: bold;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             color: #047857;
         }
 
         .student-info-table {
             width: 100%;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
+            table-layout: fixed;
         }
 
         .student-info-table td {
-            padding: 4px;
+            padding: 3px;
             vertical-align: top;
         }
 
         .assessment-layout-table {
             width: 100%;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            table-layout: fixed;
         }
 
         .assessment-layout-table td {
-            width: 48%;
+            width: 50%;
             vertical-align: top;
             padding: 0 1%;
         }
@@ -320,13 +350,27 @@
         }
 
         .footer-layout-table td {
-            padding: 4px;
+            padding: 3px;
             text-align: center;
         }
 
         .info-row {
-            margin-bottom: 6px;
-            line-height: 1.5;
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .info-row .result-details {
+            margin-right: 8px;
+        }
+
+        .info-row .rd1, .info-row .rd2, .info-row .rd3, .info-row .rd4, 
+        .info-row .rd5, .info-row .rd6, .info-row .rd7, .info-row .rd8, 
+        .info-row .rd9, .info-row .rd10 {
+            margin-right: 20px;
+        }
+
+        .info-row.students-count {
+            margin-top: 8px;
         }
 
         .text-center {
@@ -344,6 +388,12 @@
         .student-section-inner {
             width: 100%;
             height: auto;
+        }
+
+        .powered-by {
+            font-size: 9px;
+            color: #6b7280;
+            margin-top: 6px;
         }
     </style>
 </head>
@@ -367,7 +417,7 @@
                     @endif
                     <div class="header-divider"></div>
                     <div class="header-divider2"></div>
-                    <div class="report-title">MOCK TERMINAL PROGRESS REPORT</div>
+                    <div class="report-title">TERMINAL PROGRESS REPORT</div>
                 </div>
 
                 <!-- Student Information Section -->
@@ -398,18 +448,13 @@
                                                 
                                                 if ($dob) {
                                                     try {
-                                                        // Check if it's a numeric value (Excel date serial)
                                                         if (is_numeric($dob)) {
-                                                            // Convert Excel date serial to Unix timestamp
-                                                            // Excel epoch starts at 1900-01-01, but has a leap year bug
                                                             $unixTimestamp = ($dob - 25569) * 86400;
                                                             $formattedDob = date('d/m/Y', $unixTimestamp);
                                                         } else {
-                                                            // Try to parse as regular date
                                                             $formattedDob = \Carbon\Carbon::parse($dob)->format('d/m/Y');
                                                         }
                                                     } catch (\Exception $e) {
-                                                        // If all parsing fails, just display the raw value
                                                         $formattedDob = $dob;
                                                     }
                                                 }
@@ -434,6 +479,8 @@
                                             <span class="result-details">No. of Times School Absent:</span>
                                             <span class="rd9">N/A</span>
                                         @endif
+                                    </div>
+                                    <div class="info-row students-count">
                                         <span class="result-details">No. of Students in Class:</span>
                                         <span class="rd10">{{ $studentData['numberOfStudents'] ?? 'N/A' }}</span>
                                     </div>
@@ -461,27 +508,44 @@
                     <table>
                         <thead>
                             <tr>
+                                <th></th>
+                                <th>Subjects</th>
+                                <th>a</th>
+                                <th>b</th>
+                                <th>c</th>
+                                <th>d</th>
+                                <th>e</th>
+                                <th>f</th>
+                                <th>g</th>
+                                <th>h</th>
+                                <th>i</th>
+                                <th>j</th>
+                                <th>k</th>
+                            </tr>
+                            <tr>
                                 <th>S/N</th>
                                 <th>Subjects</th>
-                                <th>Mock Exam</th>
+                                <th>Term Exams</th>
                                 <th>Grade</th>
-                                <th>Position</th>
+                                <th>PSN</th>
                                 <th>Class Average</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($studentData['mockScores'] as $index => $score)
+                            @forelse ($studentData['scores'] as $index => $score)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td class="subject-name">{{ $score->subject_name }}</td>
+                                    <td class="@if ($score->ca1 <= 50 && is_numeric($score->ca1)) highlight-red @elseif ($score->ca1 > 50 && is_numeric($score->ca1)) highlight-bold @endif">{{ $score->ca1 ?? '-' }}</td>
                                     <td class="@if ($score->exam <= 50 && is_numeric($score->exam)) highlight-red @elseif ($score->exam > 50 && is_numeric($score->exam)) highlight-bold @endif">{{ $score->exam ?? '-' }}</td>
+                                    <td class="@if ($score->total <= 50 && is_numeric($score->total)) highlight-red @elseif ($score->total > 50 && is_numeric($score->total)) highlight-bold @endif">{{ $score->total ?? '-' }}</td>
                                     <td class="@if (in_array($score->grade, ['F', 'F9', 'E', 'E8'])) highlight-red @elseif ($score->grade && !in_array($score->grade, ['F', 'F9', 'E', 'E8'])) highlight-bold @endif">{{ $score->grade ?? '-' }}</td>
                                     <td class="highlight-bold">{{ $score->position ?? '-' }}</td>
                                     <td class="highlight-bold">{{ $score->class_average ?? '-' }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6">No mock scores available.</td>
+                                    <td colspan="13">No scores available.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -631,6 +695,7 @@
                             </td>
                         </tr>
                     </table>
+                    <div class="powered-by">Powered by Qudroid Systems | www.qudroid.co</div>
                 </div>
             </div>
         </div>

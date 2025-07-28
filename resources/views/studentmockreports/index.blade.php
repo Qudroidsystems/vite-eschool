@@ -1,6 +1,22 @@
 @extends('layouts.master')
 
 @section('content')
+<style>
+    #alertContainer {
+        position: fixed;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80%;
+        max-width: 600px;
+        z-index: 1050; /* Ensure it stays above other content */
+    }
+    #alertContainer .alert {
+        margin-bottom: 0;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+</style>
+
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
@@ -8,31 +24,16 @@
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0">My Classes</h4>
+                        <h4 class="mb-sm-0">{{ $pagetitle }}</h4>
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="{{ route('myclass.index') }}">Class Management</a></li>
-                                <li class="breadcrumb-item active">My Classes</li>
+                                <li class="breadcrumb-item active">Student Reports</li>
                             </ol>
                         </div>
                     </div>
                 </div>
             </div>
             <!-- End page title -->
-
-            <!-- Classes by Term Chart -->
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">Classes by Term (Current Session)</h5>
-                        </div>
-                        <div class="card-body">
-                            <canvas id="classesByTermChart" height="100"></canvas>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             @if ($errors->any())
                 <div class="alert alert-danger">
@@ -45,53 +46,54 @@
                 </div>
             @endif
 
-            @if (session('status'))
+            @if (session('status') || session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('status') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-            @if (session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
+                    {{ session('status') ?? session('success') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
 
-            <div id="classList">
+            <div id="alertContainer" aria-live="polite"></div>
+
+            <div id="studentList">
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="card">
                             <div class="card-body">
                                 <div class="row g-3">
-                                    <div class="col-xxl-3">
+                                    <div class="col-xxl-3 col-sm-6">
+                                        <select class="form-control" id="idclass" name="schoolclassid">
+                                            <option value="ALL">Select Class</option>
+                                            @foreach ($schoolclasses as $class)
+                                                <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->arm }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-3 col-sm-6">
+                                        <select class="form-control" id="idsession" name="sessionid">
+                                            <option value="ALL">Select Session</option>
+                                            @foreach ($schoolsessions as $session)
+                                                <option value="{{ $session->id }}">{{ $session->session }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-3 col-sm-6">
+                                        <select class="form-control" id="idterm" name="termid">
+                                            <option value="ALL">Select Term</option>
+                                            <option value="1">First Term</option>
+                                            <option value="2">Second Term</option>
+                                            <option value="3">Third Term</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-3 col-sm-6">
                                         <div class="search-box">
-                                            <input type="text" class="form-control search" placeholder="Search classes">
+                                            <input type="text" class="form-control search" id="searchInput" name="search" placeholder="Search students...">
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
                                     </div>
-                                    <div class="col-xxl-3 col-sm-6">
-                                        <div>
-                                            <select class="form-control" id="idTerm" data-choices data-choices-search-false data-choices-removeItem>
-                                                <option value="all">Select Term</option>
-                                                @foreach ($terms as $term)
-                                                    <option value="{{ $term->term }}">{{ $term->term }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-xxl-3 col-sm-6">
-                                        <div>
-                                            <select class="form-control" id="idSession" data-choices data-choices-search-false data-choices-removeItem>
-                                                <option value="all">Select Session</option>
-                                                @foreach ($schoolsessions as $session)
-                                                    <option value="{{ $session->session }}">{{ $session->session }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="col-xxl-1 col-sm-6">
-                                        <button type="button" class="btn btn-secondary w-100" onclick="filterData();"><i class="bi bi-funnel align-baseline me-1"></i> Filters</button>
+                                    <div class="col-xxl-3 col-sm-6 d-flex gap-2">
+                                        <button type="button" class="btn btn-secondary w-50" onclick="filterData()"><i class="bi bi-search align-baseline me-1"></i> Search</button>
+                                        <button type="button" class="btn btn-primary w-50" id="printAllBtn" style="display: none;" onclick="printAllResults()"><i class="bi bi-printer align-baseline me-1"></i> Print Selected Results</button>
                                     </div>
                                 </div>
                             </div>
@@ -102,273 +104,442 @@
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="card">
-                            <div class="card-header d-flex align-items-center">
-                                <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">Classes <span class="badge bg-dark-subtle text-dark ms-1">{{ $myclass->count() }}</span></h5>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <div class="d-flex flex-wrap align-items-start gap-2">
-                                        <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
-                                        @can('Create class')
-                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#showModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Add Class Setting</button>
-                                        @endcan
-                                    </div>
-                                </div>
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Students <span class="badge bg-dark-subtle text-dark ms-1" id="studentcount">{{ $allstudents ? $allstudents->total() : 0 }}</span></h5>
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
-                                    <table class="table table-centered align-middle table-nowrap mb-0" id="classListTable">
+                                    <table class="table table-centered align-middle table-nowrap mb-0" id="studentListTable">
                                         <thead class="table-active">
                                             <tr>
-                                                <th><div class="form-check"><input class="form-check-input" type="checkbox" value="option" id="checkAll"><label class="form-check-label" for="checkAll"></label></div></th>
-                                                <th class="sort cursor-pointer" data-sort="schoolclass">Class</th>
-                                                <th class="sort cursor-pointer" data-sort="schoolarm">Arm</th>
-                                                <th class="sort cursor-pointer" data-sort="term">Term</th>
-                                                <th class="sort cursor-pointer" data-sort="session">Session</th>
-                                                <th>Action</th>
+                                                <th><div class="form-check"><input class="form-check-input" type="checkbox" id="checkAll"><label class="form-check-label" for="checkAll"></label></div></th>
+                                                <th>Admission No</th>
+                                                <th>Picture</th>
+                                                <th>Last Name</th>
+                                                <th>First Name</th>
+                                                <th>Other Name</th>
+                                                <th>Gender</th>
+                                                <th>Class</th>
+                                                <th>Arm</th>
+                                                <th>Session</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="list form-check-all">
-                                            @forelse ($myclass as $sc)
-                                                <tr>
-                                                    <td class="id" data-id="{{ $sc->id }}">
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox" name="chk_child">
-                                                            <label class="form-check-label"></label>
-                                                        </div>
-                                                    </td>
-                                                    <td class="schoolclass" data-schoolclass="{{ $sc->schoolclass }}">{{ $sc->schoolclass }}</td>
-                                                    <td class="schoolarm" data-schoolarm="{{ $sc->schoolarm }}">{{ $sc->schoolarm }}</td>
-                                                    <td class="term" data-term="{{ $sc->term }}">{{ $sc->term }}</td>
-                                                    <td class="session" data-session="{{ $sc->session }}">{{ $sc->session }}</td>
-                                                    <td>
-                                                        <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                            @can('View my-class')
-                                                                <li>
-                                                                    <a href="viewstudent/{{ $sc->schoolclassID }}/{{ $sc->termid }}/{{ $sc->sessionid }}"   title="View Students in {{$sc->schoolclass}}  {{ $sc->schoolarm}}"  class="btn btn-subtle-primary btn-icon "><i class="ph-eye"></i></a>
-                                                                </li>
-                                                                 <li>
-                                                                    <a href="{{ route('classbroadsheet', [$sc->schoolclassID, $sc->termid, $sc->sessionid]) }}" title="Broadsheet for students in  {{$sc->schoolclass}}  {{ $sc->schoolarm}}" class="btn btn-subtle-success btn-icon"><i class="ph-eye"></i></a>
-                                                                </li>
-                                                            @endcan
-                                                            @can('Update my-class')
-                                                                <li>
-                                                                    <a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"><i class="ph-pencil"></i></a>
-                                                                </li>
-                                                            @endcan
-                                                            @can('Delete my-class')
-                                                                <li>
-                                                                    <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i class="ph-trash"></i></a>
-                                                                </li>
-                                                            @endcan
-                                                        </ul>
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="6" class="noresult" style="display: block;">No results found</td>
-                                                </tr>
-                                            @endforelse
+                                        <tbody id="studentTableBody">
+                                            @include('studentreports.partials.student_rows')
                                         </tbody>
                                     </table>
+                                    <div class="d-flex justify-content-end mt-3" id="pagination-container">
+                                        {{ $allstudents ? $allstudents->links('pagination::bootstrap-5') : '' }}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Add Class Setting Modal -->
-            <div id="showModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 id="addModalLabel" class="modal-title">Add Class Setting</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form class="tablelist-form" autocomplete="off" id="add-class-form">
-                            <div class="modal-body">
-                                <input type="hidden" id="add-id-field" name="id">
-                                <input type="hidden" id="staffid" name="staffid" value="{{ auth()->user()->id }}">
-                                <div class="mb-3">
-                                    <label for="vschoolclassid" class="form-label">Class</label>
-                                    <select id="vschoolclassid" name="vschoolclassid" class="form-control" required>
-                                        @foreach ($schoolclasses as $class)
-                                            <option value="{{ $class->id }}">{{ $class->schoolclass }} ({{ $class->arm }})</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="termid" class="form-label">Term</label>
-                                    <select id="termid" name="termid" class="form-control" required>
-                                        @foreach ($terms as $term)
-                                            <option value="{{ $term->id }}">{{ $term->term }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="sessionid" class="form-label">Session</label>
-                                    <select id="sessionid" name="sessionid" class="form-control" required>
-                                        @foreach ($schoolsessions as $session)
-                                            <option value="{{ $session->id }}">{{ $session->session }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="noschoolopened" class="form-label">Number of School Days Opened</label>
-                                    <input type="number" id="noschoolopened" name="noschoolopened" class="form-control" placeholder="Enter number of school days">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="termends" class="form-label">Term Ends</label>
-                                    <input type="date" id="termends" name="termends" class="form-control">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="nexttermbegins" class="form-label">Next Term Begins</label>
-                                    <input type="date" id="nexttermbegins" name="nexttermbegins" class="form-control">
-                                </div>
-                                <div class="alert alert-danger d-none" id="alert-error-msg"></div>
+                <!-- Image View Modal -->
+                <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Student Image</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="add-btn">Add Class Setting</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Edit Class Setting Modal -->
-            <div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 id="editModalLabel" class="modal-title">Edit Class Setting</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form class="tablelist-form" autocomplete="off" id="edit-class-form">
-                            <div class="modal-body">
-                                <input type="hidden" id="edit-id-field" name="id">
-                                <input type="hidden" id="edit-staffid" name="staffid" value="{{ auth()->user()->id }}">
-                                <div class="mb-3">
-                                    <label for="edit-vschoolclassid" class="form-label">Class</label>
-                                    <select id="edit-vschoolclassid" name="vschoolclassid" class="form-control" required>
-                                        @foreach ($schoolclasses as $class)
-                                            <option value="{{ $class->id }}">{{ $class->schoolclass }} ({{ $class->arm }})</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-termid" class="form-label">Term</label>
-                                    <select id="edit-termid" name="termid" class="form-control" required>
-                                        @foreach ($terms as $term)
-                                            <option value="{{ $term->id }}">{{ $term->term }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-sessionid" class="form-label">Session</label>
-                                    <select id="edit-sessionid" name="sessionid" class="form-control" required>
-                                        @foreach ($schoolsessions as $session)
-                                            <option value="{{ $session->id }}">{{ $session->session }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-noschoolopened" class="form-label">Number of School Days Opened</label>
-                                    <input type="number" id="edit-noschoolopened" name="noschoolopened" class="form-control" placeholder="Enter number of school days">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-termends" class="form-label">Term Ends</label>
-                                    <input type="date" id="edit-termends" name="termends" class="form-control">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-nexttermbegins" class="form-label">Next Term Begins</label>
-                                    <input type="date" id="edit-nexttermbegins" name="nexttermbegins" class="form-control">
-                                </div>
-                                <div class="alert alert-danger d-none" id="alert-error-msg"></div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Delete Class Setting Modal -->
-            <div id="deleteRecordModal" class="modal fade zoomIn" tabindex="-1" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <button type="button" class="btn-close" id="deleteRecord-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body p-md-5">
-                            <div class="text-center">
-                                <div class="text-danger">
-                                    <i class="bi bi-trash display-4"></i>
-                                </div>
-                                <div class="mt-4">
-                                    <h3 class="mb-2">Are you sure?</h3>
-                                    <p class="text-muted fs-lg mx-3 mb-0">Are you sure you want to remove this class setting?</p>
-                                </div>
-                            </div>
-                            <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
-                                <button type="button" class="btn w-sm btn-light btn-hover" data-bs-dismiss="modal">Close</button>
-                                <button type="button" class="btn w-sm btn-danger btn-hover" id="delete-record">Yes, Delete It!</button>
+                            <div class="modal-body text-center">
+                                <img id="enlargedImage" src="" alt="Student Image" class="img-fluid" onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'; console.log('Enlarged image failed to load');">
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- End Page-content -->
-
-        <!-- Scripts -->
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="{{ asset('js/class-list.init.js') }}"></script>
-        <!-- Chart Initialization -->
-        <script>
-            document.addEventListener("DOMContentLoaded", function () {
-                var ctx = document.getElementById("classesByTermChart").getContext("2d");
-                new Chart(ctx, {
-                    type: "bar",
-                    data: {
-                        labels: @json(array_keys($term_counts)),
-                        datasets: [{
-                            label: "Classes by Term",
-                            data: @json(array_values($term_counts)),
-                            backgroundColor: ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b"],
-                            borderColor: ["#4e73df", "#1cc88a", "#36b9cc", "#f6c23e", "#e74a3b"],
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                title: {
-                                    display: true,
-                                    text: "Number of Classes"
-                                }
-                            },
-                            x: {
-                                title: {
-                                    display: true,
-                                    text: "Terms"
-                                }
-                            }
-                        },
-                        plugins: {
-                            legend: {
-                                display: true,
-                                position: "top"
-                            }
-                        }
-                    }
-                });
-            });
-        </script>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    console.log("Script loaded at", new Date().toISOString());
+
+    function updateSelectionAlert() {
+        const classSelect = document.getElementById("idclass");
+        const sessionSelect = document.getElementById("idsession");
+        const termSelect = document.getElementById("idterm");
+        const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+
+        const classText = classSelect && classSelect.value !== 'ALL' ? classSelect.options[classSelect.selectedIndex].text : 'None';
+        const sessionText = sessionSelect && sessionSelect.value !== 'ALL' ? sessionSelect.options[sessionSelect.selectedIndex].text : 'None';
+        const termText = termSelect && termSelect.value !== 'ALL' ? termSelect.options[termSelect.selectedIndex].text : 'None';
+        const studentCount = checkedCheckboxes.length;
+
+        const messages = [];
+        if (classText !== 'None') messages.push(`Class: ${classText}`);
+        if (sessionText !== 'None') messages.push(`Session: ${sessionText}`);
+        if (termText !== 'None') messages.push(`Term: ${termText}`);
+        if (studentCount > 0) messages.push(`Selected: ${studentCount} student${studentCount === 1 ? '' : 's'}`);
+
+        const alertContainer = document.getElementById('alertContainer');
+        const alertId = 'alert-selection';
+
+        if (messages.length === 0) {
+            const existingAlert = document.getElementById(alertId);
+            if (existingAlert) existingAlert.remove();
+            return;
+        }
+
+        const alertMessage = messages.join(' | ');
+        const alertHtml = `
+            <div id="${alertId}" class="alert alert-info alert-dismissible fade show" role="alert">
+                ${alertMessage}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        `;
+
+        // Remove existing alert
+        const existingAlert = document.getElementById(alertId);
+        if (existingAlert) existingAlert.remove();
+
+        // Append new alert
+        alertContainer.innerHTML = alertHtml;
+
+        // Auto-dismiss after 10 seconds
+        setTimeout(() => {
+            const alert = document.getElementById(alertId);
+            if (alert) {
+                alert.classList.remove('show');
+                alert.classList.add('fade');
+                setTimeout(() => alert.remove(), 150);
+            }
+        }, 10000);
+    }
+
+    function updatePrintButtonVisibility() {
+        const printAllBtn = document.getElementById("printAllBtn");
+        const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+        printAllBtn.style.display = checkedCheckboxes.length > 0 ? 'block' : 'none';
+        updateSelectionAlert();
+    }
+
+    function filterData() {
+        console.log("filterData called");
+        if (typeof axios === 'undefined') {
+            console.error("Axios is not defined");
+            Swal.fire({
+                icon: "error",
+                title: "Configuration Error",
+                text: "Axios library is missing.",
+                showConfirmButton: true
+            });
+            return;
+        }
+
+        const classSelect = document.getElementById("idclass");
+        const sessionSelect = document.getElementById("idsession");
+        const termSelect = document.getElementById("idterm");
+        const searchInput = document.getElementById("searchInput");
+
+        if (!classSelect || !sessionSelect || !termSelect) {
+            console.error("Class, session, or term select elements not found");
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "Required filter elements not found.",
+                showConfirmButton: true
+            });
+            return;
+        }
+
+        const classValue = classSelect.value;
+        const sessionValue = sessionSelect.value;
+        const termValue = termSelect.value;
+        const searchValue = searchInput ? searchInput.value.trim() : '';
+
+        if (classValue === 'ALL' || sessionValue === 'ALL' || termValue === 'ALL') {
+            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="10" class="text-center">Select class, session, and term to view students.</td></tr>';
+            document.getElementById('pagination-container').innerHTML = '';
+            document.getElementById('studentcount').innerText = '0';
+            document.getElementById('printAllBtn').style.display = 'none';
+            document.getElementById('alertContainer').innerHTML = '';
+            Swal.fire({
+                icon: "warning",
+                title: "Missing Selection",
+                text: "Please select a valid class, session, and term.",
+                showConfirmButton: true
+            });
+            return;
+        }
+
+        console.log("Sending AJAX request with:", { search: searchValue, schoolclassid: classValue, sessionid: sessionValue, termid: termValue });
+
+        const tableBody = document.getElementById('studentTableBody');
+        tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Loading...</td></tr>';
+
+        axios.get('{{ route("studentreports.index") }}', {
+            params: {
+                search: searchValue,
+                schoolclassid: classValue,
+                sessionid: sessionValue,
+                termid: termValue
+            },
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then(function (response) {
+            console.log("AJAX response received:", response.data);
+
+            document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="10" class="text-center">No students found.</td></tr>';
+            document.getElementById('pagination-container').innerHTML = response.data.pagination || '';
+            document.getElementById('studentcount').innerText = response.data.studentCount || '0';
+
+            setupPaginationLinks();
+            setupCheckboxListeners();
+            setupDropdownListeners();
+            updatePrintButtonVisibility();
+            updateSelectionAlert();
+
+            if (response.data.tableBody.includes('No students found') || response.data.tableBody.includes('Select class and session')) {
+                Swal.fire({
+                    icon: "info",
+                    title: "No Results",
+                    text: "No students found for the selected class, session, and term.",
+                    showConfirmButton: true
+                });
+            }
+        }).catch(function (error) {
+            console.error("AJAX error:", error);
+            tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: error.response?.data?.message || "Failed to fetch student data.",
+                showConfirmButton: true
+            });
+        });
+    }
+
+    function printAllResults() {
+        const classSelect = document.getElementById("idclass");
+        const sessionSelect = document.getElementById("idsession");
+        const termSelect = document.getElementById("idterm");
+        const classValue = classSelect.value;
+        const sessionValue = sessionSelect.value;
+        const termValue = termSelect.value;
+
+        const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+        const selectedStudentIds = Array.from(checkedCheckboxes).map(checkbox => checkbox.value);
+
+        console.log('Preparing to generate PDF with params:', { schoolclassid: classValue, sessionid: sessionValue, termid: termValue, studentIds: selectedStudentIds });
+
+        if (classValue === 'ALL' || sessionValue === 'ALL' || termValue === 'ALL') {
+            Swal.fire({
+                icon: "warning",
+                title: "Missing Selection",
+                text: "Please select a valid class, session, and term.",
+                showConfirmButton: true
+            });
+            return;
+        }
+
+        if (selectedStudentIds.length === 0) {
+            Swal.fire({
+                icon: "warning",
+                title: "No Students Selected",
+                text: "Please select at least one student to generate the PDF.",
+                showConfirmButton: true
+            });
+            return;
+        }
+
+        const classText = classSelect.options[classSelect.selectedIndex].text;
+        const sessionText = sessionSelect.options[sessionSelect.selectedIndex].text;
+        const termText = termSelect.options[termSelect.selectedIndex].text;
+        const studentCount = selectedStudentIds.length;
+
+        Swal.fire({
+            title: 'Confirm Print',
+            html: `
+                <p>You are about to print results for:</p>
+                <ul style="text-align: left;">
+                    <li><strong>Class:</strong> ${classText}</li>
+                    <li><strong>Session:</strong> ${sessionText}</li>
+                    <li><strong>Term:</strong> ${termText}</li>
+                    <li><strong>Selected:</strong> ${studentCount} student${studentCount === 1 ? '' : 's'}</li>
+                </ul>
+                <p>Do you want to proceed?</p>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Confirm',
+            cancelButtonText: 'Cancel',
+            buttonsStyling: true,
+            customClass: {
+                confirmButton: 'btn btn-primary',
+                cancelButton: 'btn btn-secondary'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Generating PDF...',
+                    text: 'Please wait while the PDF is being generated.',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                axios.post('{{ route("studentreports.exportClassResultsPdf") }}', {
+                    schoolclassid: classValue,
+                    sessionid: sessionValue,
+                    termid: termValue,
+                    studentIds: selectedStudentIds,
+                    response_method: 'base64'
+                }, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    responseType: 'json'
+                }).then(function (response) {
+                    console.log("PDF response:", response.data);
+                    Swal.close();
+                    if (response.data.success && response.data.pdf_base64) {
+                        const byteCharacters = atob(response.data.pdf_base64);
+                        const byteNumbers = new Array(byteCharacters.length);
+                        for (let i = 0; i < byteCharacters.length; i++) {
+                            byteNumbers[i] = byteCharacters.charCodeAt(i);
+                        }
+                        const byteArray = new Uint8Array(byteNumbers);
+                        const blob = new Blob([byteArray], { type: 'application/pdf' });
+                        const pdfUrl = URL.createObjectURL(blob);
+                        window.open(pdfUrl, '_blank');
+                        setTimeout(() => URL.revokeObjectURL(pdfUrl), 30000);
+                    } else {
+                        Swal.fire({
+                            icon: "error",
+                            title: "Error",
+                            text: response.data.message || "Failed to generate PDF.",
+                            showConfirmButton: true
+                        });
+                    }
+                }).catch(function (error) {
+                    Swal.close();
+                    console.error("PDF generation error:", error);
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: error.response?.data?.message || "Failed to generate PDF.",
+                        showConfirmButton: true
+                    });
+                });
+            }
+        });
+    }
+
+    function setupPaginationLinks() {
+        const paginationLinks = document.querySelectorAll('#pagination-container a');
+        paginationLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const url = this.href;
+                if (url && !this.classList.contains('disabled')) {
+                    loadPage(url);
+                }
+            });
+        });
+    }
+
+    function loadPage(url) {
+        console.log("Loading page:", url);
+        const tableBody = document.getElementById('studentTableBody');
+        tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Loading...</td></tr>';
+
+        axios.get(url, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then(function (response) {
+            console.log("Page load response:", response.data);
+            document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="10" class="text-center">No students found.</td></tr>';
+            document.getElementById('pagination-container').innerHTML = response.data.pagination || '';
+            document.getElementById('studentcount').innerText = response.data.studentCount || '0';
+            setupPaginationLinks();
+            setupCheckboxListeners();
+            setupDropdownListeners();
+            updatePrintButtonVisibility();
+            updateSelectionAlert();
+        }).catch(function (error) {
+            console.error("Page load error:", error);
+            tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: error.response?.data?.message || "Failed to fetch student data.",
+                showConfirmButton: true
+            });
+        });
+    }
+
+    function setupCheckboxListeners() {
+        const checkAll = document.getElementById("checkAll");
+        const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
+
+        if (checkAll) {
+            checkAll.addEventListener("change", function () {
+                checkboxes.forEach((checkbox) => {
+                    checkbox.checked = this.checked;
+                    const row = checkbox.closest("tr");
+                    row.classList.toggle("table-active", this.checked);
+                });
+                updatePrintButtonVisibility();
+            });
+        }
+
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener("change", function () {
+                const row = this.closest("tr");
+                row.classList.toggle("table-active", this.checked);
+                const checkedCount = document.querySelectorAll('tbody input[name="chk_child"]:checked').length;
+                const allCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]').length;
+                document.getElementById("checkAll").checked = checkedCount === allCheckboxes && allCheckboxes > 0;
+                updatePrintButtonVisibility();
+            });
+        });
+    }
+
+    function setupDropdownListeners() {
+        const classSelect = document.getElementById("idclass");
+        const sessionSelect = document.getElementById("idsession");
+        const termSelect = document.getElementById("idterm");
+
+        if (classSelect) {
+            classSelect.addEventListener("change", updateSelectionAlert);
+        }
+        if (sessionSelect) {
+            sessionSelect.addEventListener("change", updateSelectionAlert);
+        }
+        if (termSelect) {
+            termSelect.addEventListener("change", updateSelectionAlert);
+        }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        console.log("DOM loaded");
+        setupCheckboxListeners();
+        setupDropdownListeners();
+        updateSelectionAlert();
+
+        const modal = document.getElementById('imageViewModal');
+        if (modal) {
+            modal.addEventListener('show.bs.modal', function (event) {
+                const button = event.relatedTarget;
+                const imageSrc = button.getAttribute('data-image');
+                const modalImage = modal.querySelector('#enlargedImage');
+                modalImage.src = imageSrc || '{{ asset('storage/student_avatars/unnamed.jpg') }}';
+            });
+        }
+    });
+</script>
 @endsection

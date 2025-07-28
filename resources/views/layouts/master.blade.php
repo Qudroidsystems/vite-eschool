@@ -444,11 +444,11 @@
                                     </li>
                                    @endcan
 
-                                   @can('View student-mock-report')
+                                   {{-- @can('View student-mock-report')
                                        <li class="nav-item">
                                         <a href="{{ route('studentmockreports.index') }}" class="nav-link" data-key="t-products">Terminal Result Reports</a>
                                     </li>
-                                   @endcan
+                                   @endcan --}}
                                     
                                     
                                 </ul>
