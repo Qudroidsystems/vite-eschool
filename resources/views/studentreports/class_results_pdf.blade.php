@@ -567,9 +567,9 @@
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td>
-                                    <td class="@if ($score->ca1 < 50 && is_numeric($score->ca1)) highlight-red @elseif ($score->ca1 > 50 && is_numeric($score->ca1)) highlight-bold @endif">{{ $score->ca1 ?? '-' }}</td>
-                                    <td class="@if ($score->ca2 < 50 && is_numeric($score->ca2)) highlight-red @elseif ($score->ca2 > 50 && is_numeric($score->ca2)) highlight-bold @endif">{{ $score->ca2 ?? '-' }}</td>
-                                    <td class="@if ($score->ca3 < 50 && is_numeric($score->ca3)) highlight-red @elseif ($score->ca3 > 50 && is_numeric($score->ca3)) highlight-bold @endif">{{ $score->ca3 ?? '-' }}</td>
+                                    <td class="@if ($score->ca1 < 50 && is_numeric($score->ca1)) highlight-red highlight-bold @elseif ($score->ca1 > 50 && is_numeric($score->ca1)) highlight-bold @endif">{{ $score->ca1 ?? '-' }}</td>
+                                    <td class="@if ($score->ca2 < 50 && is_numeric($score->ca2)) highlight-red highlight-bold @elseif ($score->ca2 > 50 && is_numeric($score->ca2)) highlight-bold @endif">{{ $score->ca2 ?? '-' }}</td>
+                                    <td class="@if ($score->ca3 < 50 && is_numeric($score->ca3)) highlight-red highlight-bold @elseif ($score->ca3 > 50 && is_numeric($score->ca3)) highlight-bold @endif">{{ $score->ca3 ?? '-' }}</td>
                                     <td class="@if ($score->ca1 && $score->ca2 && $score->ca3 && round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) <= 50) highlight-red @elseif ($score->ca1 && $score->ca2 && $score->ca3 && round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) > 50) highlight-bold @endif">
                                         {{ $score->ca1 && $score->ca2 && $score->ca3 ? round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) : '-' }}
                                     </td>
