@@ -567,16 +567,16 @@
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td>
-                                    <td class="@if ($score->ca1 <= 50 && is_numeric($score->ca1)) highlight-red @elseif ($score->ca1 > 50 && is_numeric($score->ca1)) highlight-bold @endif">{{ $score->ca1 ?? '-' }}</td>
-                                    <td class="@if ($score->ca2 <= 50 && is_numeric($score->ca2)) highlight-red @elseif ($score->ca2 > 50 && is_numeric($score->ca2)) highlight-bold @endif">{{ $score->ca2 ?? '-' }}</td>
-                                    <td class="@if ($score->ca3 <= 50 && is_numeric($score->ca3)) highlight-red @elseif ($score->ca3 > 50 && is_numeric($score->ca3)) highlight-bold @endif">{{ $score->ca3 ?? '-' }}</td>
+                                    <td class="@if ($score->ca1 < 50 && is_numeric($score->ca1)) highlight-red @elseif ($score->ca1 > 50 && is_numeric($score->ca1)) highlight-bold @endif">{{ $score->ca1 ?? '-' }}</td>
+                                    <td class="@if ($score->ca2 < 50 && is_numeric($score->ca2)) highlight-red @elseif ($score->ca2 > 50 && is_numeric($score->ca2)) highlight-bold @endif">{{ $score->ca2 ?? '-' }}</td>
+                                    <td class="@if ($score->ca3 < 50 && is_numeric($score->ca3)) highlight-red @elseif ($score->ca3 > 50 && is_numeric($score->ca3)) highlight-bold @endif">{{ $score->ca3 ?? '-' }}</td>
                                     <td class="@if ($score->ca1 && $score->ca2 && $score->ca3 && round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) <= 50) highlight-red @elseif ($score->ca1 && $score->ca2 && $score->ca3 && round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) > 50) highlight-bold @endif">
                                         {{ $score->ca1 && $score->ca2 && $score->ca3 ? round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) : '-' }}
                                     </td>
-                                    <td class="@if ($score->exam <= 50 && is_numeric($score->exam)) highlight-red @elseif ($score->exam > 50 && is_numeric($score->exam)) highlight-bold @endif">{{ $score->exam ?? '-' }}</td>
-                                    <td class="@if ($score->total <= 50 && is_numeric($score->total)) highlight-red @elseif ($score->total > 50 && is_numeric($score->total)) highlight-bold @endif">{{ $score->total ?? '-' }}</td>
-                                    <td class="@if ($score->bf <= 50 && is_numeric($score->bf)) highlight-red @elseif ($score->bf > 50 && is_numeric($score->bf)) highlight-bold @endif">{{ $score->bf ?? '-' }}</td>
-                                    <td class="@if ($score->cum <= 50 && is_numeric($score->cum)) highlight-red @elseif ($score->cum > 50 && is_numeric($score->cum)) highlight-bold @endif">{{ $score->cum ?? '-' }}</td>
+                                    <td class="@if ($score->exam < 50 && is_numeric($score->exam)) highlight-red @elseif ($score->exam > 50 && is_numeric($score->exam)) highlight-bold @endif">{{ $score->exam ?? '-' }}</td>
+                                    <td class="@if ($score->total < 50 && is_numeric($score->total)) highlight-red @elseif ($score->total > 50 && is_numeric($score->total)) highlight-bold @endif">{{ $score->total ?? '-' }}</td>
+                                    <td class="@if ($score->bf < 50 && is_numeric($score->bf)) highlight-red @elseif ($score->bf > 50 && is_numeric($score->bf)) highlight-bold @endif">{{ $score->bf ?? '-' }}</td>
+                                    <td class="@if ($score->cum < 50 && is_numeric($score->cum)) highlight-red @elseif ($score->cum > 50 && is_numeric($score->cum)) highlight-bold @endif">{{ $score->cum ?? '-' }}</td>
                                     <td class="@if (in_array($score->grade ?? '', ['F', 'F9', 'E', 'E8'])) highlight-red @elseif ($score->grade && !in_array($score->grade, ['F', 'F9', 'E', 'E8'])) highlight-bold @endif">{{ $score->grade ?? '-' }}</td>
                                     <td class="highlight-bold">{{ $score->position ?? '-' }}</td>
                                     <td class="highlight-bold">{{ $score->class_average ?? '-' }}</td>
