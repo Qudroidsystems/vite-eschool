@@ -427,7 +427,7 @@
                                             </div>
 
                                             <!-- Mobile Card View -->
-                                            {{-- <div class="mobile-cards">
+                                            <div class="mobile-cards">
                                                 <div id="mobileStudentCards">
                                                     @forelse ($students as $key => $student)
                                                         @php
@@ -535,7 +535,7 @@
                                                     <h5 class="mt-2">No matches found</h5>
                                                     <p class="text-muted mb-0">Try adjusting your search terms.</p>
                                                 </div>
-                                            </div> --}}
+                                            </div>
 
                                             <!-- Save Button and Signature Input -->
                                             <div class="d-flex justify-content-end mt-3 signature-container">
@@ -606,30 +606,57 @@
         @endforeach
     ];
 </script>
-@endsection
 
-@section('scripts')
+
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         // Show content after DOM is loaded to prevent FOUC
         document.querySelector('.main-content').classList.add('loaded');
 
-        // Form submission handler to remove hidden inputs and validate signature
+        // Form submission handler to synchronize inputs
         const form = document.getElementById('commentsForm');
         form.addEventListener('submit', function (event) {
-            // Determine if mobile or desktop view is active
-            const isMobile = window.matchMedia("(max-width: 991px)").matches;
-            if (isMobile) {
-                // Remove desktop inputs
-                document.querySelectorAll('.desktop-table .teacher-comment-input, .desktop-table .guidance-comment-input, .desktop-table .remark-input, .desktop-table .absence-input').forEach(input => {
-                    input.remove();
-                });
-            } else {
-                // Remove mobile inputs
-                document.querySelectorAll('.mobile-cards .teacher-comment-input, .mobile-cards .guidance-comment-input, .mobile-cards .remark-input, .mobile-cards .absence-input').forEach(input => {
-                    input.remove();
-                });
-            }
+            // Synchronize mobile and desktop inputs
+            const studentRows = document.querySelectorAll('.desktop-table .student-row');
+            const studentCards = document.querySelectorAll('.mobile-cards .student-card');
+
+            studentRows.forEach(row => {
+                const studentId = row.getAttribute('data-student-id');
+                const mobileCard = Array.from(studentCards).find(card => card.getAttribute('data-student-id') === studentId);
+
+                if (mobileCard) {
+                    // Sync mobile inputs to desktop inputs
+                    const desktopTeacherInput = row.querySelector('.teacher-comment-input');
+                    const desktopGuidanceInput = row.querySelector('.guidance-comment-input');
+                    const desktopRemarkInput = row.querySelector('.remark-input');
+                    const desktopAbsenceInput = row.querySelector('.absence-input');
+
+                    const mobileTeacherInput = mobileCard.querySelector('.teacher-comment-input');
+                    const mobileGuidanceInput = mobileCard.querySelector('.guidance-comment-input');
+                    const mobileRemarkInput = mobileCard.querySelector('.remark-input');
+                    const mobileAbsenceInput = mobileCard.querySelector('.absence-input');
+
+                    // Update desktop inputs with mobile values if they exist
+                    if (mobileTeacherInput && desktopTeacherInput) {
+                        desktopTeacherInput.value = mobileTeacherInput.value;
+                    }
+                    if (mobileGuidanceInput && desktopGuidanceInput) {
+                        desktopGuidanceInput.value = mobileGuidanceInput.value;
+                    }
+                    if (mobileRemarkInput && desktopRemarkInput) {
+                        desktopRemarkInput.value = mobileRemarkInput.value;
+                    }
+                    if (mobileAbsenceInput && desktopAbsenceInput) {
+                        desktopAbsenceInput.value = mobileAbsenceInput.value;
+                    }
+                }
+            });
+
+            // Remove mobile inputs to avoid duplicate names in the form
+            document.querySelectorAll('.mobile-cards .teacher-comment-input, .mobile-cards .guidance-comment-input, .mobile-cards .remark-input, .mobile-cards .absence-input').forEach(input => {
+                input.remove();
+            });
 
             // Log form data for debugging
             const formData = new FormData(form);
@@ -640,7 +667,6 @@
             const guidanceInputs = document.querySelectorAll('.guidance-comment-input');
             const remarkInputs = document.querySelectorAll('.remark-input');
             const absenceInputs = document.querySelectorAll('.absence-input');
-            const signatureInput = document.getElementById('signature');
             let hasInput = false;
 
             teacherInputs.forEach(input => {
@@ -656,31 +682,24 @@
                 if (input.value.trim() !== '') hasInput = true;
             });
 
-            // Validate signature
-            if (!signatureInput.files.length) {
-                event.preventDefault();
-                alert('Please upload a signature file (JPG, PNG, or PDF) before submitting.');
-                return;
-            }
-
             if (!hasInput) {
                 event.preventDefault();
                 alert('Please enter at least one field (comment, remark, or absence count) before submitting.');
             }
         });
 
-        // Search functionality
+        // Search functionality (unchanged)
         const searchInput = document.getElementById('searchInput');
         const resultsCount = document.getElementById('resultsCount');
-        
+
         if (searchInput) {
             searchInput.addEventListener('input', function() {
                 const searchTerm = this.value.toLowerCase().trim();
-                
+
                 // Desktop table search
                 const desktopRows = document.querySelectorAll('.desktop-table .student-row');
                 let desktopVisibleCount = 0;
-                
+
                 desktopRows.forEach(row => {
                     const admissionNo = row.querySelector('.admissionno').textContent.toLowerCase();
                     const name = row.querySelector('.name').textContent.toLowerCase();
@@ -688,14 +707,13 @@
                     const guidanceComment = row.querySelector('.guidance-comment-input')?.value.toLowerCase() || '';
                     const remarkActivity = row.querySelector('.remark-input')?.value.toLowerCase() || '';
                     const absenceCount = row.querySelector('.absence-input')?.value.toLowerCase() || '';
-                    
+
                     const searchContent = `${admissionNo} ${name} ${teacherComment} ${guidanceComment} ${remarkActivity} ${absenceCount}`;
-                    
+
                     if (searchTerm === '' || searchContent.includes(searchTerm)) {
                         row.style.display = '';
                         desktopVisibleCount++;
-                        
-                        // Highlight search terms
+
                         if (searchTerm) {
                             highlightSearchTerm(row, searchTerm);
                         } else {
@@ -705,20 +723,19 @@
                         row.style.display = 'none';
                     }
                 });
-                
+
                 // Mobile cards search
                 const mobileCards = document.querySelectorAll('.mobile-cards .student-card');
                 const noMobileResults = document.getElementById('noMobileResults');
                 let mobileVisibleCount = 0;
-                
+
                 mobileCards.forEach(card => {
                     const searchContent = card.getAttribute('data-search-content') || '';
-                    
+
                     if (searchTerm === '' || searchContent.includes(searchTerm)) {
                         card.style.display = '';
                         mobileVisibleCount++;
-                        
-                        // Highlight search terms in mobile cards
+
                         if (searchTerm) {
                             highlightSearchMobile(card, searchTerm);
                         } else {
@@ -728,8 +745,7 @@
                         card.style.display = 'none';
                     }
                 });
-                
-                // Show/hide no results message for mobile
+
                 if (noMobileResults) {
                     if (mobileCards.length > 0 && mobileVisibleCount === 0 && searchTerm) {
                         noMobileResults.style.display = 'block';
@@ -738,7 +754,6 @@
                     }
                 }
 
-                // Show results count
                 if (resultsCount) {
                     if (searchTerm && (desktopVisibleCount > 0 || mobileVisibleCount > 0)) {
                         resultsCount.textContent = `${desktopVisibleCount + mobileVisibleCount} result(s) found`;
@@ -753,7 +768,7 @@
             });
         }
 
-        // Highlight functions
+        // Highlight functions (unchanged)
         function highlightSearchTerm(element, term) {
             const highlightClass = 'search-highlight';
             const tagsToSearch = ['.admissionno', '.name'];
@@ -783,4 +798,6 @@
         }
     });
 </script>
+
+
 @endsection
