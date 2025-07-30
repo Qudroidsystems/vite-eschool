@@ -2,12 +2,12 @@
 
 @section('content')
 <style>
-    #batch-loader {
+    #batch-loader, #update-class-loader {
         backdrop-filter: blur(2px);
         font-size: 1.1rem;
         color: #333;
     }
-    #batch-loader .spinner-border {
+    #batch-loader .spinner-border, #update-class-loader .spinner-border {
         width: 2rem;
         height: 2rem;
     }
@@ -165,7 +165,9 @@
                                                     <td>
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
                                                             @can('Create student-bulk-upload')
-                                                                
+                                                                <li>
+                                                                    <a href="javascript:void(0);" class="btn btn-subtle-primary btn-icon btn-sm update-item-btn" data-id="{{ $sc->id }}" data-schoolclass="{{ $sc->schoolclass }}" data-arm="{{ $sc->arm }}" data-schoolclassid="{{ $sc->schoolclassid }}" data-armid="{{ $sc->armid }}"><i class="ph-pencil"></i></a>
+                                                                </li>
                                                                 <li>
                                                                     <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-id="{{ $sc->id }}"><i class="ph-trash"></i></a>
                                                                 </li>
@@ -259,6 +261,54 @@
                 </div>
             </div>
 
+            <!-- Update Class Modal -->
+            <div id="updateClassModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Update Class</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form class="tablelist-form" autocomplete="off" id="update-class-form" action="{{ route('student.updateclass') }}" method="POST">
+                            @csrf
+                            @method('PUT')
+                            <div class="modal-body position-relative">
+                                <!-- Loader Overlay -->
+                                <div id="update-class-loader" class="d-none position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background: rgba(255, 255, 255, 0.8); z-index: 1000;">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <span class="ms-2">Updating Class...</span>
+                                </div>
+                                <!-- Form Fields -->
+                                <input type="hidden" id="update_batch_id" name="batch_id">
+                                <div class="mb-3">
+                                    <label for="update_schoolclass" class="form-label">School Class Name</label>
+                                    <input type="text" id="update_schoolclass" name="schoolclass" class="form-control" placeholder="Enter school class name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="update_arm" class="form-label">Arm Name</label>
+                                    <input type="text" id="update_arm" name="arm" class="form-control" placeholder="Enter arm name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="update_schoolclassid" class="form-label">School Class ID</label>
+                                    <input type="text" id="update_schoolclassid" name="schoolclassid" class="form-control" placeholder="Enter school class ID" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="update_armid" class="form-label">Arm ID</label>
+                                    <input type="text" id="update_armid" name="armid" class="form-control" placeholder="Enter arm ID" required>
+                                </div>
+                                <div class="alert alert-danger d-none" id="update-alert-error-msg"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary" id="update-btn">Update Class</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
             <!-- Delete Batch Modal -->
             <div id="deleteRecordModal" class="modal fade zoomIn" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
@@ -290,18 +340,23 @@
                 </div>
             </div>
         </div>
-
+    </div>
+</div>
 
 <script>
     let currentDeleteId = null;
+    let currentUpdateId = null;
 
     document.addEventListener('DOMContentLoaded', function () {
         const deleteButtons = document.querySelectorAll('.remove-item-btn');
+        const updateButtons = document.querySelectorAll('.update-item-btn');
         const deleteRecordModal = document.getElementById('deleteRecordModal');
+        const updateClassModal = document.getElementById('updateClassModal');
         const deleteBtn = document.getElementById('delete-record');
-        const deleteBtnText = document.getElementById('delete-btn-text');
-        const deleteBtnLoader = document.getElementById('delete-btn-loader');
+        const updateBtn = document.getElementById('update-btn');
+        const updateForm = document.getElementById('update-class-form');
 
+        // Handle Delete Buttons
         deleteButtons.forEach(button => {
             button.addEventListener('click', function () {
                 currentDeleteId = this.getAttribute('data-id');
@@ -313,6 +368,31 @@
             });
         });
 
+        // Handle Update Buttons
+        updateButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                currentUpdateId = this.getAttribute('data-id');
+                const schoolclass = this.getAttribute('data-schoolclass');
+                const arm = this.getAttribute('data-arm');
+                const schoolclassid = this.getAttribute('data-schoolclassid');
+                const armid = this.getAttribute('data-armid');
+
+                // Populate form fields
+                document.getElementById('update_batch_id').value = currentUpdateId;
+                document.getElementById('update_schoolclass').value = schoolclass;
+                document.getElementById('update_arm').value = arm;
+                document.getElementById('update_schoolclassid').value = schoolclassid;
+                document.getElementById('update_armid').value = armid;
+
+                console.log("Update button clicked for batch ID:", currentUpdateId);
+                if (updateClassModal) {
+                    const modal = new bootstrap.Modal(updateClassModal);
+                    modal.show();
+                }
+            });
+        });
+
+        // Handle Delete Confirmation
         if (deleteBtn) {
             deleteBtn.addEventListener('click', handleDeleteConfirmation);
         }
@@ -342,6 +422,8 @@
                 return;
             }
 
+            const deleteBtnText = document.getElementById('delete-btn-text');
+            const deleteBtnLoader = document.getElementById('delete-btn-loader');
             deleteBtnText.classList.add('d-none');
             deleteBtnLoader.classList.remove('d-none');
             deleteBtn.disabled = true;
@@ -362,7 +444,9 @@
                 return;
             }
 
-            console.log("Sending DELETE request for batch ID:", currentDeleteId);
+            console
+
+.log("Sending DELETE request for batch ID:", currentDeleteId);
             axios.delete(`/student/deletestudentbatch?studentbatchid=${currentDeleteId}`, {
                 headers: {
                     'X-CSRF-TOKEN': csrfToken,
@@ -371,8 +455,7 @@
             })
             .then(function (response) {
                 console.log("Delete response:", response.data);
-                const deleteModal = document.getElementById('deleteRecordModal');
-                const modal = bootstrap.Modal.getInstance(deleteModal);
+                const modal = bootstrap.Modal.getInstance(deleteRecordModal);
                 if (modal) modal.hide();
 
                 Swal.fire({
@@ -392,8 +475,7 @@
                 deleteBtnLoader.classList.add('d-none');
                 deleteBtn.disabled = false;
 
-                const deleteModal = document.getElementById('deleteRecordModal');
-                const modal = bootstrap.Modal.getInstance(deleteModal);
+                const modal = bootstrap.Modal.getInstance(deleteRecordModal);
                 if (modal) modal.hide();
 
                 const errorMessage = error.response?.data?.message || 'Error deleting batch';
@@ -406,8 +488,67 @@
                 });
             });
         }
+
+        // Handle Update Form Submission
+        if (updateForm) {
+            updateForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const updateBtnText = document.getElementById('update-btn');
+                const updateLoader = document.getElementById('update-class-loader');
+                const errorMsg = document.getElementById('update-alert-error-msg');
+
+                updateBtnText.disabled = true;
+                updateLoader.classList.remove('d-none');
+
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+                if (!csrfToken) {
+                    console.error("CSRF token not found");
+                    Swal.fire({
+                        position: 'center',
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'CSRF token missing',
+                        showConfirmButton: true
+                    });
+                    updateBtnText.disabled = false;
+                    updateLoader.classList.add('d-none');
+                    return;
+                }
+
+                const formData = new FormData(updateForm);
+                axios.post(updateForm.action, formData, {
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Content-Type': 'multipart/form-data'
+                    }
+                })
+                .then(function (response) {
+                    console.log("Update response:", response.data);
+                    const modal = bootstrap.Modal.getInstance(updateClassModal);
+                    if (modal) modal.hide();
+
+                    Swal.fire({
+                        position: 'center',
+                        icon: 'success',
+                        title: 'Success',
+                        text: response.data.message || 'Class updated successfully!',
+                        showConfirmButton: false,
+                        timer: 1500
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                })
+                .catch(function (error) {
+                    console.error("Update error:", error.response ? error.response.data : error.message);
+                    updateBtnText.disabled = false;
+                    updateLoader.classList.add('d-none');
+
+                    const errorMessage = error.response?.data?.message || 'Error updating class';
+                    errorMsg.textContent = errorMessage;
+                    errorMsg.classList.remove('d-none');
+                });
+            });
+        }
     });
-</script>      
-    </div>
-</div>
+</script>
 @endsection

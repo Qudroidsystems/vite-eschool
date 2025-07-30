@@ -158,8 +158,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/batchindex', [StudentController::class, 'batchindex'])->name('studentbatchindex');
     Route::delete('/student/deletestudentbatch', [StudentController::class, 'deletestudentbatch'])->name('student.deletestudentbatch');
     Route::post('/students/destroy-multiple', [StudentController::class, 'destroyMultiple'])->name('students.destroy-multiple');
-
-    Route::resource('classoperation', ClassOperationController::class);
+    Route::put('/student/updateclass', [StudentController::class, 'updateClass'])->name('student.updateclass');    Route::resource('classoperation', ClassOperationController::class);
 
     Route::resource('classcategories', ClasscategoryController::class);
     Route::get('/classcategoryid/{classcategoryid}', [ClasscategoryController::class, 'deleteclasscategory'])->name('classcategories.deleteclasscategory');
