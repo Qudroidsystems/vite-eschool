@@ -77,7 +77,7 @@ use Spatie\Permission\Models\Role;
                                         <select class="form-control" id="idClass">
                                             <option value="all">Select Class</option>
                                             @foreach ($schoolclass as $class)
-                                                <option value="{{ $class->id }}">{{ $class->schoolclass }} - {{ $class->arm }}</option>
+                                                <option value="{{ $class->id }}">{{ $class->schoolclass }} - {{ $class->armRelation->arm }}</option>
                                             @endforeach
                                         </select>
                                     </div>
