@@ -17,10 +17,12 @@ class Student extends Model
 
     protected $fillable = [
         'userid',
-        'tittle',
+        // 'admissionNo',
+        'title',
         'firstname',
         'lastname',
         'othername',
+        'nationlity',
         'gender',
         'home_address',
         'home_address2',

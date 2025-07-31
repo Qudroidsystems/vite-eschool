@@ -166,7 +166,7 @@
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
                                                             @can('Create student-bulk-upload')
                                                                 <li>
-                                                                    <a href="javascript:void(0);" class="btn btn-subtle-primary btn-icon btn-sm update-item-btn" data-id="{{ $sc->id }}" data-schoolclass="{{ $sc->schoolclass }}" data-arm="{{ $sc->arm }}" data-schoolclassid="{{ $sc->schoolclassid }}" data-armid="{{ $sc->armid }}"><i class="ph-pencil"></i></a>
+                                                                    <a href="javascript:void(0);" class="btn btn-subtle-primary btn-icon btn-sm update-item-btn" data-id="{{ $sc->id }}" data-schoolclass="{{ $sc->schoolclass }}" data-arm="{{ $sc->arm }}" data-schoolclassid="{{ $sc->schoolclassid }}" data-armid="{{ $sc->armid }}" data-classcategoryid="{{ $sc->classcategoryid ?? '' }}"><i class="ph-pencil"></i></a>
                                                                 </li>
                                                                 <li>
                                                                     <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-id="{{ $sc->id }}"><i class="ph-trash"></i></a>
@@ -281,7 +281,10 @@
                                     <span class="ms-2">Updating Class...</span>
                                 </div>
                                 <!-- Form Fields -->
-                                <input type="hidden" id="update_batch_id" name="batch_id">
+                                <div class="mb-3">
+                                    <label for="update_batch_id" class="form-label">Batch ID</label>
+                                    <input type="text" id="update_batch_id" name="batch_id" class="form-control" readonly>
+                                </div>
                                 <div class="mb-3">
                                     <label for="update_schoolclass" class="form-label">School Class Name</label>
                                     <input type="text" id="update_schoolclass" name="schoolclass" class="form-control" placeholder="Enter school class name" required>
@@ -297,6 +300,10 @@
                                 <div class="mb-3">
                                     <label for="update_armid" class="form-label">Arm ID</label>
                                     <input type="text" id="update_armid" name="armid" class="form-control" placeholder="Enter arm ID" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="update_classcategoryid" class="form-label">Class Category ID</label>
+                                    <input type="text" id="update_classcategoryid" name="classcategoryid" class="form-control" placeholder="Enter class category ID" required>
                                 </div>
                                 <div class="alert alert-danger d-none" id="update-alert-error-msg"></div>
                             </div>
@@ -376,6 +383,7 @@
                 const arm = this.getAttribute('data-arm');
                 const schoolclassid = this.getAttribute('data-schoolclassid');
                 const armid = this.getAttribute('data-armid');
+                const classcategoryid = this.getAttribute('data-classcategoryid');
 
                 // Populate form fields
                 document.getElementById('update_batch_id').value = currentUpdateId;
@@ -383,6 +391,7 @@
                 document.getElementById('update_arm').value = arm;
                 document.getElementById('update_schoolclassid').value = schoolclassid;
                 document.getElementById('update_armid').value = armid;
+                document.getElementById('update_classcategoryid').value = classcategoryid || '';
 
                 console.log("Update button clicked for batch ID:", currentUpdateId);
                 if (updateClassModal) {
@@ -444,9 +453,7 @@
                 return;
             }
 
-            console
-
-.log("Sending DELETE request for batch ID:", currentDeleteId);
+            console.log("Sending DELETE request for batch ID:", currentDeleteId);
             axios.delete(`/student/deletestudentbatch?studentbatchid=${currentDeleteId}`, {
                 headers: {
                     'X-CSRF-TOKEN': csrfToken,

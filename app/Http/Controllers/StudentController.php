@@ -21,6 +21,7 @@ use App\Models\Studentclass;
 use App\Models\Studenthouse;
 use App\Models\Studentpersonalityprofile;
 use App\Models\Studentpicture;
+use App\Models\Subjectclass;
 use App\Models\SubjectRegistrationStatus;
 use App\Traits\ImageManager as TraitsImageManager;
 use Carbon\Carbon;
@@ -45,6 +46,7 @@ class StudentController extends Controller
         $this->middleware("permission:Delete student", ["only" => ["destroy", "deletestudent"]]);
         $this->middleware("permission:Create student-bulk-upload", ["only" => ["bulkupload"]]);
         $this->middleware("permission:Create student-bulk-uploadsave", ["only" => ["bulkuploadsave"]]);
+        //$this->middleware("permission:Create student-bulk-upload", ["only" => ["updateClass"]]);
     }
 
     public function data(Request $request): JsonResponse
@@ -952,4 +954,115 @@ class StudentController extends Controller
                 ->with('status', 'Failed to import batch: ' . $e->getMessage());
         }
     }
+
+
+    public function updateClass(Request $request)
+{
+    Log::debug('Updating class for batch', $request->all());
+
+    try {
+        $validator = Validator::make($request->all(), [
+            'batch_id' => 'required|exists:student_batch_upload,id',
+            'schoolclass' => 'required|string|max:255',
+            //'schoolclassid' => 'required|exists:schoolclass,id',
+            'armid' => 'required|exists:schoolarm,id',
+            'classcategoryid' => 'required|exists:classcategories,id',
+           // 'description' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            Log::debug('Validation failed', $validator->errors()->toArray());
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        DB::beginTransaction();
+
+        // Step 1: Update or create schoolclass
+        $schoolClass = Schoolclass::updateOrCreate(
+            ['id' => $request->schoolclassid],
+            [
+                'schoolclass' => $request->schoolclass,
+                'arm' => $request->armid,
+                'classcategoryid' => $request->classcategoryid,
+                'description' => "testing",
+            ]
+        );
+        Log::debug("Schoolclass updated/created: ID {$schoolClass->id}");
+
+        // Step 2: Update batch
+        $batch = StudentBatchModel::findOrFail($request->batch_id);
+        $batch->update(['schoolclassid' => $schoolClass->id]);
+        Log::debug("Batch ID {$batch->id} updated");
+
+        // Step 3: Get student IDs for batch
+        $studentIds = Student::where('batchid', $batch->id)->pluck('id');
+        Log::debug("Found " . count($studentIds) . " students for batch ID {$batch->id}");
+
+        // Step 4: Bulk update broadsheet records
+        BroadsheetRecord::whereIn('student_id', $studentIds)
+            ->update(['schoolclass_id' => $schoolClass->id]);
+        Log::debug("Bulk updated BroadsheetRecord for batch ID {$batch->id}");
+
+        // Step 5: Bulk update broadsheet mock records
+        BroadsheetRecordMock::whereIn('student_id', $studentIds)
+            ->update(['schoolclass_id' => $schoolClass->id]);
+        Log::debug("Bulk updated BroadsheetRecordMock for batch ID {$batch->id}");
+
+        // Step 6: Bulk update subjectclass via broadsheet
+        $broadsheetRecordIds = BroadsheetRecord::whereIn('student_id', $studentIds)->pluck('id');
+        $subjectClassIdsFromBroadsheets = Broadsheets::whereIn('broadsheet_record_id', $broadsheetRecordIds)
+            ->whereNotNull('subjectclass_id')
+            ->pluck('subjectclass_id')
+            ->unique();
+        if ($subjectClassIdsFromBroadsheets->isNotEmpty()) {
+            Subjectclass::whereIn('id', $subjectClassIdsFromBroadsheets)
+                ->update(['schoolclassid' => $schoolClass->id]);
+            Log::debug("Bulk updated Subjectclass for " . count($subjectClassIdsFromBroadsheets) . " broadsheet records");
+        } else {
+            Log::debug("No Subjectclass IDs found for broadsheet records");
+        }
+
+        // Step 7: Bulk update subjectclass for records linked to both broadsheet and broadsheet mock
+        $broadsheetMockRecordIds = BroadsheetRecordMock::whereIn('student_id', $studentIds)->pluck('id');
+        $subjectClassIdsFromBroadsheetsMock = BroadsheetsMock::whereIn('broadsheet_records_mock_id', $broadsheetMockRecordIds)
+            ->whereNotNull('subjectclass_id')
+            ->pluck('subjectclass_id')
+            ->unique();
+        $commonSubjectClassIds = $subjectClassIdsFromBroadsheets->intersect($subjectClassIdsFromBroadsheetsMock);
+        if ($commonSubjectClassIds->isNotEmpty()) {
+            Subjectclass::whereIn('id', $commonSubjectClassIds)
+                ->update(['schoolclassid' => $schoolClass->id]);
+            Log::debug("Bulk updated Subjectclass for " . count($commonSubjectClassIds) . " common subjectclass IDs");
+        } else {
+            Log::debug("No common Subjectclass IDs found for batch ID {$batch->id}");
+        }
+
+        DB::commit();
+
+        Log::info("Class updated successfully for batch ID {$request->batch_id}");
+        return response()->json([
+            'success' => true,
+            'message' => 'Class updated successfully'
+        ], 200);
+
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        DB::rollBack();
+        Log::error("Batch or related record not found: {$e->getMessage()}");
+        return response()->json([
+            'success' => false,
+            'message' => 'Batch or related record not found'
+        ], 404);
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error("Error updating class for batch ID {$request->batch_id}: {$e->getMessage()}\nStack trace: {$e->getTraceAsString()}");
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update class: An unexpected error occurred'
+        ], 500);
+    }
+}
 }
