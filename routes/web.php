@@ -147,7 +147,7 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('schoolclass/{schoolclass}/arms', [SchoolClassController::class, 'getArms'])->name('schoolclass.getarms');
     Route::put('/schoolclass/{id}', [SchoolClassController::class, 'update'])->name('schoolclass.update');
 
-    //Route::resource('student', StudentController::class)->except(['destroy']); // Exclude destroy to avoid conflict
+    Route::resource('student', StudentController::class)->except(['destroy']); // Exclude destroy to avoid conflict
     Route::get('/students/data', [App\Http\Controllers\StudentController::class, 'data'])->name('student.data');
     Route::delete('/student/{id}/destroy', [StudentController::class, 'destroy'])->name('student.destroy');
     Route::get('/studentid/{studentid}', [StudentController::class, 'deletestudent'])->name('student.deletestudent');

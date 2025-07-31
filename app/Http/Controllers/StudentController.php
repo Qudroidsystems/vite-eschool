@@ -995,7 +995,7 @@ class StudentController extends Controller
 
         // Step 2: Update batch
         $batch = StudentBatchModel::findOrFail($request->batch_id);
-       // $batch->update(['schoolclassid' => $schoolClass->id]);
+        $batch->update(['schoolclassid' => $schoolClass->id]);
        // Log::debug("Batch ID {$batch->id} updated");
 
         // Step 3: Get student IDs for batch
