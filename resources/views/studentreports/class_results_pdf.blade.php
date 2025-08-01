@@ -494,7 +494,7 @@
                                             <td width="33%">
                                                 <div class="info-row">
                                                     <span class="result-details">Name:</span>
-                                                    <span class="rd1">{{ $student->fname ?? 'NO INFO' }} {{ $student->lastname ?? 'NO INFO' }} {{ $student->othername ?? '' }}</span>
+                                                    <span class="rd1">{{ $student->lastname ?? 'NO INFO' }} {{ $student->fname ?? 'NO INFO' }}  {{ $student->othername ?? '' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Session:</span>
