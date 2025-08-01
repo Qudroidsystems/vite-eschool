@@ -27,7 +27,7 @@
             max-height: 287mm;
             page-break-after: always;
             background: #ffffff;
-            border: 2px solid #1e40af;
+            border: 3px double #000000;
             margin: 0 auto;
             padding: 12px;
             position: relative;
@@ -201,26 +201,26 @@
 
         .result-table table {
             width: 100%;
-            border: 2px solid #1e40af;
+            border: 2px solid #000000;
             border-collapse: collapse;
             margin-bottom: 8px;
         }
 
         .result-table thead th {
-            background: #243f99;
+            background: #0d1a3d; /* Very deep blue background */
             color: white;
             font-weight: 600;
-            border: 1px solid #1d4ed8;
+            border: 1px solid #000000;
             padding: 6px 3px;
             text-align: center;
             font-size: 9px;
         }
 
         .result-table tbody td {
-            border: 1px solid #cbd5e1;
+            border: 1px solid #000000;
             padding: 4px 3px;
             text-align: center;
-            font-size: 9px;
+            font-size: 11px;
             background: white;
         }
 
@@ -244,7 +244,7 @@
 
         .assessment-table {
             width: 100%;
-            border: 2px solid #cbda77;
+            border: 2px solid #000000;
             border-collapse: collapse;
             margin-bottom: 6px;
         }
@@ -253,14 +253,14 @@
             background: #fbbf24;
             color: white;
             font-weight: 600;
-            border: 1px solid #047857;
+            border: 1px solid #000000;
             padding: 4px;
             text-align: center;
             font-size: 9px;
         }
 
         .assessment-table tbody td {
-            border: 1px solid #d1d5db;
+            border: 1px solid #000000;
             padding: 3px 4px;
             background: white;
             font-size: 8px;
@@ -287,13 +287,13 @@
 
         .remarks-table {
             width: 100%;
-            border: 2px solid #7c3aed;
+            border: 2px solid #000000;
             border-collapse: collapse;
             margin-bottom: 8px;
         }
 
         .remarks-table td {
-            border: 1px solid #c4b5fd;
+            border: 1px solid #000000;
             padding: 6px;
             background: white;
             vertical-align: top;
@@ -551,7 +551,7 @@
                                 <th>Term Exams</th>
                                 <th>
                                     <div class="fraction">
-                                        <div class="numerator">d + f</div>
+                                        <div class="numerator">d + e</div>
                                         <div class="denominator">2</div>
                                     </div>
                                 </th>
