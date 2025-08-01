@@ -502,7 +502,7 @@
                                     @endphp
                                     <table style="width: 100%; table-layout: fixed;">
                                         <tr>
-                                            <td width="33%">
+                                            <td width="41%">
                                                 <div class="info-row">
                                                     <span class="result-details">Name:</span>
                                                     <span class="font-bold">{{ strtoupper($student->lastname ?? 'ILEMOBAYOEEEE') }} {{ $student->fname ?? 'Eliabeeeee' }} {{ $student->othername ?? 'eeeee' }}</span>
@@ -516,7 +516,7 @@
                                                     <span class="font-bold">{{ $studentData['schoolterm'] ?? 'NO INFO' }}</span>
                                                 </div>
                                             </td>
-                                            <td width="33%">
+                                            <td width="29%">
                                                 <div class="info-row">
                                                     <span class="result-details">Class:</span>
                                                     <span class="font-bold">{{ $studentData['schoolclass']->schoolclass ?? 'NO INFO' }} {{ $studentData['schoolclass']->armRelation->arm ?? 'NO INFO' }}</span>
@@ -548,7 +548,7 @@
                                                     <span class="font-bold">{{ $student->admissionNo ?? 'NO INFO' }}</span>
                                                 </div>
                                             </td>
-                                            <td width="34%">
+                                            <td width="30%">
                                                 <div class="info-row">
                                                     <span class="result-details">Sex:</span>
                                                     <span class="font-bold">{{ $student->gender ?? 'NO INFO' }}</span>
