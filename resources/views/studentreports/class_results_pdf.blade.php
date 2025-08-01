@@ -658,7 +658,7 @@
                 </div>
 
                 <!-- Assessment Tables Section -->
-                <table class="assessment-layout-table">
+                {{-- <table class="assessment-layout-table">
                     <tr>
                         <td>
                             <div class="h5">Character Assessment</div>
@@ -713,16 +713,16 @@
                             </table>
                         </td>
                     </tr>
-                </table>
+                </table> --}}
 
                 <!-- Grade Legend -->
-                <div class="grade-display">
+                {{-- <div class="grade-display">
                     <span>Grade: V.Good {VG}</span>
                     <span>Good {G}</span>
                     <span>Average {AVG}</span>
                     <span>Below Average {BA}</span>
                     <span>Poor {P}</span>
-                </div>
+                </div> --}}
 
                 <!-- Remarks Section -->
                 <table class="remarks-table">
