@@ -100,7 +100,7 @@
         }
 
         .school-name2 {
-            font-size: 20px;
+            font-size: 24px;
             font-weight: 900;
             color: #000000;
             text-align: left;
@@ -226,12 +226,19 @@
             font-size: 9px;
         }
 
+        .result-table thead th:nth-child(3),
+        .result-table thead th:nth-child(4),
+        .result-table thead th:nth-child(5) {
+            width: 40px; /* Reduced from 50px for T1, T2, T3 columns */
+        }
+
         .result-table tbody td {
             border: 1px solid #000000;
             padding: 4px 3px;
             text-align: center;
             font-size: 11px;
             background: white;
+            font-weight: 700; /* Make all scores bolder */
         }
 
         .result-table tbody tr:nth-child(even) td {
@@ -245,7 +252,7 @@
 
         .highlight-red {
             color: #dc2626 !important;
-            font-weight: bold;
+            font-weight: 700;
         }
 
         .highlight-bold {
@@ -414,7 +421,8 @@
 
         .powered-by {
             font-size: 9px;
-            color: #6b7280;
+            color: #000000;
+            font-weight: 700;
             margin-top: 6px;
         }
 
@@ -476,7 +484,7 @@
                     </table>
                     <div class="header-divider"></div>
                     <div class="header-divider2"></div>
-                    <div class="report-title">  {{  $metadata['term'] }} {{ $metadata['session'] }} ACADEMIC SESSION TERMINAL PROGRESS REPORT</div>
+                    <div class="report-title">{{ strtoupper($metadata['term']) }} {{ strtoupper($metadata['session']) }} ACADEMIC SESSION TERMINAL PROGRESS REPORT</div>
                 </div>
 
                 <!-- Student Information Section -->
@@ -617,19 +625,19 @@
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td>
-                                    <td class="@if ($score->ca1 < 50 && is_numeric($score->ca1)) highlight-red @elseif ($score->ca1 >= 50 && is_numeric($score->ca1)) highlight-bold @endif">{{ $score->ca1 ?? '-' }}</td>
-                                    <td class="@if ($score->ca2 < 50 && is_numeric($score->ca2)) highlight-red @elseif ($score->ca2 >= 50 && is_numeric($score->ca2)) highlight-bold @endif">{{ $score->ca2 ?? '-' }}</td>
-                                    <td class="@if ($score->ca3 < 50 && is_numeric($score->ca3)) highlight-red @elseif ($score->ca3 >= 50 && is_numeric($score->ca3)) highlight-bold @endif">{{ $score->ca3 ?? '-' }}</td>
-                                    <td class="@if ($score->ca1 && $score->ca2 && $score->ca3 && round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) < 50) highlight-red @elseif ($score->ca1 && $score->ca2 && $score->ca3 && round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) >= 50) highlight-bold @endif">
+                                    <td class="@if ($score->ca1 < 50 && is_numeric($score->ca1)) highlight-red @endif">{{ $score->ca1 ?? '-' }}</td>
+                                    <td class="@if ($score->ca2 < 50 && is_numeric($score->ca2)) highlight-red @endif">{{ $score->ca2 ?? '-' }}</td>
+                                    <td class="@if ($score->ca3 < 50 && is_numeric($score->ca3)) highlight-red @endif">{{ $score->ca3 ?? '-' }}</td>
+                                    <td class="@if ($score->ca1 && $score->ca2 && $score->ca3 && round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) < 50) highlight-red @endif">
                                         {{ $score->ca1 && $score->ca2 && $score->ca3 ? round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) : '-' }}
                                     </td>
-                                    <td class="@if ($score->exam < 50 && is_numeric($score->exam)) highlight-red @elseif ($score->exam >= 50 && is_numeric($score->exam)) highlight-bold @endif">{{ $score->exam ?? '-' }}</td>
-                                    <td class="@if ($score->total < 50 && is_numeric($score->total)) highlight-red @elseif ($score->total >= 50 && is_numeric($score->total)) highlight-bold @endif">{{ $score->total ?? '-' }}</td>
-                                    <td class="@if ($score->bf < 50 && is_numeric($score->bf)) highlight-red @elseif ($score->bf >= 50 && is_numeric($score->bf)) highlight-bold @endif">{{ $score->bf ?? '-' }}</td>
-                                    <td class="@if ($score->cum < 50 && is_numeric($score->cum)) highlight-red @elseif ($score->cum >= 50 && is_numeric($score->cum)) highlight-bold @endif">{{ $score->cum ?? '-' }}</td>
-                                    <td class="@if (in_array($score->grade ?? '', ['F', 'F9', 'E', 'E8'])) highlight-red @elseif ($score->grade && !in_array($score->grade, ['F', 'F9', 'E', 'E8'])) highlight-bold @endif">{{ $score->grade ?? '-' }}</td>
-                                    <td class="highlight-bold">{{ $score->position ?? '-' }}</td>
-                                    <td class="highlight-bold">{{ $score->class_average ?? '-' }}</td>
+                                    <td class="@if ($score->exam < 50 && is_numeric($score->exam)) highlight-red @endif">{{ $score->exam ?? '-' }}</td>
+                                    <td class="@if ($score->total < 50 && is_numeric($score->total)) highlight-red @endif">{{ $score->total ?? '-' }}</td>
+                                    <td class="@if ($score->bf < 50 && is_numeric($score->bf)) highlight-red @endif">{{ $score->bf ?? '-' }}</td>
+                                    <td class="@if ($score->cum < 50 && is_numeric($score->cum)) highlight-red @endif">{{ $score->cum ?? '-' }}</td>
+                                    <td class="@if (in_array($score->grade ?? '', ['F', 'F9', 'E', 'E8'])) highlight-red @endif">{{ $score->grade ?? '-' }}</td>
+                                    <td>{{ $score->position ?? '-' }}</td>
+                                    <td>{{ $score->class_average ?? '-' }}</td>
                                 </tr>
                             @empty
                                 <tr>
@@ -758,7 +766,7 @@
                             </td>
                         </tr>
                     </table>
-                    <div class="powered-by">Powered by Qudroid Systems | www.qudroid.co</div>
+                    <div class="powered-by">Powered by Qudroid Systems | www.qudroid.co | +2349057522004</div>
                 </div>
             </div>
         </div>
