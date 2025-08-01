@@ -219,7 +219,7 @@
         .result-table thead th {
             background: #0d1a3d;
             color: white;
-            font-weight: 600;
+            font-weight: 800;
             border: 1px solid #000000;
             padding: 6px 3px;
             text-align: center;
@@ -237,13 +237,17 @@
             width: 50px;
         }
 
+        .result-table tbody tr {
+            font-weight: 800;
+        }
+
         .result-table tbody td {
             border: 1px solid #000000;
             padding: 4px 3px;
             text-align: center;
             font-size: 11px;
             background: white;
-            font-weight: 900; /* Increased boldness for scores */
+            font-weight: 900;
         }
 
         .result-table tbody tr:nth-child(even) td {
@@ -257,11 +261,11 @@
 
         .highlight-red {
             color: #dc2626 !important;
-            font-weight: 900; /* Match increased boldness */
+            font-weight: 900;
         }
 
         .highlight-bold {
-            font-weight: 900 !important; /* Match increased boldness */
+            font-weight: 900 !important;
         }
 
         .assessment-table {
@@ -397,12 +401,6 @@
             margin-right: 4px;
         }
 
-        .info-row .rd1, .info-row .rd2, .info-row .rd3, .info-row .rd4, 
-        .info-row .rd5, .info-row .rd6, .info-row .rd7, .info-row .rd8, 
-        .info-row .rd9, .info-row .rd10 {
-            margin-right: 8px;
-        }
-
         .info-row.students-count {
             margin-top: 2px;
         }
@@ -507,25 +505,25 @@
                                             <td width="33%">
                                                 <div class="info-row">
                                                     <span class="result-details">Name:</span>
-                                                    <span class="rd1">{{ $student->lastname ?? 'NO INFO' }} {{ $student->fname ?? 'NO INFO' }}  {{ $student->othername ?? '' }}</span>
+                                                    <span class="font-bold">{{ strtoupper($student->lastname ?? 'ILEMOBAYOEEEE') }} {{ $student->fname ?? 'Eliabeeeee' }} {{ $student->othername ?? 'eeeee' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Session:</span>
-                                                    <span class="rd2">{{ $studentData['schoolsession'] ?? 'NO INFO' }}</span>
+                                                    <span class="font-bold">{{ $studentData['schoolsession'] ?? 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Term:</span>
-                                                    <span class="rd3">{{ $studentData['schoolterm'] ?? 'NO INFO' }}</span>
+                                                    <span class="font-bold">{{ $studentData['schoolterm'] ?? 'NO INFO' }}</span>
                                                 </div>
                                             </td>
                                             <td width="33%">
                                                 <div class="info-row">
                                                     <span class="result-details">Class:</span>
-                                                    <span class="rd4">{{ $studentData['schoolclass']->schoolclass ?? 'NO INFO' }} {{ $studentData['schoolclass']->armRelation->arm ?? 'NO INFO' }}</span>
+                                                    <span class="font-bold">{{ $studentData['schoolclass']->schoolclass ?? 'NO INFO' }} {{ $studentData['schoolclass']->armRelation->arm ?? 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">DOB:</span>
-                                                    <span class="rd5">
+                                                    <span class="font-bold">
                                                         @php
                                                             $dob = $student->dateofbirth ?? null;
                                                             $formattedDob = 'NO INFO';
@@ -547,25 +545,25 @@
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Adm No:</span>
-                                                    <span class="rd6">{{ $student->admissionNo ?? 'NO INFO' }}</span>
+                                                    <span class="font-bold">{{ $student->admissionNo ?? 'NO INFO' }}</span>
                                                 </div>
                                             </td>
                                             <td width="34%">
                                                 <div class="info-row">
                                                     <span class="result-details">Sex:</span>
-                                                    <span class="rd7">{{ $student->gender ?? 'NO INFO' }}</span>
+                                                    <span class="font-bold">{{ $student->gender ?? 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">School Opened:</span>
-                                                    <span class="rd8">{{ $profile ? ($profile->attendance ?? 'NO INFO') : 'NO INFO' }}</span>
+                                                    <span class="font-bold">{{ $profile ? ($profile->attendance ?? 'NO INFO') : 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Absent:</span>
-                                                    <span class="rd9">{{ $profile && $profile->attendance ? ($profile->attendance - ($profile->attendance ?? 0)) : 'NO INFO' }}</span>
+                                                    <span class="font-bold">{{ $profile && $profile->attendance ? ($profile->attendance - ($profile->attendance ?? 0)) : 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row students-count">
                                                     <span class="result-details">Students in Class:</span>
-                                                    <span class="rd10">{{ $studentData['numberOfStudents'] ?? 'NO INFO' }}</span>
+                                                    <span class="font-bold">{{ $studentData['numberOfStudents'] ?? 'NO INFO' }}</span>
                                                 </div>
                                             </td>
                                         </tr>
@@ -667,13 +665,18 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr><td>Class Attendance</td><td>{{ $profile ? ($profile->attendance ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
-                                    <tr><td>Attentiveness in Class</td><td>{{ $profile ? ($profile->attentiveness_in_class ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
-                                    <tr><td>Class Participation</td><td>{{ $profile ? ($profile->class_participation ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
-                                    <tr><td>Self Control</td><td>{{ $profile ? ($profile->selfcontrol ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
-                                    <tr><td>Relationship with Others</td><td>{{ $profile ? ($profile->relationship_with_others ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
-                                    <tr><td>Doing Assignment</td><td>{{ $profile ? ($profile->doing_assignment ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
-                                    <tr><td>Neatness</td><td>{{ $profile ? ($profile->neatness ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
+                                    @if ($studentData['studentpp'] && $studentData['studentpp']->isNotEmpty())
+                                        @php $profile = $studentData['studentpp']->first(); @endphp
+                                        <tr><td>Class Attendance</td><td>{{ $profile->attendance ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Attentiveness in Class</td><td>{{ $profile->attentiveness_in_class ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Class Participation</td><td>{{ $profile->class_participation ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Self Control</td><td>{{ $profile->selfcontrol ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Relationship with Others</td><td>{{ $profile->relationship_with_others ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Doing Assignment</td><td>{{ $profile->doing_assignment ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Neatness</td><td>{{ $profile->neatness ?? 'NO INFO' }}</td><td></td></tr>
+                                    @else
+                                        <tr><td colspan="3">No character assessment data available.</td></tr>
+                                    @endif
                                 </tbody>
                             </table>
                         </td>
@@ -688,13 +691,18 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr><td>Writing Skill</td><td>{{ $profile ? ($profile->writing_skill ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
-                                    <tr><td>Reading Skill</td><td>{{ $profile ? ($profile->reading_skill ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
-                                    <tr><td>Spoken English/Communication</td><td>{{ $profile ? ($profile->spoken_english_communication ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
-                                    <tr><td>Hand Writing</td><td>{{ $profile ? ($profile->hand_writing ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
-                                    <tr><td>Sports/Games</td><td>{{ $profile ? ($profile->gamesandsports ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
-                                    <tr><td>Club</td><td>{{ $profile ? ($profile->club ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
-                                    <tr><td>Music</td><td>{{ $profile ? ($profile->music ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
+                                    @if ($studentData['studentpp'] && $studentData['studentpp']->isNotEmpty())
+                                        @php $profile = $studentData['studentpp']->first(); @endphp
+                                        <tr><td>Writing Skill</td><td>{{ $profile->writing_skill ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Reading Skill</td><td>{{ $profile->reading_skill ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Spoken English/Communication</td><td>{{ $profile->spoken_english_communication ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Hand Writing</td><td>{{ $profile->hand_writing ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Sports/Games</td><td>{{ $profile->gamesandsports ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Club</td><td>{{ $profile->club ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Music</td><td>{{ $profile->music ?? 'NO INFO' }}</td><td></td></tr>
+                                    @else
+                                        <tr><td colspan="3">No skill development data available.</td></tr>
+                                    @endif
                                 </tbody>
                             </table>
                         </td>
@@ -702,13 +710,13 @@
                 </table> --}}
 
                 <!-- Grade Legend -->
-                <div class="grade-display">
+                {{-- <div class="grade-display">
                     <span>Grade: V.Good {VG}</span>
                     <span>Good {G}</span>
                     <span>Average {AVG}</span>
                     <span>Below Average {BA}</span>
                     <span>Poor {P}</span>
-                </div>
+                </div> --}}
 
                 <!-- Remarks Section -->
                 <table class="remarks-table">
