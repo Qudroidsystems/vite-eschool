@@ -176,8 +176,14 @@
         }
 
         .result-details {
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 800;
+            color: #000000;
+        }
+
+        .info-value {
+            font-size: 12px;
+            font-weight: bold;
             color: #000000;
         }
 
@@ -505,25 +511,25 @@
                                             <td width="41%">
                                                 <div class="info-row">
                                                     <span class="result-details">Name:</span>
-                                                    <span class="font-bold">{{ strtoupper($student->lastname ?? 'ILEMOBAYOEEEE') }} {{ $student->fname ?? 'Eliabeeeee' }} {{ $student->othername ?? 'eeeee' }}</span>
+                                                    <span class="info-value font-bold">{{ strtoupper($student->lastname ?? 'ILEMOBAYOEEEE') }} {{ $student->fname ?? 'Eliabeeeee' }} {{ $student->othername ?? 'eeeee' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Session:</span>
-                                                    <span class="font-bold">{{ $studentData['schoolsession'] ?? 'NO INFO' }}</span>
+                                                    <span class="info-value font-bold">{{ $studentData['schoolsession'] ?? 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Term:</span>
-                                                    <span class="font-bold">{{ $studentData['schoolterm'] ?? 'NO INFO' }}</span>
+                                                    <span class="info-value font-bold">{{ $studentData['schoolterm'] ?? 'NO INFO' }}</span>
                                                 </div>
                                             </td>
                                             <td width="29%">
                                                 <div class="info-row">
                                                     <span class="result-details">Class:</span>
-                                                    <span class="font-bold">{{ $studentData['schoolclass']->schoolclass ?? 'NO INFO' }} {{ $studentData['schoolclass']->armRelation->arm ?? 'NO INFO' }}</span>
+                                                    <span class="info-value font-bold">{{ $studentData['schoolclass']->schoolclass ?? 'NO INFO' }} {{ $studentData['schoolclass']->armRelation->arm ?? 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">DOB:</span>
-                                                    <span class="font-bold">
+                                                    <span class="info-value font-bold">
                                                         @php
                                                             $dob = $student->dateofbirth ?? null;
                                                             $formattedDob = 'NO INFO';
@@ -545,25 +551,25 @@
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Adm No:</span>
-                                                    <span class="font-bold">{{ $student->admissionNo ?? 'NO INFO' }}</span>
+                                                    <span class="info-value font-bold">{{ $student->admissionNo ?? 'NO INFO' }}</span>
                                                 </div>
                                             </td>
                                             <td width="30%">
                                                 <div class="info-row">
                                                     <span class="result-details">Sex:</span>
-                                                    <span class="font-bold">{{ $student->gender ?? 'NO INFO' }}</span>
+                                                    <span class="info-value font-bold">{{ $student->gender ?? 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">School Opened:</span>
-                                                    <span class="font-bold">{{ $profile ? ($profile->attendance ?? 'NO INFO') : 'NO INFO' }}</span>
+                                                    <span class="info-value font-bold">{{ $profile ? ($profile->attendance ?? 'NO INFO') : 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Absent:</span>
-                                                    <span class="font-bold">{{ $profile && $profile->attendance ? ($profile->attendance - ($profile->attendance ?? 0)) : 'NO INFO' }}</span>
+                                                    <span class="info-value font-bold">{{ $profile && $profile->attendance ? ($profile->attendance - ($profile->attendance ?? 0)) : 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row students-count">
                                                     <span class="result-details">Students in Class:</span>
-                                                    <span class="font-bold">{{ $studentData['numberOfStudents'] ?? 'NO INFO' }}</span>
+                                                    <span class="info-value font-bold">{{ $studentData['numberOfStudents'] ?? 'NO INFO' }}</span>
                                                 </div>
                                             </td>
                                         </tr>
@@ -652,7 +658,7 @@
                 </div>
 
                 <!-- Assessment Tables Section -->
-                {{-- <table class="assessment-layout-table">
+                <table class="assessment-layout-table">
                     <tr>
                         <td>
                             <div class="h5">Character Assessment</div>
@@ -707,16 +713,16 @@
                             </table>
                         </td>
                     </tr>
-                </table> --}}
+                </table>
 
                 <!-- Grade Legend -->
-                {{-- <div class="grade-display">
+                <div class="grade-display">
                     <span>Grade: V.Good {VG}</span>
                     <span>Good {G}</span>
                     <span>Average {AVG}</span>
                     <span>Below Average {BA}</span>
                     <span>Poor {P}</span>
-                </div> --}}
+                </div>
 
                 <!-- Remarks Section -->
                 <table class="remarks-table">
