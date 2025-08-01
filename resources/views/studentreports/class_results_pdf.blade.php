@@ -100,18 +100,19 @@
         }
 
         .school-name2 {
-            font-size: 18px;
-            font-weight: 800;
-            color: #1e40af;
+            font-size: 20px;
+            font-weight: 900;
+            color: #000000;
             text-align: left;
-            margin: 3px 0;
+            margin: 1px 0;
+            line-height: 1.2;
         }
 
         .school-logo {
-            width: 70px;
-            height: 70px;
+            width: 100px;
+            height: 100px;
             border: 0px solid #1e40af;
-            border-radius: 5px;
+            border-radius: 1px;
             overflow: hidden;
             text-align: center;
         }
@@ -158,22 +159,24 @@
         .header-img {
             width: 100%;
             height: 100%;
-            border-radius: 5px;
+            border-radius: 1px;
         }
 
         .school-motto, .school-address, .school-website {
-            font-size: 10px;
-            color: #6b7280;
-            margin: 2px 0;
+            font-size: 12px;
+            font-weight: 900;
+            color: #000000;
+            margin: 1px 0;
             text-align: left;
+            line-height: 1.2;
         }
 
         .student-info-section {
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
         .result-details {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 800;
             color: #000000;
         }
@@ -181,11 +184,11 @@
         .rd1, .rd2, .rd3, .rd4, .rd5, .rd6, .rd7, .rd8, .rd9, .rd10 {
             border-bottom: 2px dotted #6b7280;
             margin-left: 6px;
-            min-width: 80px;
+            min-width: 60px;
             display: inline-block;
             font-weight: 800;
-            padding-bottom: 2px;
-            font-size: 11px;
+            padding-bottom: 1px;
+            font-size: 10px;
             color: #000000;
         }
 
@@ -343,12 +346,12 @@
 
         .student-info-table {
             width: 100%;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             table-layout: fixed;
         }
 
         .student-info-table td {
-            padding: 2px;
+            padding: 1px;
             vertical-align: top;
         }
 
@@ -374,7 +377,7 @@
         }
 
         .info-row {
-            margin-bottom: 4px;
+            margin-bottom: 2px;
             line-height: 1.2;
         }
 
@@ -385,11 +388,11 @@
         .info-row .rd1, .info-row .rd2, .info-row .rd3, .info-row .rd4, 
         .info-row .rd5, .info-row .rd6, .info-row .rd7, .info-row .rd8, 
         .info-row .rd9, .info-row .rd10 {
-            margin-right: 10px;
+            margin-right: 8px;
         }
 
         .info-row.students-count {
-            margin-top: 4px;
+            margin-top: 2px;
         }
 
         .text-center {
@@ -441,15 +444,16 @@
                 <div class="header">
                     @php
                         $schoolInfo = $studentData['schoolInfo'] ?? null;
+                        $student = $studentData['students'] && $studentData['students']->isNotEmpty() ? $studentData['students']->first() : null;
                     @endphp
                     <table class="header-table">
                         <tr>
-                            <td width="20%">
+                            <td width="25%">
                                 <div class="school-logo">
                                     <img class="header-img" src="{{ $studentData['school_logo_path'] ?? public_path('storage/school_logos/default.jpg') }}" alt="School Logo">
                                 </div>
                             </td>
-                            <td width="80%">
+                            <td width="50%">
                                 <p class="school-name2">{{ $schoolInfo->school_name ?? 'QUODOROID CODING ACADEMY' }}</p>
                                 <div class="school-motto">{{ $schoolInfo->school_motto ?? 'NO INFO' }}</div>
                                 <div class="school-address">{{ $schoolInfo->school_address ?? 'NO INFO' }}</div>
@@ -458,6 +462,15 @@
                                 @else
                                     <div class="school-website">NO INFO</div>
                                 @endif
+                            </td>
+                            <td width="25%">
+                                <div class="photo-frame">
+                                    @if ($studentData['students'] && $studentData['students']->isNotEmpty() && $student->picture)
+                                        <img src="{{ $studentData['student_image_path'] ?? public_path('storage/student_avatars/unnamed.jpg') }}" alt="{{ $student->fname ?? 'Student' }}'s picture">
+                                    @else
+                                        <img src="{{ public_path('storage/student_avatars/unnamed.jpg') }}" alt="Default Photo">
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                     </table>
@@ -470,12 +483,15 @@
                 <div class="student-info-section">
                     <table class="student-info-table">
                         <tr>
-                            <td width="75%">
+                            <td width="100%">
                                 @if ($studentData['students'] && $studentData['students']->isNotEmpty())
-                                    @php $student = $studentData['students']->first(); @endphp
+                                    @php 
+                                        $student = $studentData['students']->first();
+                                        $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
+                                    @endphp
                                     <table style="width: 100%; table-layout: fixed;">
                                         <tr>
-                                            <td>
+                                            <td width="33%">
                                                 <div class="info-row">
                                                     <span class="result-details">Name:</span>
                                                     <span class="rd1">{{ $student->fname ?? 'NO INFO' }} {{ $student->lastname ?? 'NO INFO' }} {{ $student->othername ?? '' }}</span>
@@ -483,15 +499,17 @@
                                                 <div class="info-row">
                                                     <span class="result-details">Session:</span>
                                                     <span class="rd2">{{ $studentData['schoolsession'] ?? 'NO INFO' }}</span>
+                                                </div>
+                                                <div class="info-row">
                                                     <span class="result-details">Term:</span>
                                                     <span class="rd3">{{ $studentData['schoolterm'] ?? 'NO INFO' }}</span>
                                                 </div>
+                                            </td>
+                                            <td width="33%">
                                                 <div class="info-row">
                                                     <span class="result-details">Class:</span>
                                                     <span class="rd4">{{ $studentData['schoolclass']->schoolclass ?? 'NO INFO' }} {{ $studentData['schoolclass']->armRelation->arm ?? 'NO INFO' }}</span>
                                                 </div>
-                                            </td>
-                                            <td>
                                                 <div class="info-row">
                                                     <span class="result-details">DOB:</span>
                                                     <span class="rd5">
@@ -517,13 +535,14 @@
                                                 <div class="info-row">
                                                     <span class="result-details">Adm No:</span>
                                                     <span class="rd6">{{ $student->admissionNo ?? 'NO INFO' }}</span>
+                                                </div>
+                                            </td>
+                                            <td width="34%">
+                                                <div class="info-row">
                                                     <span class="result-details">Sex:</span>
                                                     <span class="rd7">{{ $student->gender ?? 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row">
-                                                    @php
-                                                        $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
-                                                    @endphp
                                                     <span class="result-details">School Opened:</span>
                                                     <span class="rd8">{{ $profile ? ($profile->attendance ?? 'NO INFO') : 'NO INFO' }}</span>
                                                 </div>
@@ -543,15 +562,6 @@
                                         <span class="result-details">No student data available.</span>
                                     </div>
                                 @endif
-                            </td>
-                            <td width="25%">
-                                <div class="photo-frame">
-                                    @if ($studentData['students'] && $studentData['students']->isNotEmpty() && $student->picture)
-                                        <img src="{{ $studentData['student_image_path'] ?? public_path('storage/student_avatars/unnamed.jpg') }}" alt="{{ $student->fname ?? 'Student' }}'s picture">
-                                    @else
-                                        <img src="{{ public_path('storage/student_avatars/unnamed.jpg') }}" alt="Default Photo">
-                                    @endif
-                                </div>
                             </td>
                         </tr>
                     </table>
@@ -644,9 +654,6 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @php
-                                        $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
-                                    @endphp
                                     <tr><td>Class Attendance</td><td>{{ $profile ? ($profile->attendance ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
                                     <tr><td>Attentiveness in Class</td><td>{{ $profile ? ($profile->attentiveness_in_class ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
                                     <tr><td>Class Participation</td><td>{{ $profile ? ($profile->class_participation ?? 'NO INFO') : 'NO INFO' }}</td><td></td></tr>
