@@ -229,7 +229,12 @@
         .result-table thead th:nth-child(3),
         .result-table thead th:nth-child(4),
         .result-table thead th:nth-child(5) {
-            width: 40px; /* Reduced from 50px for T1, T2, T3 columns */
+            width: 35px; /* Further reduced from 40px for T1, T2, T3 columns */
+        }
+
+        .result-table thead th:nth-child(6),
+        .result-table thead th:nth-child(8) {
+            width: 50px; /* Increased width for columns d and f */
         }
 
         .result-table tbody td {
@@ -238,7 +243,7 @@
             text-align: center;
             font-size: 11px;
             background: white;
-            font-weight: 700; /* Make all scores bolder */
+            font-weight: 700;
         }
 
         .result-table tbody tr:nth-child(even) td {
