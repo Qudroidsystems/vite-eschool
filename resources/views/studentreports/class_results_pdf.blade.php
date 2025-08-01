@@ -18,7 +18,6 @@
             background: #fff;
             margin: 10mm 0 0 0;
             padding: 0;
-            display: block;
             text-align: center;
         }
 
@@ -33,7 +32,6 @@
             position: relative;
             overflow: hidden;
             text-align: left;
-            display: block;
         }
 
         .student-section:last-child {
@@ -54,7 +52,6 @@
                 padding: 10mm;
                 page-break-after: always;
                 text-align: left;
-                display: block;
             }
             
             .student-section:last-child {
@@ -106,7 +103,7 @@
             font-size: 18px;
             font-weight: 800;
             color: #1e40af;
-            text-align: center;
+            text-align: left;
             margin: 3px 0;
         }
 
@@ -116,7 +113,6 @@
             border: 0px solid #1e40af;
             border-radius: 5px;
             overflow: hidden;
-            margin: 0 auto 8px;
             text-align: center;
         }
 
@@ -146,30 +142,40 @@
         }
 
         .header {
-            text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
+        }
+
+        .header-table {
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .header-table td {
+            vertical-align: middle;
+            padding: 0;
         }
 
         .header-img {
             width: 100%;
             height: 100%;
-            border-radius: 35px;
+            border-radius: 5px;
         }
 
         .school-motto, .school-address, .school-website {
             font-size: 10px;
             color: #6b7280;
             margin: 2px 0;
+            text-align: left;
         }
 
         .student-info-section {
-            margin-bottom: 10px;
+            margin-bottom: 6px;
         }
 
         .result-details {
             font-size: 11px;
-            font-weight: 700;
-            color: #374151;
+            font-weight: 800;
+            color: #000000;
         }
 
         .rd1, .rd2, .rd3, .rd4, .rd5, .rd6, .rd7, .rd8, .rd9, .rd10 {
@@ -177,13 +183,14 @@
             margin-left: 6px;
             min-width: 80px;
             display: inline-block;
-            font-weight: 700;
+            font-weight: 800;
             padding-bottom: 2px;
             font-size: 11px;
+            color: #000000;
         }
 
         .photo-frame {
-            border: 3px solid #1e40af;
+            border: 3px solid #090909;
             border-radius: 8px;
             overflow: hidden;
             background: white;
@@ -207,7 +214,7 @@
         }
 
         .result-table thead th {
-            background: #0d1a3d; /* Very deep blue background */
+            background: #0d1a3d;
             color: white;
             font-weight: 600;
             border: 1px solid #000000;
@@ -264,6 +271,8 @@
             padding: 3px 4px;
             background: white;
             font-size: 8px;
+            color: #000000;
+            font-weight: bold;
         }
 
         .assessment-table tbody tr:nth-child(even) td {
@@ -289,7 +298,7 @@
             width: 100%;
             border: 2px solid #000000;
             border-collapse: collapse;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
 
         .remarks-table td {
@@ -300,10 +309,20 @@
         }
 
         .remarks-table .h6 {
-            color: #6d28d9;
+            color: #050505;
             font-weight: 600;
             margin-bottom: 4px;
             font-size: 9px;
+        }
+
+        .remarks-table .text-space-on-dots {
+            color: #000000;
+            font-weight: bold;
+        }
+
+        .remarks-table .promotion-status {
+            color: #000000;
+            font-weight: bold;
         }
 
         .footer-section {
@@ -324,12 +343,12 @@
 
         .student-info-table {
             width: 100%;
-            margin-bottom: 10px;
+            margin-bottom: 6px;
             table-layout: fixed;
         }
 
         .student-info-table td {
-            padding: 3px;
+            padding: 2px;
             vertical-align: top;
         }
 
@@ -355,22 +374,22 @@
         }
 
         .info-row {
-            margin-bottom: 8px;
-            line-height: 1.6;
+            margin-bottom: 4px;
+            line-height: 1.2;
         }
 
         .info-row .result-details {
-            margin-right: 8px;
+            margin-right: 4px;
         }
 
         .info-row .rd1, .info-row .rd2, .info-row .rd3, .info-row .rd4, 
         .info-row .rd5, .info-row .rd6, .info-row .rd7, .info-row .rd8, 
         .info-row .rd9, .info-row .rd10 {
-            margin-right: 20px;
+            margin-right: 10px;
         }
 
         .info-row.students-count {
-            margin-top: 8px;
+            margin-top: 4px;
         }
 
         .text-center {
@@ -382,7 +401,7 @@
         }
 
         .text-primary {
-            color: #1e40af;
+            color: #02175e;
         }
 
         .student-section-inner {
@@ -402,15 +421,15 @@
         }
 
         .promotion-promoted {
-            color: #22c55e; /* Green for PROMOTED */
+            color: #22c55e;
         }
 
         .promotion-repeat {
-            color: #dc2626; /* Red for REPEAT */
+            color: #dc2626;
         }
 
         .promotion-parents {
-            color: #f97316; /* Orange for PARENTS TO SEE PRINCIPAL */
+            color: #f97316;
         }
     </style>
 </head>
@@ -423,17 +442,25 @@
                     @php
                         $schoolInfo = $studentData['schoolInfo'] ?? null;
                     @endphp
-                    <div class="school-logo">
-                        <img class="header-img" src="{{ $studentData['school_logo_path'] ?? public_path('storage/school_logos/default.jpg') }}" alt="School Logo">
-                    </div>
-                    <p class="school-name2">{{ $schoolInfo->school_name ?? 'QUODOROID CODING ACADEMY' }}</p>
-                    <div class="school-motto">{{ $schoolInfo->school_motto ?? 'NO INFO' }}</div>
-                    <div class="school-address">{{ $schoolInfo->school_address ?? 'NO INFO' }}</div>
-                    @if ($schoolInfo && $schoolInfo->school_website)
-                        <div class="school-website">{{ $schoolInfo->school_website }}</div>
-                    @else
-                        <div class="school-website">NO INFO</div>
-                    @endif
+                    <table class="header-table">
+                        <tr>
+                            <td width="20%">
+                                <div class="school-logo">
+                                    <img class="header-img" src="{{ $studentData['school_logo_path'] ?? public_path('storage/school_logos/default.jpg') }}" alt="School Logo">
+                                </div>
+                            </td>
+                            <td width="80%">
+                                <p class="school-name2">{{ $schoolInfo->school_name ?? 'QUODOROID CODING ACADEMY' }}</p>
+                                <div class="school-motto">{{ $schoolInfo->school_motto ?? 'NO INFO' }}</div>
+                                <div class="school-address">{{ $schoolInfo->school_address ?? 'NO INFO' }}</div>
+                                @if ($schoolInfo && $schoolInfo->school_website)
+                                    <div class="school-website">{{ $schoolInfo->school_website }}</div>
+                                @else
+                                    <div class="school-website">NO INFO</div>
+                                @endif
+                            </td>
+                        </tr>
+                    </table>
                     <div class="header-divider"></div>
                     <div class="header-divider2"></div>
                     <div class="report-title">TERMINAL PROGRESS REPORT</div>
@@ -446,58 +473,71 @@
                             <td width="75%">
                                 @if ($studentData['students'] && $studentData['students']->isNotEmpty())
                                     @php $student = $studentData['students']->first(); @endphp
-                                    <div class="info-row">
-                                        <span class="result-details">Name of Student:</span>
-                                        <span class="rd1">{{ $student->fname ?? 'NO INFO' }} {{ $student->lastname ?? 'NO INFO' }} {{ $student->othername ?? '' }}</span>
-                                    </div>
-                                    <div class="info-row">
-                                        <span class="result-details">Session:</span>
-                                        <span class="rd2">{{ $studentData['schoolsession'] ?? 'NO INFO' }}</span>
-                                        <span class="result-details">Term:</span>
-                                        <span class="rd3">{{ $studentData['schoolterm'] ?? 'NO INFO' }}</span>
-                                        <span class="result-details">Class:</span>
-                                        <span class="rd4">{{ $studentData['schoolclass']->schoolclass ?? 'NO INFO' }} {{ $studentData['schoolclass']->armRelation->arm ?? 'NO INFO' }}</span>
-                                    </div>
-                                    <div class="info-row">
-                                        <span class="result-details">Date of Birth:</span>
-                                        <span class="rd5">
-                                            @php
-                                                $dob = $student->dateofbirth ?? null;
-                                                $formattedDob = 'NO INFO';
-                                                
-                                                if ($dob) {
-                                                    try {
-                                                        if (is_numeric($dob)) {
-                                                            $unixTimestamp = ($dob - 25569) * 86400;
-                                                            $formattedDob = date('d/m/Y', $unixTimestamp);
-                                                        } else {
-                                                            $formattedDob = \Carbon\Carbon::parse($dob)->format('d/m/Y');
-                                                        }
-                                                    } catch (\Exception $e) {
-                                                        $formattedDob = $dob;
-                                                    }
-                                                }
-                                            @endphp
-                                            {{ $formattedDob }}
-                                        </span>
-                                        <span class="result-details">Admission No:</span>
-                                        <span class="rd6">{{ $student->admissionNo ?? 'NO INFO' }}</span>
-                                        <span class="result-details">Sex:</span>
-                                        <span class="rd7">{{ $student->gender ?? 'NO INFO' }}</span>
-                                    </div>
-                                    <div class="info-row">
-                                        @php
-                                            $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
-                                        @endphp
-                                        <span class="result-details">No. of Times School Opened:</span>
-                                        <span class="rd8">{{ $profile ? ($profile->attendance ?? 'NO INFO') : 'NO INFO' }}</span>
-                                        <span class="result-details">No. of Times School Absent:</span>
-                                        <span class="rd9">{{ $profile && $profile->attendance ? ($profile->attendance - ($profile->attendance ?? 0)) : 'NO INFO' }}</span>
-                                    </div>
-                                    <div class="info-row students-count">
-                                        <span class="result-details">No. of Students in Class:</span>
-                                        <span class="rd10">{{ $studentData['numberOfStudents'] ?? 'NO INFO' }}</span>
-                                    </div>
+                                    <table style="width: 100%; table-layout: fixed;">
+                                        <tr>
+                                            <td>
+                                                <div class="info-row">
+                                                    <span class="result-details">Name:</span>
+                                                    <span class="rd1">{{ $student->fname ?? 'NO INFO' }} {{ $student->lastname ?? 'NO INFO' }} {{ $student->othername ?? '' }}</span>
+                                                </div>
+                                                <div class="info-row">
+                                                    <span class="result-details">Session:</span>
+                                                    <span class="rd2">{{ $studentData['schoolsession'] ?? 'NO INFO' }}</span>
+                                                    <span class="result-details">Term:</span>
+                                                    <span class="rd3">{{ $studentData['schoolterm'] ?? 'NO INFO' }}</span>
+                                                </div>
+                                                <div class="info-row">
+                                                    <span class="result-details">Class:</span>
+                                                    <span class="rd4">{{ $studentData['schoolclass']->schoolclass ?? 'NO INFO' }} {{ $studentData['schoolclass']->armRelation->arm ?? 'NO INFO' }}</span>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div class="info-row">
+                                                    <span class="result-details">DOB:</span>
+                                                    <span class="rd5">
+                                                        @php
+                                                            $dob = $student->dateofbirth ?? null;
+                                                            $formattedDob = 'NO INFO';
+                                                            if ($dob) {
+                                                                try {
+                                                                    if (is_numeric($dob)) {
+                                                                        $unixTimestamp = ($dob - 25569) * 86400;
+                                                                        $formattedDob = date('d/m/Y', $unixTimestamp);
+                                                                    } else {
+                                                                        $formattedDob = \Carbon\Carbon::parse($dob)->format('d/m/Y');
+                                                                    }
+                                                                } catch (\Exception $e) {
+                                                                    $formattedDob = $dob;
+                                                                }
+                                                            }
+                                                        @endphp
+                                                        {{ $formattedDob }}
+                                                    </span>
+                                                </div>
+                                                <div class="info-row">
+                                                    <span class="result-details">Adm No:</span>
+                                                    <span class="rd6">{{ $student->admissionNo ?? 'NO INFO' }}</span>
+                                                    <span class="result-details">Sex:</span>
+                                                    <span class="rd7">{{ $student->gender ?? 'NO INFO' }}</span>
+                                                </div>
+                                                <div class="info-row">
+                                                    @php
+                                                        $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
+                                                    @endphp
+                                                    <span class="result-details">School Opened:</span>
+                                                    <span class="rd8">{{ $profile ? ($profile->attendance ?? 'NO INFO') : 'NO INFO' }}</span>
+                                                </div>
+                                                <div class="info-row">
+                                                    <span class="result-details">Absent:</span>
+                                                    <span class="rd9">{{ $profile && $profile->attendance ? ($profile->attendance - ($profile->attendance ?? 0)) : 'NO INFO' }}</span>
+                                                </div>
+                                                <div class="info-row students-count">
+                                                    <span class="result-details">Students in Class:</span>
+                                                    <span class="rd10">{{ $studentData['numberOfStudents'] ?? 'NO INFO' }}</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
                                 @else
                                     <div class="info-row">
                                         <span class="result-details">No student data available.</span>
