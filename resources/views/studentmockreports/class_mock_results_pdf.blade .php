@@ -401,12 +401,6 @@
             margin-right: 4px;
         }
 
-        .info-row .rd1, .info-row .rd2, .info-row .rd3, .info-row .rd4, 
-        .info-row .rd5, .info-row .rd6, .info-row .rd7, .info-row .rd8, 
-        .info-row .rd9, .info-row .rd10 {
-            margin-right: 8px;
-        }
-
         .info-row.students-count {
             margin-top: 2px;
         }
@@ -511,25 +505,25 @@
                                             <td width="33%">
                                                 <div class="info-row">
                                                     <span class="result-details">Name:</span>
-                                                    <span class="rd1">{{ $student->lastname ?? 'NO INFO' }} {{ $student->fname ?? 'NO INFO' }}  {{ $student->othername ?? '' }}</span>
+                                                    <span class="font-bold">{{ strtoupper($student->lastname ?? 'ILEMOBAYOEEEE') }} {{ $student->fname ?? 'Eliabeeeee' }} {{ $student->othername ?? 'eeeee' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Session:</span>
-                                                    <span class="rd2">{{ $studentData['schoolsession'] ?? 'NO INFO' }}</span>
+                                                    <span class="font-bold">{{ $studentData['schoolsession'] ?? 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Term:</span>
-                                                    <span class="rd3">{{ $studentData['schoolterm'] ?? 'NO INFO' }}</span>
+                                                    <span class="font-bold">{{ $studentData['schoolterm'] ?? 'NO INFO' }}</span>
                                                 </div>
                                             </td>
                                             <td width="33%">
                                                 <div class="info-row">
                                                     <span class="result-details">Class:</span>
-                                                    <span class="rd4">{{ $studentData['schoolclass']->schoolclass ?? 'NO INFO' }} {{ $studentData['schoolclass']->armRelation->arm ?? 'NO INFO' }}</span>
+                                                    <span class="font-bold">{{ $studentData['schoolclass']->schoolclass ?? 'NO INFO' }} {{ $studentData['schoolclass']->armRelation->arm ?? 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">DOB:</span>
-                                                    <span class="rd5">
+                                                    <span class="font-bold">
                                                         @php
                                                             $dob = $student->dateofbirth ?? null;
                                                             $formattedDob = 'NO INFO';
@@ -551,25 +545,25 @@
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Adm No:</span>
-                                                    <span class="rd6">{{ $student->admissionNo ?? 'NO INFO' }}</span>
+                                                    <span class="font-bold">{{ $student->admissionNo ?? 'NO INFO' }}</span>
                                                 </div>
                                             </td>
                                             <td width="34%">
                                                 <div class="info-row">
                                                     <span class="result-details">Sex:</span>
-                                                    <span class="rd7">{{ $student->gender ?? 'NO INFO' }}</span>
+                                                    <span class="font-bold">{{ $student->gender ?? 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">School Opened:</span>
-                                                    <span class="rd8">{{ $profile ? ($profile->attendance ?? 'NO INFO') : 'NO INFO' }}</span>
+                                                    <span class="font-bold">{{ $profile ? ($profile->attendance ?? 'NO INFO') : 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Absent:</span>
-                                                    <span class="rd9">{{ $profile && $profile->attendance ? ($profile->attendance - ($profile->attendance ?? 0)) : 'NO INFO' }}</span>
+                                                    <span class="font-bold">{{ $profile && $profile->attendance ? ($profile->attendance - ($profile->attendance ?? 0)) : 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row students-count">
                                                     <span class="result-details">Students in Class:</span>
-                                                    <span class="rd10">{{ $studentData['numberOfStudents'] ?? 'NO INFO' }}</span>
+                                                    <span class="font-bold">{{ $studentData['numberOfStudents'] ?? 'NO INFO' }}</span>
                                                 </div>
                                             </td>
                                         </tr>
