@@ -585,7 +585,7 @@ class ViewStudentReportController extends Controller
                     'chroot' => [public_path(), storage_path()],
                     'fontCache' => storage_path('fonts/'),
                     'logOutputFile' => storage_path('logs/dompdf.log'),
-                    'debugCss' => config('app.debug', falsa),
+                    'debugCss' => config('app.debug', false),
                     'debugLayout' => config('app.debug', false),
                 ]);
 

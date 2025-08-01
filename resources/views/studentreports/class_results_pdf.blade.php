@@ -476,7 +476,7 @@
                     </table>
                     <div class="header-divider"></div>
                     <div class="header-divider2"></div>
-                    <div class="report-title">TERMINAL PROGRESS REPORT</div>
+                    <div class="report-title">  {{  $metadata['term'] }} {{ $metadata['session'] }} ACADEMIC SESSION TERMINAL PROGRESS REPORT</div>
                 </div>
 
                 <!-- Student Information Section -->
@@ -641,7 +641,7 @@
                 </div>
 
                 <!-- Assessment Tables Section -->
-                <table class="assessment-layout-table">
+                {{-- <table class="assessment-layout-table">
                     <tr>
                         <td>
                             <div class="h5">Character Assessment</div>
@@ -686,7 +686,7 @@
                             </table>
                         </td>
                     </tr>
-                </table>
+                </table> --}}
 
                 <!-- Grade Legend -->
                 <div class="grade-display">
