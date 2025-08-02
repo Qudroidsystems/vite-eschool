@@ -132,7 +132,7 @@
                                                 <th>Class</th>
                                                 <th>Arm</th>
                                                 <th>Session</th>
-                                                <th>Actions</th>
+                                               
                                             </tr>
                                         </thead>
                                         <tbody id="studentTableBody">
