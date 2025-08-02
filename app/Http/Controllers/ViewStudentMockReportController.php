@@ -8,11 +8,10 @@ use App\Models\Schoolclass;
 use App\Models\SchoolInformation;
 use App\Models\Schoolsession;
 use App\Models\Schoolterm;
-use App\Models\Student;
+use App\Models\StudentRegistration;
 use App\Models\Studentclass;
 use App\Models\Studentpersonalityprofile;
 use App\Models\StudentPicture;
-use App\Models\StudentRegistration;
 use App\Models\Subject;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -329,7 +328,7 @@ class ViewStudentMockReportController extends Controller
                 return [];
             }
 
-            $students = Student::where('studentRegistration.id', $id)
+            $students = StudentRegistration::where('studentRegistration.id', $id)
                 ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
                 ->select([
                     'studentRegistration.id as id',
@@ -398,16 +397,17 @@ class ViewStudentMockReportController extends Controller
                 'school_address' => config('school.default_address', 'N/A'),
                 'school_website' => config('school.default_website', null),
                 'getLogoUrlAttribute' => function () {
-                    return config('school.default_logo', 'school_logos/default.jpg');
+                    $defaultLogo = storage_path('app/public/school_logos/default.jpg');
+                    return file_exists($defaultLogo) ? 'file://' . $defaultLogo : null;
                 }
             ];
 
             if ($students->isNotEmpty() && $students->first()->picture) {
-                $imagePath = Storage::disk('public')->path($students->first()->picture);
-                Log::info('Student image path', ['path' => $imagePath, 'exists' => file_exists($imagePath)]);
+                $imagePath = $this->sanitizeImagePath($students->first()->picture);
+                Log::info('Student image path', ['path' => $imagePath, 'exists' => file_exists(str_replace('file://', '', $imagePath ?? ''))]);
             }
-            $logoPath = Storage::disk('public')->path($schoolInfo->getLogoUrlAttribute());
-            Log::info('School logo path:', ['path' => $logoPath, 'exists' => file_exists($logoPath)]);
+            $logoPath = $this->sanitizeImagePath($schoolInfo->getLogoUrlAttribute());
+            Log::info('School logo path:', ['path' => $logoPath, 'exists' => file_exists(str_replace('file://', '', $logoPath ?? ''))]);
 
             return [
                 'students' => $students,
@@ -568,6 +568,7 @@ class ViewStudentMockReportController extends Controller
     /**
      * Display class broadsheet.
      *
+     * @param Request $request
      * @param int $schoolclassid
      * @param int $sessionid
      * @param int $termid
@@ -656,11 +657,11 @@ class ViewStudentMockReportController extends Controller
                 return back()->with('error', 'No student data found for the provided parameters.');
             }
 
+            $this->fixImagePaths([$data]);
+
             $student = $data['students']->first();
             $studentName = $student ? $student->fname . '_' . $student->lastname : 'Student';
             $filename = 'Mock_Terminal_Report_' . $studentName . '_' . $data['schoolsession'] . '_Term_' . $data['termid'] . '.pdf';
-
-            $this->fixImagePaths([$data]);
 
             $pdf = Pdf::loadView('studentreports.studentmockresult_pdf', ['data' => $data])
                 ->setPaper('A4', 'portrait')
@@ -671,11 +672,12 @@ class ViewStudentMockReportController extends Controller
                     'isHtml5ParserEnabled' => true,
                     'isFontSubsettingEnabled' => true,
                     'isPhpEnabled' => false,
-                    'chroot' => [public_path(), storage_path()],
+                    'chroot' => [public_path(), storage_path('app/public')],
                     'fontCache' => storage_path('fonts/'),
                     'logOutputFile' => storage_path('logs/dompdf.log'),
                     'debugCss' => config('app.debug', false),
                     'debugLayout' => config('app.debug', false),
+                    'debugKeepTemp' => config('app.debug', false),
                 ]);
 
             return $pdf->download($filename);
@@ -852,15 +854,15 @@ class ViewStudentMockReportController extends Controller
                     'isHtml5ParserEnabled' => true,
                     'isFontSubsettingEnabled' => true,
                     'isPhpEnabled' => false,
-                    'chroot' => [public_path(), storage_path()],
+                    'chroot' => [public_path(), storage_path('app/public')],
                     'tempDir' => storage_path('app/temp/'),
                     'fontCache' => storage_path('fonts/'),
                     'logOutputFile' => storage_path('logs/dompdf.log'),
                     'isJavascriptEnabled' => false,
                     'enable_css_float' => true,
-                    'debugLayout' => false,
-                    'debugCss' => false,
-                    'debugKeepTemp' => false
+                    'debugLayout' => config('app.debug', false),
+                    'debugCss' => config('app.debug', false),
+                    'debugKeepTemp' => config('app.debug', false),
                 ])
                 ->setWarnings(true);
 
@@ -923,7 +925,7 @@ class ViewStudentMockReportController extends Controller
     }
 
     /**
-     * Calculate grade preview based on cumulative score.
+     * Calculate grade preview based on total score.
      *
      * @param Request $request
      * @return JsonResponse
@@ -933,13 +935,13 @@ class ViewStudentMockReportController extends Controller
         try {
             $request->validate([
                 'schoolclass_id' => 'required|numeric|exists:schoolclass,id',
-                'cum' => 'required|numeric|min:0|max:100',
+                'total' => 'required|numeric|min:0|max:100', // Changed from 'cum' to 'total'
             ]);
 
             $schoolclass = Schoolclass::with('classcategory')->findOrFail($request->schoolclass_id);
             $grade = $schoolclass->classcategory
-                ? $schoolclass->classcategory->calculateGrade($request->cum)
-                : $this->getDefaultGrade($request->cum);
+                ? $schoolclass->classcategory->calculateGrade($request->total)
+                : $this->getDefaultGrade($request->total);
             $remark = $this->getRemark($grade);
 
             return response()->json([
@@ -956,7 +958,7 @@ class ViewStudentMockReportController extends Controller
         } catch (\Exception $e) {
             Log::error('Error calculating grade preview', [
                 'schoolclass_id' => $request->schoolclass_id,
-                'cum' => $request->cum,
+                'total' => $request->total,
                 'error' => $e->getMessage(),
             ]);
             return response()->json([
@@ -1167,23 +1169,31 @@ class ViewStudentMockReportController extends Controller
                 Log::info('Student image path set', [
                     'student_id' => $student['students']->first()->id,
                     'path' => $student['student_image_path'],
-                    'exists' => file_exists($student['student_image_path'])
+                    'exists' => file_exists(str_replace('file://', '', $student['student_image_path'] ?? '')),
                 ]);
             } else {
-                $student['student_image_path'] = Storage::disk('public')->path('student_avatars/unnamed.jpg');
-                Log::info('Using default student image', ['path' => $student['student_image_path']]);
+                $defaultStudentImage = storage_path('app/public/student_avatars/unnamed.jpg');
+                $student['student_image_path'] = file_exists($defaultStudentImage) ? 'file://' . $defaultStudentImage : null;
+                Log::info('Using default student image', [
+                    'path' => $student['student_image_path'],
+                    'exists' => file_exists($defaultStudentImage),
+                ]);
             }
 
-            if (isset($student['schoolInfo'])) {
+            if (isset($student['schoolInfo']) && $student['schoolInfo']->getLogoUrlAttribute()) {
                 $logoPath = $student['schoolInfo']->getLogoUrlAttribute();
                 $student['school_logo_path'] = $this->sanitizeImagePath($logoPath);
                 Log::info('School logo path set', [
                     'path' => $student['school_logo_path'],
-                    'exists' => file_exists($student['school_logo_path'])
+                    'exists' => file_exists(str_replace('file://', '', $student['school_logo_path'] ?? '')),
                 ]);
             } else {
-                $student['school_logo_path'] = Storage::disk('public')->path('school_logos/default.jpg');
-                Log::info('Using default school logo', ['path' => $student['school_logo_path']]);
+                $defaultLogo = storage_path('app/public/school_logos/default.jpg');
+                $student['school_logo_path'] = file_exists($defaultLogo) ? 'file://' . $defaultLogo : null;
+                Log::info('Using default school logo', [
+                    'path' => $student['school_logo_path'],
+                    'exists' => file_exists($defaultLogo),
+                ]);
             }
         }
     }
@@ -1212,8 +1222,13 @@ class ViewStudentMockReportController extends Controller
         $fullPath = realpath($fullPath) ?: $fullPath;
 
         if (file_exists($fullPath)) {
-            Log::info('Sanitized image path', ['original' => $path, 'sanitized' => $fullPath]);
-            return $fullPath;
+            Log::info('Sanitized image path', [
+                'original' => $path,
+                'sanitized' => $fullPath,
+                'exists' => file_exists($fullPath),
+                'realpath' => realpath($fullPath),
+            ]);
+            return 'file://' . $fullPath; // Prepend file:// for DomPDF
         }
 
         Log::warning('Image file does not exist', ['path' => $fullPath]);
@@ -1311,4 +1326,3 @@ class ViewStudentMockReportController extends Controller
         }
     }
 }
-?>
