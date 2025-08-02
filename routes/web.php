@@ -261,7 +261,26 @@ Route::group(['middleware' => ['auth']], function () {
     // Route::get('/studentreports/export/{id}/{schoolclassid}/{sessionid}/{termid}', [ViewStudentReportController::class, 'exportStudentResultPdf'])->name('studentreports.exportStudentResultPdf');
     Route::match(['get', 'post'], '/studentreports/export-class-results-pdf', [ViewStudentReportController::class, 'exportClassResultsPdf'])->name('studentreports.exportClassResultsPdf');
     
-    
+
+
+    Route::get('/studentmockreports', [ViewStudentMockReportController::class, 'index'])->name('studentmockreports.index');
+  
+    // Display individual student mock result
+    Route::get('/studentmockresult/{id}/{schoolclassid}/{sessionid}/{termid}', [ViewStudentMockReportController::class, 'studentmockresult'])->name('studentmockreports.studentmockresult');
+
+    // Fetch registered classes for a session
+    Route::get('/registered-classes', [ViewStudentMockReportController::class, 'registeredClasses'])->name('studentmockreports.registeredClasses');
+
+    // Display class broadsheet
+    Route::get('/class-broadsheet/{schoolclassid}/{sessionid}/{termid}', [ViewStudentMockReportController::class, 'classBroadsheet'])->name('studentmockreports.classBroadsheet');
+
+
+    // Export class mock results as PDF
+    Route::post('/export-class-results-pdf', [ViewStudentMockReportController::class, 'exportClassMockResultsPdf'])->name('studentmockreports.exportClassMockResultsPdf');
+
+
+
+
     
     Route::resource('subjectoperation', SubjectOperationController::class);
     Route::get('/subjects', [SubjectOperationController::class, 'index'])->name('subjects.index');

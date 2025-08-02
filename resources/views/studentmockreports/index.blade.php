@@ -27,7 +27,7 @@
                         <h4 class="mb-sm-0">{{ $pagetitle }}</h4>
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item active">Student Reports</li>
+                                <li class="breadcrumb-item active">Student Mock Reports</li>
                             </ol>
                         </div>
                     </div>
@@ -36,19 +36,20 @@
             <!-- End page title -->
 
             @if ($errors->any())
-                <div class="alert alert-danger">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <strong>Whoops!</strong> There were some problems with your input.<br><br>
                     <ul>
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
                     </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
 
-            @if (session('status') || session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('status') ?? session('success') }}
+            @if (session('status') || session('success') || session('error'))
+                <div class="alert alert-{{ session('error') ? 'danger' : 'success' }} alert-dismissible fade show" role="alert">
+                    {{ session('status') ?? session('success') ?? session('error') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
@@ -62,7 +63,7 @@
                             <div class="card-body">
                                 <div class="row g-3">
                                     <div class="col-xxl-3 col-sm-6">
-                                        <select class="form-control" id="idclass" name="schoolclassid">
+                                        <select class="form-control" id="idclass" name="schoolclassid" aria-label="Select Class">
                                             <option value="ALL">Select Class</option>
                                             @foreach ($schoolclasses as $class)
                                                 <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->arm }}</option>
@@ -70,7 +71,7 @@
                                         </select>
                                     </div>
                                     <div class="col-xxl-3 col-sm-6">
-                                        <select class="form-control" id="idsession" name="sessionid">
+                                        <select class="form-control" id="idsession" name="sessionid" aria-label="Select Session">
                                             <option value="ALL">Select Session</option>
                                             @foreach ($schoolsessions as $session)
                                                 <option value="{{ $session->id }}">{{ $session->session }}</option>
@@ -78,22 +79,26 @@
                                         </select>
                                     </div>
                                     <div class="col-xxl-3 col-sm-6">
-                                        <select class="form-control" id="idterm" name="termid">
+                                        <select class="form-control" id="idterm" name="termid" aria-label="Select Term">
                                             <option value="ALL">Select Term</option>
-                                            <option value="1">First Term</option>
-                                            <option value="2">Second Term</option>
-                                            <option value="3">Third Term</option>
+                                            @foreach ($schoolterms as $term)
+                                                <option value="{{ $term->id }}">{{ $term->term }}</option>
+                                            @endforeach
                                         </select>
                                     </div>
                                     <div class="col-xxl-3 col-sm-6">
                                         <div class="search-box">
-                                            <input type="text" class="form-control search" id="searchInput" name="search" placeholder="Search students...">
+                                            <input type="text" class="form-control search" id="searchInput" name="search" placeholder="Search students..." aria-label="Search students">
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
                                     </div>
                                     <div class="col-xxl-3 col-sm-6 d-flex gap-2">
-                                        <button type="button" class="btn btn-secondary w-50" onclick="filterData()"><i class="bi bi-search align-baseline me-1"></i> Search</button>
-                                        <button type="button" class="btn btn-primary w-50" id="printAllBtn" style="display: none;" onclick="printAllResults()"><i class="bi bi-printer align-baseline me-1"></i> Print Selected Results</button>
+                                        <button type="button" class="btn btn-secondary w-50" onclick="filterData()">
+                                            <i class="bi bi-search align-baseline me-1"></i> Search
+                                        </button>
+                                        <button type="button" class="btn btn-primary w-50" id="printAllBtn" style="display: none;" onclick="printAllResults()">
+                                            <i class="bi bi-printer align-baseline me-1"></i> Print Selected Results
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -112,7 +117,7 @@
                                     <table class="table table-centered align-middle table-nowrap mb-0" id="studentListTable">
                                         <thead class="table-active">
                                             <tr>
-                                                <th><div class="form-check"><input class="form-check-input" type="checkbox" id="checkAll"><label class="form-check-label" for="checkAll"></label></div></th>
+                                                <th><div class="form-check"><input class="form-check-input" type="checkbox" id="checkAll" aria-label="Select all students"><label class="form-check-label" for="checkAll"></label></div></th>
                                                 <th>Admission No</th>
                                                 <th>Picture</th>
                                                 <th>Last Name</th>
@@ -122,6 +127,7 @@
                                                 <th>Class</th>
                                                 <th>Arm</th>
                                                 <th>Session</th>
+                                                <th>Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody id="studentTableBody">
@@ -138,11 +144,11 @@
                 </div>
 
                 <!-- Image View Modal -->
-                <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
+                <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true" aria-labelledby="imageViewModalLabel">
                     <div class="modal-dialog modal-dialog-centered modal-lg">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title">Student Image</h5>
+                                <h5 class="modal-title" id="imageViewModalLabel">Student Image</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body text-center">
@@ -160,8 +166,9 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    console.log("Script loaded at", new Date().toISOString());
+    console.log("Mock Reports Script loaded at", new Date().toISOString());
 
+    // Update selection alert text
     function updateSelectionAlert() {
         const classSelect = document.getElementById("idclass");
         const sessionSelect = document.getElementById("idsession");
@@ -214,6 +221,7 @@
         }, 10000);
     }
 
+    // Update visibility of print button
     function updatePrintButtonVisibility() {
         const printAllBtn = document.getElementById("printAllBtn");
         const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
@@ -221,6 +229,7 @@
         updateSelectionAlert();
     }
 
+    // Filter student data via AJAX
     function filterData() {
         console.log("filterData called");
         if (typeof axios === 'undefined') {
@@ -229,7 +238,10 @@
                 icon: "error",
                 title: "Configuration Error",
                 text: "Axios library is missing.",
-                showConfirmButton: true
+                showConfirmButton: true,
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                }
             });
             return;
         }
@@ -245,7 +257,10 @@
                 icon: "error",
                 title: "Error",
                 text: "Required filter elements not found.",
-                showConfirmButton: true
+                showConfirmButton: true,
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                }
             });
             return;
         }
@@ -256,7 +271,7 @@
         const searchValue = searchInput ? searchInput.value.trim() : '';
 
         if (classValue === 'ALL' || sessionValue === 'ALL' || termValue === 'ALL') {
-            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="10" class="text-center">Select class, session, and term to view students.</td></tr>';
+            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="11" class="text-center">Select class, session, and term to view students.</td></tr>';
             document.getElementById('pagination-container').innerHTML = '';
             document.getElementById('studentcount').innerText = '0';
             document.getElementById('printAllBtn').style.display = 'none';
@@ -265,7 +280,10 @@
                 icon: "warning",
                 title: "Missing Selection",
                 text: "Please select a valid class, session, and term.",
-                showConfirmButton: true
+                showConfirmButton: true,
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                }
             });
             return;
         }
@@ -273,9 +291,9 @@
         console.log("Sending AJAX request with:", { search: searchValue, schoolclassid: classValue, sessionid: sessionValue, termid: termValue });
 
         const tableBody = document.getElementById('studentTableBody');
-        tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Loading...</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="11" class="text-center">Loading...</td></tr>';
 
-        axios.get('{{ route("studentreports.index") }}', {
+        axios.get('{{ route("studentmockreports.index") }}', {
             params: {
                 search: searchValue,
                 schoolclassid: classValue,
@@ -289,7 +307,7 @@
         }).then(function (response) {
             console.log("AJAX response received:", response.data);
 
-            document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="10" class="text-center">No students found.</td></tr>';
+            document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="11" class="text-center">No students found.</td></tr>';
             document.getElementById('pagination-container').innerHTML = response.data.pagination || '';
             document.getElementById('studentcount').innerText = response.data.studentCount || '0';
 
@@ -297,28 +315,34 @@
             setupCheckboxListeners();
             setupDropdownListeners();
             updatePrintButtonVisibility();
-            updateSelectionAlert();
 
             if (response.data.tableBody.includes('No students found') || response.data.tableBody.includes('Select class and session')) {
                 Swal.fire({
                     icon: "info",
                     title: "No Results",
                     text: "No students found for the selected class, session, and term.",
-                    showConfirmButton: true
+                    showConfirmButton: true,
+                    customClass: {
+                        confirmButton: 'btn btn-primary'
+                    }
                 });
             }
         }).catch(function (error) {
             console.error("AJAX error:", error);
-            tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="11" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
             Swal.fire({
                 icon: "error",
                 title: "Error",
                 text: error.response?.data?.message || "Failed to fetch student data.",
-                showConfirmButton: true
+                showConfirmButton: true,
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                }
             });
         });
     }
 
+    // Print selected results as PDF
     function printAllResults() {
         const classSelect = document.getElementById("idclass");
         const sessionSelect = document.getElementById("idsession");
@@ -326,18 +350,18 @@
         const classValue = classSelect.value;
         const sessionValue = sessionSelect.value;
         const termValue = termSelect.value;
-
         const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
         const selectedStudentIds = Array.from(checkedCheckboxes).map(checkbox => checkbox.value);
-
-        console.log('Preparing to generate PDF with params:', { schoolclassid: classValue, sessionid: sessionValue, termid: termValue, studentIds: selectedStudentIds });
 
         if (classValue === 'ALL' || sessionValue === 'ALL' || termValue === 'ALL') {
             Swal.fire({
                 icon: "warning",
                 title: "Missing Selection",
                 text: "Please select a valid class, session, and term.",
-                showConfirmButton: true
+                showConfirmButton: true,
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                }
             });
             return;
         }
@@ -347,7 +371,10 @@
                 icon: "warning",
                 title: "No Students Selected",
                 text: "Please select at least one student to generate the PDF.",
-                showConfirmButton: true
+                showConfirmButton: true,
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                }
             });
             return;
         }
@@ -360,7 +387,7 @@
         Swal.fire({
             title: 'Confirm Print',
             html: `
-                <p>You are about to print results for:</p>
+                <p>You are about to print mock results for:</p>
                 <ul style="text-align: left;">
                     <li><strong>Class:</strong> ${classText}</li>
                     <li><strong>Session:</strong> ${sessionText}</li>
@@ -389,7 +416,9 @@
                     }
                 });
 
-                axios.post('{{ route("studentreports.exportClassResultsPdf") }}', {
+                console.log('Generating PDF with params:', { schoolclassid: classValue, sessionid: sessionValue, termid: termValue, studentIds: selectedStudentIds });
+
+                axios.post('{{ route("studentmockreports.exportClassMockResultsPdf") }}', {
                     schoolclassid: classValue,
                     sessionid: sessionValue,
                     termid: termValue,
@@ -415,12 +444,24 @@
                         const pdfUrl = URL.createObjectURL(blob);
                         window.open(pdfUrl, '_blank');
                         setTimeout(() => URL.revokeObjectURL(pdfUrl), 30000);
+                        Swal.fire({
+                            icon: "success",
+                            title: "Success",
+                            text: "PDF generated successfully.",
+                            showConfirmButton: true,
+                            customClass: {
+                                confirmButton: 'btn btn-primary'
+                            }
+                        });
                     } else {
                         Swal.fire({
                             icon: "error",
                             title: "Error",
                             text: response.data.message || "Failed to generate PDF.",
-                            showConfirmButton: true
+                            showConfirmButton: true,
+                            customClass: {
+                                confirmButton: 'btn btn-primary'
+                            }
                         });
                     }
                 }).catch(function (error) {
@@ -430,13 +471,17 @@
                         icon: "error",
                         title: "Error",
                         text: error.response?.data?.message || "Failed to generate PDF.",
-                        showConfirmButton: true
+                        showConfirmButton: true,
+                        customClass: {
+                            confirmButton: 'btn btn-primary'
+                        }
                     });
                 });
             }
         });
     }
 
+    // Setup pagination links
     function setupPaginationLinks() {
         const paginationLinks = document.querySelectorAll('#pagination-container a');
         paginationLinks.forEach(link => {
@@ -450,10 +495,11 @@
         });
     }
 
+    // Load paginated data
     function loadPage(url) {
         console.log("Loading page:", url);
         const tableBody = document.getElementById('studentTableBody');
-        tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Loading...</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="11" class="text-center">Loading...</td></tr>';
 
         axios.get(url, {
             headers: {
@@ -462,26 +508,29 @@
             }
         }).then(function (response) {
             console.log("Page load response:", response.data);
-            document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="10" class="text-center">No students found.</td></tr>';
+            document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="11" class="text-center">No students found.</td></tr>';
             document.getElementById('pagination-container').innerHTML = response.data.pagination || '';
             document.getElementById('studentcount').innerText = response.data.studentCount || '0';
             setupPaginationLinks();
             setupCheckboxListeners();
             setupDropdownListeners();
             updatePrintButtonVisibility();
-            updateSelectionAlert();
         }).catch(function (error) {
             console.error("Page load error:", error);
-            tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="11" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
             Swal.fire({
                 icon: "error",
                 title: "Error",
                 text: error.response?.data?.message || "Failed to fetch student data.",
-                showConfirmButton: true
+                showConfirmButton: true,
+                customClass: {
+                    confirmButton: 'btn btn-primary'
+                }
             });
         });
     }
 
+    // Setup checkbox listeners
     function setupCheckboxListeners() {
         const checkAll = document.getElementById("checkAll");
         const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
@@ -509,27 +558,44 @@
         });
     }
 
+    // Setup dropdown listeners
     function setupDropdownListeners() {
         const classSelect = document.getElementById("idclass");
         const sessionSelect = document.getElementById("idsession");
         const termSelect = document.getElementById("idterm");
 
         if (classSelect) {
-            classSelect.addEventListener("change", updateSelectionAlert);
+            classSelect.addEventListener("change", function () {
+                updatePrintButtonVisibility();
+                if (this.value !== 'ALL' && sessionSelect.value !== 'ALL' && termSelect.value !== 'ALL') {
+                    filterData();
+                }
+            });
         }
         if (sessionSelect) {
-            sessionSelect.addEventListener("change", updateSelectionAlert);
+            sessionSelect.addEventListener("change", function () {
+                updatePrintButtonVisibility();
+                if (this.value !== 'ALL' && classSelect.value !== 'ALL' && termSelect.value !== 'ALL') {
+                    filterData();
+                }
+            });
         }
         if (termSelect) {
-            termSelect.addEventListener("change", updateSelectionAlert);
+            termSelect.addEventListener("change", function () {
+                updatePrintButtonVisibility();
+                if (this.value !== 'ALL' && classSelect.value !== 'ALL' && sessionSelect.value !== 'ALL') {
+                    filterData();
+                }
+            });
         }
     }
 
+    // Initialize on DOM load
     document.addEventListener("DOMContentLoaded", function () {
         console.log("DOM loaded");
         setupCheckboxListeners();
         setupDropdownListeners();
-        updateSelectionAlert();
+        updatePrintButtonVisibility();
 
         const modal = document.getElementById('imageViewModal');
         if (modal) {

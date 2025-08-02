@@ -126,6 +126,9 @@
             @include('layouts.pages-assets.css.studentreport-list-css')
     @endif 
 
+    @if (Route::is('studentmockreports.*'))
+            @include('layouts.pages-assets.css.studentreport-list-css')
+    @endif 
 
     @if (Route::is('subjectoperation.*'))
         @include('layouts.pages-assets.css.subjectoperation-list-css')
@@ -446,11 +449,11 @@
                                     </li>
                                    @endcan
 
-                                   {{-- @can('View student-mock-report')
+                                   @can('View student-mock-report')
                                        <li class="nav-item">
-                                        <a href="{{ route('studentmockreports.index') }}" class="nav-link" data-key="t-products">Terminal Result Reports</a>
+                                        <a href="{{ route('studentmockreports.index') }}" class="nav-link" data-key="t-products">Mock Result Reports</a>
                                     </li>
-                                   @endcan --}}
+                                   @endcan
                                     
                                     
                                 </ul>
@@ -2008,6 +2011,10 @@
        @if (Route::is('studentreports.*'))
           @include('layouts.pages-assets.js.studentreport-list-js')
       @endif 
+
+      @if (Route::is('studentmockreports.*'))
+          @include('layouts.pages-assets.js.studentmockreport-list-js')
+      @endif
 
       @if (Route::is('subjectoperation.*'))
           @include('layouts.pages-assets.js.subjectoperation-list-js')
