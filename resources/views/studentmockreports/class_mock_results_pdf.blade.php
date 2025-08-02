@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Mock Results - {{ $metadata['class_name'] }} - {{ $metadata['session'] }} - {{ $metadata['term'] }}</title>
     <style>
-        /* Basic reset and font setup */
+        /* [Existing CSS styles unchanged] */
         * {
             margin: 0;
             padding: 0;
@@ -233,14 +233,13 @@
         }
 
         .result-table thead th:nth-child(3),
-        .result-table thead th:nth-child(4),
-        .result-table thead th:nth-child(5) {
-            width: 35px;
+        .result-table thead th:nth-child(4) {
+            width: 50px;
         }
 
-        .result-table thead th:nth-child(6),
-        .result-table thead th:nth-child(8) {
-            width: 50px;
+        .result-table thead th:nth-child(5),
+        .result-table thead th:nth-child(6) {
+            width: 60px;
         }
 
         .result-table tbody tr {
@@ -589,68 +588,29 @@
                     <table>
                         <thead>
                             <tr>
-                                <th></th>
-                                <th>Subjects</th>
-                                <th>a</th>
-                                <th>b</th>
-                                <th>c</th>
-                                <th>d</th>
-                                <th>e</th>
-                                <th>f</th>
-                                <th>g</th>
-                                <th>h</th>
-                                <th>i</th>
-                                <th>j</th>
-                                <th>k</th>
-                            </tr>
-                            <tr>
                                 <th>S/N</th>
                                 <th>Subjects</th>
-                                <th>T1</th>
-                                <th>T2</th>
-                                <th>T3</th>
-                                <th>
-                                    <div class="fraction">
-                                        <div class="numerator">a + b + c</div>
-                                        <div class="denominator">3</div>
-                                    </div>
-                                </th>
-                                <th>Term Exams</th>
-                                <th>
-                                    <div class="fraction">
-                                        <div class="numerator">d + e</div>
-                                        <div class="denominator">2</div>
-                                    </div>
-                                </th>
-                                <th>B/F</th>
-                                <th>Cum (f/g)/2</th>
+                                <th>Exam Score</th>
+                                <th>Total Score</th>
                                 <th>Grade</th>
-                                <th>PSN</th>
+                                <th>Position</th>
                                 <th>Class Average</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($studentData['scores'] as $index => $score)
+                            @forelse ($studentData['mockScores'] as $index => $score)
                                 <tr>
                                     <td>{{ $index + 1 }}</td>
                                     <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td>
-                                    <td class="@if ($score->ca1 < 50 && is_numeric($score->ca1)) highlight-red @endif">{{ $score->ca1 ?? '-' }}</td>
-                                    <td class="@if ($score->ca2 < 50 && is_numeric($score->ca2)) highlight-red @endif">{{ $score->ca2 ?? '-' }}</td>
-                                    <td class="@if ($score->ca3 < 50 && is_numeric($score->ca3)) highlight-red @endif">{{ $score->ca3 ?? '-' }}</td>
-                                    <td class="@if ($score->ca1 && $score->ca2 && $score->ca3 && round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) < 50) highlight-red @endif">
-                                        {{ $score->ca1 && $score->ca2 && $score->ca3 ? round(($score->ca1 + $score->ca2 + $score->ca3) / 3, 1) : '-' }}
-                                    </td>
                                     <td class="@if ($score->exam < 50 && is_numeric($score->exam)) highlight-red @endif">{{ $score->exam ?? '-' }}</td>
                                     <td class="@if ($score->total < 50 && is_numeric($score->total)) highlight-red @endif">{{ $score->total ?? '-' }}</td>
-                                    <td class="@if ($score->bf < 50 && is_numeric($score->bf)) highlight-red @endif">{{ $score->bf ?? '-' }}</td>
-                                    <td class="@if ($score->cum < 50 && is_numeric($score->cum)) highlight-red @endif">{{ $score->cum ?? '-' }}</td>
                                     <td class="@if (in_array($score->grade ?? '', ['F', 'F9', 'E', 'E8'])) highlight-red @endif">{{ $score->grade ?? '-' }}</td>
                                     <td>{{ $score->position ?? '-' }}</td>
                                     <td>{{ $score->class_average ?? '-' }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="13">No scores available.</td>
+                                    <td colspan="7">No scores available.</td>
                                 </tr>
                             @endforelse
                         </tbody>

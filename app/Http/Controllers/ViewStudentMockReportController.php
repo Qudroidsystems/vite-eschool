@@ -2,26 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Validation\ValidationException;
-use Illuminate\View\View;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\BroadsheetRecordsMock;
+use App\Models\BroadsheetsMock;
+use App\Models\Schoolclass;
+use App\Models\SchoolInformation;
 use App\Models\Schoolsession;
 use App\Models\Schoolterm;
+use App\Models\Student;
 use App\Models\Studentclass;
-use App\Models\Schoolclass;
-use App\Models\StudentRegistration;
-use App\Models\StudentPicture;
-use App\Models\BroadsheetsMock;
-use App\Models\BroadsheetRecordsMock;
-use App\Models\SchoolInformation;
 use App\Models\Studentpersonalityprofile;
+use App\Models\StudentPicture;
+use App\Models\StudentRegistration;
 use App\Models\Subject;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class ViewStudentMockReportController extends Controller
 {
@@ -194,7 +195,6 @@ class ViewStudentMockReportController extends Controller
                 'subject.subject as subject_name',
                 'studentRegistration.admissionNo as admission_no',
                 'broadsheetmock.total',
-                'broadsheetmock.cum',
                 'broadsheetmock.subject_position_class',
                 'broadsheetmock.avg',
                 'broadsheetmock.grade',
@@ -217,7 +217,7 @@ class ViewStudentMockReportController extends Controller
         foreach ($subjectGroups as $subjectId => $subjectRecords) {
             $subjectName = $subjectRecords->first()->subject_name;
             $validRecords = $subjectRecords->filter(function ($record) {
-                return $record->cum != 0;
+                return $record->total != 0;
             });
             $totalScores = $validRecords->sum('total');
             $studentCount = $validRecords->count();
@@ -241,15 +241,15 @@ class ViewStudentMockReportController extends Controller
             }
 
             foreach ($subjectRecords as $record) {
-                $newPosition = $record->cum == 0 ? '-' : ($positionMap[$record->id] ?? null);
+                $newPosition = $record->total == 0 ? '-' : ($positionMap[$record->id] ?? null);
                 if ($newPosition !== '-') {
                     $newPosition = $this->formatOrdinal($newPosition);
                 }
 
-                $grade = $record->cum == 0 ? '-' : (
+                $grade = $record->total == 0 ? '-' : (
                     $isSenior && $schoolclass->classcategory
-                        ? $schoolclass->classcategory->calculateGrade($record->cum)
-                        : $this->calculateJuniorGrade($record->cum)
+                        ? $schoolclass->classcategory->calculateGrade($record->total)
+                        : $this->calculateJuniorGrade($record->total)
                 );
                 $remark = $this->getRemark($grade);
 
@@ -277,7 +277,7 @@ class ViewStudentMockReportController extends Controller
                         'grade' => $grade,
                         'remark' => $remark,
                         'class_name' => $className,
-                        'cum' => $record->cum,
+                        'total' => $record->total,
                     ]);
                 }
             }
@@ -329,7 +329,7 @@ class ViewStudentMockReportController extends Controller
                 return [];
             }
 
-            $students = StudentRegistration::where('studentRegistration.id', $id)
+            $students = Student::where('studentRegistration.id', $id)
                 ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
                 ->select([
                     'studentRegistration.id as id',
@@ -375,7 +375,6 @@ class ViewStudentMockReportController extends Controller
                     'subject.subject_code',
                     'broadsheetmock.exam',
                     'broadsheetmock.total',
-                    'broadsheetmock.cum',
                     'broadsheetmock.grade',
                     'broadsheetmock.remark',
                     'broadsheetmock.subject_position_class as position',
@@ -490,21 +489,24 @@ class ViewStudentMockReportController extends Controller
         $schoolsessions = Schoolsession::where('status', 'Current')->get();
         $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->get(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm']);
+        $schoolterms = Schoolterm::all(['id', 'term']);
 
         if (config('app.debug')) {
             Log::debug('Sessions for select:', $schoolsessions->toArray());
+            Log::debug('Classes for select:', $schoolclasses->toArray());
+            Log::debug('Terms for select:', $schoolterms->toArray());
             Log::debug('Students fetched:', $allstudents->toArray());
         }
 
         if ($request->ajax()) {
             return response()->json([
-                'tableBody' => view('studentreports.partials.student_rows', compact('allstudents'))->render(),
+                'tableBody' => view('studentmockreports.partials.student_rows', compact('allstudents'))->render(),
                 'pagination' => $allstudents->links('pagination::bootstrap-5')->render(),
                 'studentCount' => $allstudents->total(),
             ]);
         }
 
-        return view('studentreports.index_mock', compact('allstudents', 'schoolsessions', 'schoolclasses', 'pagetitle'));
+        return view('studentmockreports.index', compact('allstudents', 'schoolsessions', 'schoolclasses', 'schoolterms', 'pagetitle'));
     }
 
     /**
@@ -819,7 +821,7 @@ class ViewStudentMockReportController extends Controller
                 'term' => $term
             ]);
 
-            $viewName = 'studentreports.class_mock_results_pdf';
+            $viewName = 'studentmockreports.class_mock_results_pdf';
             if (!view()->exists($viewName)) {
                 Log::error('Mock PDF view not found', ['view' => $viewName]);
                 return response()->json([
@@ -1309,3 +1311,4 @@ class ViewStudentMockReportController extends Controller
         }
     }
 }
+?>
