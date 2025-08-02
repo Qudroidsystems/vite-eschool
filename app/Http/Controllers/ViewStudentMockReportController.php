@@ -8,10 +8,11 @@ use App\Models\Schoolclass;
 use App\Models\SchoolInformation;
 use App\Models\Schoolsession;
 use App\Models\Schoolterm;
-use App\Models\StudentRegistration;
+use App\Models\Student;
 use App\Models\Studentclass;
 use App\Models\Studentpersonalityprofile;
 use App\Models\StudentPicture;
+use App\Models\StudentRegistration;
 use App\Models\Subject;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
@@ -328,7 +329,7 @@ class ViewStudentMockReportController extends Controller
                 return [];
             }
 
-            $students = StudentRegistration::where('studentRegistration.id', $id)
+            $students = Student::where('studentRegistration.id', $id)
                 ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
                 ->select([
                     'studentRegistration.id as id',
