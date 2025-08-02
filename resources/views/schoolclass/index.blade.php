@@ -92,7 +92,7 @@
                                                 <th class="min-w-125px sort cursor-pointer" data-sort="schoolclass">School Class</th>
                                                 <th class="min-w-125px sort cursor-pointer" data-sort="arm">Arm</th>
                                                 <th class="min-w-125px sort cursor-pointer" data-sort="classcategory">Category</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="datereg">Date Updated</th>
+                                                {{-- <th class="min-w-125px sort cursor-pointer" data-sort="datereg">Date Updated</th> --}}
                                                 <th class="min-w-100px">Actions</th>
                                             </tr>
                                         </thead>
@@ -109,7 +109,7 @@
                                                     <td class="schoolclass" data-schoolclass="{{ $class->schoolclass }}">{{ $class->schoolclass }}</td>
                                                     <td class="arm" data-arm="{{ $class->arm_name }}">{{ $class->arm_name }}</td>
                                                     <td class="classcategory" data-classcategory="{{ $class->classcategory }}">{{ $class->classcategory }}</td>
-                                                    <td class="datereg">{{ $class->updated_at->format('Y-m-d') }}</td>
+                                                    {{-- <td class="datereg">{{ $class->updated_at->format('Y-m-d') }}</td> --}}
                                                     <td>
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
                                                             @can('Update school-class')

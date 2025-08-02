@@ -235,10 +235,13 @@
         .result-table thead th:nth-child(3),
         .result-table thead th:nth-child(4),
         .result-table thead th:nth-child(5) {
-            width: 35px;
+            width: 30px; /* Reduced width for T1, T2, T3 */
         }
 
-        .result-table thead th:nth-child(6),
+        .result-table thead th:nth-child(6) {
+            width: 60px; /* Increased width for column d */
+        }
+
         .result-table thead th:nth-child(8) {
             width: 50px;
         }
@@ -626,7 +629,7 @@
                                 <th>Cum (f/g)/2</th>
                                 <th>Grade</th>
                                 <th>PSN</th>
-                                <th>Class Average</th>
+                                <th>Class Avg</th>
                             </tr>
                         </thead>
                         <tbody>
