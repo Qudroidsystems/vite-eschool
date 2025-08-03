@@ -427,7 +427,7 @@
                                             </div>
 
                                             <!-- Mobile Card View -->
-                                            {{-- <div class="mobile-cards">
+                                            <div class="mobile-cards">
                                                 <div id="mobileStudentCards">
                                                     @forelse ($students as $key => $student)
                                                         @php
@@ -535,7 +535,7 @@
                                                     <h5 class="mt-2">No matches found</h5>
                                                     <p class="text-muted mb-0">Try adjusting your search terms.</p>
                                                 </div>
-                                            </div> --}}
+                                            </div>
 
                                             <!-- Save Button and Signature Input -->
                                             <div class="d-flex justify-content-end mt-3 signature-container">

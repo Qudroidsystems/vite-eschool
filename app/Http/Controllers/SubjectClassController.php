@@ -2,16 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Broadsheet;
+use App\Models\Broadsheets;
+use App\Models\Schoolclass;
+use App\Models\Schoolsession;
+use App\Models\Schoolterm;
+use App\Models\Subjectclass;
+use App\Models\SubjectRegistrationStatus;
+use App\Models\SubjectTeacher;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use App\Models\Schoolclass;
-use App\Models\Subjectclass;
-use App\Models\Broadsheet;
-use App\Models\SubjectRegistrationStatus;
-use App\Models\SubjectTeacher;
-use App\Models\Schoolterm;
-use App\Models\Schoolsession;
 
 class SubjectClassController extends Controller
 {
@@ -365,7 +366,7 @@ class SubjectClassController extends Controller
             ], 404);
         }
 
-        Broadsheet::where('subjectclassid', $id)->delete();
+        Broadsheets::where('subjectclassid', $id)->delete();
         SubjectRegistrationStatus::where('subjectclassid', $id)->delete();
         $subjectclass->delete();
 
@@ -385,7 +386,7 @@ class SubjectClassController extends Controller
             ], 404);
         }
 
-        Broadsheet::where('subjectclassid', $request->subjectclassid)->delete();
+        Broadsheets::where('subjectclassid', $request->subjectclassid)->delete();
         SubjectRegistrationStatus::where('subjectclassid', $request->subjectclassid)->delete();
         $subjectclass->delete();
 
