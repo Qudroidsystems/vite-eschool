@@ -745,13 +745,13 @@
                                                 'PROMOTED' => 'promotion-promoted',
                                                 'PROMOTED ON TRIAL' => 'promotion-repeat',
                                                 'PARENTS TO SEE PRINCIPAL' => 'promotion-repeat',
-                                                'ADVICE TO REPEAT/PARENTS TO SEE PRINCIPAL' => 'promotion-parents',
+                                                'ADVICE TO REPEAT/PARENTS TO SEE PRINCIPAL' => 'promotion-repeat',
                                                 default => 'promotion-default',
                                             };
                                             $statusText = $status ?? 'Not applicable for this term';
                                         @endphp
                                         <br>
-                                         <span class="promotion-status {{ $statusClass }}" style="color: {{ $status === 'PROMOTED' ? '#251f96' : ($status === 'PROMOTED ON TRIAL' ? '#dc2626' : ($status === 'PARENTS TO SEE PRINCIPAL' ? '#dc2626' : '#000000')) }};">
+                                         <span class="promotion-status {{ $statusClass }}" style="color: {{ $status === 'PROMOTED' ? '#251f96' : ($status === 'PROMOTED ON TRIAL' ? '#dc2626' : ($status === 'PARENTS TO SEE PRINCIPAL' ? '#dc2626' : $status === 'ADVICE TO REPEAT/PARENTS TO SEE PRINCIPAL' ? '#dc2626' : '#000000')) }};">
                                             Promotion Status: {{ $statusText }}
                                         </span>
                                     </span>
