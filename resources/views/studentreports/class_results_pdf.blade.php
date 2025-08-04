@@ -129,7 +129,7 @@
         .header-divider2 {
             width: 100%;
             height: 1px;
-            background: #62748b;
+            background: #64748b;
             margin: 2px 0;
         }
 
@@ -353,8 +353,6 @@
         .remarks-table .promotion-status {
             color: #000000;
             font-weight: bold;
-            display: block; /* Ensure promotion status is on a new line */
-            margin-top: 4px;
         }
 
         .footer-section {
@@ -442,27 +440,32 @@
             margin-top: 6px;
         }
 
-        /* Promotion status styles */
-        .promotion-promoted {
-            color: #251f96; /* Blue for PROMOTED */
+        .promotion-status {
             font-weight: bold;
+            margin-left: 5px;
         }
 
-        .promotion-on-trial {
-            color: #f97316; /* Orange for PROMOTED ON TRIAL */
-            font-weight: bold;
+
+        .promotion-repeat {
+            color: #dc2626;
         }
 
         .promotion-parents {
-            color: #dc2626; /* Red for PARENTS TO SEE THE PRINCIPAL */
+            color: #f97316;
+        }
+         /* Promotion status styles */
+        .promotion-promoted {
+            color: #251f96; /* blue for PROMOTED */
             font-weight: bold;
         }
-
-        .promotion-repeat-parents {
-            color: #f87171; /* Light red for ADVICE TO REPEAT/PARENTS TO SEE THE PRINCIPAL */
+        .promotion-repeat {
+            color: #dc2626; /* Red for REPEAT */
             font-weight: bold;
         }
-
+        .promotion-parents {
+            color: #f87171; /* Light red for PARENTS TO SEE PRINCIPAL */
+            font-weight: bold;
+        }
         .promotion-default {
             color: #000000; /* Black for default or not applicable */
             font-weight: bold;
@@ -488,7 +491,7 @@
                             </td>
                             <td width="50%">
                                 <div class="info-row">
-                                    <p class="school-name2">{{ $schoolInfo->school_name ?? 'QUDROID SYSTEMS' }}</p>
+                                     <p class="school-name2">{{ $schoolInfo->school_name ?? 'QUDROID SYSTEMS' }}</p>
                                 </div>
                                 <div class="info-row">
                                     <span class="result-details">Motto:</span>
@@ -611,6 +614,17 @@
                                                     <span class="result-details">Times School Opened:</span>
                                                     <span class="info-value font-bold">{{ $schoolInfo->no_of_times_school_opened ?? 'NO INFO' }}</span>
                                                 </div>
+                                                {{-- <div class="info-row">
+                                                    <span class="result-details">Absent:</span>
+                                                    <span class="info-value font-bold">
+                                                        @php
+                                                            $timesSchoolOpened = $schoolInfo->no_of_times_school_opened ?? null;
+                                                            $attendance = $profile->attendance ?? null;
+                                                            $absent = ($timesSchoolOpened && $attendance) ? ($timesSchoolOpened - $attendance) : 'NO INFO';
+                                                        @endphp
+                                                        {{ $absent }}
+                                                    </span>
+                                                </div> --}}
                                                 <div class="info-row students-count">
                                                     <span class="result-details">Students in Class:</span>
                                                     <span class="info-value font-bold">{{ $studentData['numberOfStudents'] ?? 'NO INFO' }}</span>
@@ -701,6 +715,7 @@
                     </table>
                 </div>
 
+ 
                 <!-- Remarks Section -->
                 <table class="remarks-table">
                     <tbody>
@@ -722,21 +737,21 @@
                             <td width="50%">
                                 <div class="h6">Principal's Remark & Promotion Status</div>
                                 <div>
-                                    <span class="text-space-on-dots">{{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}</span>
-                                    @php
-                                        // Normalize status by removing extra spaces, newlines, and converting to uppercase
-                                        $status = strtoupper(preg_replace('/\s+/', ' ', trim($studentData['promotionStatusValue'] ?? '')));
-                                        $statusClass = match ($status) {
-                                            'PROMOTED' => 'promotion-promoted',
-                                            'PROMOTED ON TRIAL' => 'promotion-on-trial',
-                                            'PARENTS TO SEE THE PRINCIPAL' => 'promotion-parents',
-                                            'ADVICE TO REPEAT/PARENTS TO SEE THE PRINCIPAL' => 'promotion-repeat-parents',
-                                            default => 'promotion-default',
-                                        };
-                                        $statusText = $status ?: 'Not applicable for this term';
-                                    @endphp
-                                    <span class="promotion-status {{ $statusClass }}">
-                                        Promotion Status: {{ $statusText }}
+                                    <span class="text-space-on-dots">
+                                        {{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}
+                                        @php
+                                            $status = $studentData['promotionStatusValue'] ?? null;
+                                            $statusClass = match ($status) {
+                                                'PROMOTED' => 'promotion-promoted',
+                                                'REPEAT' => 'promotion-repeat',
+                                                'PARENTS TO SEE PRINCIPAL' => 'promotion-parents',
+                                                default => 'promotion-default',
+                                            };
+                                            $statusText = $status ?? 'Not applicable for this term';
+                                        @endphp
+                                         <span class="promotion-status {{ $statusClass }}" style="color: {{ $status === 'PROMOTED' ? '#251f96' : ($status === 'REPEAT' ? '#dc2626' : ($status === 'PARENTS TO SEE PRINCIPAL' ? '#f87171' : '#000000')) }};">
+                                            Promotion Status: {{ $statusText }}
+                                        </span>
                                     </span>
                                 </div>
                             </td>
@@ -744,15 +759,16 @@
                     </tbody>
                 </table>
 
+
                 <!-- Footer Section -->
                 <div class="footer-section">
                     <table class="footer-layout-table">
                         <tr>
                             <td>
                                 <span class="font-bold">This Result was issued on</span>
-                                <span class="text-dot-space2">........................</span>
+                                {{-- <span class="text-dot-space2">........................</span> --}}
                                 <span class="font-bold">and collected by</span>
-                                <span class="text-dot-space2">........................</span>
+                                {{-- <span class="text-dot-space2">........................</span> --}}
                             </td>
                         </tr>
                         <tr>
