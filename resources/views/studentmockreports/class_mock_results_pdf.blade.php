@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Mock Results - {{ $metadata['class_name'] }} - {{ $metadata['session'] }} - {{ $metadata['term'] }}</title>
     <style>
-        /* [Existing CSS styles unchanged] */
+        /* Basic reset and font setup */
         * {
             margin: 0;
             padding: 0;
@@ -162,7 +162,7 @@
             border-radius: 1px;
         }
 
-        .school-motto, .school-address, .school-website {
+        .school-motto, .school-address, .school-website, .school-email {
             font-size: 12px;
             font-weight: 900;
             color: #000000;
@@ -473,11 +473,8 @@
                                 <p class="school-name2">{{ $schoolInfo->school_name ?? 'QUODOROID CODING ACADEMY' }}</p>
                                 <div class="school-motto">{{ $schoolInfo->school_motto ?? 'NO INFO' }}</div>
                                 <div class="school-address">{{ $schoolInfo->school_address ?? 'NO INFO' }}</div>
-                                @if ($schoolInfo && $schoolInfo->school_website)
-                                    <div class="school-website">{{ $schoolInfo->school_website }}</div>
-                                @else
-                                    <div class="school-website">NO INFO</div>
-                                @endif
+                                <div class="school-email">{{ $schoolInfo->school_email ?? 'NO INFO' }}</div>
+                                <div class="school-website">{{ $schoolInfo->school_website ?? 'NO INFO' }}</div>
                             </td>
                             <td width="25%">
                                 <div class="photo-frame">
@@ -536,9 +533,9 @@
                                                                 try {
                                                                     if (is_numeric($dob)) {
                                                                         $unixTimestamp = ($dob - 25569) * 86400;
-                                                                        $formattedDob = date('d/m/Y', $unixTimestamp);
+                                                                        $formattedDob = date('jS F, Y', $unixTimestamp);
                                                                     } else {
-                                                                        $formattedDob = \Carbon\Carbon::parse($dob)->format('d/m/Y');
+                                                                        $formattedDob = \Carbon\Carbon::parse($dob)->format('jS F, Y');
                                                                     }
                                                                 } catch (\Exception $e) {
                                                                     $formattedDob = $dob;
@@ -560,11 +557,31 @@
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">School Opened:</span>
-                                                    <span class="info-value font-bold">{{ $profile ? ($profile->attendance ?? 'NO INFO') : 'NO INFO' }}</span>
+                                                    <span class="info-value font-bold">
+                                                        @php
+                                                            $dateSchoolOpened = $schoolInfo->date_school_opened ?? null;
+                                                            $formattedDateSchoolOpened = 'NO INFO';
+                                                            if ($dateSchoolOpened) {
+                                                                try {
+                                                                    $formattedDateSchoolOpened = \Carbon\Carbon::parse($dateSchoolOpened)->format('jS F, Y');
+                                                                } catch (\Exception $e) {
+                                                                    $formattedDateSchoolOpened = $dateSchoolOpened;
+                                                                }
+                                                            }
+                                                        @endphp
+                                                        {{ $formattedDateSchoolOpened }}
+                                                    </span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Absent:</span>
-                                                    <span class="info-value font-bold">{{ $profile && $profile->attendance ? ($profile->attendance - ($profile->attendance ?? 0)) : 'NO INFO' }}</span>
+                                                    <span class="info-value font-bold">
+                                                        @php
+                                                            $timesSchoolOpened = $schoolInfo->no_of_times_school_opened ?? null;
+                                                            $attendance = $profile->attendance ?? null;
+                                                            $absent = ($timesSchoolOpened && $attendance) ? ($timesSchoolOpened - $attendance) : 'NO INFO';
+                                                        @endphp
+                                                        {{ $absent }}
+                                                    </span>
                                                 </div>
                                                 <div class="info-row students-count">
                                                     <span class="result-details">Students in Class:</span>
@@ -762,8 +779,14 @@
                         </tr>
                         <tr>
                             <td>
-                                <span class="font-bold text-primary">NEXT TERM BEGINS</span>
-                                <span class="text-dot-space2">........................</span>
+                                <span class="font-bold text-primary">Next Term Begins:</span>
+                                <span class="text-dot-space2">
+                                    @php
+                                        $nextTermBegins = $schoolInfo->date_next_term_begins ?? null;
+                                        $formattedNextTermBegins = $nextTermBegins ? \Carbon\Carbon::parse($nextTermBegins)->format('jS F, Y') : '........................';
+                                    @endphp
+                                    {{ $formattedNextTermBegins }}
+                                </span>
                             </td>
                         </tr>
                     </table>

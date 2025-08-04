@@ -434,7 +434,7 @@
         }
 
         .powered-by {
-            font-size: 8px;
+            font-size: 12px;
             color: #000000;
             font-weight: 700;
             margin-top: 6px;
@@ -477,7 +477,8 @@
                             </td>
                             <td width="50%">
                                 <div class="info-row">
-                                     <p class="school-name2">{{ $schoolInfo->school_name ?? 'QUODOROID CODING ACADEMY' }}</p>
+                                     <p class="school-name2">{{ $schoolInfo->school_name ?? 'QUDROID SYSTEMS' }}</p>
+                                </div>
                                 <div class="info-row">
                                     <span class="result-details">Motto:</span>
                                     <span class="info-value font-bold">{{ $schoolInfo->school_motto ?? 'NO INFO' }}</span>
@@ -487,12 +488,12 @@
                                     <span class="info-value font-bold">{{ $schoolInfo->school_address ?? 'NO INFO' }}</span>
                                 </div>
                                 <div class="info-row">
-                                    <span class="result-details">Email:</span>
-                                    <span class="info-value font-bold">{{ $schoolInfo->school_email ?? 'NO INFO' }}</span>
-                                </div>
-                                 <div class="info-row">
                                     <span class="result-details">Phone:</span>
                                     <span class="info-value font-bold">{{ $schoolInfo->school_phone ?? 'NO INFO' }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="result-details">Email:</span>
+                                    <span class="info-value font-bold">{{ $schoolInfo->school_email ?? 'NO INFO' }}</span>
                                 </div>
                                 <div class="info-row">
                                     <span class="result-details">Website:</span>
@@ -556,9 +557,9 @@
                                                                 try {
                                                                     if (is_numeric($dob)) {
                                                                         $unixTimestamp = ($dob - 25569) * 86400;
-                                                                        $formattedDob = date('d/m/Y', $unixTimestamp);
+                                                                        $formattedDob = date('jS F, Y', $unixTimestamp);
                                                                     } else {
-                                                                        $formattedDob = \Carbon\Carbon::parse($dob)->format('d/m/Y');
+                                                                        $formattedDob = \Carbon\Carbon::parse($dob)->format('jS F, Y');
                                                                     }
                                                                 } catch (\Exception $e) {
                                                                     $formattedDob = $dob;
@@ -586,7 +587,7 @@
                                                             $formattedDateSchoolOpened = 'NO INFO';
                                                             if ($dateSchoolOpened) {
                                                                 try {
-                                                                    $formattedDateSchoolOpened = \Carbon\Carbon::parse($dateSchoolOpened)->format('d/m/Y');
+                                                                    $formattedDateSchoolOpened = \Carbon\Carbon::parse($dateSchoolOpened)->format('jS F, Y');
                                                                 } catch (\Exception $e) {
                                                                     $formattedDateSchoolOpened = $dateSchoolOpened;
                                                                 }
@@ -599,7 +600,7 @@
                                                     <span class="result-details">Times School Opened:</span>
                                                     <span class="info-value font-bold">{{ $schoolInfo->no_of_times_school_opened ?? 'NO INFO' }}</span>
                                                 </div>
-                                                <div class="info-row">
+                                                {{-- <div class="info-row">
                                                     <span class="result-details">Absent:</span>
                                                     <span class="info-value font-bold">
                                                         @php
@@ -609,7 +610,7 @@
                                                         @endphp
                                                         {{ $absent }}
                                                     </span>
-                                                </div>
+                                                </div> --}}
                                                 <div class="info-row students-count">
                                                     <span class="result-details">Students in Class:</span>
                                                     <span class="info-value font-bold">{{ $studentData['numberOfStudents'] ?? 'NO INFO' }}</span>
@@ -710,12 +711,12 @@
                                     <span class="text-space-on-dots">{{ $profile ? ($profile->classteachercomment ?? 'NO INFO') : 'NO INFO' }}</span>
                                 </div>
                             </td>
-                            <td width="50%">
+                            {{-- <td width="50%">
                                 <div class="h6">Remark On Other Activities</div>
                                 <div>
                                     <span class="text-space-on-dots">{{ $profile ? ($profile->cooperation ?? 'NO INFO') : 'NO INFO' }}</span>
                                 </div>
-                            </td>
+                            </td> --}}
                         </tr>
                         <tr>
                             <td width="50%">
@@ -749,9 +750,9 @@
                         <tr>
                             <td>
                                 <span class="font-bold">This Result was issued on</span>
-                                <span class="text-dot-space2">........................</span>
+                                {{-- <span class="text-dot-space2">........................</span> --}}
                                 <span class="font-bold">and collected by</span>
-                                <span class="text-dot-space2">........................</span>
+                                {{-- <span class="text-dot-space2">........................</span> --}}
                             </td>
                         </tr>
                         <tr>
@@ -760,7 +761,7 @@
                                 <span class="text-dot-space2">
                                     @php
                                         $nextTermBegins = $schoolInfo->date_next_term_begins ?? null;
-                                        $formattedNextTermBegins = $nextTermBegins ? \Carbon\Carbon::parse($nextTermBegins)->format('d/m/Y') : '........................';
+                                        $formattedNextTermBegins = $nextTermBegins ? \Carbon\Carbon::parse($nextTermBegins)->format('jS F, Y') : '........................';
                                     @endphp
                                     {{ $formattedNextTermBegins }}
                                 </span>
