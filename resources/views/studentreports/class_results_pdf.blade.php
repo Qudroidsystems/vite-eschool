@@ -445,17 +445,9 @@
             margin-left: 5px;
         }
 
-
-        .promotion-repeat {
-            color: #dc2626;
-        }
-
-        .promotion-parents {
-            color: #f97316;
-        }
-         /* Promotion status styles */
+        /* Promotion status styles */
         .promotion-promoted {
-            color: #251f96; /* blue for PROMOTED */
+            color: #251f96; /* Blue for PROMOTED */
             font-weight: 700;
         }
         .promotion-repeat {
@@ -463,7 +455,7 @@
             font-weight: 700;
         }
         .promotion-parents {
-            color: #dc2626; /* Light red for PARENTS TO SEE PRINCIPAL */
+            color: #dc2626; /* Red for ADVICE TO REPEAT/PARENTS TO SEE PRINCIPAL */
             font-weight: 700;
         }
         .promotion-default {
@@ -614,17 +606,6 @@
                                                     <span class="result-details">Times School Opened:</span>
                                                     <span class="info-value font-bold">{{ $schoolInfo->no_of_times_school_opened ?? 'NO INFO' }}</span>
                                                 </div>
-                                                {{-- <div class="info-row">
-                                                    <span class="result-details">Absent:</span>
-                                                    <span class="info-value font-bold">
-                                                        @php
-                                                            $timesSchoolOpened = $schoolInfo->no_of_times_school_opened ?? null;
-                                                            $attendance = $profile->attendance ?? null;
-                                                            $absent = ($timesSchoolOpened && $attendance) ? ($timesSchoolOpened - $attendance) : 'NO INFO';
-                                                        @endphp
-                                                        {{ $absent }}
-                                                    </span>
-                                                </div> --}}
                                                 <div class="info-row students-count">
                                                     <span class="result-details">Students in Class:</span>
                                                     <span class="info-value font-bold">{{ $studentData['numberOfStudents'] ?? 'NO INFO' }}</span>
@@ -715,7 +696,6 @@
                     </table>
                 </div>
 
- 
                 <!-- Remarks Section -->
                 <table class="remarks-table">
                     <tbody>
@@ -751,7 +731,7 @@
                                             $statusText = $status ?? 'Not applicable for this term';
                                         @endphp
                                         <br>
-                                         <span class="promotion-status {{ $statusClass }}" style="color: {{ $status === 'PROMOTED' ? '#251f96' : ($status === 'PROMOTED ON TRIAL' ? '#dc2626' : ($status === 'PARENTS TO SEE PRINCIPAL' ? '#dc2626' : '#000000')) }};">
+                                        <span class="promotion-status {{ $statusClass }}">
                                             Promotion Status: {{ $statusText }}
                                         </span>
                                     </span>
@@ -761,16 +741,13 @@
                     </tbody>
                 </table>
 
-
                 <!-- Footer Section -->
                 <div class="footer-section">
                     <table class="footer-layout-table">
                         <tr>
                             <td>
                                 <span class="font-bold">This Result was issued on</span>
-                                {{-- <span class="text-dot-space2">........................</span> --}}
                                 <span class="font-bold">and collected by</span>
-                                {{-- <span class="text-dot-space2">........................</span> --}}
                             </td>
                         </tr>
                         <tr>
