@@ -15,7 +15,7 @@ class SchoolInformationController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:View schoolinformation|Create schoolinformation|Update schoolinformation|Delete schoolinformation', ['only' => ['index', 'store']]);
+        $this->middleware('permission:View schoolinformation|Create schoolinformation|Update schoolinformation|Delete schoolinformation', ['only' => ['index', 'show']]);
         $this->middleware('permission:Create schoolinformation', ['only' => ['create', 'store']]);
         $this->middleware('permission:Update schoolinformation', ['only' => ['edit', 'update']]);
         $this->middleware('permission:Delete schoolinformation', ['only' => ['destroy']]);
@@ -65,7 +65,14 @@ class SchoolInformationController extends Controller
                 'school_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
                 'school_motto' => 'nullable|string|max:255',
                 'school_website' => 'nullable|url|max:255',
+                'no_of_times_school_opened' => 'required|integer|min:0',
+                'date_school_opened' => 'nullable|date',
+                'date_next_term_begins' => 'nullable|date',
                 'is_active' => 'boolean',
+            ], [
+                'no_of_times_school_opened.integer' => 'The number of times school opened must be a valid integer.',
+                'date_school_opened.date' => 'The date school opened must be a valid date.',
+                'date_next_term_begins.date' => 'The date next term begins must be a valid date.',
             ]);
 
             if ($request->hasFile('school_logo')) {
@@ -132,13 +139,20 @@ class SchoolInformationController extends Controller
                 'school_logo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
                 'school_motto' => 'nullable|string|max:255',
                 'school_website' => 'nullable|url|max:255',
+                'no_of_times_school_opened' => 'required|integer|min:0',
+                'date_school_opened' => 'nullable|date',
+                'date_next_term_begins' => 'nullable|date',
                 'is_active' => 'boolean',
+            ], [
+                'no_of_times_school_opened.integer' => 'The number of times school opened must be a valid integer.',
+                'date_school_opened.date' => 'The date school opened must be a valid date.',
+                'date_next_term_begins.date' => 'The date next term begins must be a valid date.',
             ]);
 
             $school = SchoolInformation::findOrFail($id);
 
             if ($request->hasFile('school_logo')) {
-                if ($school->school_logo) {
+                if ($school->school_logo && Storage::disk('public')->exists($school->school_logo)) {
                     Storage::disk('public')->delete($school->school_logo);
                 }
                 $path = $request->file('school_logo')->store('school_logos', 'public');
@@ -187,7 +201,7 @@ class SchoolInformationController extends Controller
         try {
             $school = SchoolInformation::findOrFail($id);
 
-            if ($school->school_logo) {
+            if ($school->school_logo && Storage::disk('public')->exists($school->school_logo)) {
                 Storage::disk('public')->delete($school->school_logo);
             }
 

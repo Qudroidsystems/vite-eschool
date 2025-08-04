@@ -2,7 +2,16 @@ var perPage = 5,
     editlist = false,
     checkAll = document.getElementById("checkAll"),
     options = {
-        valueNames: ["id", "name", "email", "status", "created_at"],
+        valueNames: [
+            "id",
+            "name",
+            "email",
+            "status",
+            "no_of_times_school_opened",
+            "date_school_opened",
+            "date_next_term_begins",
+            "created_at"
+        ],
     },
     schoolList = new List("schoolList", options);
 
@@ -58,6 +67,9 @@ var addIdField = document.getElementById("add-id-field"),
     addLogoField = document.getElementById("school_logo"),
     addMottoField = document.getElementById("school_motto"),
     addWebsiteField = document.getElementById("school_website"),
+    addTimesOpenedField = document.getElementById("no_of_times_school_opened"),
+    addDateOpenedField = document.getElementById("date_school_opened"),
+    addNextTermField = document.getElementById("date_next_term_begins"),
     addStatusField = document.getElementById("is_active"),
     editIdField = document.getElementById("edit-id-field"),
     editNameField = document.getElementById("edit_school_name"),
@@ -67,6 +79,9 @@ var addIdField = document.getElementById("add-id-field"),
     editLogoField = document.getElementById("edit_school_logo"),
     editMottoField = document.getElementById("edit_school_motto"),
     editWebsiteField = document.getElementById("edit_school_website"),
+    editTimesOpenedField = document.getElementById("edit_no_of_times_school_opened"),
+    editDateOpenedField = document.getElementById("edit_date_school_opened"),
+    editNextTermField = document.getElementById("edit_date_next_term_begins"),
     editStatusField = document.getElementById("edit_is_active");
 
 function ensureAxios() {
@@ -180,6 +195,9 @@ function handleEditClick(e) {
         editEmailField.value = tr.querySelector(".email").innerText;
         editMottoField.value = tr.querySelector(".name").getAttribute("data-motto") || "";
         editWebsiteField.value = tr.querySelector(".name").getAttribute("data-website") || "";
+        editTimesOpenedField.value = tr.querySelector(".no_of_times_school_opened").getAttribute("data-no_of_times_school_opened") || "";
+        editDateOpenedField.value = tr.querySelector(".date_school_opened").getAttribute("data-date_school_opened") || "";
+        editNextTermField.value = tr.querySelector(".date_next_term_begins").getAttribute("data-date_next_term_begins") || "";
         var status = tr.querySelector(".status").getAttribute("data-status") === "Active";
         editStatusField.checked = status;
         var modal = new bootstrap.Modal(document.getElementById("editModal"));
@@ -204,6 +222,9 @@ function clearAddFields() {
     addLogoField.value = "";
     addMottoField.value = "";
     addWebsiteField.value = "";
+    addTimesOpenedField.value = "";
+    addDateOpenedField.value = "";
+    addNextTermField.value = "";
     addStatusField.checked = false;
 }
 
@@ -216,6 +237,9 @@ function clearEditFields() {
     editLogoField.value = "";
     editMottoField.value = "";
     editWebsiteField.value = "";
+    editTimesOpenedField.value = "";
+    editDateOpenedField.value = "";
+    editNextTermField.value = "";
     editStatusField.checked = false;
 }
 
@@ -318,6 +342,10 @@ document.getElementById("add-school-form").addEventListener("submit", function (
         errorMsg.innerHTML = "Please enter an email";
         return false;
     }
+    if (addTimesOpenedField.value === "") {
+        errorMsg.innerHTML = "Please enter the number of times school opened";
+        return false;
+    }
 
     if (!ensureAxios()) return;
 
@@ -331,6 +359,9 @@ document.getElementById("add-school-form").addEventListener("submit", function (
     }
     formData.append('school_motto', addMottoField.value);
     formData.append('school_website', addWebsiteField.value);
+    formData.append('no_of_times_school_opened', addTimesOpenedField.value);
+    formData.append('date_school_opened', addDateOpenedField.value);
+    formData.append('date_next_term_begins', addNextTermField.value);
     formData.append('is_active', addStatusField.checked ? 1 : 0);
     formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
 
@@ -378,6 +409,10 @@ document.getElementById("edit-school-form").addEventListener("submit", function 
         errorMsg.innerHTML = "Please enter an email";
         return false;
     }
+    if (editTimesOpenedField.value === "") {
+        errorMsg.innerHTML = "Please enter the number of times school opened";
+        return false;
+    }
 
     if (!ensureAxios()) return;
 
@@ -391,6 +426,9 @@ document.getElementById("edit-school-form").addEventListener("submit", function 
     }
     formData.append('school_motto', editMottoField.value);
     formData.append('school_website', editWebsiteField.value);
+    formData.append('no_of_times_school_opened', editTimesOpenedField.value);
+    formData.append('date_school_opened', editDateOpenedField.value);
+    formData.append('date_next_term_begins', editNextTermField.value);
     formData.append('is_active', editStatusField.checked ? 1 : 0);
     formData.append('_token', document.querySelector('meta[name="csrf-token"]').content);
     formData.append('_method', 'PUT');

@@ -123,6 +123,9 @@
                                                 <th class="sort cursor-pointer" data-sort="name">Name</th>
                                                 <th class="sort cursor-pointer" data-sort="email">Email</th>
                                                 <th class="sort cursor-pointer" data-sort="status">Status</th>
+                                                <th class="sort cursor-pointer" data-sort="no_of_times_school_opened">Times Opened</th>
+                                                <th class="sort cursor-pointer" data-sort="date_school_opened">Date Opened</th>
+                                                <th class="sort cursor-pointer" data-sort="date_next_term_begins">Next Term Begins</th>
                                                 <th class="sort cursor-pointer" data-sort="created_at">Date Created</th>
                                                 <th>Action</th>
                                             </tr>
@@ -136,7 +139,7 @@
                                                             <label class="form-check-label"></label>
                                                         </div>
                                                     </td>
-                                                    <td class="name" data-name="{{ $school->school_name }}">
+                                                    <td class="name" data-name="{{ $school->school_name }}" data-address="{{ $school->school_address }}" data-motto="{{ $school->school_motto }}" data-website="{{ $school->school_website }}">
                                                         <div class="d-flex align-items-center">
                                                             <div>
                                                                 <h6 class="mb-0"><a href="{{ route('school-information.show', $school->id) }}" class="text-reset products">{{ $school->school_name }}</a></h6>
@@ -147,6 +150,9 @@
                                                     <td class="status" data-status="{{ $school->is_active ? 'Active' : 'Inactive' }}">
                                                         <label class="badge bg-{{ $school->is_active ? 'success' : 'secondary' }}">{{ $school->is_active ? 'Active' : 'Inactive' }}</label>
                                                     </td>
+                                                    <td class="no_of_times_school_opened" data-no_of_times_school_opened="{{ $school->no_of_times_school_opened }}">{{ $school->no_of_times_school_opened }}</td>
+                                                    <td class="date_school_opened" data-date_school_opened="{{ $school->date_school_opened ? $school->date_school_opened->format('Y-m-d') : '' }}">{{ $school->date_school_opened ? $school->date_school_opened->format('Y-m-d') : '-' }}</td>
+                                                    <td class="date_next_term_begins" data-date_next_term_begins="{{ $school->date_next_term_begins ? $school->date_next_term_begins->format('Y-m-d') : '' }}">{{ $school->date_next_term_begins ? $school->date_next_term_begins->format('Y-m-d') : '-' }}</td>
                                                     <td class="created_at">{{ $school->created_at->format('Y-m-d') }}</td>
                                                     <td>
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
@@ -170,7 +176,7 @@
                                                 </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="6" class="noresult" style="display: block;">No results found</td>
+                                                    <td colspan="8" class="noresult" style="display: block;">No results found</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
@@ -205,194 +211,210 @@
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Add School Modal -->
-        <div id="showModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 id="addModalLabel" class="modal-title">Add School</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <!-- Add School Modal -->
+            <div id="showModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 id="addModalLabel" class="modal-title">Add School</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form class="tablelist-form" autocomplete="off" id="add-school-form" enctype="multipart/form-data">
+                            <div class="modal-body">
+                                <input type="hidden" id="add-id-field" name="id">
+                                <div class="mb-3">
+                                    <label for="school_name" class="form-label">School Name</label>
+                                    <input type="text" id="school_name" name="school_name" class="form-control" placeholder="Enter school name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="school_address" class="form-label">Address</label>
+                                    <textarea id="school_address" name="school_address" class="form-control" placeholder="Enter school address" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="school_phone" class="form-label">Phone</label>
+                                    <input type="text" id="school_phone" name="school_phone" class="form-control" placeholder="Enter school phone" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="school_email" class="form-label">Email</label>
+                                    <input type="email" id="school_email" name="school_email" class="form-control" placeholder="Enter school email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="school_logo" class="form-label">Logo</label>
+                                    <input type="file" id="school_logo" name="school_logo" class="form-control" accept="image/jpeg,image/png,image/jpg">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="school_motto" class="form-label">Motto</label>
+                                    <input type="text" id="school_motto" name="school_motto" class="form-control" placeholder="Enter school motto">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="school_website" class="form-label">Website</label>
+                                    <input type="url" id="school_website" name="school_website" class="form-control" placeholder="Enter school website">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="no_of_times_school_opened" class="form-label">Number of Times School Opened</label>
+                                    <input type="number" id="no_of_times_school_opened" name="no_of_times_school_opened" class="form-control" placeholder="Enter number of times school opened" min="0" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="date_school_opened" class="form-label">Date School Opened</label>
+                                    <input type="date" id="date_school_opened" name="date_school_opened" class="form-control" placeholder="Select date school opened">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="date_next_term_begins" class="form-label">Date Next Term Begins</label>
+                                    <input type="date" id="date_next_term_begins" name="date_next_term_begins" class="form-control" placeholder="Select date next term begins">
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1">
+                                        <label class="form-check-label" for="is_active">Active</label>
+                                    </div>
+                                </div>
+                                <div class="alert alert-danger d-none" id="alert-error-msg"></div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary" id="add-btn">Add School</button>
+                            </div>
+                        </form>
                     </div>
-                    <form class="tablelist-form" autocomplete="off" id="add-school-form" enctype="multipart/form-data">
-                        <div class="modal-body">
-                            <input type="hidden" id="add-id-field" name="id">
-                            <div class="mb-3">
-                                <label for="school_name" class="form-label">School Name</label>
-                                <input type="text" id="school_name" name="school_name" class="form-control" placeholder="Enter school name" required>
+                </div>
+            </div>
+
+            <!-- Edit School Modal -->
+            <div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 id="editModalLabel" class="modal-title">Edit School</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form class="tablelist-form" autocomplete="off" id="edit-school-form" enctype="multipart/form-data">
+                            <div class="modal-body">
+                                <input type="hidden" id="edit-id-field" name="id">
+                                <div class="mb-3">
+                                    <label for="edit_school_name" class="form-label">School Name</label>
+                                    <input type="text" id="edit_school_name" name="school_name" class="form-control" placeholder="Enter school name" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit_school_address" class="form-label">Address</label>
+                                    <textarea id="edit_school_address" name="school_address" class="form-control" placeholder="Enter school address" required></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit_school_phone" class="form-label">Phone</label>
+                                    <input type="text" id="edit_school_phone" name="school_phone" class="form-control" placeholder="Enter school phone" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit_school_email" class="form-label">Email</label>
+                                    <input type="email" id="edit_school_email" name="school_email" class="form-control" placeholder="Enter school email" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit_school_logo" class="form-label">Logo</label>
+                                    <input type="file" id="edit_school_logo" name="school_logo" class="form-control" accept="image/jpeg,image/png,image/jpg">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit_school_motto" class="form-label">Motto</label>
+                                    <input type="text" id="edit_school_motto" name="school_motto" class="form-control" placeholder="Enter school motto">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit_school_website" class="form-label">Website</label>
+                                    <input type="url" id="edit_school_website" name="school_website" class="form-control" placeholder="Enter school website">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit_no_of_times_school_opened" class="form-label">Number of Times School Opened</label>
+                                    <input type="number" id="edit_no_of_times_school_opened" name="no_of_times_school_opened" class="form-control" placeholder="Enter number of times school opened" min="0" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit_date_school_opened" class="form-label">Date School Opened</label>
+                                    <input type="date" id="edit_date_school_opened" name="date_school_opened" class="form-control" placeholder="Select date school opened">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="edit_date_next_term_begins" class="form-label">Date Next Term Begins</label>
+                                    <input type="date" id="edit_date_next_term_begins" name="date_next_term_begins" class="form-control" placeholder="Select date next term begins">
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="edit_is_active" name="is_active" value="1">
+                                        <label class="form-check-label" for="edit_is_active">Active</label>
+                                    </div>
+                                </div>
+                                <div class="alert alert-danger d-none" id="alert-error-msg"></div>
                             </div>
-                            <div class="mb-3">
-                                <label for="school_address" class="form-label">Address</label>
-                                <textarea id="school_address" name="school_address" class="form-control" placeholder="Enter school address" required></textarea>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
                             </div>
-                            <div class="mb-3">
-                                <label for="school_phone" class="form-label">Phone</label>
-                                <input type="text" id="school_phone" name="school_phone" class="form-control" placeholder="Enter school phone" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="school_email" class="form-label">Email</label>
-                                <input type="email" id="school_email" name="school_email" class="form-control" placeholder="Enter school email" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="school_logo" class="form-label">Logo</label>
-                                <input type="file" id="school_logo" name="school_logo" class="form-control" accept="image/jpeg,image/png,image/jpg">
-                            </div>
-                            <div class="mb-3">
-                                <label for="school_motto" class="form-label">Motto</label>
-                                <input type="text" id="school_motto" name="school_motto" class="form-control" placeholder="Enter school motto">
-                            </div>
-                            <div class="mb-3">
-                                <label for="school_website" class="form-label">Website</label>
-                                <input type="url" id="school_website" name="school_website" class="form-control" placeholder="Enter school website">
-                            </div>
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1">
-                                    <label class="form-check-label" for="is_active">Active</label>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete School Modal -->
+            <div id="deleteRecordModal" class="modal fade zoomIn" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="btn-close" id="deleteRecord-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-md-5">
+                            <div class="text-center">
+                                <div class="text-danger">
+                                    <i class="bi bi-trash display-4"></i>
+                                </div>
+                                <div class="mt-4">
+                                    <h3 class="mb-2">Are you sure?</h3>
+                                    <p class="text-muted fs-lg mx-3 mb-0">Are you sure you want to remove this record?</p>
                                 </div>
                             </div>
-                            <div class="alert alert-danger d-none" id="alert-error-msg"></div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary" id="add-btn">Add School</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Edit School Modal -->
-        <div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 id="editModalLabel" class="modal-title">Edit School</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <form class="tablelist-form" autocomplete="off" id="edit-school-form" enctype="multipart/form-data">
-                        <div class="modal-body">
-                            <input type="hidden" id="edit-id-field" name="id">
-                            <div class="mb-3">
-                                <label for="edit_school_name" class="form-label">School Name</label>
-                                <input type="text" id="edit_school_name" name="school_name" class="form-control" placeholder="Enter school name" required>
+                            <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
+                                <button type="button" class="btn w-sm btn-light btn-hover" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn w-sm btn-danger btn-hover" id="delete-record">Yes, Delete It!</button>
                             </div>
-                            <div class="mb-3">
-                                <label for="edit_school_address" class="form-label">Address</label>
-                                <textarea id="edit_school_address" name="school_address" class="form-control" placeholder="Enter school address" required></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label for="edit_school_phone" class="form-label">Phone</label>
-                                <input type="text" id="edit_school_phone" name="school_phone" class="form-control" placeholder="Enter school phone" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="edit_school_email" class="form-label">Email</label>
-                                <input type="email" id="edit_school_email" name="school_email" class="form-control" placeholder="Enter school email" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="edit_school_logo" class="form-label">Logo</label>
-                                <input type="file" id="edit_school_logo" name="school_logo" class="form-control" accept="image/jpeg,image/png,image/jpg">
-                            </div>
-                            <div class="mb-3">
-                                <label for="edit_school_motto" class="form-label">Motto</label>
-                                <input type="text" id="edit_school_motto" name="school_motto" class="form-control" placeholder="Enter school motto">
-                            </div>
-                            <div class="mb-3">
-                                <label for="edit_school_website" class="form-label">Website</label>
-                                <input type="url" id="edit_school_website" name="school_website" class="form-control" placeholder="Enter school website">
-                            </div>
-                            <div class="mb-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="edit_is_active" name="is_active" value="1">
-                                    <label class="form-check-label" for="edit_is_active">Active</label>
-                                </div>
-                            </div>
-                            <div class="alert alert-danger d-none" id="alert-error-msg"></div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                            <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- Delete School Modal -->
-        <div id="deleteRecordModal" class="modal fade zoomIn" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <button type="button" class="btn-close" id="deleteRecord-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                    </div>
-                    <div class="modal-body p-md-5">
-                        <div class="text-center">
-                            <div class="text-danger">
-                                <i class="bi bi-trash display-4"></i>
-                            </div>
-                            <div class="mt-4">
-                                <h3 class="mb-2">Are you sure?</h3>
-                                <p class="text-muted fs-lg mx-3 mb-0">Are you sure you want to remove this record?</p>
-                            </div>
-                        </div>
-                        <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
-                            <button type="button" class="btn w-sm btn-light btn-hover" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn w-sm btn-danger btn-hover" id="delete-record">Yes, Delete It!</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    <!-- End Page-content -->
-    {{-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="{{ asset('theme/layouts/assets/js/bootstrap.bundle.min.js') }}"></script>
-    <script src="{{ asset('theme/layouts/assets/js/list.min.js') }}"></script>
-    <script src="{{ asset('theme/layouts/assets/js/choices.min.js') }}" defer></script>
-    <script src="{{ asset('theme/layouts/assets/js/sweetalert2.min.js') }}"></script>
-    <script src="{{ asset('js/school-information.init.js') }}"></script> --}}
-    <!-- Chart Initialization -->
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            var ctx = document.getElementById("schoolsByStatusChart").getContext("2d");
-            new Chart(ctx, {
-                type: "bar",
-                data: {
-                    labels: @json(array_keys($status_counts)),
-                    datasets: [{
-                        label: "Schools by Status",
-                        data: @json(array_values($status_counts)),
-                        backgroundColor: ["#28a745", "#6c757d"],
-                        borderColor: ["#28a745", "#6c757d"],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: "Number of Schools"
+        <!-- End Page-content -->
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                var ctx = document.getElementById("schoolsByStatusChart").getContext("2d");
+                new Chart(ctx, {
+                    type: "bar",
+                    data: {
+                        labels: @json(array_keys($status_counts)),
+                        datasets: [{
+                            label: "Schools by Status",
+                            data: @json(array_values($status_counts)),
+                            backgroundColor: ["#28a745", "#6c757d"],
+                            borderColor: ["#28a745", "#6c757d"],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: "Number of Schools"
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: "Status"
+                                }
                             }
                         },
-                        x: {
-                            title: {
+                        plugins: {
+                            legend: {
                                 display: true,
-                                text: "Status"
+                                position: "top"
                             }
                         }
-                    },
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: "top"
-                        }
                     }
-                }
+                });
             });
-        });
-    </script>
-</div>
+        </script>
+    </div>
 @endsection

@@ -11,19 +11,24 @@ class SchoolInformation extends Model
 
     protected $table = 'school_information';
     
-     protected $fillable = [
+    protected $fillable = [
         'school_name',
         'school_address',
         'school_phone',
         'school_email',
         'school_logo',
         'school_motto',
-        'school_website', // Added
+        'school_website',
+        'no_of_times_school_opened',
+        'date_school_opened',
+        'date_next_term_begins',
         'is_active',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'date_school_opened' => 'date',
+        'date_next_term_begins' => 'date',
     ];
 
     /**
@@ -41,7 +46,4 @@ class SchoolInformation extends Model
     {
         return $this->school_logo ? asset('storage/' . $this->school_logo) : null;
     }
-
-
 }
-?>

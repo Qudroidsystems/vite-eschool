@@ -12,7 +12,7 @@
 
         body {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 12px;
+            font-size: 11px;
             line-height: 1.4;
             color: #000;
             background: #fff;
@@ -62,8 +62,9 @@
         .fraction {
             display: inline-block;
             font-family: Arial, sans-serif;
-            font-size: 9px;
+            font-size: 8px;
             text-align: center;
+            font-weight: bold;
         }
 
         .fraction .numerator {
@@ -82,6 +83,7 @@
             border-bottom: 1px dotted #666;
             display: inline-block;
             min-height: 14px;
+            font-weight: bold;
         }
 
         span.text-space-on-dots {
@@ -93,14 +95,14 @@
         }
 
         .school-name1 {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
             color: #1e3a8a;
             text-align: center;
         }
 
         .school-name2 {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 900;
             color: #000000;
             text-align: left;
@@ -136,7 +138,7 @@
             color: white;
             padding: 8px 16px;
             border-radius: 6px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: 700;
             text-align: center;
             margin: 8px 0;
@@ -162,8 +164,8 @@
             border-radius: 1px;
         }
 
-        .school-motto, .school-address, .school-website {
-            font-size: 12px;
+        .school-motto, .school-address, .school-website, .school-email {
+            font-size: 11px;
             font-weight: 900;
             color: #000000;
             margin: 1px 0;
@@ -176,14 +178,14 @@
         }
 
         .result-details {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 800;
             color: #000000;
         }
 
         .info-value {
-            font-size: 12px;
-            font-weight: bold;
+            font-size: 11px;
+            font-weight: 900;
             color: #000000;
         }
 
@@ -194,7 +196,7 @@
             display: inline-block;
             font-weight: 800;
             padding-bottom: 1px;
-            font-size: 10px;
+            font-size: 9px;
             color: #000000;
         }
 
@@ -229,17 +231,17 @@
             border: 1px solid #000000;
             padding: 6px 3px;
             text-align: center;
-            font-size: 9px;
+            font-size: 8px;
         }
 
         .result-table thead th:nth-child(3),
         .result-table thead th:nth-child(4),
         .result-table thead th:nth-child(5) {
-            width: 30px; /* Reduced width for T1, T2, T3 */
+            width: 30px;
         }
 
         .result-table thead th:nth-child(6) {
-            width: 60px; /* Increased width for column d */
+            width: 60px;
         }
 
         .result-table thead th:nth-child(8) {
@@ -254,7 +256,7 @@
             border: 1px solid #000000;
             padding: 4px 3px;
             text-align: center;
-            font-size: 11px;
+            font-size: 10px;
             background: white;
             font-weight: 900;
         }
@@ -291,14 +293,14 @@
             border: 1px solid #000000;
             padding: 4px;
             text-align: center;
-            font-size: 9px;
+            font-size: 8px;
         }
 
         .assessment-table tbody td {
             border: 1px solid #000000;
             padding: 3px 4px;
             background: white;
-            font-size: 8px;
+            font-size: 7px;
             color: #000000;
             font-weight: bold;
         }
@@ -317,7 +319,7 @@
         }
 
         .grade-display span {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 600;
             margin: 0 4px;
         }
@@ -340,7 +342,7 @@
             color: #050505;
             font-weight: 600;
             margin-bottom: 4px;
-            font-size: 9px;
+            font-size: 8px;
         }
 
         .remarks-table .text-space-on-dots {
@@ -363,7 +365,7 @@
         }
 
         .h5 {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: bold;
             margin-bottom: 4px;
             color: #047857;
@@ -419,7 +421,7 @@
         }
 
         .font-bold {
-            font-weight: bold;
+            font-weight: 900;
         }
 
         .text-primary {
@@ -432,7 +434,7 @@
         }
 
         .powered-by {
-            font-size: 9px;
+            font-size: 8px;
             color: #000000;
             font-weight: 700;
             margin-top: 6px;
@@ -474,14 +476,28 @@
                                 </div>
                             </td>
                             <td width="50%">
-                                <p class="school-name2">{{ $schoolInfo->school_name ?? 'QUODOROID CODING ACADEMY' }}</p>
-                                <div class="school-motto">{{ $schoolInfo->school_motto ?? 'NO INFO' }}</div>
-                                <div class="school-address">{{ $schoolInfo->school_address ?? 'NO INFO' }}</div>
-                                @if ($schoolInfo && $schoolInfo->school_website)
-                                    <div class="school-website">{{ $schoolInfo->school_website }}</div>
-                                @else
-                                    <div class="school-website">NO INFO</div>
-                                @endif
+                                <div class="info-row">
+                                     <p class="school-name2">{{ $schoolInfo->school_name ?? 'QUODOROID CODING ACADEMY' }}</p>
+                                <div class="info-row">
+                                    <span class="result-details">Motto:</span>
+                                    <span class="info-value font-bold">{{ $schoolInfo->school_motto ?? 'NO INFO' }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="result-details">Address:</span>
+                                    <span class="info-value font-bold">{{ $schoolInfo->school_address ?? 'NO INFO' }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="result-details">Email:</span>
+                                    <span class="info-value font-bold">{{ $schoolInfo->school_email ?? 'NO INFO' }}</span>
+                                </div>
+                                 <div class="info-row">
+                                    <span class="result-details">Phone:</span>
+                                    <span class="info-value font-bold">{{ $schoolInfo->school_phone ?? 'NO INFO' }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="result-details">Website:</span>
+                                    <span class="info-value font-bold">{{ $schoolInfo->school_website ?? 'NO INFO' }}</span>
+                                </div>
                             </td>
                             <td width="25%">
                                 <div class="photo-frame">
@@ -563,12 +579,36 @@
                                                     <span class="info-value font-bold">{{ $student->gender ?? 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row">
-                                                    <span class="result-details">School Opened:</span>
-                                                    <span class="info-value font-bold">{{ $profile ? ($profile->attendance ?? 'NO INFO') : 'NO INFO' }}</span>
+                                                    <span class="result-details">Date School Opened:</span>
+                                                    <span class="info-value font-bold">
+                                                        @php
+                                                            $dateSchoolOpened = $schoolInfo->date_school_opened ?? null;
+                                                            $formattedDateSchoolOpened = 'NO INFO';
+                                                            if ($dateSchoolOpened) {
+                                                                try {
+                                                                    $formattedDateSchoolOpened = \Carbon\Carbon::parse($dateSchoolOpened)->format('d/m/Y');
+                                                                } catch (\Exception $e) {
+                                                                    $formattedDateSchoolOpened = $dateSchoolOpened;
+                                                                }
+                                                            }
+                                                        @endphp
+                                                        {{ $formattedDateSchoolOpened }}
+                                                    </span>
+                                                </div>
+                                                <div class="info-row">
+                                                    <span class="result-details">Times School Opened:</span>
+                                                    <span class="info-value font-bold">{{ $schoolInfo->no_of_times_school_opened ?? 'NO INFO' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Absent:</span>
-                                                    <span class="info-value font-bold">{{ $profile && $profile->attendance ? ($profile->attendance - ($profile->attendance ?? 0)) : 'NO INFO' }}</span>
+                                                    <span class="info-value font-bold">
+                                                        @php
+                                                            $timesSchoolOpened = $schoolInfo->no_of_times_school_opened ?? null;
+                                                            $attendance = $profile->attendance ?? null;
+                                                            $absent = ($timesSchoolOpened && $attendance) ? ($timesSchoolOpened - $attendance) : 'NO INFO';
+                                                        @endphp
+                                                        {{ $absent }}
+                                                    </span>
                                                 </div>
                                                 <div class="info-row students-count">
                                                     <span class="result-details">Students in Class:</span>
@@ -660,73 +700,6 @@
                     </table>
                 </div>
 
-                <!-- Assessment Tables Section -->
-                {{-- <table class="assessment-layout-table">
-                    <tr>
-                        <td>
-                            <div class="h5">Character Assessment</div>
-                            <table class="assessment-table">
-                                <thead>
-                                    <tr>
-                                        <th>Criteria</th>
-                                        <th>Grade</th>
-                                        <th>Sign</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if ($studentData['studentpp'] && $studentData['studentpp']->isNotEmpty())
-                                        @php $profile = $studentData['studentpp']->first(); @endphp
-                                        <tr><td>Class Attendance</td><td>{{ $profile->attendance ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Attentiveness in Class</td><td>{{ $profile->attentiveness_in_class ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Class Participation</td><td>{{ $profile->class_participation ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Self Control</td><td>{{ $profile->selfcontrol ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Relationship with Others</td><td>{{ $profile->relationship_with_others ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Doing Assignment</td><td>{{ $profile->doing_assignment ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Neatness</td><td>{{ $profile->neatness ?? 'NO INFO' }}</td><td></td></tr>
-                                    @else
-                                        <tr><td colspan="3">No character assessment data available.</td></tr>
-                                    @endif
-                                </tbody>
-                            </table>
-                        </td>
-                        <td>
-                            <div class="h5">Skill Development</div>
-                            <table class="assessment-table">
-                                <thead>
-                                    <tr>
-                                        <th>Skills</th>
-                                        <th>Grade</th>
-                                        <th>Sign</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @if ($studentData['studentpp'] && $studentData['studentpp']->isNotEmpty())
-                                        @php $profile = $studentData['studentpp']->first(); @endphp
-                                        <tr><td>Writing Skill</td><td>{{ $profile->writing_skill ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Reading Skill</td><td>{{ $profile->reading_skill ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Spoken English/Communication</td><td>{{ $profile->spoken_english_communication ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Hand Writing</td><td>{{ $profile->hand_writing ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Sports/Games</td><td>{{ $profile->gamesandsports ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Club</td><td>{{ $profile->club ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Music</td><td>{{ $profile->music ?? 'NO INFO' }}</td><td></td></tr>
-                                    @else
-                                        <tr><td colspan="3">No skill development data available.</td></tr>
-                                    @endif
-                                </tbody>
-                            </table>
-                        </td>
-                    </tr>
-                </table> --}}
-
-                <!-- Grade Legend -->
-                {{-- <div class="grade-display">
-                    <span>Grade: V.Good {VG}</span>
-                    <span>Good {G}</span>
-                    <span>Average {AVG}</span>
-                    <span>Below Average {BA}</span>
-                    <span>Poor {P}</span>
-                </div> --}}
-
                 <!-- Remarks Section -->
                 <table class="remarks-table">
                     <tbody>
@@ -783,8 +756,14 @@
                         </tr>
                         <tr>
                             <td>
-                                <span class="font-bold text-primary">NEXT TERM BEGINS</span>
-                                <span class="text-dot-space2">........................</span>
+                                <span class="font-bold text-primary">Next Term Begins:</span>
+                                <span class="text-dot-space2">
+                                    @php
+                                        $nextTermBegins = $schoolInfo->date_next_term_begins ?? null;
+                                        $formattedNextTermBegins = $nextTermBegins ? \Carbon\Carbon::parse($nextTermBegins)->format('d/m/Y') : '........................';
+                                    @endphp
+                                    {{ $formattedNextTermBegins }}
+                                </span>
                             </td>
                         </tr>
                     </table>
