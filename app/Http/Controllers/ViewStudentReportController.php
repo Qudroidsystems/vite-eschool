@@ -274,8 +274,7 @@ class ViewStudentReportController extends Controller
         ]);
     }
 
-   
-    private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
+   private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
 {
     try {
         if (!is_numeric($id) || !is_numeric($schoolclassid) || !is_numeric($sessionid) || !is_numeric($termid)) {
@@ -393,16 +392,115 @@ class ViewStudentReportController extends Controller
                 ->select(['compulsory_subject_classes.subjectId', 'subject.subject as subject_name'])
                 ->get();
 
-            // Enhanced promotion criteria logic
-            $promotionResult = $this->calculatePromotionStatus($scores, $compulsorySubjects, $isSenior);
-            
-            $principalComment = $promotionResult['comment'];
-            $promotionStatusValue = $promotionResult['status'];
+            $compulsorySubjectLog = [];
+            $compulsoryCreditCount = 0;
+            $creditCount = 0;
+            $failCount = 0;
+            $gradeCounts = ['A' => 0, 'B' => 0, 'C' => 0, 'D' => 0, 'F' => 0];
+            $compulsoryFailCount = 0;
+            $missingCompulsorySubjects = [];
+
+            $creditGrades = $isSenior ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6'] : ['A', 'B', 'C'];
+            $failGrades = $isSenior ? ['F9', 'E8'] : ['F'];
+
+            $compulsorySubjectIds = $compulsorySubjects->pluck('subjectId')->toArray();
+            foreach ($compulsorySubjects as $compulsorySubject) {
+                $subjectId = $compulsorySubject->subjectId;
+                $subjectName = $compulsorySubject->subject_name;
+                $score = $scores->firstWhere('subject_id', $subjectId);
+                $grade = $score ? $score->grade : 'N/A';
+                $compulsorySubjectLog[] = [
+                    'subject_id' => $subjectId,
+                    'subject_name' => $subjectName,
+                    'grade' => $grade,
+                ];
+                if ($score && in_array($grade, $creditGrades)) {
+                    $compulsoryCreditCount++;
+                } elseif ($score && in_array($grade, $failGrades)) {
+                    $compulsoryFailCount++;
+                } elseif (!$score) {
+                    $missingCompulsorySubjects[] = $subjectName;
+                }
+            }
+
+            foreach ($scores as $score) {
+                $grade = $score->grade;
+                if (in_array($grade, $creditGrades)) {
+                    $creditCount++;
+                    if ($isSenior) {
+                        if (in_array($grade, ['A1'])) $gradeCounts['A']++;
+                        elseif (in_array($grade, ['B2', 'B3'])) $gradeCounts['B']++;
+                        elseif (in_array($grade, ['C4', 'C5', 'C6'])) $gradeCounts['C']++;
+                    } else {
+                        if ($grade === 'A') $gradeCounts['A']++;
+                        elseif ($grade === 'B') $gradeCounts['B']++;
+                        elseif ($grade === 'C') $gradeCounts['C']++;
+                    }
+                } elseif (in_array($grade, $failGrades)) {
+                    $failCount++;
+                    $gradeCounts['F']++;
+                } elseif ($grade === 'D') {
+                    $gradeCounts['D']++;
+                }
+            }
+
+            $principalComment = '';
+            $promotionStatusValue = '';
+
+            // Check if minimum 5 credits in compulsory subjects
+            $meetsCompulsoryCreditRequirement = $compulsoryCreditCount >= 5;
+
+            if ($meetsCompulsoryCreditRequirement) {
+                if ($gradeCounts['A'] === count($scores) && $compulsoryFailCount === 0) {
+                    // Straight A's in all subjects
+                    $principalComment = 'Excellent results.';
+                    $promotionStatusValue = 'PROMOTED';
+                } elseif ($gradeCounts['A'] > 0 && $gradeCounts['B'] > 0 && $gradeCounts['C'] === 0 && $gradeCounts['D'] === 0 && $gradeCounts['F'] === 0) {
+                    // A's mixed with B's
+                    $principalComment = 'Very Good results.';
+                    $promotionStatusValue = 'PROMOTED';
+                } elseif ($gradeCounts['A'] > 0 && $gradeCounts['B'] > 0 && $gradeCounts['C'] > 0 && $gradeCounts['D'] === 0 && $gradeCounts['F'] === 0) {
+                    // A's, B's, and C's
+                    $principalComment = 'Good results.';
+                    $promotionStatusValue = 'PROMOTED';
+                } elseif ($gradeCounts['B'] > 0 && $gradeCounts['C'] > 0 && $gradeCounts['A'] === 0 && $gradeCounts['D'] === 0 && $gradeCounts['F'] === 0) {
+                    // B's and C's
+                    $principalComment = 'Average results.';
+                    $promotionStatusValue = 'PROMOTED';
+                } elseif ($gradeCounts['C'] > 0 && $gradeCounts['D'] > 0 && $gradeCounts['A'] === 0 && $gradeCounts['B'] === 0 && $gradeCounts['F'] === 0) {
+                    // C's and D's
+                    $principalComment = 'Below Average Results.';
+                    $promotionStatusValue = 'PROMOTED';
+                } elseif ($gradeCounts['D'] > 0 && $gradeCounts['F'] === 2 && $gradeCounts['A'] === 0 && $gradeCounts['B'] === 0 && $gradeCounts['C'] === 0) {
+                    // D's with exactly 2 F's
+                    $principalComment = 'Very Poor Results.';
+                    $promotionStatusValue = 'PROMOTED ON TRIAL';
+                } elseif ($gradeCounts['F'] >= 4) {
+                    // 4 or more F's
+                    $principalComment = 'Very Poor Result.';
+                    $promotionStatusValue = 'PARENTS TO SEE THE PRINCIPAL';
+                } else {
+                    // Default case for other combinations with 5 compulsory credits
+                    $principalComment = 'Inconsistent performance. Parents to see the Principal for further discussion.';
+                    $promotionStatusValue = 'PARENTS TO SEE THE PRINCIPAL';
+                }
+            } else {
+                // Less than 5 compulsory credits or fails in compulsory subjects
+                if ($compulsoryFailCount > 0 || $gradeCounts['F'] >= 5) {
+                    $principalComment = 'Very Poor Results.';
+                    $promotionStatusValue = 'ADVICE TO REPEAT/PARENTS TO SEE THE PRINCIPAL';
+                } else {
+                    $principalComment = 'Insufficient credits in compulsory subjects. Parents to see the Principal.';
+                    $promotionStatusValue = 'PARENTS TO SEE THE PRINCIPAL';
+                }
+            }
 
             Log::info("Promotion Decision for Student ID: {$id}", [
                 'principal_comment' => $principalComment,
                 'promotion_status' => $promotionStatusValue,
-                'grade_analysis' => $promotionResult['analysis'],
+                'grade_counts' => $gradeCounts,
+                'compulsory_credit_count' => $compulsoryCreditCount,
+                'compulsory_fail_count' => $compulsoryFailCount,
             ]);
 
             Studentpersonalityprofile::updateOrCreate(
@@ -458,243 +556,6 @@ class ViewStudentReportController extends Controller
         return [];
     }
 }
-
-/**
- * Calculate promotion status based on enhanced criteria
- */
-private function calculatePromotionStatus($scores, $compulsorySubjects, $isSenior)
-{
-    // Define grade hierarchies
-    $creditGrades = $isSenior ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6'] : ['A', 'B', 'C'];
-    $failGrades = $isSenior ? ['F9', 'E8'] : ['F'];
-    $allGrades = $isSenior ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6', 'D7', 'E8', 'F9'] : ['A', 'B', 'C', 'D', 'F'];
-    
-    // Get compulsory subject IDs
-    $compulsorySubjectIds = $compulsorySubjects->pluck('subjectId')->toArray();
-    
-    // Analyze grades
-    $gradeAnalysis = $this->analyzeGrades($scores, $compulsorySubjectIds, $isSenior);
-    
-    // Check minimum credit requirement (5 credits minimum)
-    if ($gradeAnalysis['total_credits'] < 5) {
-        return [
-            'comment' => 'Very Poor Results',
-            'status' => 'ADVICE TO REPEAT/PARENTS TO SEE THE PRINCIPAL',
-            'analysis' => $gradeAnalysis
-        ];
-    }
-    
-    // Check for F's in compulsory subjects
-    if ($gradeAnalysis['compulsory_fails'] > 0) {
-        return [
-            'comment' => 'Very Poor Results',
-            'status' => 'ADVICE TO REPEAT/PARENTS TO SEE THE PRINCIPAL',
-            'analysis' => $gradeAnalysis
-        ];
-    }
-    
-    // Check for 5 or more F's overall
-    if ($gradeAnalysis['total_fails'] >= 5) {
-        return [
-            'comment' => 'Very Poor Results',
-            'status' => 'ADVICE TO REPEAT/PARENTS TO SEE THE PRINCIPAL',
-            'analysis' => $gradeAnalysis
-        ];
-    }
-    
-    // Check for 4 or more F's
-    if ($gradeAnalysis['total_fails'] >= 4) {
-        return [
-            'comment' => 'Very Poor Result',
-            'status' => 'PARENTS TO SEE THE PRINCIPAL',
-            'analysis' => $gradeAnalysis
-        ];
-    }
-    
-    // Check for D's + 2F's scenario (including compulsory subjects)
-    if ($gradeAnalysis['has_d_grades'] && $gradeAnalysis['total_fails'] >= 2 && $gradeAnalysis['compulsory_has_d_or_f']) {
-        return [
-            'comment' => 'Very Poor Results',
-            'status' => 'PROMOTED ON TRIAL',
-            'analysis' => $gradeAnalysis
-        ];
-    }
-    
-    // Grade pattern analysis for promotion
-    $gradePattern = $this->identifyGradePattern($gradeAnalysis, $isSenior);
-    
-    switch ($gradePattern) {
-        case 'straight_a':
-            return [
-                'comment' => 'Excellent results',
-                'status' => 'PROMOTED',
-                'analysis' => $gradeAnalysis
-            ];
-            
-        case 'a_and_b':
-            return [
-                'comment' => 'Very Good results',
-                'status' => 'PROMOTED',
-                'analysis' => $gradeAnalysis
-            ];
-            
-        case 'a_b_c':
-            return [
-                'comment' => 'Good results',
-                'status' => 'PROMOTED',
-                'analysis' => $gradeAnalysis
-            ];
-            
-        case 'b_and_c':
-            return [
-                'comment' => 'Average results',
-                'status' => 'PROMOTED',
-                'analysis' => $gradeAnalysis
-            ];
-            
-        case 'c_and_d':
-            return [
-                'comment' => 'Below Average Results',
-                'status' => 'PROMOTED',
-                'analysis' => $gradeAnalysis
-            ];
-            
-        default:
-            return [
-                'comment' => 'Average results',
-                'status' => 'PROMOTED',
-                'analysis' => $gradeAnalysis
-            ];
-    }
-}
-
-/**
- * Analyze student grades comprehensively
- */
-private function analyzeGrades($scores, $compulsorySubjectIds, $isSenior)
-{
-    $analysis = [
-        'total_subjects' => $scores->count(),
-        'compulsory_subjects' => count($compulsorySubjectIds),
-        'total_credits' => 0,
-        'compulsory_credits' => 0,
-        'total_fails' => 0,
-        'compulsory_fails' => 0,
-        'compulsory_has_d_or_f' => false,
-        'has_d_grades' => false,
-        'grade_counts' => [],
-        'compulsory_grade_counts' => [],
-        'highest_grade' => null,
-        'lowest_grade' => null,
-    ];
-    
-    $creditGrades = $isSenior ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6'] : ['A', 'B', 'C'];
-    $failGrades = $isSenior ? ['F9', 'E8'] : ['F'];
-    $dGrades = $isSenior ? ['D7'] : ['D'];
-    
-    foreach ($scores as $score) {
-        $grade = $score->grade;
-        $isCompulsory = in_array($score->subject_id, $compulsorySubjectIds);
-        
-        // Count grades
-        $analysis['grade_counts'][$grade] = ($analysis['grade_counts'][$grade] ?? 0) + 1;
-        
-        if ($isCompulsory) {
-            $analysis['compulsory_grade_counts'][$grade] = ($analysis['compulsory_grade_counts'][$grade] ?? 0) + 1;
-        }
-        
-        // Track credits
-        if (in_array($grade, $creditGrades)) {
-            $analysis['total_credits']++;
-            if ($isCompulsory) {
-                $analysis['compulsory_credits']++;
-            }
-        }
-        
-        // Track fails
-        if (in_array($grade, $failGrades)) {
-            $analysis['total_fails']++;
-            if ($isCompulsory) {
-                $analysis['compulsory_fails']++;
-                $analysis['compulsory_has_d_or_f'] = true;
-            }
-        }
-        
-        // Track D grades
-        if (in_array($grade, $dGrades)) {
-            $analysis['has_d_grades'] = true;
-            if ($isCompulsory) {
-                $analysis['compulsory_has_d_or_f'] = true;
-            }
-        }
-        
-        // Track highest and lowest grades
-        if (!$analysis['highest_grade'] || $this->compareGrades($grade, $analysis['highest_grade'], $isSenior) > 0) {
-            $analysis['highest_grade'] = $grade;
-        }
-        if (!$analysis['lowest_grade'] || $this->compareGrades($grade, $analysis['lowest_grade'], $isSenior) < 0) {
-            $analysis['lowest_grade'] = $grade;
-        }
-    }
-    
-    return $analysis;
-}
-
-/**
- * Identify grade pattern for promotion criteria
- */
-private function identifyGradePattern($analysis, $isSenior)
-{
-    $aGrades = $isSenior ? ['A1'] : ['A'];
-    $bGrades = $isSenior ? ['B2', 'B3'] : ['B'];
-    $cGrades = $isSenior ? ['C4', 'C5', 'C6'] : ['C'];
-    $dGrades = $isSenior ? ['D7'] : ['D'];
-    
-    $hasA = $this->hasAnyGrade($analysis['grade_counts'], $aGrades);
-    $hasB = $this->hasAnyGrade($analysis['grade_counts'], $bGrades);
-    $hasC = $this->hasAnyGrade($analysis['grade_counts'], $cGrades);
-    $hasD = $this->hasAnyGrade($analysis['grade_counts'], $dGrades);
-    
-    $onlyA = $hasA && !$hasB && !$hasC && !$hasD && $analysis['total_fails'] == 0;
-    $onlyAB = ($hasA || $hasB) && !$hasC && !$hasD && $analysis['total_fails'] == 0;
-    $onlyABC = ($hasA || $hasB || $hasC) && !$hasD && $analysis['total_fails'] == 0;
-    $onlyBC = ($hasB || $hasC) && !$hasA && !$hasD && $analysis['total_fails'] == 0;
-    $onlyCD = ($hasC || $hasD) && !$hasA && !$hasB && $analysis['total_fails'] == 0;
-    
-    if ($onlyA) return 'straight_a';
-    if ($onlyAB) return 'a_and_b';
-    if ($onlyABC) return 'a_b_c';
-    if ($onlyBC) return 'b_and_c';
-    if ($onlyCD) return 'c_and_d';
-    
-    return 'mixed';
-}
-
-/**
- * Helper function to check if any grade from a list exists
- */
-private function hasAnyGrade($gradeCounts, $targetGrades)
-{
-    foreach ($targetGrades as $grade) {
-        if (isset($gradeCounts[$grade]) && $gradeCounts[$grade] > 0) {
-            return true;
-        }
-    }
-    return false;
-}
-
-/**
- * Compare grades (higher grade returns positive value)
- */
-private function compareGrades($grade1, $grade2, $isSenior)
-{
-    $gradeOrder = $isSenior 
-        ? ['F9' => 0, 'E8' => 1, 'D7' => 2, 'C6' => 3, 'C5' => 4, 'C4' => 5, 'B3' => 6, 'B2' => 7, 'A1' => 8]
-        : ['F' => 0, 'D' => 1, 'C' => 2, 'B' => 3, 'A' => 4];
-    
-    return ($gradeOrder[$grade1] ?? 0) - ($gradeOrder[$grade2] ?? 0);
-}
-
     public function calculateGradePreview(Request $request)
     {
         $request->validate([
@@ -943,7 +804,7 @@ private function compareGrades($grade1, $grade2, $isSenior)
                 ->setOptions([
                     'dpi' => 96,
                     'defaultFont' => 'DejaVu Sans',
-                    'isRemoteEnabled' => true,
+                    'isRemoteEnabled' => false,
                     'isHtml5ParserEnabled' => true,
                     'isFontSubsettingEnabled' => true,
                     'isPhpEnabled' => false,
