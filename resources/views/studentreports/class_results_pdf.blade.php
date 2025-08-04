@@ -458,7 +458,7 @@
         }
          /* Promotion status styles */
         .promotion-promoted {
-            color: #22c55e; /* Green for PROMOTED */
+            color: #1c1779; /* Green for PROMOTED */
             font-weight: bold;
         }
         .promotion-repeat {
