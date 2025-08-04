@@ -394,11 +394,10 @@ class ViewStudentReportController extends Controller
 
             $compulsorySubjectLog = [];
             $compulsoryCreditCount = 0;
-            $creditCount = 0;
             $failCount = 0;
-            $gradeCounts = ['A' => 0, 'B' => 0, 'C' => 0, 'D' => 0, 'F' => 0];
             $compulsoryFailCount = 0;
             $missingCompulsorySubjects = [];
+            $gradeCounts = ['A' => 0, 'B' => 0, 'C' => 0, 'D' => 0, 'F' => 0];
 
             $creditGrades = $isSenior ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6'] : ['A', 'B', 'C'];
             $failGrades = $isSenior ? ['F9', 'E8'] : ['F'];
@@ -425,22 +424,19 @@ class ViewStudentReportController extends Controller
 
             foreach ($scores as $score) {
                 $grade = $score->grade;
-                if (in_array($grade, $creditGrades)) {
-                    $creditCount++;
-                    if ($isSenior) {
-                        if (in_array($grade, ['A1'])) $gradeCounts['A']++;
-                        elseif (in_array($grade, ['B2', 'B3'])) $gradeCounts['B']++;
-                        elseif (in_array($grade, ['C4', 'C5', 'C6'])) $gradeCounts['C']++;
-                    } else {
-                        if ($grade === 'A') $gradeCounts['A']++;
-                        elseif ($grade === 'B') $gradeCounts['B']++;
-                        elseif ($grade === 'C') $gradeCounts['C']++;
-                    }
-                } elseif (in_array($grade, $failGrades)) {
+                if (in_array($grade, $failGrades)) {
                     $failCount++;
                     $gradeCounts['F']++;
                 } elseif ($grade === 'D') {
                     $gradeCounts['D']++;
+                } elseif ($isSenior) {
+                    if (in_array($grade, ['A1'])) $gradeCounts['A']++;
+                    elseif (in_array($grade, ['B2', 'B3'])) $gradeCounts['B']++;
+                    elseif (in_array($grade, ['C4', 'C5', 'C6'])) $gradeCounts['C']++;
+                } else {
+                    if ($grade === 'A') $gradeCounts['A']++;
+                    elseif ($grade === 'B') $gradeCounts['B']++;
+                    elseif ($grade === 'C') $gradeCounts['C']++;
                 }
             }
 
@@ -450,9 +446,22 @@ class ViewStudentReportController extends Controller
             // Check if minimum 5 credits in compulsory subjects
             $meetsCompulsoryCreditRequirement = $compulsoryCreditCount >= 5;
 
-            if ($meetsCompulsoryCreditRequirement) {
-                if ($gradeCounts['A'] === count($scores) && $compulsoryFailCount === 0) {
-                    // Straight A's in all subjects
+            if ($compulsoryFailCount > 0 || $failCount >= 5) {
+                // F's in compulsory subjects or 5+ F's overall
+                $principalComment = 'Very Poor Results.';
+                $promotionStatusValue = 'ADVICE TO REPEAT/PARENTS TO SEE THE PRINCIPAL';
+            } elseif ($failCount >= 4) {
+                // 4 or more F's (but no F's in compulsory subjects)
+                $principalComment = 'Very Poor Result.';
+                $promotionStatusValue = 'PARENTS TO SEE THE PRINCIPAL';
+            } elseif (!$meetsCompulsoryCreditRequirement) {
+                // Less than 5 credits in compulsory subjects
+                $principalComment = 'Insufficient credits in compulsory subjects. Parents to see the Principal.';
+                $promotionStatusValue = 'PARENTS TO SEE THE PRINCIPAL';
+            } else {
+                // Meets 5 compulsory credits, evaluate grade combinations
+                if ($gradeCounts['A'] === count($scores) && count($scores) > 0) {
+                    // Straight A's
                     $principalComment = 'Excellent results.';
                     $promotionStatusValue = 'PROMOTED';
                 } elseif ($gradeCounts['A'] > 0 && $gradeCounts['B'] > 0 && $gradeCounts['C'] === 0 && $gradeCounts['D'] === 0 && $gradeCounts['F'] === 0) {
@@ -475,22 +484,9 @@ class ViewStudentReportController extends Controller
                     // D's with exactly 2 F's
                     $principalComment = 'Very Poor Results.';
                     $promotionStatusValue = 'PROMOTED ON TRIAL';
-                } elseif ($gradeCounts['F'] >= 4) {
-                    // 4 or more F's
-                    $principalComment = 'Very Poor Result.';
-                    $promotionStatusValue = 'PARENTS TO SEE THE PRINCIPAL';
                 } else {
-                    // Default case for other combinations with 5 compulsory credits
-                    $principalComment = 'Inconsistent performance. Parents to see the Principal for further discussion.';
-                    $promotionStatusValue = 'PARENTS TO SEE THE PRINCIPAL';
-                }
-            } else {
-                // Less than 5 compulsory credits or fails in compulsory subjects
-                if ($compulsoryFailCount > 0 || $gradeCounts['F'] >= 5) {
-                    $principalComment = 'Very Poor Results.';
-                    $promotionStatusValue = 'ADVICE TO REPEAT/PARENTS TO SEE THE PRINCIPAL';
-                } else {
-                    $principalComment = 'Insufficient credits in compulsory subjects. Parents to see the Principal.';
+                    // Other cases with 5 compulsory credits but not matching specific criteria
+                    $principalComment = 'Inconsistent performance. Parents to see the Principal.';
                     $promotionStatusValue = 'PARENTS TO SEE THE PRINCIPAL';
                 }
             }
@@ -501,6 +497,7 @@ class ViewStudentReportController extends Controller
                 'grade_counts' => $gradeCounts,
                 'compulsory_credit_count' => $compulsoryCreditCount,
                 'compulsory_fail_count' => $compulsoryFailCount,
+                'total_fail_count' => $failCount,
             ]);
 
             Studentpersonalityprofile::updateOrCreate(
