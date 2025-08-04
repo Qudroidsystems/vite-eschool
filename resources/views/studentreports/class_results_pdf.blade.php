@@ -749,7 +749,7 @@
                                             };
                                             $statusText = $status ?? 'Not applicable for this term';
                                         @endphp
-                                        | <span class="promotion-status {{ $statusClass }}" style="color: {{ $status === 'PROMOTED' ? '#251f96' : ($status === 'REPEAT' ? '#dc2626' : ($status === 'PARENTS TO SEE PRINCIPAL' ? '#f87171' : '#000000')) }};">
+                                         <span class="promotion-status {{ $statusClass }}" style="color: {{ $status === 'PROMOTED' ? '#251f96' : ($status === 'REPEAT' ? '#dc2626' : ($status === 'PARENTS TO SEE PRINCIPAL' ? '#f87171' : '#000000')) }};">
                                             Promotion Status: {{ $statusText }}
                                         </span>
                                     </span>
