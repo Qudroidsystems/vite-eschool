@@ -456,6 +456,23 @@
         .promotion-parents {
             color: #f97316;
         }
+         /* Promotion status styles */
+        .promotion-promoted {
+            color: #22c55e; /* Green for PROMOTED */
+            font-weight: bold;
+        }
+        .promotion-repeat {
+            color: #dc2626; /* Red for REPEAT */
+            font-weight: bold;
+        }
+        .promotion-parents {
+            color: #f87171; /* Light red for PARENTS TO SEE PRINCIPAL */
+            font-weight: bold;
+        }
+        .promotion-default {
+            color: #000000; /* Black for default or not applicable */
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -701,42 +718,50 @@
                     </table>
                 </div>
 
-               <!-- Remarks Section -->
-<table class="remarks-table">
-    <tbody>
-        <tr>
-            <td width="50%">
-                <div class="h6">Class Teacher's Remark Signature/Date</div>
-                <div>
-                    <span class="text-space-on-dots">{{ $profile ? ($profile->classteachercomment ?? 'NO INFO') : 'NO INFO' }}</span>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <td width="50%">
-                <div class="h6">Guidance Counselor's Remark Signature/Date</div>
-                <div>
-                    <span class="text-space-on-dots">{{ $profile ? ($profile->guidancescomment ?? 'NO INFO') : 'NO INFO' }}</span>
-                </div>
-            </td>
-            <td width="50%">
-                <div class="h6">Principal's Remark & Promotion Status</div>
-                <div>
-                    <span class="text-space-on-dots">
-                        {{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}
-                        @if ($studentData['promotionStatusValue'])
-                            | <span class="promotion-status @if ($studentData['promotionStatusValue'] === 'PROMOTED') promotion-promoted @elseif ($studentData['promotionStatusValue'] === 'REPEAT') promotion-repeat @elseif ($studentData['promotionStatusValue'] === 'PARENTS TO SEE PRINCIPAL') promotion-parents @else promotion-parents @endif">
-                                Promotion Status: {{ $studentData['promotionStatusValue'] }}
-                            </span>
-                        @else
-                            | <span class="promotion-status">Promotion Status: Not applicable for this term</span>
-                        @endif
-                    </span>
-                </div>
-            </td>
-        </tr>
-    </tbody>
-</table>
+ 
+                <!-- Remarks Section -->
+                <table class="remarks-table">
+                    <tbody>
+                        <tr>
+                            <td width="50%">
+                                <div class="h6">Class Teacher's Remark Signature/Date</div>
+                                <div>
+                                    <span class="text-space-on-dots">{{ $profile ? ($profile->classteachercomment ?? 'NO INFO') : 'NO INFO' }}</span>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td width="50%">
+                                <div class="h6">Guidance Counselor's Remark Signature/Date</div>
+                                <div>
+                                    <span class="text-space-on-dots">{{ $profile ? ($profile->guidancescomment ?? 'NO INFO') : 'NO INFO' }}</span>
+                                </div>
+                            </td>
+                            <td width="50%">
+                                <div class="h6">Principal's Remark & Promotion Status</div>
+                                <div>
+                                    <span class="text-space-on-dots">
+                                        {{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}
+                                        @php
+                                            $status = $studentData['promotionStatusValue'] ?? null;
+                                            $statusClass = match ($status) {
+                                                'PROMOTED' => 'promotion-promoted',
+                                                'REPEAT' => 'promotion-repeat',
+                                                'PARENTS TO SEE PRINCIPAL' => 'promotion-parents',
+                                                default => 'promotion-default',
+                                            };
+                                            $statusText = $status ?? 'Not applicable for this term';
+                                        @endphp
+                                        | <span class="promotion-status {{ $statusClass }}" style="color: {{ $status === 'PROMOTED' ? '#22c55e' : ($status === 'REPEAT' ? '#dc2626' : ($status === 'PARENTS TO SEE PRINCIPAL' ? '#f87171' : '#000000')) }};">
+                                            Promotion Status: {{ $statusText }}
+                                        </span>
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
 
                 <!-- Footer Section -->
                 <div class="footer-section">
