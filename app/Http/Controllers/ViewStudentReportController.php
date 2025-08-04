@@ -943,7 +943,7 @@ private function compareGrades($grade1, $grade2, $isSenior)
                 ->setOptions([
                     'dpi' => 96,
                     'defaultFont' => 'DejaVu Sans',
-                    'isRemoteEnabled' => false,
+                    'isRemoteEnabled' => true,
                     'isHtml5ParserEnabled' => true,
                     'isFontSubsettingEnabled' => true,
                     'isPhpEnabled' => false,
