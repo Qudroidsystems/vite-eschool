@@ -353,6 +353,8 @@
         .remarks-table .promotion-status {
             color: #000000;
             font-weight: bold;
+            display: block; /* Ensure promotion status is on a new line */
+            margin-top: 4px;
         }
 
         .footer-section {
@@ -720,22 +722,21 @@
                             <td width="50%">
                                 <div class="h6">Principal's Remark & Promotion Status</div>
                                 <div>
-                                    <span class="text-space-on-dots">
-                                        {{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}
-                                        @php
-                                            $status = $studentData['promotionStatusValue'] ?? null;
-                                            $statusClass = match ($status) {
-                                                'PROMOTED' => 'promotion-promoted',
-                                                'PROMOTED ON TRIAL' => 'promotion-on-trial',
-                                                'PARENTS TO SEE THE PRINCIPAL' => 'promotion-parents',
-                                                'ADVICE TO REPEAT/PARENTS TO SEE THE PRINCIPAL' => 'promotion-repeat-parents',
-                                                default => 'promotion-default',
-                                            };
-                                            $statusText = $status ?? 'Not applicable for this term';
-                                        @endphp
-                                        <span class="promotion-status {{ $statusClass }}">
-                                            Promotion Status: {{ $statusText }}
-                                        </span>
+                                    <span class="text-space-on-dots">{{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}</span>
+                                    @php
+                                        // Normalize status by removing extra spaces, newlines, and converting to uppercase
+                                        $status = strtoupper(preg_replace('/\s+/', ' ', trim($studentData['promotionStatusValue'] ?? '')));
+                                        $statusClass = match ($status) {
+                                            'PROMOTED' => 'promotion-promoted',
+                                            'PROMOTED ON TRIAL' => 'promotion-on-trial',
+                                            'PARENTS TO SEE THE PRINCIPAL' => 'promotion-parents',
+                                            'ADVICE TO REPEAT/PARENTS TO SEE THE PRINCIPAL' => 'promotion-repeat-parents',
+                                            default => 'promotion-default',
+                                        };
+                                        $statusText = $status ?: 'Not applicable for this term';
+                                    @endphp
+                                    <span class="promotion-status {{ $statusClass }}">
+                                        Promotion Status: {{ $statusText }}
                                     </span>
                                 </div>
                             </td>
