@@ -8,7 +8,6 @@
         * {
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
 
         body {
@@ -351,6 +350,11 @@
             font-weight: bold;
         }
 
+        .remarks-table .promotion-status {
+            color: #000000;
+            font-weight: bold;
+        }
+
         .footer-section {
             background: #f1f5f9;
             border-radius: 6px;
@@ -439,24 +443,23 @@
         .promotion-status {
             font-weight: bold;
             margin-left: 5px;
-            display: inline-block;
         }
 
         /* Promotion status styles */
         .promotion-promoted {
-            color: #251f96 !important; /* Blue for PROMOTED */
+            color: #251f96; /* Blue for PROMOTED */
             font-weight: 700;
         }
         .promotion-repeat {
-            color: #dc2626 !important; /* Red for REPEAT statuses */
+            color: #dc2626; /* Red for REPEAT */
             font-weight: 700;
         }
         .promotion-parents {
-            color: #dc2626 !important; /* Red for ADVICE TO REPEAT/PARENTS TO SEE PRINCIPAL */
+            color: #dc2626; /* Red for ADVICE TO REPEAT/PARENTS TO SEE PRINCIPAL */
             font-weight: 700;
         }
         .promotion-default {
-            color: #000000 !important; /* Black for default or not applicable */
+            color: #000000; /* Black for default or not applicable */
             font-weight: 700;
         }
     </style>
@@ -718,15 +721,19 @@
                                         {{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}
                                         @php
                                             $status = $studentData['promotionStatusValue'] ?? null;
-                                            $statusClass = match (strtoupper($status ?? '')) {
+                                            $statusClass = match ($status) {
                                                 'PROMOTED' => 'promotion-promoted',
-                                                'PROMOTED ON TRIAL', 'PARENTS TO SEE PRINCIPAL', 'ADVICE TO REPEAT/PARENTS TO SEE PRINCIPAL' => 'promotion-repeat',
+                                                'PROMOTED ON TRIAL' => 'promotion-repeat',
+                                                'PARENTS TO SEE PRINCIPAL' => 'promotion-repeat',
+                                                'ADVICE TO REPEAT/PARENTS TO SEE PRINCIPAL' => 'promotion-parents',
                                                 default => 'promotion-default',
                                             };
                                             $statusText = $status ?? 'Not applicable for this term';
                                         @endphp
                                         <br>
-                                        <span class="promotion-status {{ $statusClass }}">Promotion Status: {{ $statusText }}</span>
+                                        <span class="promotion-status {{ $statusClass }}">
+                                            Promotion Status: {{ $statusText }}
+                                        </span>
                                     </span>
                                 </div>
                             </td>
