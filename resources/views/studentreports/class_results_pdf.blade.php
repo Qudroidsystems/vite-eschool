@@ -445,9 +445,6 @@
             margin-left: 5px;
         }
 
-        .promotion-promoted {
-            color: #330d8b;
-        }
 
         .promotion-repeat {
             color: #dc2626;
@@ -458,7 +455,7 @@
         }
          /* Promotion status styles */
         .promotion-promoted {
-            color: #1c1779; /* Green for PROMOTED */
+            color: #1c1779; /* blue for PROMOTED */
             font-weight: bold;
         }
         .promotion-repeat {
