@@ -446,7 +446,7 @@
         }
 
         .promotion-promoted {
-            color: #22c55e;
+            color: #1c8643;
         }
 
         .promotion-repeat {
