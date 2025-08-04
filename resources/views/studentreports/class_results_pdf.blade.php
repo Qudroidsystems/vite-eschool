@@ -455,7 +455,7 @@
         }
          /* Promotion status styles */
         .promotion-promoted {
-            color: #181287; /* blue for PROMOTED */
+            color: #251f96; /* blue for PROMOTED */
             font-weight: bold;
         }
         .promotion-repeat {
@@ -749,7 +749,7 @@
                                             };
                                             $statusText = $status ?? 'Not applicable for this term';
                                         @endphp
-                                        | <span class="promotion-status {{ $statusClass }}" style="color: {{ $status === 'PROMOTED' ? '#22c55e' : ($status === 'REPEAT' ? '#dc2626' : ($status === 'PARENTS TO SEE PRINCIPAL' ? '#f87171' : '#000000')) }};">
+                                        | <span class="promotion-status {{ $statusClass }}" style="color: {{ $status === 'PROMOTED' ? '#251f96' : ($status === 'REPEAT' ? '#dc2626' : ($status === 'PARENTS TO SEE PRINCIPAL' ? '#f87171' : '#000000')) }};">
                                             Promotion Status: {{ $statusText }}
                                         </span>
                                     </span>
