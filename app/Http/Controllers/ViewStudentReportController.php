@@ -274,6 +274,254 @@ class ViewStudentReportController extends Controller
         ]);
     }
 
+    // private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
+    // {
+    //     try {
+    //         if (!is_numeric($id) || !is_numeric($schoolclassid) || !is_numeric($sessionid) || !is_numeric($termid)) {
+    //             Log::error('Invalid parameters in getStudentResultData', [
+    //                 'student_id' => $id,
+    //                 'schoolclassid' => $schoolclassid,
+    //                 'sessionid' => $sessionid,
+    //                 'termid' => $termid,
+    //             ]);
+    //             return [];
+    //         }
+
+    //         $students = Student::where('studentRegistration.id', $id)
+    //             ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+    //             ->select([
+    //                 'studentRegistration.id as id',
+    //                 'studentRegistration.admissionNo as admissionNo',
+    //                 'studentRegistration.firstname as fname',
+    //                 'studentRegistration.home_address as homeaddress',
+    //                 'studentRegistration.lastname as lastname',
+    //                 'studentRegistration.othername as othername',
+    //                 'studentRegistration.dateofbirth as dateofbirth',
+    //                 'studentRegistration.gender as gender',
+    //                 'studentRegistration.updated_at as updated_at',
+    //                 'studentpicture.picture as picture'
+    //             ])
+    //             ->orderBy('studentRegistration.lastname', 'asc')
+    //             ->get();
+
+    //         if ($students->isEmpty()) {
+    //             Log::warning('No active student found for ID', [
+    //                 'student_id' => $id,
+    //                 'schoolclassid' => $schoolclassid,
+    //                 'sessionid' => $sessionid,
+    //                 'termid' => $termid,
+    //             ]);
+    //             $students = collect([]);
+    //         }
+
+    //         $this->calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid);
+
+    //         $studentpp = Studentpersonalityprofile::where('studentid', $id)
+    //             ->where('schoolclassid', $schoolclassid)
+    //             ->where('sessionid', $sessionid)
+    //             ->where('termid', $termid)
+    //             ->first();
+            
+    //         $promotionStatus = PromotionStatus::where('studentId', $id)
+    //             ->where('schoolclassid', $schoolclassid)
+    //             ->where('sessionid', $sessionid)
+    //             ->where('termid', $termid)
+    //             ->first();
+
+    //         $scores = Broadsheets::where('broadsheet_records.student_id', $id)
+    //             ->where('broadsheets.term_id', $termid)
+    //             ->where('broadsheet_records.session_id', $sessionid)
+    //             ->where('broadsheet_records.schoolclass_id', $schoolclassid)
+    //             ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+    //             ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+    //             ->orderBy('subject.subject')
+    //             ->select([
+    //                 'subject.id as subject_id',
+    //                 'subject.subject as subject_name',
+    //                 'subject.subject_code',
+    //                 'broadsheets.ca1',
+    //                 'broadsheets.ca2',
+    //                 'broadsheets.ca3',
+    //                 'broadsheets.exam',
+    //                 'broadsheets.total',
+    //                 'broadsheets.bf',
+    //                 'broadsheets.cum',
+    //                 'broadsheets.grade',
+    //                 'broadsheets.remark',
+    //                 'broadsheets.subject_position_class as position',
+    //                 'broadsheets.avg as class_average',
+    //             ])->get();
+
+    //         $schoolclass = Schoolclass::with('armRelation')->find($schoolclassid, ['id', 'schoolclass', 'arm', 'classcategoryid']) ?? (object)[
+    //             'schoolclass' => 'N/A',
+    //             'armRelation' => (object)['arm' => 'N/A'],
+    //             'classcategoryid' => null
+    //         ];
+    //         $schoolterm = Schoolterm::where('id', $termid)->value('term') ?? 'N/A';
+    //         $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
+    //         $numberOfStudents = Studentclass::whereIn('schoolclassid', 
+    //             Schoolclass::where('schoolclass', $schoolclass->schoolclass ?? 'N/A')->pluck('id'))
+    //             ->where('sessionid', $sessionid)
+    //             ->count();
+    //         $schoolInfo = SchoolInformation::getActiveSchool() ?? (object)[
+    //             'school_name' => 'QUODOROID CODING ACADEMY',
+    //             'school_motto' => 'N/A',
+    //             'school_address' => 'N/A',
+    //             'school_website' => null,
+    //             'getLogoUrlAttribute' => function () {
+    //                 return 'school_logos/LUYWInGbX6ypLQO4fEWue9jHx3VwaKJG5hPLsQmt.jpg';
+    //             }
+    //         ];
+
+    //         if ($students->isNotEmpty() && $students->first()->picture) {
+    //             $imagePath = public_path('storage/' . $students->first()->picture);
+    //             Log::info('Student image path', ['path' => $imagePath, 'exists' => file_exists($imagePath)]);
+    //         }
+    //         $logoPath = public_path('storage/' . $schoolInfo->getLogoUrlAttribute());
+    //         Log::info('School logo path:', ['path' => $logoPath, 'exists' => file_exists($logoPath)]);
+
+    //         if ($termid == 3) {
+    //             $classCategory = Classcategory::find($schoolclass->classcategoryid, ['is_senior']);
+    //             $isSenior = $classCategory ? $classCategory->is_senior : false;
+
+    //             $compulsorySubjects = CompulsorySubjectClass::where('schoolclassid', $schoolclassid)
+    //                 ->join('subject', 'compulsory_subject_classes.subjectId', '=', 'subject.id')
+    //                 ->select(['compulsory_subject_classes.subjectId', 'subject.subject as subject_name'])
+    //                 ->get();
+
+    //             $compulsorySubjectLog = [];
+    //             $compulsoryCreditCount = 0;
+    //             $creditCount = 0;
+    //             $failCount = 0;
+    //             $hasNonCompulsoryDOrF = false;
+    //             $nonCompulsorySubjectLog = [];
+    //             $missingCompulsorySubjects = [];
+
+    //             $creditGrades = $isSenior ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6'] : ['A', 'B', 'C'];
+    //             $failGrades = $isSenior ? ['F9', 'E8'] : ['F'];
+
+    //             $compulsorySubjectIds = $compulsorySubjects->pluck('subjectId')->toArray();
+    //             foreach ($compulsorySubjects as $compulsorySubject) {
+    //                 $subjectId = $compulsorySubject->subjectId;
+    //                 $subjectName = $compulsorySubject->subject_name;
+    //                 $score = $scores->firstWhere('subject_id', $subjectId);
+    //                 $grade = $score ? $score->grade : 'N/A';
+    //                 $compulsorySubjectLog[] = [
+    //                     'subject_id' => $subjectId,
+    //                     'subject_name' => $subjectName,
+    //                     'grade' => $grade,
+    //                 ];
+    //                 if ($score && in_array($grade, $creditGrades)) {
+    //                     $compulsoryCreditCount++;
+    //                 } elseif (!$score) {
+    //                     $missingCompulsorySubjects[] = $subjectName;
+    //                 }
+    //             }
+
+    //             foreach ($scores as $score) {
+    //                 $isCompulsory = in_array($score->subject_id, $compulsorySubjectIds);
+    //                 $grade = $score->grade;
+    //                 if (in_array($grade, $creditGrades)) {
+    //                     $creditCount++;
+    //                 } elseif (in_array($grade, $failGrades)) {
+    //                     $failCount++;
+    //                     if (!$isCompulsory) {
+    //                         $hasNonCompulsoryDOrF = true;
+    //                     }
+    //                 } elseif (!$isSenior && $grade === 'D' && !$isCompulsory) {
+    //                     $hasNonCompulsoryDOrF = true;
+    //                 }
+    //                 if (!$isCompulsory) {
+    //                     $nonCompulsorySubjectLog[] = [
+    //                         'subject_id' => $score->subject_id,
+    //                         'subject_name' => $score->subject_name,
+    //                         'grade' => $grade,
+    //                     ];
+    //                 }
+    //             }
+
+    //             $principalComment = '';
+    //             $promotionStatusValue = '';
+    //             $totalCompulsorySubjects = count($compulsorySubjects);
+    //             if ($totalCompulsorySubjects > 0 && $compulsoryCreditCount === $totalCompulsorySubjects && $creditCount >= 5) {
+    //                 $principalComment = 'Excellent performance. Promoted to the next class.';
+    //                 $promotionStatusValue = 'PROMOTED';
+    //             } elseif ($creditCount >= 5 && $compulsoryCreditCount > 0) {
+    //                 $principalComment = $isSenior || !$hasNonCompulsoryDOrF 
+    //                     ? 'Good performance but needs improvement in some compulsory subjects. Promoted on trial.'
+    //                     : 'Credits in compulsory subjects but poor performance in other subjects. Parents to see the Principal.';
+    //                 $promotionStatusValue = $isSenior || !$hasNonCompulsoryDOrF ? 'PROMOTED' : 'PARENTS TO SEE PRINCIPAL';
+    //             } elseif ($creditCount >= 5) {
+    //                 $principalComment = 'Achieved credits but none in compulsory subjects. Parents to see the Principal.';
+    //                 $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
+    //             } elseif ($failCount === count($scores) && count($scores) > 0) {
+    //                 $principalComment = 'Poor performance across all subjects. Advice to repeat the class. Parents to see the Principal.';
+    //                 $promotionStatusValue = 'REPEAT';
+    //             } else {
+    //                 $principalComment = 'Inconsistent performance or incomplete grades. Parents to see the Principal for further discussion.';
+    //                 $promotionStatusValue = 'REPEAT';
+    //             }
+
+    //             Log::info("Promotion Decision for Student ID: {$id}", [
+    //                 'principal_comment' => $principalComment,
+    //                 'promotion_status' => $promotionStatusValue,
+    //             ]);
+
+    //             Studentpersonalityprofile::updateOrCreate(
+    //                 [
+    //                     'studentid' => $id,
+    //                     'schoolclassid' => $schoolclassid,
+    //                     'sessionid' => $sessionid,
+    //                     'termid' => $termid,
+    //                 ],
+    //                 ['principalscomment' => $principalComment]
+    //             );
+
+    //             PromotionStatus::updateOrCreate(
+    //                 [
+    //                     'studentId' => $id,
+    //                     'schoolclassid' => $schoolclassid,
+    //                     'sessionid' => $sessionid,
+    //                     'termid' => $termid,
+    //                 ],
+    //                 [
+    //                     'promotionStatus' => $promotionStatusValue,
+    //                     'position' => null,
+    //                     'classstatus' => 'CURRENT',
+    //                 ]
+    //             );
+    //         }
+
+    //         return [
+    //             'students' => $students,
+    //             'studentpp' => collect([$studentpp]),
+    //             'scores' => $scores,
+    //             'studentid' => $id,
+    //             'schoolclassid' => $schoolclassid,
+    //             'sessionid' => $sessionid,
+    //             'termid' => $termid,
+    //             'schoolclass' => $schoolclass,
+    //             'schoolterm' => $schoolterm,
+    //             'schoolsession' => $schoolsession,
+    //             'numberOfStudents' => $numberOfStudents,
+    //             'schoolInfo' => $schoolInfo,
+    //             'promotionStatusValue' => $promotionStatusValue
+    //         ];
+    //     } catch (Exception $e) {
+    //         Log::error('Error fetching student result data', [
+    //             'student_id' => $id,
+    //             'schoolclassid' => $schoolclassid,
+    //             'sessionid' => $sessionid,
+    //             'termid' => $termid,
+    //             'error' => $e->getMessage(),
+    //             'file' => $e->getFile(),
+    //             'line' => $e->getLine(),
+    //         ]);
+    //         return [];
+    //     }
+    // }
+
+
     private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
     {
         try {
@@ -286,6 +534,9 @@ class ViewStudentReportController extends Controller
                 ]);
                 return [];
             }
+
+            // Initialize $promotionStatusValue to avoid undefined variable error
+            $promotionStatusValue = null;
 
             $students = Student::where('studentRegistration.id', $id)
                 ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
@@ -505,7 +756,7 @@ class ViewStudentReportController extends Controller
                 'schoolsession' => $schoolsession,
                 'numberOfStudents' => $numberOfStudents,
                 'schoolInfo' => $schoolInfo,
-                'promotionStatus' => $promotionStatus
+                'promotionStatusValue' => $promotionStatusValue
             ];
         } catch (Exception $e) {
             Log::error('Error fetching student result data', [
@@ -520,7 +771,6 @@ class ViewStudentReportController extends Controller
             return [];
         }
     }
-
     public function calculateGradePreview(Request $request)
     {
         $request->validate([
