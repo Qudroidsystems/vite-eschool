@@ -743,13 +743,14 @@
                                             $status = $studentData['promotionStatusValue'] ?? null;
                                             $statusClass = match ($status) {
                                                 'PROMOTED' => 'promotion-promoted',
-                                                'REPEAT' => 'promotion-repeat',
-                                                'PARENTS TO SEE PRINCIPAL' => 'promotion-parents',
+                                                'PROMOTED ON TRIAL' => 'promotion-repeat',
+                                                'PARENTS TO SEE PRINCIPAL' => 'promotion-repeat',
+                                                'ADVICE TO REPEAT/PARENTS TO SEE PRINCIPAL' => 'promotion-parents',
                                                 default => 'promotion-default',
                                             };
                                             $statusText = $status ?? 'Not applicable for this term';
                                         @endphp
-                                         <span class="promotion-status {{ $statusClass }}" style="color: {{ $status === 'PROMOTED' ? '#251f96' : ($status === 'REPEAT' ? '#dc2626' : ($status === 'PARENTS TO SEE PRINCIPAL' ? '#f87171' : '#000000')) }};">
+                                         <span class="promotion-status {{ $statusClass }}" style="color: {{ $status === 'PROMOTED' ? '#251f96' : ($status === 'PROMOTED ON TRIAL' ? '#dc2626' : ($status === 'PARENTS TO SEE PRINCIPAL' ? '#dc2626' : '#000000')) }};">
                                             Promotion Status: {{ $statusText }}
                                         </span>
                                     </span>

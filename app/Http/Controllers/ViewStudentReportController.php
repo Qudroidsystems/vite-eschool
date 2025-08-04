@@ -453,16 +453,16 @@ class ViewStudentReportController extends Controller
                     $principalComment = $isSenior || !$hasNonCompulsoryDOrF 
                         ? 'Good performance but needs improvement in some compulsory subjects. Promoted on trial.'
                         : 'Credits in compulsory subjects but poor performance in other subjects. Parents to see the Principal.';
-                    $promotionStatusValue = $isSenior || !$hasNonCompulsoryDOrF ? 'PROMOTED' : 'PARENTS TO SEE PRINCIPAL';
+                    $promotionStatusValue = $isSenior || !$hasNonCompulsoryDOrF ? 'PROMOTED ON TRIAL' : 'PARENTS TO SEE PRINCIPAL';
                 } elseif ($creditCount >= 5) {
                     $principalComment = 'Achieved credits but none in compulsory subjects. Parents to see the Principal.';
-                    $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
+                    $promotionStatusValue = 'PROMOTED ON TRIAL';
                 } elseif ($failCount === count($scores) && count($scores) > 0) {
                     $principalComment = 'Poor performance across all subjects. Advice to repeat the class. Parents to see the Principal.';
-                    $promotionStatusValue = 'REPEAT';
+                    $promotionStatusValue = 'ADVICE TO REPEAT/PARENTS TO SEE PRINCIPAL';
                 } else {
                     $principalComment = 'Inconsistent performance or incomplete grades. Parents to see the Principal for further discussion.';
-                    $promotionStatusValue = 'REPEAT';
+                    $promotionStatusValue = 'ADVICE TO REPEAT/PARENTS TO SEE PRINCIPAL';
                 }
 
                 Log::info("Promotion Decision for Student ID: {$id}", [
