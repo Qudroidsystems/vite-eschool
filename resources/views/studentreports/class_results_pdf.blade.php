@@ -440,27 +440,53 @@
             margin-top: 6px;
         }
 
+        /* FIXED PROMOTION STATUS STYLES - Higher specificity and better coverage */
         .promotion-status {
-            font-weight: bold;
+            font-weight: 900 !important;
             margin-left: 5px;
+            font-size: 10px !important;
         }
 
-        /* Promotion status styles */
-        .promotion-promoted {
-            color: #251f96; /* Blue for PROMOTED */
-            font-weight: 700;
+        /* Promotion status color classes with higher specificity */
+        .remarks-table .promotion-status.promotion-promoted,
+        .promotion-status.promotion-promoted {
+            color: #1e40af !important; /* Blue for PROMOTED */
+            font-weight: 900 !important;
         }
-        .promotion-repeat {
-            color: #dc2626; /* Red for REPEAT */
-            font-weight: 700;
+
+        .remarks-table .promotion-status.promotion-repeat,
+        .promotion-status.promotion-repeat {
+            color: #dc2626 !important; /* Red for REPEAT/TRIAL */
+            font-weight: 900 !important;
         }
-        .promotion-parents {
-            color: #dc2626; /* Red for ADVICE TO REPEAT/PARENTS TO SEE PRINCIPAL */
-            font-weight: 700;
+
+        .remarks-table .promotion-status.promotion-parents,
+        .promotion-status.promotion-parents {
+            color: #dc2626 !important; /* Red for PARENTS TO SEE PRINCIPAL */
+            font-weight: 900 !important;
         }
-        .promotion-default {
-            color: #000000; /* Black for default or not applicable */
-            font-weight: 700;
+
+        .remarks-table .promotion-status.promotion-default,
+        .promotion-status.promotion-default {
+            color: #6b7280 !important; /* Gray for default/not applicable */
+            font-weight: 900 !important;
+        }
+
+        /* Additional specific color classes for common statuses */
+        .promotion-status.status-promoted {
+            color: #1e40af !important;
+        }
+
+        .promotion-status.status-trial {
+            color: #f59e0b !important; /* Amber for trial */
+        }
+
+        .promotion-status.status-repeat {
+            color: #dc2626 !important;
+        }
+
+        .promotion-status.status-see-principal {
+            color: #dc2626 !important;
         }
     </style>
 </head>
@@ -721,13 +747,22 @@
                                         {{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}
                                         @php
                                             $status = $studentData['promotionStatusValue'] ?? null;
-                                            $statusClass = match ($status) {
-                                                'PROMOTED' => 'promotion-promoted',
-                                                'PROMOTED ON TRIAL' => 'promotion-repeat',
-                                                'PARENTS TO SEE PRINCIPAL' => 'promotion-repeat',
-                                                'ADVICE TO REPEAT/PARENTS TO SEE PRINCIPAL' => 'promotion-parents',
-                                                default => 'promotion-default',
-                                            };
+                                            
+                                            // Enhanced status classification with better string matching
+                                            $statusUpper = strtoupper(trim($status ?? ''));
+                                            $statusClass = 'promotion-default';
+                                            
+                                            // More comprehensive matching
+                                            if (str_contains($statusUpper, 'PROMOTED') && !str_contains($statusUpper, 'TRIAL')) {
+                                                $statusClass = 'promotion-promoted';
+                                            } elseif (str_contains($statusUpper, 'TRIAL') || str_contains($statusUpper, 'PROMOTED ON TRIAL')) {
+                                                $statusClass = 'promotion-repeat';
+                                            } elseif (str_contains($statusUpper, 'REPEAT')) {
+                                                $statusClass = 'promotion-repeat';
+                                            } elseif (str_contains($statusUpper, 'PRINCIPAL') || str_contains($statusUpper, 'PARENTS')) {
+                                                $statusClass = 'promotion-parents';
+                                            }
+                                            
                                             $statusText = $status ?? 'Not applicable for this term';
                                         @endphp
                                         <br>
