@@ -456,19 +456,19 @@
          /* Promotion status styles */
         .promotion-promoted {
             color: #251f96; /* blue for PROMOTED */
-            font-weight: bold;
+            font-weight: 700;
         }
         .promotion-repeat {
             color: #dc2626; /* Red for REPEAT */
-            font-weight: bold;
+            font-weight: 700;
         }
         .promotion-parents {
             color: #f87171; /* Light red for PARENTS TO SEE PRINCIPAL */
-            font-weight: bold;
+            font-weight: 700;
         }
         .promotion-default {
             color: #000000; /* Black for default or not applicable */
-            font-weight: bold;
+            font-weight: 700;
         }
     </style>
 </head>
