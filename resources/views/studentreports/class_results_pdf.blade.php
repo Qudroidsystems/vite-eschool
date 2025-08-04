@@ -463,7 +463,7 @@
             font-weight: 700;
         }
         .promotion-parents {
-            color: #f87171; /* Light red for PARENTS TO SEE PRINCIPAL */
+            color: #dc2626; /* Light red for PARENTS TO SEE PRINCIPAL */
             font-weight: 700;
         }
         .promotion-default {
