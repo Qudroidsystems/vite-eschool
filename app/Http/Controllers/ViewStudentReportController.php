@@ -479,7 +479,7 @@ private function calculatePromotionStatus($scores, $compulsorySubjects, $isSenio
     if ($gradeAnalysis['compulsory_fails'] > 0 || $gradeAnalysis['total_fails'] >= 5) {
         return [
             'comment' => 'Very Poor Results',
-            'status' => 'ADVICE TO REPEAT/PARENTS TO SEE THE PRINCIPAL',
+            'status' => 'ADVISED TO REPEAT/PARENTS TO SEE THE PRINCIPAL',
             'analysis' => $gradeAnalysis
         ];
     }
@@ -497,7 +497,7 @@ private function calculatePromotionStatus($scores, $compulsorySubjects, $isSenio
     if ($gradeAnalysis['total_credits'] < 5) {
         return [
             'comment' => 'Very Poor Results',
-            'status' => 'ADVICE TO REPEAT/PARENTS TO SEE THE PRINCIPAL',
+            'status' => 'ADVISED TO REPEAT/PARENTS TO SEE THE PRINCIPAL',
             'analysis' => $gradeAnalysis
         ];
     }
@@ -516,7 +516,7 @@ private function calculatePromotionStatus($scores, $compulsorySubjects, $isSenio
     if ($gradeAnalysis['compulsory_credits'] == 0 && $gradeAnalysis['compulsory_subjects'] > 0) {
         return [
             'comment' => 'Very Poor Results',
-            'status' => 'ADVICE TO REPEAT/PARENTS TO SEE THE PRINCIPAL',
+            'status' => 'ADVISED TO REPEAT/PARENTS TO SEE THE PRINCIPAL',
             'analysis' => $gradeAnalysis
         ];
     }
@@ -581,7 +581,7 @@ private function calculatePromotionStatus($scores, $compulsorySubjects, $isSenio
             } else {
                 return [
                     'comment' => 'Very Poor Results',
-                    'status' => 'ADVICE TO REPEAT/PARENTS TO SEE THE PRINCIPAL',
+                    'status' => 'ADVISED TO REPEAT/PARENTS TO SEE THE PRINCIPAL',
                     'analysis' => $gradeAnalysis
                 ];
             }

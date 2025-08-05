@@ -84,6 +84,7 @@
             display: inline-block;
             min-height: 14px;
             font-weight: bold;
+            font-size: 12px; /* Increased font size */
         }
 
         span.text-space-on-dots {
@@ -342,7 +343,7 @@
             color: #050505;
             font-weight: 600;
             margin-bottom: 4px;
-            font-size: 10px;
+            font-size: 12px;
         }
 
         .remarks-table .text-space-on-dots {
@@ -781,9 +782,13 @@
                     <table class="footer-layout-table">
                         <tr>
                             <td>
-                                <span class="font-bold">This Result was issued on 11th August 2025 </span>
-                                <span class="font-bold"> and collected by</span>
+                                <span class="font-bold">This Result was issued on  </span>
+                                <span class="text-dot-space2"> 11th August 2025</span>
+                        
+                                <span class="font-bold">and collected by</span>
+                                <span class="">.......................................</span>
                             </td>
+                            
                         </tr>
                         <tr>
                             <td>
