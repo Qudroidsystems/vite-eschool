@@ -467,7 +467,7 @@ private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
                 } elseif ($onlyCsDs) {
                     $performanceComment = 'C\'s and D\'s. Below Average results';
                 } else {
-                    $performanceComment = 'Mixed performance across subjects';
+                    $performanceComment = '';
                 }
             } else {
                 $performanceComment = 'No grades available';
