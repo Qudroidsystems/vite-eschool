@@ -402,6 +402,9 @@ private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
             $creditGrades = $isSenior ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6'] : ['A', 'B', 'C'];
             $failGrades = $isSenior ? ['F9', 'E8'] : ['F'];
             $dGrade = $isSenior ? 'D7' : 'D';
+            $aGrades = $isSenior ? ['A1'] : ['A'];
+            $bGrades = $isSenior ? ['B2', 'B3'] : ['B'];
+            $cGrades = $isSenior ? ['C4', 'C5', 'C6'] : ['C'];
 
             $compulsorySubjectIds = $compulsorySubjects->pluck('subjectId')->toArray();
             foreach ($compulsorySubjects as $compulsorySubject) {
@@ -430,6 +433,44 @@ private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
                 }
             }
 
+            // Determine performance comment based on grades
+            $performanceComment = '';
+            if ($scores->count() > 0) {
+                $grades = $scores->pluck('grade')->toArray();
+                $allAs = $scores->every(function ($score) use ($aGrades) {
+                    return in_array($score->grade, $aGrades);
+                });
+                $onlyAsAndBs = $scores->every(function ($score) use ($aGrades, $bGrades) {
+                    return in_array($score->grade, array_merge($aGrades, $bGrades));
+                });
+                $onlyAsBsCs = $scores->every(function ($score) use ($aGrades, $bGrades, $cGrades) {
+                    return in_array($score->grade, array_merge($aGrades, $bGrades, $cGrades));
+                });
+                $onlyBsCs = $scores->every(function ($score) use ($bGrades, $cGrades) {
+                    return in_array($score->grade, array_merge($bGrades, $cGrades));
+                });
+                $onlyCsDs = $scores->every(function ($score) use ($cGrades, $dGrade) {
+                    return in_array($score->grade, array_merge($cGrades, [$dGrade]));
+                });
+
+                if ($allAs) {
+                    $performanceComment = 'Straight A\'s. Excellent results';
+                } elseif ($onlyAsAndBs) {
+                    $performanceComment = 'A\'s mixed with B\'s. Very Good results';
+                } elseif ($onlyAsBsCs) {
+                    $performanceComment = 'A\'s, B\'s, and C\'s. Good results';
+                } elseif ($onlyBsCs) {
+                    $performanceComment = 'B\'s and C\'s. Average results';
+                } elseif ($onlyCsDs) {
+                    $performanceComment = 'C\'s and D\'s. Below Average results';
+                } else {
+                    $performanceComment = 'Mixed performance across subjects';
+                }
+            } else {
+                $performanceComment = 'No grades available';
+            }
+
+            // Promotion logic
             $allDs = $scores->count() > 0 && $scores->every(function ($score) use ($dGrade) {
                 return $score->grade === $dGrade;
             });
@@ -444,37 +485,38 @@ private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
             $promotionStatusValue = '';
 
             if (!empty($missingCompulsorySubjects)) {
-                $principalComment = 'Missing grades for compulsory subjects: ' . implode(', ', $missingCompulsorySubjects) . '. Parents to see the Principal.';
+                $principalComment = "$performanceComment. Missing grades for compulsory subjects: " . implode(', ', $missingCompulsorySubjects) . '. Parents to see the Principal.';
                 $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
             } elseif ($compulsorySubjects->count() > 0 && $compulsoryCreditCount === $compulsorySubjects->count() && $creditCount >= 5) {
-                $principalComment = 'Excellent performance. Promoted to the next class.';
+                $principalComment = "$performanceComment. Excellent performance. Promoted to the next class.";
                 $promotionStatusValue = 'PROMOTED';
             } elseif ($creditCount >= 4 && $compulsoryCreditCount > 0) {
-                $principalComment = 'Good performance but needs improvement in some compulsory subjects. Promoted on trial.';
+                $principalComment = "$performanceComment. Good performance but needs improvement in some compulsory subjects. Promoted on trial.";
                 $promotionStatusValue = 'PROMOTED';
             } elseif ($creditCount >= 4 && $compulsoryCreditCount == 0) {
-                $principalComment = 'Achieved credits but none in compulsory subjects. Parents to see the Principal.';
+                $principalComment = "$performanceComment. Achieved credits but none in compulsory subjects. Parents to see the Principal.";
                 $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
             } elseif ($failCount === count($scores) && count($scores) > 0) {
-                $principalComment = 'Poor performance across all subjects. Advice to repeat the class. Parents to see the Principal.';
+                $principalComment = "$performanceComment. Poor performance across all subjects. Advice to repeat the class. Parents to see the Principal.";
                 $promotionStatusValue = 'REPEAT';
             } elseif ($allDs || $mixOfDsAndFs) {
-                $principalComment = 'Poor performance with D or F grades. Advice to repeat the class. Parents to see the Principal.';
+                $principalComment = "$performanceComment. Poor performance with D or F grades. Advice to repeat the class. Parents to see the Principal.";
                 $promotionStatusValue = 'REPEAT';
             } elseif ($compulsoryCreditCount === $compulsorySubjects->count() && $failedNonCompulsory && $scores->count() > count($compulsorySubjectIds)) {
-                $principalComment = 'Passed compulsory subjects but failed all other subjects. Parents to see the Principal.';
+                $principalComment = "$performanceComment. Passed compulsory subjects but failed all other subjects. Parents to see the Principal.";
                 $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
             } elseif ($creditCount < 4 && $compulsoryCreditCount < $compulsorySubjects->count()) {
-                $principalComment = 'Less than 4 credits and failed compulsory subjects. Advice to repeat the class. Parents to see the Principal.';
+                $principalComment = "$performanceComment. Less than 4 credits and failed compulsory subjects. Advice to repeat the class. Parents to see the Principal.";
                 $promotionStatusValue = 'REPEAT';
             } else {
-                $principalComment = 'Inconsistent performance or incomplete grades. Parents to see the Principal for further discussion.';
+                $principalComment = "$performanceComment. Inconsistent performance or incomplete grades. Parents to see the Principal for further discussion.";
                 $promotionStatusValue = 'REPEAT';
             }
 
             Log::info("Promotion Decision for Student ID: {$id}", [
                 'principal_comment' => $principalComment,
                 'promotion_status' => $promotionStatusValue,
+                'performance_comment' => $performanceComment,
                 'compulsory_subject_log' => $compulsorySubjectLog,
                 'missing_compulsory_subjects' => $missingCompulsorySubjects,
                 'credit_count' => $creditCount,
@@ -535,7 +577,6 @@ private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
         return [];
     }
 }
-
 
     
       public function calculateGradePreview(Request $request)
