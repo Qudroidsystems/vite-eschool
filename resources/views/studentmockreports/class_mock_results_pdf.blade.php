@@ -466,7 +466,7 @@
                         <tr>
                             <td width="25%">
                                 <div class="school-logo">
-                                    <img class="header-img" src="{{ $studentData['school_logo_path'] ?? public_path('storage/school_logos/default.jpg') }}" alt="School Logo">
+                                    <img class="header-img" src="{{ $studentData['school_logo_path'] ?? 'file://' . storage_path('app/public/school_logos/default.jpg') }}" alt="School Logo">
                                 </div>
                             </td>
                             <td width="50%">
@@ -479,9 +479,9 @@
                             <td width="25%">
                                 <div class="photo-frame">
                                     @if ($studentData['students'] && $studentData['students']->isNotEmpty() && $student->picture)
-                                        <img src="{{ $studentData['student_image_path'] ?? public_path('storage/student_avatars/unnamed.jpg') }}" alt="{{ $student->fname ?? 'Student' }}'s picture">
+                                        <img src="{{ $studentData['student_image_path'] ?? 'file://' . storage_path('app/public/student_avatars/unnamed.jpg') }}" alt="{{ $student->fname ?? 'Student' }}'s picture">
                                     @else
-                                        <img src="{{ public_path('storage/student_avatars/unnamed.jpg') }}" alt="Default Photo">
+                                        <img src="{{ 'file://' . storage_path('app/public/student_avatars/unnamed.jpg') }}" alt="Default Photo">
                                     @endif
                                 </div>
                             </td>
@@ -507,7 +507,7 @@
                                             <td width="41%">
                                                 <div class="info-row">
                                                     <span class="result-details">Name:</span>
-                                                    <span class="info-value font-bold">{{ strtoupper($student->lastname ?? 'ILEMOBAYOEEEE') }} {{ $student->fname ?? 'Eliabeeeee' }} {{ $student->othername ?? 'eeeee' }}</span>
+                                                    <span class="info-value font-bold">{{ strtoupper($student->lastname ?? 'N/A') }} {{ $student->fname ?? 'N/A' }} {{ $student->othername ?? 'N/A' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Session:</span>
@@ -651,12 +651,13 @@
                                     @if ($studentData['studentpp'] && $studentData['studentpp']->isNotEmpty())
                                         @php $profile = $studentData['studentpp']->first(); @endphp
                                         <tr><td>Class Attendance</td><td>{{ $profile->attendance ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Attentiveness in Class</td><td>{{ $profile->attentiveness_in_class ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Class Participation</td><td>{{ $profile->class_participation ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Self Control</td><td>{{ $profile->selfcontrol ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Relationship with Others</td><td>{{ $profile->relationship_with_others ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Doing Assignment</td><td>{{ $profile->doing_assignment ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Punctuality</td><td>{{ $profile->punctuality ?? 'NO INFO' }}</td><td></td></tr>
                                         <tr><td>Neatness</td><td>{{ $profile->neatness ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Politeness</td><td>{{ $profile->politeness ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Honesty</td><td>{{ $profile->honesty ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Leadership</td><td>{{ $profile->leadership ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Cooperation</td><td>{{ $profile->cooperation ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Attitude to Work</td><td>{{ $profile->attitude_to_work ?? 'NO INFO' }}</td><td></td></tr>
                                     @else
                                         <tr><td colspan="3">No character assessment data available.</td></tr>
                                     @endif
@@ -664,11 +665,11 @@
                             </table>
                         </td>
                         <td>
-                            <div class="h5">Skill Development</div>
+                            <div class="h5">Skills Assessment</div>
                             <table class="assessment-table">
                                 <thead>
                                     <tr>
-                                        <th>Skills</th>
+                                        <th>Criteria</th>
                                         <th>Grade</th>
                                         <th>Sign</th>
                                     </tr>
@@ -676,15 +677,13 @@
                                 <tbody>
                                     @if ($studentData['studentpp'] && $studentData['studentpp']->isNotEmpty())
                                         @php $profile = $studentData['studentpp']->first(); @endphp
-                                        <tr><td>Writing Skill</td><td>{{ $profile->writing_skill ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Reading Skill</td><td>{{ $profile->reading_skill ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Spoken English/Communication</td><td>{{ $profile->spoken_english_communication ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Hand Writing</td><td>{{ $profile->hand_writing ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Sports/Games</td><td>{{ $profile->gamesandsports ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Club</td><td>{{ $profile->club ?? 'NO INFO' }}</td><td></td></tr>
-                                        <tr><td>Music</td><td>{{ $profile->music ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Handwriting</td><td>{{ $profile->handwriting ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Verbal Fluency</td><td>{{ $profile->verbal_fluency ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Sports</td><td>{{ $profile->sports ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Manual Skills</td><td>{{ $profile->manual_skills ?? 'NO INFO' }}</td><td></td></tr>
+                                        <tr><td>Creative Arts</td><td>{{ $profile->creative_arts ?? 'NO INFO' }}</td><td></td></tr>
                                     @else
-                                        <tr><td colspan="3">No skill development data available.</td></tr>
+                                        <tr><td colspan="3">No skills assessment data available.</td></tr>
                                     @endif
                                 </tbody>
                             </table>
@@ -692,78 +691,46 @@
                     </tr>
                 </table>
 
-                <!-- Grade Legend -->
+                <!-- Grade Display -->
                 <div class="grade-display">
-                    <span>Grade: V.Good {VG}</span>
-                    <span>Good {G}</span>
-                    <span>Average {AVG}</span>
-                    <span>Below Average {BA}</span>
-                    <span>Poor {P}</span>
+                    <span>A: 70-100</span>
+                    <span>B: 60-69</span>
+                    <span>C: 50-59</span>
+                    <span>D: 40-49</span>
+                    <span>F: 0-39</span>
                 </div>
 
-                <!-- Remarks Section -->
+                <!-- Remarks Table -->
                 <table class="remarks-table">
-                    <tbody>
-                        <tr>
-                            <td width="50%">
-                                <div class="h6">Class Teacher's Remark Signature/Date</div>
-                                <div>
-                                    <span class="text-space-on-dots">
-                                        @if ($studentData['studentpp'] && $studentData['studentpp']->isNotEmpty())
-                                            {{ $studentData['studentpp']->first()->classteachercomment ?? 'NO INFO' }}
-                                        @else
-                                            NO INFO
-                                        @endif
-                                    </span>
-                                </div>
-                            </td>
-                            <td width="50%">
-                                <div class="h6">Remark On Other Activities</div>
-                                <div>
-                                    <span class="text-space-on-dots">
-                                        @if ($studentData['studentpp'] && $studentData['studentpp']->isNotEmpty())
-                                            {{ $studentData['studentpp']->first()->cooperation ?? 'NO INFO' }}
-                                        @else
-                                            NO INFO
-                                        @endif
-                                    </span>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td width="50%">
-                                <div class="h6">Guidance Counselor's Remark Signature/Date</div>
-                                <div>
-                                    <span class="text-space-on-dots">
-                                        @if ($studentData['studentpp'] && $studentData['studentpp']->isNotEmpty())
-                                            {{ $studentData['studentpp']->first()->guidancescomment ?? 'NO INFO' }}
-                                        @else
-                                            NO INFO
-                                        @endif
-                                    </span>
-                                </div>
-                            </td>
-                            <td width="50%">
-                                <div class="h6">Principal's Remark & Promotion Status</div>
-                                <div>
-                                    <span class="text-space-on-dots">
-                                        @if ($studentData['studentpp'] && $studentData['studentpp']->isNotEmpty())
-                                            {{ $studentData['studentpp']->first()->principalscomment ?? 'NO INFO' }}
-                                            @if ($studentData['studentpp']->first()->promotionStatus)
-                                                | <span class="promotion-status @if ($studentData['studentpp']->first()->promotionStatus === 'PROMOTED') promotion-promoted @elseif ($studentData['studentpp']->first()->promotionStatus === 'REPEAT') promotion-repeat @elseif ($studentData['studentpp']->first()->promotionStatus === 'PARENTS TO SEE PRINCIPAL') promotion-parents @endif">
-                                                    Promotion Status: {{ $studentData['studentpp']->first()->promotionStatus }}
-                                                </span>
-                                            @else
-                                                | <span class="promotion-status">Promotion Status: NO INFO</span>
-                                            @endif
-                                        @else
-                                            NO INFO | <span class="promotion-status">Promotion Status: NO INFO</span>
-                                        @endif
-                                    </span>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
+                    <tr>
+                        <td width="50%">
+                            <div class="h6">Class Teacher's Remark</div>
+                            <span class="text-space-on-dots">
+                                {{ $profile->class_teacher_remark ?? 'NO INFO' }}
+                            </span>
+                        </td>
+                        <td width="50%">
+                            <div class="h6">Principal's Remark</div>
+                            <span class="text-space-on-dots">
+                                {{ $profile->principal_remark ?? 'NO INFO' }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td colspan="2">
+                            <div class="h6">Promotion Status</div>
+                            @php
+                                $promotionStatus = $profile->promotion_status ?? 'N/A';
+                                $promotionClass = match($promotionStatus) {
+                                    'Promoted' => 'promotion-promoted',
+                                    'Repeat' => 'promotion-repeat',
+                                    'See Parents' => 'promotion-parents',
+                                    default => ''
+                                };
+                            @endphp
+                            <span class="promotion-status {{ $promotionClass }}">{{ $promotionStatus }}</span>
+                        </td>
+                    </tr>
                 </table>
 
                 <!-- Footer Section -->
@@ -771,26 +738,16 @@
                     <table class="footer-layout-table">
                         <tr>
                             <td>
-                                <span class="font-bold">This Result was issued on</span>
-                                <span class="text-dot-space2">........................</span>
-                                <span class="font-bold">and collected by</span>
-                                <span class="text-dot-space2">........................</span>
+                                <div class="h5">Class Teacher's Signature</div>
+                                <span class="text-dot-space2"></span>
                             </td>
-                        </tr>
-                        <tr>
                             <td>
-                                <span class="font-bold text-primary">Next Term Begins:</span>
-                                <span class="text-dot-space2">
-                                    @php
-                                        $nextTermBegins = $schoolInfo->date_next_term_begins ?? null;
-                                        $formattedNextTermBegins = $nextTermBegins ? \Carbon\Carbon::parse($nextTermBegins)->format('jS F, Y') : '........................';
-                                    @endphp
-                                    {{ $formattedNextTermBegins }}
-                                </span>
+                                <div class="h5">Principal's Signature</div>
+                                <span class="text-dot-space2"></span>
                             </td>
                         </tr>
                     </table>
-                    <div class="powered-by">Powered by Qudroid Systems | www.qudroid.co | +2349057522004</div>
+                    <div class="powered-by">Powered by QUODOROID CODING ACADEMY</div>
                 </div>
             </div>
         </div>
