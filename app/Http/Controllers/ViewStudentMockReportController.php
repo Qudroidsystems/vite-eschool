@@ -851,7 +851,7 @@ class ViewStudentMockReportController extends Controller
                 ->setOptions([
                     'dpi' => 96,
                     'defaultFont' => 'DejaVu Sans',
-                    'isRemoteEnabled' => true,
+                    'isRemoteEnabled' => false,
                     'isHtml5ParserEnabled' => true,
                     'isFontSubsettingEnabled' => true,
                     'isPhpEnabled' => false,
@@ -861,12 +861,10 @@ class ViewStudentMockReportController extends Controller
                     'logOutputFile' => storage_path('logs/dompdf.log'),
                     'isJavascriptEnabled' => false,
                     'enable_css_float' => true,
-                    // 'debugLayout' => config('app.debug', false),
-                    // 'debugCss' => config('app.debug', false),
-                    // 'debugKeepTemp' => config('app.debug', false),
-                    'debugLayout' => false,
-                    'debugCss' => false,
-                    'debugKeepTemp' => false,
+                    'debugLayout' => config('app.debug', false),
+                    'debugCss' => config('app.debug', false),
+                    'debugKeepTemp' => config('app.debug', false),
+             
                 ])
                 ->setWarnings(true);
 
