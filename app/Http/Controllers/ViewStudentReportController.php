@@ -723,7 +723,7 @@ class ViewStudentReportController extends Controller
                 ->setOptions([
                     'dpi' => 150,
                     'defaultFont' => 'DejaVu Sans',
-                    'isRemoteEnabled' => false,
+                    'isRemoteEnabled' => true,
                     'isHtml5ParserEnabled' => true,
                     'isFontSubsettingEnabled' => true,
                     'isPhpEnabled' => false,
