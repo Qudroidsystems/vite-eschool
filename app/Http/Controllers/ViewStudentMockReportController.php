@@ -855,15 +855,15 @@ class ViewStudentMockReportController extends Controller
                     'isHtml5ParserEnabled' => true,
                     'isFontSubsettingEnabled' => true,
                     'isPhpEnabled' => false,
-                    'chroot' => [public_path(), storage_path('app/public')],
+                    'chroot' => [public_path(), storage_path()],
                     'tempDir' => storage_path('app/temp/'),
                     'fontCache' => storage_path('fonts/'),
                     'logOutputFile' => storage_path('logs/dompdf.log'),
                     'isJavascriptEnabled' => false,
                     'enable_css_float' => true,
-                    'debugLayout' => config('app.debug', false),
-                    'debugCss' => config('app.debug', false),
-                    'debugKeepTemp' => config('app.debug', false),
+                    'debugLayout' => false,
+                    'debugCss' => false,
+                    'debugKeepTemp' => false,
              
                 ])
                 ->setWarnings(true);
