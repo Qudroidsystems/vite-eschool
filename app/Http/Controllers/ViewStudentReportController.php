@@ -1247,12 +1247,12 @@ class ViewStudentReportController extends Controller
     private function getTermName($termid)
     {
         $terms = [
-            1 => 'First_Term',
-            2 => 'Second_Term',
-            3 => 'Third_Term'
+            1 => 'First Term',
+            2 => 'Second Term',
+            3 => 'Third Term'
         ];
         
-        return $terms[$termid] ?? 'Unknown_Term';
+        return $terms[$termid] ?? 'Unknown Term';
     }
 
     private function validateStudentData($studentData): bool
