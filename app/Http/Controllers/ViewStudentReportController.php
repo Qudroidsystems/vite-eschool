@@ -496,7 +496,7 @@ class ViewStudentReportController extends Controller
                 $principalComment = "$performanceComment. Missing grades for compulsory subjects: " . implode(', ', $missingCompulsorySubjects) . '. Parents to see the Principal.';
                 $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
             } elseif ($compulsorySubjects->count() > 0 && $compulsoryCreditCount === $compulsorySubjects->count() && $creditCount >= 5) {
-                $principalComment = "$performanceComment. Excellent performance. Promoted to the next class.";
+                $principalComment = "$performanceComment.  Promoted to the next class.";
                 $promotionStatusValue = 'PROMOTED';
             } elseif ($creditCount >= 4 && $compulsoryCreditCount > 0) {
                 $principalComment = "$performanceComment. Average performance but needs improvement in some compulsory subjects. Promoted on trial.";
