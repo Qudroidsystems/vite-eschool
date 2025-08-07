@@ -43,6 +43,8 @@
                 margin: 0;
                 padding: 0;
                 text-align: center;
+                background: #ffffff !important;
+                background-color: #ffffff !important;
             }
             
             .student-section {
@@ -52,11 +54,36 @@
                 padding: 10mm;
                 page-break-after: always;
                 text-align: left;
+                background: #ffffff !important;
+                background-color: #ffffff !important;
             }
             
             .student-section:last-child {
                 page-break-after: avoid;
             }
+
+            .school-logo,
+            .header-img,
+            .photo-frame,
+            .photo-frame img {
+                background: none !important;
+                background-color: transparent !important;
+            }
+
+            /* Optional: Uncomment to force all table rows to white if colors are incorrect */
+            /*
+            .result-table tbody tr td,
+            .result-table tbody tr:nth-child(even) td {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+            }
+
+            .assessment-table tbody tr td,
+            .assessment-table tbody tr:nth-child(even) td {
+                background: #ffffff !important;
+                background-color: #ffffff !important;
+            }
+            */
         }
 
         .fraction {
@@ -84,7 +111,7 @@
             display: inline-block;
             min-height: 14px;
             font-weight: bold;
-            font-size: 12px; /* Increased font size */
+            font-size: 12px;
         }
 
         span.text-space-on-dots {
@@ -118,6 +145,16 @@
             border-radius: 1px;
             overflow: hidden;
             text-align: center;
+            background: none !important;
+            background-color: transparent !important;
+        }
+
+        .header-img {
+            width: 100%;
+            height: 100%;
+            border-radius: 1px;
+            background: none !important;
+            background-color: transparent !important;
         }
 
         .header-divider {
@@ -157,12 +194,6 @@
         .header-table td {
             vertical-align: middle;
             padding: 0;
-        }
-
-        .header-img {
-            width: 100%;
-            height: 100%;
-            border-radius: 1px;
         }
 
         .school-motto, .school-address, .school-website, .school-email {
@@ -205,7 +236,8 @@
             border: 3px solid #090909;
             border-radius: 8px;
             overflow: hidden;
-            background: white;
+            background: none !important;
+            background-color: transparent !important;
             padding: 2px;
             width: 80px;
             height: 100px;
@@ -216,6 +248,8 @@
         .photo-frame img {
             width: 100%;
             height: 100%;
+            background: none !important;
+            background-color: transparent !important;
         }
 
         .result-table table {
@@ -258,12 +292,12 @@
             padding: 4px 3px;
             text-align: center;
             font-size: 10px;
-            background: white;
+            background: #ffffff !important;
             font-weight: 900;
         }
 
         .result-table tbody tr:nth-child(even) td {
-            background: #f8fafc;
+            background: #f8fafc !important;
         }
 
         .result-table tbody td.subject-name {
@@ -300,14 +334,14 @@
         .assessment-table tbody td {
             border: 1px solid #000000;
             padding: 3px 4px;
-            background: white;
+            background: #ffffff !important;
             font-size: 7px;
             color: #000000;
             font-weight: bold;
         }
 
         .assessment-table tbody tr:nth-child(even) td {
-            background: #f0fdf4;
+            background: #f0fdf4 !important;
         }
 
         .grade-display {
@@ -441,45 +475,42 @@
             margin-top: 6px;
         }
 
-        /* FIXED PROMOTION STATUS STYLES - Higher specificity and better coverage */
         .promotion-status {
             font-weight: 900 !important;
             margin-left: 5px;
             font-size: 10px !important;
         }
 
-        /* Promotion status color classes with higher specificity */
         .remarks-table .promotion-status.promotion-promoted,
         .promotion-status.promotion-promoted {
-            color: #1e40af !important; /* Blue for PROMOTED */
+            color: #1e40af !important;
             font-weight: 900 !important;
         }
 
         .remarks-table .promotion-status.promotion-repeat,
         .promotion-status.promotion-repeat {
-            color: #dc2626 !important; /* Red for REPEAT/TRIAL */
+            color: #dc2626 !important;
             font-weight: 900 !important;
         }
 
         .remarks-table .promotion-status.promotion-parents,
         .promotion-status.promotion-parents {
-            color: #dc2626 !important; /* Red for PARENTS TO SEE PRINCIPAL */
+            color: #dc2626 !important;
             font-weight: 900 !important;
         }
 
         .remarks-table .promotion-status.promotion-default,
         .promotion-status.promotion-default {
-            color: #6b7280 !important; /* Gray for default/not applicable */
+            color: #6b7280 !important;
             font-weight: 900 !important;
         }
 
-        /* Additional specific color classes for common statuses */
         .promotion-status.status-promoted {
             color: #1e40af !important;
         }
 
         .promotion-status.status-trial {
-            color: #f59e0b !important; /* Amber for trial */
+            color: #f59e0b !important;
         }
 
         .promotion-status.status-repeat {
@@ -505,12 +536,12 @@
                         <tr>
                             <td width="25%">
                                 <div class="school-logo">
-                                    <img class="header-img" src="{{ $studentData['school_logo_path'] ?? public_path('storage/school_logos/default.jpg') }}" alt="School Logo">
+                                    <img class="header-img" src="{{ asset($studentData['school_logo_path'] ?? 'storage/school_logos/default.jpg') }}" alt="School Logo">
                                 </div>
                             </td>
                             <td width="50%">
                                 <div class="info-row">
-                                     <p class="school-name2">{{ $schoolInfo->school_name ?? 'QUDROID SYSTEMS' }}</p>
+                                    <p class="school-name2">{{ $schoolInfo->school_name ?? 'QUDROID SYSTEMS' }}</p>
                                 </div>
                                 <div class="info-row">
                                     <span class="result-details">Motto:</span>
@@ -536,9 +567,9 @@
                             <td width="25%">
                                 <div class="photo-frame">
                                     @if ($studentData['students'] && $studentData['students']->isNotEmpty() && $student->picture)
-                                        <img src="{{ $studentData['student_image_path'] ?? public_path('storage/student_avatars/unnamed.jpg') }}" alt="{{ $student->fname ?? 'Student' }}'s picture">
+                                        <img src="{{ asset($studentData['student_image_path'] ?? 'storage/student_avatars/unnamed.jpg') }}" alt="{{ $student->fname ?? 'Student' }}'s picture">
                                     @else
-                                        <img src="{{ public_path('storage/student_avatars/unnamed.jpg') }}" alt="Default Photo">
+                                        <img src="{{ asset('storage/student_avatars/unnamed.jpg') }}" alt="Default Photo">
                                     @endif
                                 </div>
                             </td>
@@ -564,7 +595,7 @@
                                             <td width="41%">
                                                 <div class="info-row">
                                                     <span class="result-details">Name:</span>
-                                                    <span class="info-value font-bold">{{ strtoupper($student->lastname ?? 'ILEMOBAYOEEEE') }} {{ $student->fname ?? 'Eliabeeeee' }} {{ $student->othername ?? 'eeeee' }}</span>
+                                                    <span class="info-value font-bold">{{ strtoupper($student->lastname ?? 'ILEMOBAYO') }} {{ $student->fname ?? 'Eliab' }} {{ $student->othername ?? '' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Session:</span>
@@ -748,12 +779,8 @@
                                         {{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}
                                         @php
                                             $status = $studentData['promotionStatusValue'] ?? null;
-                                            
-                                            // Enhanced status classification with better string matching
                                             $statusUpper = strtoupper(trim($status ?? ''));
                                             $statusClass = 'promotion-default';
-                                            
-                                            // More comprehensive matching
                                             if (str_contains($statusUpper, 'PROMOTED') && !str_contains($statusUpper, 'TRIAL')) {
                                                 $statusClass = 'promotion-promoted';
                                             } elseif (str_contains($statusUpper, 'TRIAL') || str_contains($statusUpper, 'PROMOTED ON TRIAL')) {
@@ -763,7 +790,6 @@
                                             } elseif (str_contains($statusUpper, 'PRINCIPAL') || str_contains($statusUpper, 'PARENTS')) {
                                                 $statusClass = 'promotion-parents';
                                             }
-                                            
                                             $statusText = $status ?? 'Not applicable for this term';
                                         @endphp
                                         <br>
@@ -784,11 +810,9 @@
                             <td>
                                 <span class="font-bold">This Result was issued on  </span>
                                 <span class="text-dot-space2"> 11th August, 2025</span>
-                        
                                 <span class="font-bold">and collected by</span>
                                 <span class="">.......................................</span>
                             </td>
-                            
                         </tr>
                         <tr>
                             <td>
