@@ -462,15 +462,15 @@ class ViewStudentReportController extends Controller
                 $allCsDs = ($cCount + $dCount) === $totalGrades && $cCount > 0 && $dCount > 0;
 
                 if ($allAs) {
-                    $performanceComment = 'Straight A\'s. Excellent results';
+                    $performanceComment = 'Excellent results';
                 } elseif ($aCount > 0 && $bCount > 0 && $cCount === 0 && $dCount === 0 && $fCount === 0) {
-                    $performanceComment = 'A\'s mixed with B\'s. Very Good results';
+                    $performanceComment = 'Very Good results';
                 } elseif ($hasAsOrBsOrCs && $aCount > 0) {
-                    $performanceComment = 'A\'s, B\'s, and C\'s. Good results';
+                    $performanceComment = 'Good results';
                 } elseif ($hasBsOrCs || $allBsCs) {
-                    $performanceComment = 'B\'s and C\'s. Average results';
+                    $performanceComment = 'Average results';
                 } elseif ($hasCsOrDs || $allCsDs) {
-                    $performanceComment = 'C\'s and D\'s. Below Average results';
+                    $performanceComment = 'Below Average results';
                 } else {
                     $performanceComment = 'Mixed performance across subjects';
                 }
