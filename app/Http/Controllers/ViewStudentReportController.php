@@ -472,7 +472,7 @@ class ViewStudentReportController extends Controller
                 } elseif ($hasCsOrDs || $allCsDs) {
                     $performanceComment = 'Below Average results';
                 } else {
-                    $performanceComment = 'Mixed performance across subjects';
+                    $performanceComment = 'Inconsistent performance across subjects';
                 }
             } else {
                 $performanceComment = 'No grades available';
