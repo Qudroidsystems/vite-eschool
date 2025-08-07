@@ -409,7 +409,7 @@
                         <tr>
                             <td width="25%">
                                 <div class="school-logo">
-                                    <img class="header-img" src="{{ $studentData['school_logo_path'] ?? public_path('storage/school_logos/default.jpg') }}" alt="School Logo">
+                                    {{-- <img class="header-img" src="{{ $studentData['school_logo_path'] ?? public_path('storage/school_logos/default.jpg') }}" alt="School Logo"> --}}
                                 </div>
                             </td>
                             <td width="50%">
@@ -439,11 +439,11 @@
                             </td>
                             <td width="25%">
                                 <div class="photo-frame">
-                                    @if ($studentData['students'] && $studentData['students']->isNotEmpty() && $student->picture)
+                                    {{-- @if ($studentData['students'] && $studentData['students']->isNotEmpty() && $student->picture)
                                         <img src="{{ $studentData['student_image_path'] ?? public_path('storage/student_avatars/unnamed.jpg') }}" alt="{{ $student->fname ?? 'Student' }}'s picture">
                                     @else
                                         <img src="{{ public_path('storage/student_avatars/unnamed.jpg') }}" alt="Default Photo">
-                                    @endif
+                                    @endif --}}
                                 </div>
                             </td>
                         </tr>
