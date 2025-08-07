@@ -551,7 +551,7 @@ class ViewStudentReportController extends Controller
                     $principalComment = "$performanceComment. Promoted to the next class.";
                     $promotionStatusValue = 'PROMOTED';
                 } elseif ($creditCount >= 4 && $compulsoryCreditCount > 0) {
-                    $principalComment = "$performanceComment. Average performance but needs improvement in some compulsory subjects. Promoted on trial.";
+                    $principalComment = "$performanceComment. But needs improvement in some compulsory subjects. Promoted on trial.";
                     $promotionStatusValue = 'PROMOTED ON TRIAL';
                 } elseif ($creditCount >= 4 && $compulsoryCreditCount == 0) {
                     $principalComment = "$performanceComment. Achieved credits but none in compulsory subjects. Parents to see the Principal.";
