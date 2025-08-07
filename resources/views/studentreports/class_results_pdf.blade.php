@@ -69,21 +69,6 @@
                 background: none !important;
                 background-color: transparent !important;
             }
-
-            /* Optional: Uncomment to force all table rows to white if colors are incorrect */
-            /*
-            .result-table tbody tr td,
-            .result-table tbody tr:nth-child(even) td {
-                background: #ffffff !important;
-                background-color: #ffffff !important;
-            }
-
-            .assessment-table tbody tr td,
-            .assessment-table tbody tr:nth-child(even) td {
-                background: #ffffff !important;
-                background-color: #ffffff !important;
-            }
-            */
         }
 
         .fraction {
@@ -536,7 +521,7 @@
                         <tr>
                             <td width="25%">
                                 <div class="school-logo">
-                                    <img class="header-img" src="{{ asset($studentData['school_logo_path'] ?? 'storage/school_logos/default.jpg') }}" alt="School Logo">
+                                    <img class="header-img" src="{{ public_path($studentData['school_logo_path'] ?? 'storage/school_logos/default.jpg') }}" alt="School Logo">
                                 </div>
                             </td>
                             <td width="50%">
@@ -567,9 +552,9 @@
                             <td width="25%">
                                 <div class="photo-frame">
                                     @if ($studentData['students'] && $studentData['students']->isNotEmpty() && $student->picture)
-                                        <img src="{{ asset($studentData['student_image_path'] ?? 'storage/student_avatars/unnamed.jpg') }}" alt="{{ $student->fname ?? 'Student' }}'s picture">
+                                        <img src="{{ public_path($studentData['student_image_path'] ?? 'storage/student_avatars/unnamed.jpg') }}" alt="{{ $student->fname ?? 'Student' }}'s picture">
                                     @else
-                                        <img src="{{ asset('storage/student_avatars/unnamed.jpg') }}" alt="Default Photo">
+                                        <img src="{{ public_path('storage/student_avatars/unnamed.jpg') }}" alt="Default Photo">
                                     @endif
                                 </div>
                             </td>
