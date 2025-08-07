@@ -189,9 +189,14 @@ function initializeCheckboxLogic() {
 
             console.log('Edit modal checkboxes - Arms:', editArmCheckboxes.length, 'Categories:', editCategoryCheckboxes.length);
 
-            // Multiple selection for arms
+            // Single selection for arms
             editArmCheckboxes.forEach(checkbox => {
                 checkbox.addEventListener('change', function () {
+                    if (this.checked) {
+                        editArmCheckboxes.forEach(cb => {
+                            if (cb !== this) cb.checked = false;
+                        });
+                    }
                     updateSelectAllState(editArmSelectAll, editArmCheckboxes);
                 });
             });
@@ -213,6 +218,11 @@ function initializeCheckboxLogic() {
                     console.log('Edit arm select all toggled:', this.checked);
                     editArmCheckboxes.forEach(checkbox => {
                         checkbox.checked = this.checked;
+                        if (this.checked) {
+                            editArmCheckboxes.forEach(cb => {
+                                if (cb !== checkbox) cb.checked = false;
+                            });
+                        }
                     });
                     updateSelectAllState(editArmSelectAll, editArmCheckboxes);
                 });
@@ -279,7 +289,6 @@ function handleRemoveClick(e) {
         const itemId = e.target.closest("tr").querySelector(".id").getAttribute("data-id");
         console.log("Remove button clicked for ID:", itemId);
 
-        // Close other modals
         const editModal = document.getElementById("editModal");
         if (editModal && bootstrap.Modal.getInstance(editModal)) {
             bootstrap.Modal.getInstance(editModal).hide();
@@ -375,10 +384,10 @@ function handleEditClick(e) {
             headers: { 'X-CSRF-TOKEN': csrfToken }
         }).then(response => {
             if (response.data.success) {
-                const armIds = response.data.armIds.map(String);
-                console.log("Arms fetched for ID", itemId, ":", armIds);
+                const armId = response.data.armIds[0]?.toString();
+                console.log("Arm fetched for ID", itemId, ":", armId);
                 editArmCheckboxes.forEach(checkbox => {
-                    const isChecked = armIds.includes(checkbox.value);
+                    const isChecked = checkbox.value === armId;
                     checkbox.checked = isChecked;
                     console.log(`Checkbox value=${checkbox.value} checked=${isChecked}`);
                 });
@@ -588,19 +597,24 @@ if (addSchoolClassForm) {
             if (errorMsg) {
                 const errors = error.response?.data?.errors;
                 let errorMessage = "Error adding school class";
-                if (errors) {
-                    errorMessage = Object.values(errors).flat().join(", ");
+                if (errors && errors.schoolclass) {
+                    errorMessage = errors.schoolclass.join(", ");
                 } else if (error.response?.data?.message) {
                     errorMessage = error.response.data.message;
                 }
                 errorMsg.innerHTML = errorMessage;
                 errorMsg.classList.remove("d-none");
+                Swal.fire({
+                    position: "center",
+                    icon: "error",
+                    title: "Error adding school class",
+                    text: errorMessage,
+                    showConfirmButton: true
+                });
             }
         });
     });
 }
-
-
 
 const editSchoolClassForm = document.getElementById("edit-schoolclass-form");
 if (editSchoolClassForm) {
@@ -615,12 +629,10 @@ if (editSchoolClassForm) {
         const classcategoryid = Array.from(document.querySelectorAll('#edit-category-checkboxes input[name="classcategoryid[]"]:checked')).map(cb => cb.value)[0] || '';
         const id = editIdField.value;
 
-        console.log("Form data:", { id, schoolclass, arm_id, classcategoryid });
-
-        if (!id || !schoolclass || !arm_id.length || !classcategoryid) {
+        if (!id || !schoolclass || arm_id.length !== 1 || !classcategoryid) {
             console.error("Validation failed:", { id, schoolclass, arm_id, classcategoryid });
             if (errorMsg) {
-                errorMsg.innerHTML = "Please fill in all required fields";
+                errorMsg.innerHTML = "Please fill in all required fields and select exactly one arm";
                 errorMsg.classList.remove("d-none");
             }
             return;
@@ -648,7 +660,13 @@ if (editSchoolClassForm) {
             });
         }).catch(function (error) {
             console.error("Edit error:", error.response?.status, error.response?.data || error.message);
-            const errorMsgText = error.response?.data?.message || Object.values(error.response?.data?.errors || {}).flat().join(", ") || "Failed to update school class";
+            const errors = error.response?.data?.errors;
+            let errorMsgText = "Failed to update school class";
+            if (errors && errors.schoolclass) {
+                errorMsgText = errors.schoolclass.join(", ");
+            } else if (error.response?.data?.message) {
+                errorMsgText = error.response.data.message;
+            }
             if (errorMsg) {
                 errorMsg.innerHTML = errorMsgText;
                 errorMsg.classList.remove("d-none");
@@ -664,29 +682,11 @@ if (editSchoolClassForm) {
     });
 }
 
-
 function handleError(error, errorMsg) {
     const errors = error.response?.data?.errors;
-    let errorMessage = "Error updating school class";
-    if (errors) {
-        errorMessage = Object.values(errors).flat().join(", ");
-    } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-    } else if (error.message) {
-        errorMessage = error.message;
-    }
-    console.error("Error details:", errorMessage);
-    if (errorMsg) {
-        errorMsg.innerHTML = errorMessage;
-        errorMsg.classList.remove("d-none");
-    }
-}
-
-function handleError(error, errorMsg) {
-    const errors = error.response?.data?.errors;
-    let errorMessage = "Error updating school class";
-    if (errors) {
-        errorMessage = Object.values(errors).flat().join(", ");
+    let errorMessage = "Error processing request";
+    if (errors && errors.schoolclass) {
+        errorMessage = errors.schoolclass.join(", ");
     } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
     } else if (error.message) {
