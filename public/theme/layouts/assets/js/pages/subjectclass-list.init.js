@@ -283,6 +283,7 @@ function clearAddFields() {
     document.querySelectorAll('#addSubjectClassModal input[name="subjectteacherid[]"]').forEach(checkbox => {
         checkbox.checked = false;
     });
+    updateSelectedTeachersAlert();
 }
 
 function clearEditFields() {
@@ -437,6 +438,27 @@ function filterData() {
 function refreshTable() {
     console.log("Refreshing table...");
     window.location.reload();
+}
+
+// Update selected teachers alert
+function updateSelectedTeachersAlert() {
+    const alertContainer = document.getElementById('selected-teachers-alert');
+    const selectedTeachers = document.querySelectorAll('#addSubjectClassModal input[name="subjectteacherid[]"]:checked');
+    const selectedTeachersList = document.getElementById('selected-teachers-list');
+    
+    if (selectedTeachers.length === 0) {
+        alertContainer.classList.add('d-none');
+        selectedTeachersList.innerHTML = '';
+        return;
+    }
+    
+    const teacherNames = Array.from(selectedTeachers).map(checkbox => {
+        const label = checkbox.nextElementSibling;
+        return label.textContent.trim();
+    });
+    
+    selectedTeachersList.innerHTML = teacherNames.map(name => `<li>${name}</li>`).join('');
+    alertContainer.classList.remove('d-none');
 }
 
 // Add subject class
@@ -602,6 +624,14 @@ if (editSubjectClassForm) {
     });
 }
 
+// Update submit button state
+function updateSubmitButton() {
+    const addBtn = document.getElementById("add-btn");
+    const schoolclassid = document.getElementById("schoolclassid")?.value;
+    const checkedTeachers = document.querySelectorAll('#addSubjectClassModal input[name="subjectteacherid[]"]:checked').length;
+    if (addBtn) addBtn.disabled = !schoolclassid || checkedTeachers === 0;
+}
+
 // Modal events
 const addModal = document.getElementById("addSubjectClassModal");
 if (addModal) {
@@ -617,15 +647,14 @@ if (addModal) {
             addBtn.disabled = true;
         }
         
-        const updateSubmitButton = () => {
-            const schoolclassid = document.getElementById("schoolclassid")?.value;
-            const checkedTeachers = document.querySelectorAll('#addSubjectClassModal input[name="subjectteacherid[]"]:checked').length;
-            if (addBtn) addBtn.disabled = !schoolclassid || checkedTeachers === 0;
-        };
+        updateSelectedTeachersAlert();
         
         document.getElementById("schoolclassid")?.addEventListener("change", updateSubmitButton);
         document.querySelectorAll('#addSubjectClassModal input[name="subjectteacherid[]"]').forEach(cb => {
-            cb.addEventListener("change", updateSubmitButton);
+            cb.addEventListener("change", () => {
+                updateSelectedTeachersAlert();
+                updateSubmitButton();
+            });
         });
     });
     
@@ -640,6 +669,9 @@ if (addModal) {
             addBtn.disabled = true;
             addBtn.innerHTML = "Add Subject Class";
         }
+        
+        const alertContainer = document.getElementById('selected-teachers-alert');
+        if (alertContainer) alertContainer.classList.add('d-none');
         
         const backdrop = document.querySelector('.modal-backdrop');
         if (backdrop) {

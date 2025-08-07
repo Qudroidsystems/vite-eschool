@@ -197,7 +197,7 @@
 
                 <!-- Add Subject Class Modal -->
                 <div id="addSubjectClassModal" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static">
-                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-dialog modal-dialog-centered modal-xl">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 id="exampleModalLabel" class="modal-title">Add Subject Class</h5>
@@ -217,7 +217,7 @@
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Subject Teachers</label>
-                                        <div class="checkbox-group" style="max-height: 150px; overflow-y: auto;">
+                                        <div class="checkbox-group" style="max-height: 200px; overflow-y: auto;">
                                             @foreach ($subjectteacher->sortBy(['teachername', 'subject']) as $teacher)
                                                 <div class="form-check me-3">
                                                     <input class="form-check-input modal-checkbox" type="checkbox" name="subjectteacherid[]" id="add-teacher-{{ $teacher->id }}" value="{{ $teacher->id }}">
@@ -230,6 +230,11 @@
                                                 </div>
                                             @endforeach
                                         </div>
+                                    </div>
+                                    <div class="alert alert-info alert-dismissible d-none" id="selected-teachers-alert">
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        <strong>Selected Teachers:</strong>
+                                        <ul id="selected-teachers-list" class="mb-0"></ul>
                                     </div>
                                     <div class="alert alert-danger d-none" id="alert-error-msg"></div>
                                 </div>
