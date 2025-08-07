@@ -439,11 +439,11 @@
                             </td>
                             <td width="25%">
                                 <div class="photo-frame">
-                                    {{-- @if ($studentData['students'] && $studentData['students']->isNotEmpty() && $student->picture)
+                                    @if ($studentData['students'] && $studentData['students']->isNotEmpty() && $student->picture)
                                         <img src="{{ $studentData['student_image_path'] ?? public_path('storage/student_avatars/unnamed.jpg') }}" alt="{{ $student->fname ?? 'Student' }}'s picture">
                                     @else
                                         <img src="{{ public_path('storage/student_avatars/unnamed.jpg') }}" alt="Default Photo">
-                                    @endif --}}
+                                    @endif
                                 </div>
                             </td>
                         </tr>
