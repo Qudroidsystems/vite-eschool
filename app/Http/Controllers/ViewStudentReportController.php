@@ -505,16 +505,16 @@ class ViewStudentReportController extends Controller
                 $principalComment = "$performanceComment. Achieved credits but none in compulsory subjects. Parents to see the Principal.";
                 $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
             } elseif ($failCount === count($scores) && count($scores) > 0) {
-                $principalComment = "$performanceComment. Poor performance across all subjects. Advice to ADVISED TO repeat/PARENTS TO SEE PRINCIPAL the class. Parents to see the Principal.";
+                $principalComment = "$performanceComment. Poor performance across all subjects. Advised to repeat the class. Parents to see the Principal.";
                 $promotionStatusValue = 'ADVISED TO REPEAT/PARENTS TO SEE PRINCIPAL';
             } elseif ($allDs || $mixOfDsAndFs) {
-                $principalComment = "$performanceComment. Poor performance with D or F grades. Advice to ADVISED TO repeat/PARENTS TO SEE PRINCIPAL the class. Parents to see the Principal.";
+                $principalComment = "$performanceComment. Poor performance with D or F grades. Advised to repeat the class. Parents to see the Principal.";
                 $promotionStatusValue = 'ADVISED TO REPEAT/PARENTS TO SEE PRINCIPAL';
             } elseif ($compulsoryCreditCount === $compulsorySubjects->count() && $failedNonCompulsory && $scores->count() > count($compulsorySubjectIds)) {
                 $principalComment = "$performanceComment. Passed compulsory subjects but failed all other subjects. Parents to see the Principal.";
                 $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
             } elseif ($creditCount < 4 && $compulsoryCreditCount < $compulsorySubjects->count()) {
-                $principalComment = "$performanceComment. Less than 4 credits and failed compulsory subjects. Advice to ADVISED TO repeat/PARENTS TO SEE PRINCIPAL the class. Parents to see the Principal.";
+                $principalComment = "$performanceComment. Less than 4 credits and failed compulsory subjects. Advised to repeat the class. Parents to see the Principal.";
                 $promotionStatusValue = 'ADVISED TO REPEAT/PARENTS TO SEE PRINCIPAL';
             } else {
                 $principalComment = "$performanceComment. Inconsistent performance or incomplete grades. Parents to see the Principal for further discussion.";
