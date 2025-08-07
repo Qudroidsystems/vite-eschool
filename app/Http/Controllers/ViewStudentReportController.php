@@ -275,7 +275,7 @@ class ViewStudentReportController extends Controller
     }
 
 
-private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
+    private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
 {
     try {
         if (!is_numeric($id) || !is_numeric($schoolclassid) || !is_numeric($sessionid) || !is_numeric($termid)) {
@@ -437,37 +437,42 @@ private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
             $performanceComment = '';
             if ($scores->count() > 0) {
                 $grades = $scores->pluck('grade')->toArray();
-                $allAs = $scores->every(function ($score) use ($aGrades) {
+                $aCount = $scores->filter(function ($score) use ($aGrades) {
                     return in_array($score->grade, $aGrades);
-                });
-                $hasAsOrBsOrCs = $scores->filter(function ($score) use ($aGrades, $bGrades, $cGrades) {
-                    return in_array($score->grade, array_merge($aGrades, $bGrades, $cGrades));
-                })->count() >= $scores->count() - 1; // Allow one non-A/B/C grade
-                $onlyAsAndBs = $scores->every(function ($score) use ($aGrades, $bGrades) {
-                    return in_array($score->grade, array_merge($aGrades, $bGrades));
-                });
-                $onlyBsCs = $scores->every(function ($score) use ($bGrades, $cGrades) {
-                    return in_array($score->grade, array_merge($bGrades, $cGrades));
-                });
-                $onlyCsDs = $scores->every(function ($score) use ($cGrades, $dGrade) {
-                    return in_array($score->grade, array_merge($cGrades, [$dGrade]));
-                });
+                })->count();
+                $bCount = $scores->filter(function ($score) use ($bGrades) {
+                    return in_array($score->grade, $bGrades);
+                })->count();
+                $cCount = $scores->filter(function ($score) use ($cGrades) {
+                    return in_array($score->grade, $cGrades);
+                })->count();
+                $dCount = $scores->filter(function ($score) use ($dGrade) {
+                    return $score->grade === $dGrade;
+                })->count();
+                $fCount = $scores->filter(function ($score) use ($failGrades) {
+                    return in_array($score->grade, $failGrades);
+                })->count();
 
-                // Check if compulsory subjects have credits
-                $hasCompulsoryCredits = $compulsoryCreditCount > 0;
+                $totalGrades = $scores->count();
+                $hasAsOrBsOrCs = ($aCount + $bCount + $cCount) >= $totalGrades / 2; // Majority are A, B, or C
+                $hasBsOrCs = ($bCount + $cCount) >= $totalGrades / 2; // Majority are B or C
+                $hasCsOrDs = ($cCount + $dCount) >= $totalGrades / 2; // Majority are C or D
+                $allAs = $aCount === $totalGrades;
+                $allBsCs = ($bCount + $cCount) === $totalGrades && $bCount > 0 && $cCount > 0;
+                $allCsDs = ($cCount + $dCount) === $totalGrades && $cCount > 0 && $dCount > 0;
 
                 if ($allAs) {
                     $performanceComment = 'Straight A\'s. Excellent results';
-                } elseif ($onlyAsAndBs) {
+                } elseif ($aCount > 0 && $bCount > 0 && $cCount === 0 && $dCount === 0 && $fCount === 0) {
                     $performanceComment = 'A\'s mixed with B\'s. Very Good results';
-                } elseif ($hasAsOrBsOrCs && $hasCompulsoryCredits) {
+                } elseif ($hasAsOrBsOrCs && $aCount > 0) {
                     $performanceComment = 'A\'s, B\'s, and C\'s. Good results';
-                } elseif ($onlyBsCs) {
+                } elseif ($hasBsOrCs || $allBsCs) {
                     $performanceComment = 'B\'s and C\'s. Average results';
-                } elseif ($onlyCsDs) {
+                } elseif ($hasCsOrDs || $allCsDs) {
                     $performanceComment = 'C\'s and D\'s. Below Average results';
                 } else {
-                    $performanceComment = '';
+                    $performanceComment = 'Mixed performance across subjects';
                 }
             } else {
                 $performanceComment = 'No grades available';
@@ -494,8 +499,8 @@ private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
                 $principalComment = "$performanceComment. Excellent performance. Promoted to the next class.";
                 $promotionStatusValue = 'PROMOTED';
             } elseif ($creditCount >= 4 && $compulsoryCreditCount > 0) {
-                $principalComment = "$performanceComment. Good performance but needs improvement in some compulsory subjects. Promoted on trial.";
-                $promotionStatusValue = 'PROMOTED';
+                $principalComment = "$performanceComment. Average performance but needs improvement in some compulsory subjects. Promoted on trial.";
+                $promotionStatusValue = 'PROMOTED ON TRIAL';
             } elseif ($creditCount >= 4 && $compulsoryCreditCount == 0) {
                 $principalComment = "$performanceComment. Achieved credits but none in compulsory subjects. Parents to see the Principal.";
                 $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
