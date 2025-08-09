@@ -547,7 +547,7 @@ class ViewStudentReportController extends Controller
                 }
 
                 $compulsoryFailCount = $compulsorySubjects->count() - $compulsoryCreditCount;
-                $failedCompulsorySubjects = $compulsorySubjectLog
+                $failedCompulsorySubjects = collect($compulsorySubjectLog)
                     ->filter(function ($log) use ($creditGrades) {
                         return $log['grade'] !== 'N/A' && !in_array($log['grade'], $creditGrades);
                     })
