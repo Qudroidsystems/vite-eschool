@@ -536,7 +536,6 @@ class ViewStudentReportController extends Controller
 
                 $criticalCompulsoryCreditCount = 0;
                 $failedCriticalSubjects = [];
-                $belowC6CriticalSubjects = [];
                 foreach ($criticalCompulsorySubjects as $subjectId) {
                     $score = $scores->firstWhere('subject_id', $subjectId);
                     $subjectName = $compulsorySubjects->firstWhere('subjectId', $subjectId)->subject_name ?? 'Unknown';
@@ -544,37 +543,32 @@ class ViewStudentReportController extends Controller
                         $criticalCompulsoryCreditCount++;
                     } elseif ($score && !in_array($score->grade, $creditGrades)) {
                         $failedCriticalSubjects[] = $subjectName;
-                        $belowC6CriticalSubjects[] = $subjectName;
-                    } elseif (!$score) {
-                        $belowC6CriticalSubjects[] = $subjectName;
                     }
                 }
 
                 $compulsoryFailCount = $compulsorySubjects->count() - $compulsoryCreditCount;
+                $failedCompulsorySubjects = $compulsorySubjectLog
+                    ->filter(function ($log) use ($creditGrades) {
+                        return $log['grade'] !== 'N/A' && !in_array($log['grade'], $creditGrades);
+                    })
+                    ->pluck('subject_name')
+                    ->toArray();
 
-                // Check if student has less than C6 in both English and Mathematics
-                $englishScore = $scores->firstWhere('subject_name', 'ENGLISH LANGUAGE');
-                $mathScore = $scores->firstWhere('subject_name', 'MATHEMATICS');
-                $englishBelowC6 = !$englishScore || !in_array($englishScore->grade, $creditGrades);
-                $mathBelowC6 = !$mathScore || !in_array($mathScore->grade, $creditGrades);
-
-                if ($englishBelowC6 && $mathBelowC6) {
-                    $principalComment = "$performanceComment. Failed to achieve at least C6 in both English Language and Mathematics. Parents to see the Principal.";
-                    $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
-                } elseif (!empty($missingCompulsorySubjects)) {
+                if (!empty($missingCompulsorySubjects)) {
                     $principalComment = "$performanceComment. Missing grades for compulsory subjects: " . implode(', ', $missingCompulsorySubjects) . '. Parents to see the Principal.';
                     $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
                 } elseif ($compulsoryCreditCount === 5 && $creditCount >= 5) {
                     $principalComment = "$performanceComment. Promoted to the next class.";
                     $promotionStatusValue = 'PROMOTED';
-                } elseif ($creditCount >= 4 && $compulsoryFailCount <= 2) {
-                    $principalComment = "$performanceComment. Needs improvement in some compulsory subjects. Promoted on trial.";
+                } elseif ($creditCount >= 4 && $compulsoryFailCount <= 1) {
+                    $principalComment = "$performanceComment. Needs improvement in some subjects. Promoted on trial.";
                     $promotionStatusValue = 'PROMOTED ON TRIAL';
-                } elseif ($compulsoryFailCount >= 3 && !empty($failedCriticalSubjects)) {
-                    $principalComment = "$performanceComment. Failed multiple compulsory subjects including " . implode(' and ', $failedCriticalSubjects) . ". Advised to repeat the class. Parents to see the Principal.";
-                    $promotionStatusValue = 'ADVISED TO REPEAT/PARENTS TO SEE PRINCIPAL';
-                } elseif ($creditCount < 4) {
-                    $principalComment = "$performanceComment. Insufficient total credits. Advised to repeat the class. Parents to see the Principal.";
+                } elseif ($compulsoryFailCount === 2) {
+                    $principalComment = "$performanceComment. Failed compulsory subjects: " . implode(', ', $failedCompulsorySubjects) . ". Parents to see the Principal.";
+                    $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
+                } elseif ($compulsoryFailCount > 2 || $creditCount < 4) {
+                    $failedSubjectsList = !empty($failedCompulsorySubjects) ? " Failed compulsory subjects: " . implode(', ', $failedCompulsorySubjects) . "." : "";
+                    $principalComment = "$performanceComment.$failedSubjectsList Advised to repeat the class. Parents to see the Principal.";
                     $promotionStatusValue = 'ADVISED TO REPEAT/PARENTS TO SEE PRINCIPAL';
                 } else {
                     $principalComment = "$performanceComment. Inconsistent performance or insufficient compulsory subject credits. Parents to see the Principal.";
@@ -635,7 +629,7 @@ class ViewStudentReportController extends Controller
                 'is_senior' => $isSenior,
                 'critical_compulsory_credit_count' => $isSenior ? $criticalCompulsoryCreditCount : null,
                 'failed_critical_subjects' => $isSenior ? $failedCriticalSubjects : [],
-                'below_c6_critical_subjects' => $isSenior ? $belowC6CriticalSubjects : [],
+                'compulsory_fail_count' => $isSenior ? $compulsoryFailCount : null,
             ]);
 
             Studentpersonalityprofile::updateOrCreate(
