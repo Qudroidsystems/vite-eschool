@@ -287,7 +287,8 @@ class ViewStudentReportController extends Controller
         return $success;
     }
 
-private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
+
+    private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
 {
     try {
         if (!is_numeric($id) || !is_numeric($schoolclassid) || !is_numeric($sessionid) || !is_numeric($termid)) {
@@ -535,6 +536,7 @@ private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
 
                 $criticalCompulsoryCreditCount = 0;
                 $failedCriticalSubjects = [];
+                $belowC6CriticalSubjects = [];
                 foreach ($criticalCompulsorySubjects as $subjectId) {
                     $score = $scores->firstWhere('subject_id', $subjectId);
                     $subjectName = $compulsorySubjects->firstWhere('subjectId', $subjectId)->subject_name ?? 'Unknown';
@@ -542,12 +544,24 @@ private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
                         $criticalCompulsoryCreditCount++;
                     } elseif ($score && !in_array($score->grade, $creditGrades)) {
                         $failedCriticalSubjects[] = $subjectName;
+                        $belowC6CriticalSubjects[] = $subjectName;
+                    } elseif (!$score) {
+                        $belowC6CriticalSubjects[] = $subjectName;
                     }
                 }
 
                 $compulsoryFailCount = $compulsorySubjects->count() - $compulsoryCreditCount;
 
-                if (!empty($missingCompulsorySubjects)) {
+                // Check if student has less than C6 in both English and Mathematics
+                $englishScore = $scores->firstWhere('subject_name', 'ENGLISH LANGUAGE');
+                $mathScore = $scores->firstWhere('subject_name', 'MATHEMATICS');
+                $englishBelowC6 = !$englishScore || !in_array($englishScore->grade, $creditGrades);
+                $mathBelowC6 = !$mathScore || !in_array($mathScore->grade, $creditGrades);
+
+                if ($englishBelowC6 && $mathBelowC6) {
+                    $principalComment = "$performanceComment. Failed to achieve at least C6 in both English Language and Mathematics. Parents to see the Principal.";
+                    $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
+                } elseif (!empty($missingCompulsorySubjects)) {
                     $principalComment = "$performanceComment. Missing grades for compulsory subjects: " . implode(', ', $missingCompulsorySubjects) . '. Parents to see the Principal.';
                     $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
                 } elseif ($compulsoryCreditCount === 5 && $creditCount >= 5) {
@@ -621,6 +635,7 @@ private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
                 'is_senior' => $isSenior,
                 'critical_compulsory_credit_count' => $isSenior ? $criticalCompulsoryCreditCount : null,
                 'failed_critical_subjects' => $isSenior ? $failedCriticalSubjects : [],
+                'below_c6_critical_subjects' => $isSenior ? $belowC6CriticalSubjects : [],
             ]);
 
             Studentpersonalityprofile::updateOrCreate(
