@@ -2,18 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Broadsheet;
+
 use App\Models\BroadsheetRecord;
 use App\Models\BroadsheetRecordMock;
 use App\Models\Broadsheets;
 use App\Models\BroadsheetsMock;
 use App\Models\Schoolclass;
-use App\Models\SchoolFirstTerm;
-use App\Models\SchoolFirstTermMock;
-use App\Models\SchoolSecondTerm;
-use App\Models\SchoolSecondTermMock;
-use App\Models\SchoolThirdTerm;
-use App\Models\SchoolThirdTermMock;
 use App\Models\Student;
 use App\Models\Studentpicture;
 use App\Models\StudentSubjectRecord;
@@ -239,7 +233,7 @@ class SubjectOperationController extends Controller
                 ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
                 ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
                 ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
-                ->where('schoolterm.id', $termid)
+                ->where('schoolterm.id', 2)
                 ->where('schoolsession.id', $sessionid)
                 ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
                 ->leftJoin('staffbioinfo', 'staffbioinfo.userid', '=', 'users.id')
@@ -304,7 +298,7 @@ class SubjectOperationController extends Controller
                 ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
                 ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
                 ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
-                ->where('schoolterm.id', $termid)
+                ->where('schoolterm.id', 2)
                 ->where('schoolsession.id', $sessionid)
                 ->distinct('subjectteacher.subjectid')
                 ->count('subjectteacher.subjectid');
@@ -314,7 +308,7 @@ class SubjectOperationController extends Controller
                 ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
                 ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
                 ->leftJoin('schoolsession', 'schoolsession.id', '=', 'student_subject_register_record.session')
-                ->where('schoolterm.id', $termid)
+                ->where('schoolterm.id', 2)
                 ->where('schoolsession.status', $current)
                 ->count();
 
