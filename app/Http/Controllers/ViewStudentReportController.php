@@ -518,7 +518,7 @@ class ViewStudentReportController extends Controller
                 } elseif (($cCount + $dCount) >= $totalGrades / 2) {
                     $performanceComment = 'Below Average results';
                 } else {
-                    $performanceComment = 'Poor performance';
+                    $performanceComment = 'Below Average results';
                 }
             } else {
                 $performanceComment = 'No grades available';
@@ -547,15 +547,9 @@ class ViewStudentReportController extends Controller
                 }
 
                 $compulsoryFailCount = $compulsorySubjects->count() - $compulsoryCreditCount;
-                $failedCompulsorySubjects = collect($compulsorySubjectLog)
-                    ->filter(function ($log) use ($creditGrades) {
-                        return $log['grade'] !== 'N/A' && !in_array($log['grade'], $creditGrades);
-                    })
-                    ->pluck('subject_name')
-                    ->toArray();
 
                 if (!empty($missingCompulsorySubjects)) {
-                    $principalComment = "$performanceComment. Missing grades for compulsory subjects: " . implode(', ', $missingCompulsorySubjects) . '. Parents to see the Principal.';
+                    $principalComment = "$performanceComment. Missing grades for compulsory subjects. Parents to see the Principal.";
                     $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
                 } elseif ($compulsoryCreditCount === 5 && $creditCount >= 5) {
                     $principalComment = "$performanceComment. Promoted to the next class.";
@@ -564,11 +558,10 @@ class ViewStudentReportController extends Controller
                     $principalComment = "$performanceComment. Needs improvement in some subjects. Promoted on trial.";
                     $promotionStatusValue = 'PROMOTED ON TRIAL';
                 } elseif ($compulsoryFailCount === 2) {
-                    $principalComment = "$performanceComment. Failed compulsory subjects: " . implode(', ', $failedCompulsorySubjects) . ". Parents to see the Principal.";
+                    $principalComment = "$performanceComment. Failed two compulsory subjects. Parents to see the Principal.";
                     $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
                 } elseif ($compulsoryFailCount > 2 || $creditCount < 4) {
-                    $failedSubjectsList = !empty($failedCompulsorySubjects) ? " Failed compulsory subjects: " . implode(', ', $failedCompulsorySubjects) . "." : "";
-                    $principalComment = "$performanceComment.$failedSubjectsList Advised to repeat the class. Parents to see the Principal.";
+                    $principalComment = "$performanceComment. Advised to repeat the class. Parents to see the Principal.";
                     $promotionStatusValue = 'ADVISED TO REPEAT/PARENTS TO SEE PRINCIPAL';
                 } else {
                     $principalComment = "$performanceComment. Inconsistent performance or insufficient compulsory subject credits. Parents to see the Principal.";
