@@ -287,250 +287,287 @@ class ViewStudentReportController extends Controller
         return $success;
     }
 
-    private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
-    {
-        try {
-            if (!is_numeric($id) || !is_numeric($schoolclassid) || !is_numeric($sessionid) || !is_numeric($termid)) {
-                Log::error('Invalid parameters in getStudentResultData', [
-                    'student_id' => $id,
-                    'schoolclassid' => $schoolclassid,
-                    'sessionid' => $sessionid,
-                    'termid' => $termid,
-                ]);
-                return [];
-            }
-
-            // Initialize $promotionStatusValue to avoid undefined variable error
-            $promotionStatusValue = null;
-
-            $students = Student::where('studentRegistration.id', $id)
-                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-                ->select([
-                    'studentRegistration.id as id',
-                    'studentRegistration.admissionNo as admissionNo',
-                    'studentRegistration.firstname as fname',
-                    'studentRegistration.home_address as homeaddress',
-                    'studentRegistration.lastname as lastname',
-                    'studentRegistration.othername as othername',
-                    'studentRegistration.dateofbirth as dateofbirth',
-                    'studentRegistration.gender as gender',
-                    'studentRegistration.updated_at as updated_at',
-                    'studentpicture.picture as picture'
-                ])
-                ->orderBy('studentRegistration.lastname', 'asc')
-                ->get();
-
-            if ($students->isEmpty()) {
-                Log::warning('No active student found for ID', [
-                    'student_id' => $id,
-                    'schoolclassid' => $schoolclassid,
-                    'sessionid' => $sessionid,
-                    'termid' => $termid,
-                ]);
-                $students = collect([]);
-            }
-
-            // Fetch scores with retry mechanism
-            $scores = null;
-            $attempts = 0;
-            $maxAttempts = 3;
-            $retryDelay = 500; // milliseconds
-
-            while ($attempts < $maxAttempts) {
-                $scores = Broadsheets::where('broadsheet_records.student_id', $id)
-                    ->where('broadsheets.term_id', $termid)
-                    ->where('broadsheet_records.session_id', $sessionid)
-                    ->where('broadsheet_records.schoolclass_id', $schoolclassid)
-                    ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-                    ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
-                    ->orderBy('subject.subject')
-                    ->select([
-                        'subject.id as subject_id',
-                        'subject.subject as subject_name',
-                        'subject.subject_code',
-                        'broadsheets.ca1',
-                        'broadsheets.ca2',
-                        'broadsheets.ca3',
-                        'broadsheets.exam',
-                        'broadsheets.total',
-                        'broadsheets.bf',
-                        'broadsheets.cum',
-                        'broadsheets.grade',
-                        'broadsheets.remark',
-                        'broadsheets.subject_position_class as position',
-                        'broadsheets.avg as class_average',
-                    ])->get();
-
-                // Verify if grades are populated
-                $hasValidGrades = $scores->every(function ($score) {
-                    return $score->grade !== '-' && $score->grade !== null;
-                });
-
-                if ($hasValidGrades || $scores->isEmpty()) {
-                    break;
-                }
-
-                Log::warning('Retrying fetch of broadsheet data due to incomplete grades', [
-                    'student_id' => $id,
-                    'attempt' => $attempts + 1,
-                    'scores' => $scores->toArray(),
-                ]);
-
-                usleep($retryDelay * 1000); // Delay in microseconds
-                $attempts++;
-            }
-
-            if ($attempts >= $maxAttempts) {
-                Log::error('Failed to fetch valid broadsheet data after retries', [
-                    'student_id' => $id,
-                    'schoolclassid' => $schoolclassid,
-                    'sessionid' => $sessionid,
-                    'termid' => $termid,
-                    'scores' => $scores->toArray(),
-                ]);
-            }
-
-            Log::info('Fetched broadsheet data', [
+private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
+{
+    try {
+        if (!is_numeric($id) || !is_numeric($schoolclassid) || !is_numeric($sessionid) || !is_numeric($termid)) {
+            Log::error('Invalid parameters in getStudentResultData', [
                 'student_id' => $id,
-                'scores_count' => $scores->count(),
-                'grades' => $scores->pluck('grade')->toArray(),
+                'schoolclassid' => $schoolclassid,
+                'sessionid' => $sessionid,
+                'termid' => $termid,
+            ]);
+            return [];
+        }
+
+        // Initialize $promotionStatusValue to avoid undefined variable error
+        $promotionStatusValue = null;
+
+        $students = Student::where('studentRegistration.id', $id)
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->select([
+                'studentRegistration.id as id',
+                'studentRegistration.admissionNo as admissionNo',
+                'studentRegistration.firstname as fname',
+                'studentRegistration.home_address as homeaddress',
+                'studentRegistration.lastname as lastname',
+                'studentRegistration.othername as othername',
+                'studentRegistration.dateofbirth as dateofbirth',
+                'studentRegistration.gender as gender',
+                'studentRegistration.updated_at as updated_at',
+                'studentpicture.picture as picture'
+            ])
+            ->orderBy('studentRegistration.lastname', 'asc')
+            ->get();
+
+        if ($students->isEmpty()) {
+            Log::warning('No active student found for ID', [
+                'student_id' => $id,
+                'schoolclassid' => $schoolclassid,
+                'sessionid' => $sessionid,
+                'termid' => $termid,
+            ]);
+            $students = collect([]);
+        }
+
+        // Fetch scores with retry mechanism
+        $scores = null;
+        $attempts = 0;
+        $maxAttempts = 3;
+        $retryDelay = 500; // milliseconds
+
+        while ($attempts < $maxAttempts) {
+            $scores = Broadsheets::where('broadsheet_records.student_id', $id)
+                ->where('broadsheets.term_id', $termid)
+                ->where('broadsheet_records.session_id', $sessionid)
+                ->where('broadsheet_records.schoolclass_id', $schoolclassid)
+                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+                ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+                ->orderBy('subject.subject')
+                ->select([
+                    'subject.id as subject_id',
+                    'subject.subject as subject_name',
+                    'subject.subject_code',
+                    'broadsheets.ca1',
+                    'broadsheets.ca2',
+                    'broadsheets.ca3',
+                    'broadsheets.exam',
+                    'broadsheets.total',
+                    'broadsheets.bf',
+                    'broadsheets.cum',
+                    'broadsheets.grade',
+                    'broadsheets.remark',
+                    'broadsheets.subject_position_class as position',
+                    'broadsheets.avg as class_average',
+                ])->get();
+
+            // Verify if grades are populated
+            $hasValidGrades = $scores->every(function ($score) {
+                return $score->grade !== '-' && $score->grade !== null;
+            });
+
+            if ($hasValidGrades || $scores->isEmpty()) {
+                break;
+            }
+
+            Log::warning('Retrying fetch of broadsheet data due to incomplete grades', [
+                'student_id' => $id,
+                'attempt' => $attempts + 1,
+                'scores' => $scores->toArray(),
             ]);
 
-            $studentpp = Studentpersonalityprofile::where('studentid', $id)
-                ->where('schoolclassid', $schoolclassid)
-                ->where('sessionid', $sessionid)
-                ->where('termid', $termid)
-                ->first();
+            usleep($retryDelay * 1000); // Delay in microseconds
+            $attempts++;
+        }
 
-            $promotionStatus = PromotionStatus::where('studentId', $id)
-                ->where('schoolclassid', $schoolclassid)
-                ->where('sessionid', $sessionid)
-                ->where('termid', $termid)
-                ->first();
+        if ($attempts >= $maxAttempts) {
+            Log::error('Failed to fetch valid broadsheet data after retries', [
+                'student_id' => $id,
+                'schoolclassid' => $schoolclassid,
+                'sessionid' => $sessionid,
+                'termid' => $termid,
+                'scores' => $scores->toArray(),
+            ]);
+        }
 
-            $schoolclass = Schoolclass::with('armRelation')->find($schoolclassid, ['id', 'schoolclass', 'arm', 'classcategoryid']) ?? (object)[
-                'schoolclass' => 'N/A',
-                'armRelation' => (object)['arm' => 'N/A'],
-                'classcategoryid' => null
-            ];
-            $schoolterm = Schoolterm::where('id', $termid)->value('term') ?? 'N/A';
-            $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
-            $numberOfStudents = Studentclass::whereIn('schoolclassid', 
-                Schoolclass::where('schoolclass', $schoolclass->schoolclass ?? 'N/A')->pluck('id'))
-                ->where('sessionid', $sessionid)
-                ->count();
-            $schoolInfo = SchoolInformation::getActiveSchool() ?? (object)[
-                'school_name' => 'QUODOROID CODING ACADEMY',
-                'school_motto' => 'N/A',
-                'school_address' => 'N/A',
-                'school_website' => null,
-                'getLogoUrlAttribute' => function () {
-                    return 'school_logos/LUYWInGbX6ypLQO4fEWue9jHx3VwaKJG5hPLsQmt.jpg';
-                }
-            ];
+        Log::info('Fetched broadsheet data', [
+            'student_id' => $id,
+            'scores_count' => $scores->count(),
+            'grades' => $scores->pluck('grade')->toArray(),
+        ]);
 
-            if ($students->isNotEmpty() && $students->first()->picture) {
-                $imagePath = public_path('storage/' . $students->first()->picture);
-                Log::info('Student image path', ['path' => $imagePath, 'exists' => file_exists($imagePath)]);
+        $studentpp = Studentpersonalityprofile::where('studentid', $id)
+            ->where('schoolclassid', $schoolclassid)
+            ->where('sessionid', $sessionid)
+            ->where('termid', $termid)
+            ->first();
+
+        $promotionStatus = PromotionStatus::where('studentId', $id)
+            ->where('schoolclassid', $schoolclassid)
+            ->where('sessionid', $sessionid)
+            ->where('termid', $termid)
+            ->first();
+
+        $schoolclass = Schoolclass::with('armRelation')->find($schoolclassid, ['id', 'schoolclass', 'arm', 'classcategoryid']) ?? (object)[
+            'schoolclass' => 'N/A',
+            'armRelation' => (object)['arm' => 'N/A'],
+            'classcategoryid' => null
+        ];
+        $schoolterm = Schoolterm::where('id', $termid)->value('term') ?? 'N/A';
+        $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
+        $numberOfStudents = Studentclass::whereIn('schoolclassid', 
+            Schoolclass::where('schoolclass', $schoolclass->schoolclass ?? 'N/A')->pluck('id'))
+            ->where('sessionid', $sessionid)
+            ->count();
+        $schoolInfo = SchoolInformation::getActiveSchool() ?? (object)[
+            'school_name' => 'QUODOROID CODING ACADEMY',
+            'school_motto' => 'N/A',
+            'school_address' => 'N/A',
+            'school_website' => null,
+            'getLogoUrlAttribute' => function () {
+                return 'school_logos/LUYWInGbX6ypLQO4fEWue9jHx3VwaKJG5hPLsQmt.jpg';
             }
-            $logoPath = public_path('storage/' . $schoolInfo->getLogoUrlAttribute());
-            Log::info('School logo path:', ['path' => $logoPath, 'exists' => file_exists($logoPath)]);
+        ];
 
-            if ($termid == 3) {
-                $classCategory = Classcategory::find($schoolclass->classcategoryid, ['is_senior']);
-                $isSenior = $classCategory ? $classCategory->is_senior : false;
+        if ($students->isNotEmpty() && $students->first()->picture) {
+            $imagePath = public_path('storage/' . $students->first()->picture);
+            Log::info('Student image path', ['path' => $imagePath, 'exists' => file_exists($imagePath)]);
+        }
+        $logoPath = public_path('storage/' . $schoolInfo->getLogoUrlAttribute());
+        Log::info('School logo path:', ['path' => $logoPath, 'exists' => file_exists($logoPath)]);
 
-                $compulsorySubjects = CompulsorySubjectClass::where('schoolclassid', $schoolclassid)
-                    ->join('subject', 'compulsory_subject_classes.subjectId', '=', 'subject.id')
-                    ->select(['compulsory_subject_classes.subjectId', 'subject.subject as subject_name'])
-                    ->get();
+        if ($termid == 3) {
+            $classCategory = Classcategory::find($schoolclass->classcategoryid, ['is_senior']);
+            $isSenior = $classCategory ? $classCategory->is_senior : false;
 
-                $compulsorySubjectLog = [];
-                $compulsoryCreditCount = 0;
-                $creditCount = 0;
-                $failCount = 0;
-                $missingCompulsorySubjects = [];
+            $compulsorySubjects = CompulsorySubjectClass::where('schoolclassid', $schoolclassid)
+                ->join('subject', 'compulsory_subject_classes.subjectId', '=', 'subject.id')
+                ->select(['compulsory_subject_classes.subjectId', 'subject.subject as subject_name'])
+                ->get();
 
-                $creditGrades = $isSenior ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6'] : ['A', 'B', 'C'];
-                $failGrades = $isSenior ? ['F9', 'E8'] : ['F'];
-                $dGrade = $isSenior ? 'D7' : 'D';
-                $aGrades = $isSenior ? ['A1'] : ['A'];
-                $bGrades = $isSenior ? ['B2', 'B3'] : ['B'];
-                $cGrades = $isSenior ? ['C4', 'C5', 'C6'] : ['C'];
+            $compulsorySubjectLog = [];
+            $compulsoryCreditCount = 0;
+            $creditCount = 0;
+            $failCount = 0;
+            $missingCompulsorySubjects = [];
 
-                $compulsorySubjectIds = $compulsorySubjects->pluck('subjectId')->toArray();
-                foreach ($compulsorySubjects as $compulsorySubject) {
-                    $subjectId = $compulsorySubject->subjectId;
-                    $subjectName = $compulsorySubject->subject_name;
-                    $score = $scores->firstWhere('subject_id', $subjectId);
-                    $grade = $score ? $score->grade : 'N/A';
-                    $compulsorySubjectLog[] = [
-                        'subject_id' => $subjectId,
-                        'subject_name' => $subjectName,
-                        'grade' => $grade,
-                    ];
-                    if ($score && in_array($grade, $creditGrades)) {
-                        $compulsoryCreditCount++;
-                    } elseif (!$score) {
-                        $missingCompulsorySubjects[] = $subjectName;
-                    }
+            $creditGrades = $isSenior ? ['A1', 'B2', 'B3', 'C4', 'C5', 'C6'] : ['A', 'B', 'C'];
+            $failGrades = $isSenior ? ['F9', 'E8'] : ['F'];
+            $dGrade = $isSenior ? 'D7' : 'D';
+            $aGrades = $isSenior ? ['A1'] : ['A'];
+            $bGrades = $isSenior ? ['B2', 'B3'] : ['B'];
+            $cGrades = $isSenior ? ['C4', 'C5', 'C6'] : ['C'];
+
+            $compulsorySubjectIds = $compulsorySubjects->pluck('subjectId')->toArray();
+            foreach ($compulsorySubjects as $compulsorySubject) {
+                $subjectId = $compulsorySubject->subjectId;
+                $subjectName = $compulsorySubject->subject_name;
+                $score = $scores->firstWhere('subject_id', $subjectId);
+                $grade = $score ? $score->grade : 'N/A';
+                $compulsorySubjectLog[] = [
+                    'subject_id' => $subjectId,
+                    'subject_name' => $subjectName,
+                    'grade' => $grade,
+                ];
+                if ($score && in_array($grade, $creditGrades)) {
+                    $compulsoryCreditCount++;
+                } elseif (!$score) {
+                    $missingCompulsorySubjects[] = $subjectName;
                 }
+            }
 
-                foreach ($scores as $score) {
-                    $grade = $score->grade;
-                    if (in_array($grade, $creditGrades)) {
-                        $creditCount++;
-                    } elseif (in_array($grade, $failGrades)) {
-                        $failCount++;
-                    }
+            foreach ($scores as $score) {
+                $grade = $score->grade;
+                if (in_array($grade, $creditGrades)) {
+                    $creditCount++;
+                } elseif (in_array($grade, $failGrades)) {
+                    $failCount++;
                 }
+            }
 
-                // Determine performance comment based on grades
-                $performanceComment = '';
-                if ($scores->count() > 0) {
-                    $grades = $scores->pluck('grade')->toArray();
-                    $aCount = $scores->filter(function ($score) use ($aGrades) {
-                        return in_array($score->grade, $aGrades);
-                    })->count();
-                    $bCount = $scores->filter(function ($score) use ($bGrades) {
-                        return in_array($score->grade, $bGrades);
-                    })->count();
-                    $cCount = $scores->filter(function ($score) use ($cGrades) {
-                        return in_array($score->grade, $cGrades);
-                    })->count();
-                    $dCount = $scores->filter(function ($score) use ($dGrade) {
-                        return $score->grade === $dGrade;
-                    })->count();
-                    $fCount = $scores->filter(function ($score) use ($failGrades) {
-                        return in_array($score->grade, $failGrades);
-                    })->count();
+            // Determine performance comment based on grades
+            $performanceComment = '';
+            if ($scores->count() > 0) {
+                $grades = $scores->pluck('grade')->toArray();
+                $aCount = $scores->filter(function ($score) use ($aGrades) {
+                    return in_array($score->grade, $aGrades);
+                })->count();
+                $bCount = $scores->filter(function ($score) use ($bGrades) {
+                    return in_array($score->grade, $bGrades);
+                })->count();
+                $cCount = $scores->filter(function ($score) use ($cGrades) {
+                    return in_array($score->grade, $cGrades);
+                })->count();
+                $dCount = $scores->filter(function ($score) use ($dGrade) {
+                    return $score->grade === $dGrade;
+                })->count();
+                $fCount = $scores->filter(function ($score) use ($failGrades) {
+                    return in_array($score->grade, $failGrades);
+                })->count();
 
-                    $totalGrades = $scores->count();
-                    $hasAsOrBsOrCs = ($aCount + $bCount + $cCount) >= $totalGrades / 2;
-                    $hasBsOrCs = ($bCount + $cCount) >= $totalGrades / 2;
-                    $hasCsOrDs = ($cCount + $dCount) >= $totalGrades / 2;
-                    $allAs = $aCount === $totalGrades;
-                    $allBsCs = ($bCount + $cCount) === $totalGrades && $bCount > 0 && $cCount > 0;
-                    $allCsDs = ($cCount + $dCount) === $totalGrades && $cCount > 0 && $dCount > 0;
-
-                    if ($allAs) {
-                        $performanceComment = 'Excellent results';
-                    } elseif ($aCount > 0 && $bCount > 0 && $cCount === 0 && $dCount === 0 && $fCount === 0) {
-                        $performanceComment = 'Very Good results';
-                    } elseif ($hasAsOrBsOrCs && $aCount > 0) {
-                        $performanceComment = 'Good results';
-                    } elseif ($hasBsOrCs || $allBsCs) {
-                        $performanceComment = 'Average results';
-                    } elseif ($hasCsOrDs || $allCsDs) {
-                        $performanceComment = 'Below Average results';
-                    } else {
-                        $performanceComment = 'Inconsistent performance across subjects';
-                    }
+                $totalGrades = $scores->count();
+                if ($aCount === $totalGrades) {
+                    $performanceComment = 'Excellent results';
+                } elseif ($aCount > 0 && $bCount > 0 && $cCount === 0 && $dCount === 0 && $fCount === 0) {
+                    $performanceComment = 'Very Good results';
+                } elseif (($aCount + $bCount + $cCount) >= $totalGrades / 2) {
+                    $performanceComment = 'Good results';
+                } elseif (($bCount + $cCount) >= $totalGrades / 2) {
+                    $performanceComment = 'Average results';
+                } elseif (($cCount + $dCount) >= $totalGrades / 2) {
+                    $performanceComment = 'Below Average results';
                 } else {
-                    $performanceComment = 'No grades available';
+                    $performanceComment = 'Poor performance';
+                }
+            } else {
+                $performanceComment = 'No grades available';
+            }
+
+            // Updated Promotion logic
+            $principalComment = '';
+            $promotionStatusValue = '';
+
+            if ($isSenior) {
+                // Identify critical compulsory subjects (English Language and Mathematics)
+                $criticalCompulsorySubjects = $compulsorySubjects->filter(function ($subject) {
+                    return in_array(strtolower($subject->subject_name), ['english language', 'mathematics']);
+                })->pluck('subjectId')->toArray();
+
+                $criticalCompulsoryCreditCount = 0;
+                $failedCriticalSubjects = [];
+                foreach ($criticalCompulsorySubjects as $subjectId) {
+                    $score = $scores->firstWhere('subject_id', $subjectId);
+                    $subjectName = $compulsorySubjects->firstWhere('subjectId', $subjectId)->subject_name ?? 'Unknown';
+                    if ($score && in_array($score->grade, $creditGrades)) {
+                        $criticalCompulsoryCreditCount++;
+                    } elseif ($score && !in_array($score->grade, $creditGrades)) {
+                        $failedCriticalSubjects[] = $subjectName;
+                    }
                 }
 
-                // Promotion logic
+                $compulsoryFailCount = $compulsorySubjects->count() - $compulsoryCreditCount;
+
+                if (!empty($missingCompulsorySubjects)) {
+                    $principalComment = "$performanceComment. Missing grades for compulsory subjects: " . implode(', ', $missingCompulsorySubjects) . '. Parents to see the Principal.';
+                    $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
+                } elseif ($compulsoryCreditCount === 5 && $creditCount >= 5) {
+                    $principalComment = "$performanceComment. Promoted to the next class.";
+                    $promotionStatusValue = 'PROMOTED';
+                } elseif ($creditCount >= 4 && $compulsoryFailCount <= 2) {
+                    $principalComment = "$performanceComment. Needs improvement in some compulsory subjects. Promoted on trial.";
+                    $promotionStatusValue = 'PROMOTED ON TRIAL';
+                } elseif ($compulsoryFailCount >= 3 && !empty($failedCriticalSubjects)) {
+                    $principalComment = "$performanceComment. Failed multiple compulsory subjects including " . implode(' and ', $failedCriticalSubjects) . ". Advised to repeat the class. Parents to see the Principal.";
+                    $promotionStatusValue = 'ADVISED TO REPEAT/PARENTS TO SEE PRINCIPAL';
+                } elseif ($creditCount < 4) {
+                    $principalComment = "$performanceComment. Insufficient total credits. Advised to repeat the class. Parents to see the Principal.";
+                    $promotionStatusValue = 'ADVISED TO REPEAT/PARENTS TO SEE PRINCIPAL';
+                } else {
+                    $principalComment = "$performanceComment. Inconsistent performance or insufficient compulsory subject credits. Parents to see the Principal.";
+                    $promotionStatusValue = 'PARENTS TO SEE PRINCIPAL';
+                }
+            } else {
+                // Junior category (unchanged)
                 $allDs = $scores->count() > 0 && $scores->every(function ($score) use ($dGrade) {
                     return $score->grade === $dGrade;
                 });
@@ -540,9 +577,6 @@ class ViewStudentReportController extends Controller
                 $failedNonCompulsory = $scores->filter(function ($score) use ($compulsorySubjectIds, $failGrades) {
                     return !in_array($score->subject_id, $compulsorySubjectIds) && in_array($score->grade, $failGrades);
                 })->count() === ($scores->count() - count($compulsorySubjectIds));
-
-                $principalComment = '';
-                $promotionStatusValue = '';
 
                 if (!empty($missingCompulsorySubjects)) {
                     $principalComment = "$performanceComment. Missing grades for compulsory subjects: " . implode(', ', $missingCompulsorySubjects) . '. Parents to see the Principal.';
@@ -572,72 +606,77 @@ class ViewStudentReportController extends Controller
                     $principalComment = "$performanceComment. Inconsistent performance or incomplete grades. Parents to see the Principal for further discussion.";
                     $promotionStatusValue = 'ADVISED TO REPEAT/PARENTS TO SEE PRINCIPAL';
                 }
-
-                Log::info("Promotion Decision for Student ID: {$id}", [
-                    'principal_comment' => $principalComment,
-                    'promotion_status' => $promotionStatusValue,
-                    'performance_comment' => $performanceComment,
-                    'compulsory_subject_log' => $compulsorySubjectLog,
-                    'missing_compulsory_subjects' => $missingCompulsorySubjects,
-                    'credit_count' => $creditCount,
-                    'compulsory_credit_count' => $compulsoryCreditCount,
-                    'fail_count' => $failCount,
-                    'grades' => $scores->pluck('grade')->toArray(),
-                ]);
-
-                Studentpersonalityprofile::updateOrCreate(
-                    [
-                        'studentid' => $id,
-                        'schoolclassid' => $schoolclassid,
-                        'sessionid' => $sessionid,
-                        'termid' => $termid,
-                    ],
-                    ['principalscomment' => $principalComment]
-                );
-
-                PromotionStatus::updateOrCreate(
-                    [
-                        'studentId' => $id,
-                        'schoolclassid' => $schoolclassid,
-                        'sessionid' => $sessionid,
-                        'termid' => $termid,
-                    ],
-                    [
-                        'promotionStatus' => $promotionStatusValue,
-                        'position' => null,
-                        'classstatus' => 'CURRENT',
-                    ]
-                );
             }
 
-            return [
-                'students' => $students,
-                'studentpp' => collect([$studentpp]),
-                'scores' => $scores,
-                'studentid' => $id,
-                'schoolclassid' => $schoolclassid,
-                'sessionid' => $sessionid,
-                'termid' => $termid,
-                'schoolclass' => $schoolclass,
-                'schoolterm' => $schoolterm,
-                'schoolsession' => $schoolsession,
-                'numberOfStudents' => $numberOfStudents,
-                'schoolInfo' => $schoolInfo,
-                'promotionStatusValue' => $promotionStatusValue
-            ];
-        } catch (Exception $e) {
-            Log::error('Error fetching student result data', [
-                'student_id' => $id,
-                'schoolclassid' => $schoolclassid,
-                'sessionid' => $sessionid,
-                'termid' => $termid,
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
+            Log::info("Promotion Decision for Student ID: {$id}", [
+                'principal_comment' => $principalComment,
+                'promotion_status' => $promotionStatusValue,
+                'performance_comment' => $performanceComment,
+                'compulsory_subject_log' => $compulsorySubjectLog,
+                'missing_compulsory_subjects' => $missingCompulsorySubjects,
+                'credit_count' => $creditCount,
+                'compulsory_credit_count' => $compulsoryCreditCount,
+                'fail_count' => $failCount,
+                'grades' => $scores->pluck('grade')->toArray(),
+                'is_senior' => $isSenior,
+                'critical_compulsory_credit_count' => $isSenior ? $criticalCompulsoryCreditCount : null,
+                'failed_critical_subjects' => $isSenior ? $failedCriticalSubjects : [],
             ]);
-            return [];
+
+            Studentpersonalityprofile::updateOrCreate(
+                [
+                    'studentid' => $id,
+                    'schoolclassid' => $schoolclassid,
+                    'sessionid' => $sessionid,
+                    'termid' => $termid,
+                ],
+                ['principalscomment' => $principalComment]
+            );
+
+            PromotionStatus::updateOrCreate(
+                [
+                    'studentId' => $id,
+                    'schoolclassid' => $schoolclassid,
+                    'sessionid' => $sessionid,
+                    'termid' => $termid,
+                ],
+                [
+                    'promotionStatus' => $promotionStatusValue,
+                    'position' => null,
+                    'classstatus' => 'CURRENT',
+                ]
+            );
         }
+
+        return [
+            'students' => $students,
+            'studentpp' => collect([$studentpp]),
+            'scores' => $scores,
+            'studentid' => $id,
+            'schoolclassid' => $schoolclassid,
+            'sessionid' => $sessionid,
+            'termid' => $termid,
+            'schoolclass' => $schoolclass,
+            'schoolterm' => $schoolterm,
+            'schoolsession' => $schoolsession,
+            'numberOfStudents' => $numberOfStudents,
+            'schoolInfo' => $schoolInfo,
+            'promotionStatusValue' => $promotionStatusValue
+        ];
+    } catch (Exception $e) {
+        Log::error('Error fetching student result data', [
+            'student_id' => $id,
+            'schoolclassid' => $schoolclassid,
+            'sessionid' => $sessionid,
+            'termid' => $termid,
+            'error' => $e->getMessage(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine(),
+        ]);
+        return [];
     }
+}
+
 
     public function calculateGradePreview(Request $request)
     {
