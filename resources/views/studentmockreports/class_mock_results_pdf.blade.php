@@ -410,7 +410,7 @@
                             <td width="25%">
                                 <div class="school-logo">
                                     {{-- <img class="header-img" src="{{ $studentData['school_logo_path'] ?? public_path('storage/school_logos/default.jpg') }}" alt="School Logo"> --}}
-                                     <img src="{{ public_path('storage/student_avatars/unnamed.jpg') }}" alt="Default Photo">
+                                     <img src="{{ public_path('storage/school_logos/default.jpg') }}" alt="Default Photo">
                                 </div>
                             </td>
                             <td width="50%">
