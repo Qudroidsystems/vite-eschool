@@ -1168,29 +1168,28 @@ class ViewStudentMockReportController extends Controller
         foreach ($studentData as &$student) {
             if (isset($student['students']) && $student['students']->isNotEmpty() && $student['students']->first()->picture) {
                 $student['student_image_path'] = $this->sanitizeImagePath($student['students']->first()->picture);
-                Log::info('Student image path set', [
-                    'student_id' => $student['students']->first()->id,
-                    'path' => $student['student_image_path'],
-                    'exists' => file_exists($student['student_image_path'])
-                ]);
             } else {
-                $student['student_image_path'] = public_path('storage/student_avatars/unnamed.jpg');
-                Log::info('Using default student image', ['path' => $student['student_image_path']]);
+                $defaultStudentImage = storage_path('app/public/student_avatars/unnamed.jpg');
+                $student['student_image_path'] = file_exists($defaultStudentImage) ? 'file://' . $defaultStudentImage : null;
             }
-            
-            if (isset($student['schoolInfo'])) {
-                $logoPath = $student['schoolInfo']->getLogoUrlAttribute();
-                $student['school_logo_path'] = $this->sanitizeImagePath($logoPath);
-                Log::info('School logo path set', [
-                    'path' => $student['school_logo_path'],
-                    'exists' => file_exists($student['school_logo_path'])
-                ]);
+
+            if (isset($student['schoolInfo']) && method_exists($student['schoolInfo'], 'getLogoUrlAttribute') && $student['schoolInfo']->getLogoUrlAttribute()) {
+                $student['school_logo_path'] = $this->sanitizeImagePath($student['schoolInfo']->getLogoUrlAttribute());
             } else {
-                $student['school_logo_path'] = public_path('storage/school_logos/default.jpg');
-                Log::info('Using default school logo', ['path' => $student['school_logo_path']]);
+                $defaultLogo = storage_path('app/public/school_logos/default.jpg');
+                $student['school_logo_path'] = file_exists($defaultLogo) ? 'file://' . $defaultLogo : null;
             }
+
+            Log::info('Image paths set', [
+                'student_id' => $student['students']->first()->id ?? 'N/A',
+                'student_image_path' => $student['student_image_path'],
+                'school_logo_path' => $student['school_logo_path'],
+                'student_image_exists' => file_exists(str_replace('file://', '', $student['student_image_path'] ?? '')),
+                'school_logo_exists' => file_exists(str_replace('file://', '', $student['school_logo_path'] ?? '')),
+            ]);
         }
     }
+
     /**
      * Sanitize image paths to ensure they are valid and exist.
      *
