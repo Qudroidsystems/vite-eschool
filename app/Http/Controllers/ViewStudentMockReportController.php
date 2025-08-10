@@ -1173,11 +1173,16 @@ class ViewStudentMockReportController extends Controller
                 $student['student_image_path'] = file_exists($defaultStudentImage) ? 'file://' . $defaultStudentImage : null;
             }
 
-            if (isset($student['schoolInfo']) && method_exists($student['schoolInfo'], 'getLogoUrlAttribute') && $student['schoolInfo']->getLogoUrlAttribute()) {
-                $student['school_logo_path'] = $this->sanitizeImagePath($student['schoolInfo']->getLogoUrlAttribute());
+            if (isset($student['schoolInfo'])) {
+                $logoPath = $student['schoolInfo']->getLogoUrlAttribute();
+                $student['school_logo_path'] = $this->sanitizeImagePath($logoPath);
+                Log::info('School logo path set', [
+                    'path' => $student['school_logo_path'],
+                    'exists' => file_exists($student['school_logo_path'])
+                ]);
             } else {
-                $defaultLogo = storage_path('app/public/school_logos/default.jpg');
-                $student['school_logo_path'] = file_exists($defaultLogo) ? 'file://' . $defaultLogo : null;
+                $student['school_logo_path'] = public_path('storage/school_logos/default.jpg');
+                Log::info('Using default school logo', ['path' => $student['school_logo_path']]);
             }
 
             Log::info('Image paths set', [
