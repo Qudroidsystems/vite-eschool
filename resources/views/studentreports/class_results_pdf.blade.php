@@ -113,7 +113,7 @@
 
         .school-logo {
             width: 100px;
-            height: 100px;
+            height: 70px;
             border: 0px solid #1e40af;
             border-radius: 1px;
             overflow: hidden;
