@@ -616,7 +616,7 @@
                             </td>
                             <td width="50%">
                                 <div class="h6">Principal's Remark & Promotion Status</div>
-                                <div>
+                                {{-- <div>
                                     <span class="text-space-on-dots">
                                         {{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}
                                         @php
@@ -639,7 +639,7 @@
                                             PROMOTION STATUS: {{ $statusText }}
                                         </span>
                                     </span>
-                                </div>
+                                </div> --}}
                             </td>
                         </tr>
                     </tbody>
