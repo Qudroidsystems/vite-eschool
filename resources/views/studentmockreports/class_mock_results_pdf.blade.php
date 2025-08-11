@@ -588,13 +588,13 @@
                 </div>
 
                 <!-- Grade Display -->
-                <div class="grade-display">
+                {{-- <div class="grade-display">
                     <span>A: 70-100</span>
                     <span>B: 60-69</span>
                     <span>C: 50-59</span>
                     <span>D: 40-49</span>
                     <span>F: 0-39</span>
-                </div>
+                </div> --}}
 
                 <!-- Remarks Section -->
                 <table class="remarks-table">
