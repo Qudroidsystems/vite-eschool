@@ -1157,79 +1157,62 @@ class ViewStudentMockReportController extends Controller
         }
     }
 
-    /**
-     * Fix image paths for students and school logo.
-     *
-     * @param array &$studentData
-     * @return void
-     */
-    private function fixImagePaths(&$studentData)
+      private function fixImagePaths(&$studentData)
     {
         foreach ($studentData as &$student) {
             if (isset($student['students']) && $student['students']->isNotEmpty() && $student['students']->first()->picture) {
                 $student['student_image_path'] = $this->sanitizeImagePath($student['students']->first()->picture);
+                Log::info('Student image path set', [
+                    'student_id' => $student['students']->first()->id,
+                    'path' => $student['student_image_path'],
+                    'exists' => file_exists($student['student_image_path'])
+                ]);
             } else {
-                $defaultStudentImage = storage_path('app/public/student_avatars/unnamed.jpg');
-                $student['student_image_path'] = file_exists($defaultStudentImage) ? 'file://' . $defaultStudentImage : null;
+                $student['student_image_path'] = public_path('storage/student_avatars/unnamed.jpg');
+                Log::info('Using default student image', ['path' => $student['student_image_path']]);
             }
-
-            if (isset($student['schoolInfo']) && method_exists($student['schoolInfo'], 'getLogoUrlAttribute') && $student['schoolInfo']->getLogoUrlAttribute()) {
-                $student['school_logo_path'] = $this->sanitizeImagePath($student['schoolInfo']->getLogoUrlAttribute());
+            
+            if (isset($student['schoolInfo'])) {
+                $logoPath = $student['schoolInfo']->getLogoUrlAttribute();
+                $student['school_logo_path'] = $this->sanitizeImagePath($logoPath);
+                Log::info('School logo path set', [
+                    'path' => $student['school_logo_path'],
+                    'exists' => file_exists($student['school_logo_path'])
+                ]);
             } else {
-                $defaultLogo = storage_path('app/public/school_logos/default.jpg');
-                $student['school_logo_path'] = file_exists($defaultLogo) ? 'file://' . $defaultLogo : null;
+                $student['school_logo_path'] = public_path('storage/school_logos/default.jpg');
+                Log::info('Using default school logo', ['path' => $student['school_logo_path']]);
             }
-
-            Log::info('Image paths set', [
-                'student_id' => $student['students']->first()->id ?? 'N/A',
-                'student_image_path' => $student['student_image_path'],
-                'school_logo_path' => $student['school_logo_path'],
-                'student_image_exists' => file_exists(str_replace('file://', '', $student['student_image_path'] ?? '')),
-                'school_logo_exists' => file_exists(str_replace('file://', '', $student['school_logo_path'] ?? '')),
-            ]);
         }
     }
 
-    /**
-     * Sanitize image paths to ensure they are valid and exist.
-     *
-     * @param string|null $path
-     * @return string|null
-     */
     private function sanitizeImagePath($path)
     {
         if (empty($path)) {
             Log::warning('Empty image path provided');
-            $defaultLogo = storage_path('app/public/school_logos/default.jpg');
-            return file_exists($defaultLogo) ? 'file://' . $defaultLogo : null;
+            return null;
         }
 
-        // Remove any URL prefixes (http://, https://, //)
-        $path = preg_replace('/^(http:\/\/|https:\/\/|\/\/)[^\/]+/', '', $path);
         $path = str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path);
+        $path = preg_replace('/^(http:\/\/|https:\/\/|\/\/)[^\/]+/', '', $path);
         $path = ltrim($path, DIRECTORY_SEPARATOR);
-
-        // Ensure the path starts with the correct storage directory
         if (!preg_match('/^(storage|school_logos|student_avatars)/', $path)) {
-            $path = 'app/public/' . $path;
+            $path = 'storage/' . $path;
         }
-
-        $fullPath = storage_path($path);
+        
+        $fullPath = public_path($path);
         $fullPath = realpath($fullPath) ?: $fullPath;
-
+        
         if (file_exists($fullPath)) {
-            Log::info('Sanitized image path', [
-                'original' => $path,
-                'sanitized' => $fullPath,
-                'exists' => true,
-            ]);
-            return 'file://' . $fullPath;
+            Log::info('Sanitized image path', ['original' => $path, 'sanitized' => $fullPath]);
+            return $fullPath;
         }
-
-        Log::warning('Image file does not exist, using default', ['path' => $fullPath]);
-        $defaultLogo = storage_path('app/public/school_logos/default.jpg');
-        return file_exists($defaultLogo) ? 'file://' . $defaultLogo : null;
+        
+        Log::warning('Image file does not exist', ['path' => $fullPath]);
+        return null;
     }
+
+
 
     /**
      * Ensure required directories exist for PDF generation.
