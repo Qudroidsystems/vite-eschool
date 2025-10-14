@@ -205,6 +205,10 @@
     @if (Route::is('mymocksubjectvettings.*'))
         @include('layouts.pages-assets.css.mymocksubjectvettings-list-css')
     @endif
+
+     @if (Route::is('promotions.*'))
+        @include('layouts.pages-assets.css.promotions-list-css')
+    @endif
 </head>
 
 <body>
@@ -448,6 +452,35 @@
                                         <a href="{{ route('studentreports.index') }}" class="nav-link" data-key="t-products">Terminal Result Reports</a>
                                     </li>
                                    @endcan
+
+                                   @can('View student-mock-report')
+                                       <li class="nav-item">
+                                        <a href="{{ route('studentmockreports.index') }}" class="nav-link" data-key="t-products">Mock Result Reports</a>
+                                    </li>
+                                   @endcan
+                                    
+                                    
+                                </ul>
+                            </div>
+                        </li>
+
+
+                         <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">PROMOTION MANAGEMENT </span></li>
+
+                         <li class="nav-item">
+                            <a href="#sidebarPromotions" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarRecords">
+                                <i class="ph-folder-open"></i> <span data-key="t-ecommerce">Promotion Management </span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarPromotions">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View myresult-room')
+                                         <li class="nav-item">
+                                              <a href="{{ route('promotions.index') }}" class="nav-link" data-key="t-products">Student Promotion</a>
+                                        </li>
+                                    @endcan
+                                  
+                                 
+                                 
 
                                    @can('View student-mock-report')
                                        <li class="nav-item">
@@ -2091,6 +2124,11 @@
 
       @if (Route::is('mymocksubjectvettings.*'))
             @include('layouts.pages-assets.js.mymocksubjectvetting-list-js')
+      @endif
+
+
+       @if (Route::is('promotions.*'))
+            @include('layouts.pages-assets.js.promotions-list-js')
       @endif
 
       </body>

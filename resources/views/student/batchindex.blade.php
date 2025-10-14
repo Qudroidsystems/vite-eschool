@@ -196,7 +196,8 @@
                 </div>
             </div>
 
-            <!-- Add Batch Modal -->
+            
+           <!-- Add Batch Modal -->
             <div id="addBatchModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
@@ -223,8 +224,8 @@
                                     <label for="schoolclassid" class="form-label">School Class & Arm</label>
                                     <select id="schoolclassid" name="schoolclassid" class="form-control" data-choices data-choices-search-true required>
                                         <option value="">Select Class</option>
-                                        @foreach ($schoolclass as $sc)
-                                            <option value="{{ $sc->id }}">{{ $sc->schoolclass }} - {{ $sc->arm }}</option>
+                                        @foreach ($schoolclasses as $sc)
+                                            <option value="{{ $sc->id }}">{{ $sc->class_display }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -232,8 +233,8 @@
                                     <label for="termid" class="form-label">Term</label>
                                     <select id="termid" name="termid" class="form-control" data-choices data-choices-search-true required>
                                         <option value="">Select Term</option>
-                                        @foreach ($schoolterm as $sc)
-                                            <option value="{{ $sc->id }}">{{ $sc->term }}</option>
+                                        @foreach ($schoolterms as $sc)
+                                            <option value="{{ $sc->id }}">{{ $sc->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -241,8 +242,8 @@
                                     <label for="sessionid" class="form-label">Session</label>
                                     <select id="sessionid" name="sessionid" class="form-control" data-choices data-choices-search-true required>
                                         <option value="">Select Session</option>
-                                        @foreach ($schoolsession as $sc)
-                                            <option value="{{ $sc->id }}">{{ $sc->session }}</option>
+                                        @foreach ($schoolsessions as $sc)
+                                            <option value="{{ $sc->id }}">{{ $sc->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>

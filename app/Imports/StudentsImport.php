@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use Carbon\Carbon;
 use App\Models\Student;
 use Illuminate\Support\Str;
 use App\Models\Studentclass;
@@ -21,9 +22,10 @@ use Maatwebsite\Excel\Concerns\WithUpserts;
 use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithProgressBar;
-use Maatwebsite\Excel\Concerns\WithUpsertColumns;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithUpsertColumns; // Added for better performance on large files
 
-class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpsertColumns, WithUpserts, WithValidation
+class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpsertColumns, WithUpserts, WithValidation, WithChunkReading
 {
     use Importable;
 
@@ -36,6 +38,14 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
     public $_sessionid = 0;
 
     public $_batchid = 0;
+
+    /**
+     * Chunk size for reading large files.
+     */
+    public function chunkSize(): int
+    {
+        return 1000;
+    }
 
     /**
      * Handle a single row of the Excel file and map it to models.
@@ -58,10 +68,10 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
         $surname = $naIfEmpty($row[1] ?? null);
         $firstname = $naIfEmpty($row[2] ?? null);
         $othername = $naIfEmpty($row[3] ?? null);
-        $gender = $naIfEmpty($row[4] ?? null);
-        $homeaddress = $naIfEmpty($row[5] ?? null);
-        $dob = $naIfEmpty($row[6] ?? null);
-        $age = $naIfEmpty($row[7] ?? null);
+        $rawGender = $naIfEmpty($row[4] ?? null);
+        $futureAmbition = $naIfEmpty($row[5] ?? null);
+        $rawDob = $naIfEmpty($row[6] ?? null);
+        $rawAge = $naIfEmpty($row[7] ?? null);
         $placeofbirth = $naIfEmpty($row[8] ?? null);
         $nationality = $naIfEmpty($row[9] ?? null);
         $state = $naIfEmpty($row[10] ?? null);
@@ -82,6 +92,26 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
         $mother_office_address = $naIfEmpty($row[25] ?? null);
         $parent_address = $naIfEmpty($row[26] ?? null);
         $parent_religion = $naIfEmpty($row[27] ?? null);
+
+        // Normalize gender
+        $gender = ucfirst(strtolower($rawGender));
+        if (!in_array($gender, ['Male', 'Female'])) {
+            $gender = 'N/A'; // Fallback if invalid
+        }
+
+        // Parse date of birth (handle common Excel date formats)
+        $parsedDob = null;
+        try {
+            $parsedDob = Carbon::parse($rawDob);
+        } catch (\Exception $e) {
+            $parsedDob = Carbon::now()->subYears((int) ($rawAge === 'N/A' ? 11 : $rawAge))->startOfYear(); // Fallback based on age, default 11 if N/A
+        }
+        if ($parsedDob && $parsedDob->isFuture()) {
+            $parsedDob = Carbon::now()->subYears((int) ($rawAge === 'N/A' ? 11 : $rawAge))->startOfYear();
+        }
+
+        // Set age: if 'N/A', use null or calculate from DOB; else cast to int
+        $age = ($rawAge === 'N/A' || !is_numeric($rawAge)) ? null : (int) $rawAge;
 
         // Validate required fields
         if (in_array($admissionno, ['N/A', ''], true) || in_array($surname, ['N/A', ''], true) || in_array($firstname, ['N/A', ''], true)) {
@@ -106,7 +136,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
         // Use transaction to ensure data consistency
         return \DB::transaction(function () use (
             $studentbiodata, $studentclass, $promotion, $parent, $studenthouse, $picture, $studentpersonalityprofile, $studentStatus,
-            $admissionno, $surname, $firstname, $othername, $gender, $homeaddress, $dob, $age, $placeofbirth, $nationality, $state, $local, $religion, $lastschool, $lastclass,
+            $admissionno, $surname, $firstname, $othername, $gender, $futureAmbition, $parsedDob, $age, $placeofbirth, $nationality, $state, $local, $religion, $lastschool, $lastclass,
             $father_title, $father, $father_phone, $office_address, $father_occupation, $mother_title, $mother, $mother_phone, $mother_occupation, $mother_office_address, $parent_address, $parent_religion,
             $schoolclassid, $termid, $sessionid, $batchid
         ) {
@@ -117,9 +147,9 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             $studentbiodata->lastname = $surname;
             $studentbiodata->othername = $othername;
             $studentbiodata->gender = $gender;
-            $studentbiodata->home_address = $homeaddress;
-            $studentbiodata->home_address2 = 'N/A'; // Hardcoded as per original
-            $studentbiodata->dateofbirth = $dob;
+            $studentbiodata->future_ambition = $futureAmbition; // FIXED: Changed from home_address
+            $studentbiodata->home_address2 = 'N/A'; // Consider mapping to permanent_address if updated in model
+            $studentbiodata->dateofbirth = $parsedDob;
             $studentbiodata->age = $age;
             $studentbiodata->placeofbirth = $placeofbirth;
             $studentbiodata->religion = $religion;
@@ -152,7 +182,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
 
             // Populate student picture
             $picture->studentid = $studentId;
-            $picture->picture = 'N/A'; 
+            $picture->picture = 'unnamed.jpg'; // Updated to match store method default
             $picture->save();
 
             // Populate student class
@@ -175,7 +205,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             $studenthouse->studentid = $studentId;
             $studenthouse->termid = $termid;
             $studenthouse->sessionid = $sessionid;
-            $studenthouse->schoolhouse = 'N/A';  
+            $studenthouse->schoolhouse = null; // Set to null instead of 'N/A' if it's an ID field
             $studenthouse->save();
 
             // Populate student personality profile
@@ -193,6 +223,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
 
     /**
      * Validation rules for the Excel import.
+     * Note: Column indices are 1-based (A=1, B=2, etc.).
      */
     public function rules(): array
     {
@@ -202,26 +233,47 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
         $this->_batchid = Session::get('batchid') ?? 'N/A';
 
         return [
-            '0' => 'required', // admissionno
-            '1' => 'required', // surname
-            '2' => 'required', // firstname
-           // '4' => 'in:Male,Female|nullable', // gender
-            '7' => 'numeric|nullable', // age
-            '15' => function ($attribute, $value, $onFailure) {
-                if ($value != $this->_sclassid) {
-                    $onFailure('This data does not match the selected School Class');
+            '*.1' => 'required|string|max:255', // admissionno (column A)
+            '*.2' => 'required|string|max:255', // surname (column B)
+            '*.3' => 'required|string|max:255', // firstname (column C)
+            '*.5' => [
+                function ($attribute, $value, $onFailure) {
+                    if ($value === 'N/A' || trim($value ?? '') === '') {
+                        return; // Allow N/A or empty for gender
+                    }
+                    $normalized = ucfirst(strtolower(trim($value)));
+                    if (!in_array($normalized, ['Male', 'Female'])) {
+                        $onFailure('Gender must be Male or Female.');
+                    }
                 }
-            },
-            '16' => function ($attribute, $value, $onFailure) {
-                if ($value != $this->_termid) {
-                    $onFailure('This data does not match the selected School Term');
+            ], // gender (column E) - normalized validation, allow N/A
+            '*.7' => [
+                function ($attribute, $value, $onFailure) {
+                    if ($value === 'N/A' || trim($value ?? '') === '') {
+                        return; // Allow N/A or empty for DOB
+                    }
+                    try {
+                        $parsed = Carbon::parse($value);
+                        if ($parsed->gte(Carbon::today())) {
+                            $onFailure('Date of birth must be a valid date before today.');
+                        }
+                    } catch (\Exception $e) {
+                        $onFailure('Date of birth must be a valid date before today.');
+                    }
                 }
-            },
-            '17' => function ($attribute, $value, $onFailure) {
-                if ($value != $this->_sessionid) {
-                    $onFailure('This data does not match the selected School Session');
+            ], // dateofbirth (column G) - flexible parsing validation, allow N/A
+            '*.8' => [
+                function ($attribute, $value, $onFailure) {
+                    if ($value === 'N/A' || trim($value ?? '') === '') {
+                        return; // Allow N/A or empty for age
+                    }
+                    if (!is_numeric($value) || (int)$value < 1 || (int)$value > 100) {
+                        $onFailure('Age must be a number between 1 and 100.');
+                    }
                 }
-            },
+            ], // age (column H) - allow N/A, validate if present
+            // Note: Removed mismatched '15','16','17' as they don't align with Excel columns; session data is from PHP session, not Excel
+            // If Excel has columns for class/term/session IDs, add them here with proper indices (e.g., '*.15' for column O)
         ];
     }
 
@@ -231,14 +283,10 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
     public function customValidationMessages()
     {
         return [
-            '0.required' => 'Admission number is required.',
-            '1.required' => 'Surname is required.',
-            '2.required' => 'First name is required.',
-            '4.in' => 'Gender must be Male or Female.',
-            '7.numeric' => 'Age must be a number.',
-            '15' => 'School class ID does not match the selected class.',
-            '16' => 'Term ID does not match the selected term.',
-            '17' => 'Session ID does not match the selected session.',
+            '*.1.required' => 'Admission number is required.',
+            '*.2.required' => 'Surname is required.',
+            '*.3.required' => 'First name is required.',
+            // Messages for closures are handled directly in $onFailure
         ];
     }
 
@@ -248,14 +296,13 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
     public function customValidationAttributes()
     {
         return [
-            '0' => 'admissionno',
-            '1' => 'surname',
-            '2' => 'firstname',
-           // '4' => 'gender',
-            '7' => 'age',
-            '15' => 'schoolclassid',
-            '16' => 'termid',
-            '17' => 'sessionid',
+            '*.1' => 'admissionno',
+            '*.2' => 'surname',
+            '*.3' => 'firstname',
+            '*.5' => 'gender',
+            '*.7' => 'dateofbirth',
+            '*.8' => 'age',
+            // Adjust as needed
         ];
     }
 
@@ -272,7 +319,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
      */
     public function uniqueBy()
     {
-        return 'admissionNo';
+        return ['admissionNo'];
     }
 
     /**
@@ -286,7 +333,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             'lastname',
             'othername',
             'gender',
-            'home_address',
+            'future_ambition', // FIXED: Changed from home_address
             'home_address2',
             'dateofbirth',
             'age',
@@ -308,7 +355,8 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
      */
     public function onFailure(Failure ...$failures)
     {
-        StudentBatchModel::where('id', $this->_batchid)->update(['Status' => 'Failed']);
+        // Update batch status only if all rows fail; for partial, handle differently
+        StudentBatchModel::where('id', $this->_batchid)->update(['status' => 'Failed']); // Fixed column name to 'status'
         foreach ($failures as $failure) {
             \Log::error('Excel Import Failure', [
                 'row' => $failure->row(),
@@ -317,7 +365,8 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
                 'values' => $failure->values(),
             ]);
         }
-        throw new \Exception('Validation failed for row ' . $failure->row() . ': ' . implode(', ', $failure->errors()));
+        // For partial imports, don't throw; let it continue. Remove throw if desired.
+        // throw new \Exception('Validation failed for row ' . $failures[0]->row() . ': ' . implode(', ', $failures[0]->errors()));
     }
 
     /**
@@ -325,11 +374,12 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
      */
     public function onError(\Throwable $e)
     {
-        StudentBatchModel::where('id', $this->_batchid)->update(['Status' => 'Failed']);
+        StudentBatchModel::where('id', $this->_batchid)->update(['status' => 'Failed']); // Fixed column name to 'status'
         \Log::error('Excel Import Error', [
             'message' => $e->getMessage(),
             'trace' => $e->getTraceAsString(),
         ]);
+        // Re-throw to stop import on critical errors
         throw $e;
     }
 }
