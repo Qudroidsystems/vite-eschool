@@ -1192,7 +1192,8 @@
           <div class="container-fluid">
               <div class="row">
                   <div class="col-sm-6">
-                      <script>document.write(new Date().getFullYear())</script> © Topclass College.
+                     @php $school = \App\Models\SchoolInformation::getActiveSchool();@endphp
+                     <script>document.write(new Date().getFullYear())</script> © {{ $school->school_name ?? 'Vite-Eschool' }}.
                   </div>
                   <div class="col-sm-6">
                       <div class="text-sm-end d-none d-sm-block">
