@@ -190,7 +190,7 @@ class SchoolPaymentController extends Controller
                             'school_bill.bill_amount as amount'
                         ])
                         ->get();
-                //  print_r($student_bill_info);
+                 print_r($student_bill_info);
 
             } catch (\Illuminate\Database\QueryException $e) {
                 if (strpos($e->getMessage(), 'school_bill_term_session') !== false) {
