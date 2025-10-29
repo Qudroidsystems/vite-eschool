@@ -110,8 +110,8 @@ class SchoolPaymentController extends Controller
 
         // Fetch new payment records (delete_status = '1')
         $studentpaymentbill = StudentBillPayment::where('student_bill_payment.student_id', $studentId)
-            ->where('student_bill_payment.termid_id', $termid)
-            ->where('student_bill_payment.session_id', $sessionid)
+            // ->where('student_bill_payment.termid_id', $termid)
+            // ->where('student_bill_payment.session_id', $sessionid)
             ->where('student_bill_payment.delete_status', '1')
             ->leftJoin('student_bill_payment_record', function ($join) {
                 $join->on('student_bill_payment_record.student_bill_payment_id', '=', 'student_bill_payment.id')
