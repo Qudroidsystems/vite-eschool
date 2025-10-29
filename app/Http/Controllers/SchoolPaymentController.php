@@ -222,21 +222,21 @@ class SchoolPaymentController extends Controller
         Log::info('Student Payment Bill:', $studentpaymentbill->toArray());
         Log::info('Payment History:', $paymentHistory->toArray());
 
-        // return view('schoolpayment.studentpayment', compact(
-        //     'pagetitle',
-        //     'studentdata',
-        //     'studentpaymentbill',
-        //     'student_bill_info',
-        //     'studentpaymentbillbook',
-        //     'paymentRecordsCount',
-        //     'schoolterm',
-        //     'schoolsession',
-        //     'studentId',
-        //     'schoolclassId',
-        //     'termid',
-        //     'sessionid',
-        //     'paymentHistory'
-        // ));
+        return view('schoolpayment.studentpayment', compact(
+            'pagetitle',
+            'studentdata',
+            'studentpaymentbill',
+            'student_bill_info',
+            'studentpaymentbillbook',
+            'paymentRecordsCount',
+            'schoolterm',
+            'schoolsession',
+            'studentId',
+            'schoolclassId',
+            'termid',
+            'sessionid',
+            'paymentHistory'
+        ));
     }
 
     /**
