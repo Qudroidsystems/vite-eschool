@@ -1197,7 +1197,7 @@
                   </div>
                   <div class="col-sm-6">
                       <div class="text-sm-end d-none d-sm-block">
-                          Created by Qudroid Systems
+                          Developed by Qudroid Systems
                       </div>
                   </div>
               </div>
