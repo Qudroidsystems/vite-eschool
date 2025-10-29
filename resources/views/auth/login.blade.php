@@ -212,7 +212,7 @@
                                                 <div class="effect-circle-1 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center">
                                                     <div class="effect-circle-2 position-relative mx-auto rounded-circle d-flex align-items-center justify-content-center">
                                                         <div class="effect-circle-3 mx-auto rounded-circle position-relative text-white fs-4xl d-flex align-items-center justify-content-center">
-                                                            Welcome to <span class="text-primary ms-1">{{ $school->school_name ?? 'Vite-ESchool' }}</span>
+                                                            Welcome to <span class="text-primary ms-1">Vite-ESchool'</span>
                                                         </div>
                                                     </div>
                                                 </div>
