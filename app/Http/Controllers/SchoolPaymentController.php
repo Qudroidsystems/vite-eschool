@@ -186,7 +186,7 @@ class SchoolPaymentController extends Controller
                             'school_bill.id as schoolbillid',
                             'school_bill.title as title',
                             'school_bill.description as description',
-                            'student_status.id as statusId',
+                            // 'student_status.id as statusId',
                             'school_bill.bill_amount as amount'
                         ])
                         ->get();
