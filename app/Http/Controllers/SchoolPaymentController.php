@@ -14,6 +14,7 @@ use App\Models\SchoolInformation;
 use App\Models\StudentBillPayment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SchoolBillTermSession;
 use App\Models\StudentBillPaymentBook;
@@ -103,7 +104,7 @@ class SchoolPaymentController extends Controller
                 'studentclass.schoolclassid as schoolclassId',
             ])
             ->first();
-            print($studentdata->schoolclass);
+            // print($studentdata->schoolclass);
 
         if (!$studentdata) {
             return redirect()->route('schoolpayment.index')->with('error', 'Student not found or not enrolled in the current session.');
@@ -178,8 +179,8 @@ class SchoolPaymentController extends Controller
                         ->where('school_bill_class_term_session.termid_id', $request->termid)
                         ->where('school_bill_class_term_session.session_id', $request->sessionid)
                         ->leftJoin('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
-                        ->leftJoin('student_status', 'student_status.id', '=', 'school_bill.statusId')
-                        ->where('student_status.id', 1)
+                        // ->leftJoin('student_status', 'student_status.id', '=', 'school_bill.statusId')
+                        // ->where('student_status.id', 1)
                         ->select([
                             'school_bill_class_term_session.id as id',
                             'school_bill.id as schoolbillid',
