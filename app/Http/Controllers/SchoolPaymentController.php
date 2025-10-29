@@ -174,8 +174,8 @@ class SchoolPaymentController extends Controller
         try {
   
               $student_bill_info = SchoolBillTermSession::where('school_bill_class_term_session.class_id', $studentdata->schoolclassId)
-                        ->where('school_bill_class_term_session.termid_id', $request->termid)
-                        ->where('school_bill_class_term_session.session_id', $request->sessionid)
+                        // ->where('school_bill_class_term_session.termid_id', $request->termid)
+                        // ->where('school_bill_class_term_session.session_id', $request->sessionid)
                         ->leftJoin('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
                         ->leftJoin('student_status', 'student_status.id', '=', 'school_bill.statusId')
                         ->where('student_status.id', 1)
