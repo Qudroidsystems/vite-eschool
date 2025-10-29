@@ -386,11 +386,8 @@
                                                <a href="{{ route('subjectoperation.index') }}" class="nav-link" data-key="t-products">Student Subject Registration</a>
                                          </li>
                                     @endcan
-                                  @can('View my-subject')
-                                          <li class="nav-item">
-                                              <a href="{{ route('subjectoperation.index') }}" class="nav-link" data-key="t-products">My Subject</a>
-                                        </li>
-                                  @endcan                                  
+                               
+                                                             
                                 </ul>
                             </div>
                         </li>

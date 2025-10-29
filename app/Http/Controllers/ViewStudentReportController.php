@@ -1356,7 +1356,7 @@ class ViewStudentReportController extends Controller
             ])->latest('studentclass.created_at')->paginate(100);
         }
 
-        $schoolsessions = Schoolsession::where('status', 'Current')->get();
+        $schoolsessions = Schoolsession::get();
         $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->get(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm']);
 
