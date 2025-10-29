@@ -1197,7 +1197,7 @@
                   </div>
                   <div class="col-sm-6">
                       <div class="text-sm-end d-none d-sm-block">
-                          Developed by Qudroid Systems
+                          Vite-Eschool 1.0 Developed by Qudroid Systems
                       </div>
                   </div>
               </div>
