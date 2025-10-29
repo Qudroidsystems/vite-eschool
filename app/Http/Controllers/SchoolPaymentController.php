@@ -173,21 +173,21 @@ class SchoolPaymentController extends Controller
         // Fetch school bills (fallback to all bills if school_bill_term_session doesn't exist)
         try {
   
-            //   $student_bill_info = SchoolBillTermSession::where('school_bill_class_term_session.class_id', $studentdata->schoolclassId)
-            //             ->where('school_bill_class_term_session.termid_id', $request->termid)
-            //             ->where('school_bill_class_term_session.session_id', $request->sessionid)
-            //             ->leftJoin('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
-            //             ->leftJoin('student_status', 'student_status.id', '=', 'school_bill.statusId')
-            //             ->where('student_status.id', 1)
-            //             ->select([
-            //                 'school_bill_class_term_session.id as id',
-            //                 'school_bill.id as schoolbillid',
-            //                 'school_bill.title as title',
-            //                 'school_bill.description as description',
-            //                 'student_status.id as statusId',
-            //                 'school_bill.bill_amount as amount'
-            //             ])
-            //             ->get();
+              $student_bill_info = SchoolBillTermSession::where('school_bill_class_term_session.class_id', $studentdata->schoolclassId)
+                        ->where('school_bill_class_term_session.termid_id', $request->termid)
+                        ->where('school_bill_class_term_session.session_id', $request->sessionid)
+                        ->leftJoin('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
+                        ->leftJoin('student_status', 'student_status.id', '=', 'school_bill.statusId')
+                        ->where('student_status.id', 1)
+                        ->select([
+                            'school_bill_class_term_session.id as id',
+                            'school_bill.id as schoolbillid',
+                            'school_bill.title as title',
+                            'school_bill.description as description',
+                            'student_status.id as statusId',
+                            'school_bill.bill_amount as amount'
+                        ])
+                        ->get();
                  print_r($student_bill_info);
 
             } catch (\Illuminate\Database\QueryException $e) {
