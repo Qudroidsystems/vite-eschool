@@ -2,22 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\SchoolBillModel;
-use App\Models\SchoolBillTermSession;
-use App\Models\Schoolclass;
-use App\Models\SchoolInformation;
-use App\Models\Schoolsession;
-use App\Models\Schoolterm;
-use App\Models\Student;
-use App\Models\StudentBillPayment;
-use App\Models\StudentBillPaymentBook;
-use App\Models\StudentBillPaymentRecord;
+use PDF;
 use Carbon\Carbon;
+use App\Models\Student;
+use App\Models\Schoolterm;
+use App\Models\Schoolclass;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Schoolsession;
+use App\Models\SchoolBillModel;
+use App\Models\SchoolInformation;
+use App\Models\StudentBillPayment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use PDF;
+use Illuminate\Support\Facades\Auth;
+use App\Models\SchoolBillTermSession;
+use App\Models\StudentBillPaymentBook;
+use App\Models\StudentBillPaymentRecord;
 
 class SchoolPaymentController extends Controller
 {
@@ -93,7 +93,7 @@ class SchoolPaymentController extends Controller
                 'studentRegistration.admissionNo as admissionNo',
                 'studentRegistration.firstname as firstname',
                 'studentRegistration.lastname as lastname',
-                'studentRegistration.home_address as homeadd',
+                'studentRegistration.home_address2 as homeadd',
                 'parentRegistration.father_phone as phone',
                 'studentpicture.picture as avatar',
                 'schoolclass.schoolclass as schoolclass',
