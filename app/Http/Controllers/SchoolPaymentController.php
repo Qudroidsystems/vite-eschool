@@ -97,6 +97,7 @@ class SchoolPaymentController extends Controller
                 'studentRegistration.home_address2 as homeadd',
                 'parentRegistration.father_phone as phone',
                 'studentRegistration.statusId as statusId',
+                'studentRegistration.student_status as student_status',
                 'studentpicture.picture as avatar',
                 'schoolclass.schoolclass as schoolclass',
                 'schoolarm.arm as arm',
