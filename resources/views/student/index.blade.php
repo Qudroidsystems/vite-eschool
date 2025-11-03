@@ -2686,7 +2686,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 </td>
                 <td class="admissionNo" data-admissionNo="${student.admissionNo}">${student.admissionNo}</td>
                 <td class="class" data-class="${student.schoolclassid}">${student.schoolclass} - ${student.arm}</td>
-                <td class="status" data-status="${student.statusId}">${student.statusId == 1 ? 'Old Student' : student.statusId == 2 ? 'New Student' : ''}</td>
+                <td class="status" data-status="${student.statusId}">${student.statusId == 1 ? 'Returning Student' : student.statusId == 2 ? 'New Student' : ''}</td>
                 <td class="gender" data-gender="${student.gender}">${student.gender}</td>
                 <td class="datereg">${student.created_at ? new Date(student.created_at).toISOString().split('T')[0] : ''}</td>
                 <td>
