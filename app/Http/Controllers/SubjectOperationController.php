@@ -3,24 +3,24 @@
 namespace App\Http\Controllers;
 
 
-use App\Models\BroadsheetRecord;
-use App\Models\BroadsheetRecordMock;
-use App\Models\Broadsheets;
-use App\Models\BroadsheetsMock;
-use App\Models\Schoolclass;
-use App\Models\Student;
-use App\Models\Studentpicture;
-use App\Models\StudentSubjectRecord;
-use App\Models\Subjectclass;
-use App\Models\SubjectRegistrationStatus;
-use App\Models\SubjectTeacher;
 use App\Models\User;
-use App\Models\Schoolsession;
+use App\Models\Student;
 use App\Models\Schoolterm;
-use Illuminate\Http\JsonResponse;
+use App\Models\Broadsheets;
+use App\Models\Schoolclass;
+use App\Models\Subjectclass;
 use Illuminate\Http\Request;
+use App\Models\Schoolsession;
+use App\Models\Studentpicture;
+use App\Models\SubjectTeacher;
+use App\Models\BroadsheetsMock;
+use App\Models\BroadsheetRecord;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Models\BroadsheetRecordMock;
+use App\Models\StudentSubjectRecord;
+use App\Models\SubjectRegistrationStatus;
 
 class SubjectOperationController extends Controller
 {
@@ -116,7 +116,10 @@ class SubjectOperationController extends Controller
             
             // Required filters
             $query->where('studentclass.schoolclassid', $request->input('class_id'))
-                ->where('studentclass.sessionid', $request->input('session_id'));
+                ->where('studentclass.sessionid', $request->input('session_id'))
+                // Sort alphabetically by lastname, then firstname (case-insensitive)
+                ->orderBy('studentRegistration.lastname', 'asc')
+                ->orderBy('studentRegistration.firstname', 'asc');
 
             $students = $query->select([
                 'studentRegistration.id as id',
@@ -1241,3 +1244,4 @@ class SubjectOperationController extends Controller
         }
     }
 }
+
