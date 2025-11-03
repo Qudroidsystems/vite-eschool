@@ -221,8 +221,8 @@ class SchoolPaymentController extends Controller
         $schoolclassId = $studentdata->schoolclassId ?? null;
 
         // Debug the $studentpaymentbill and $paymentHistory collections
-        Log::info('Student Payment Bill:', $studentpaymentbill->toArray());
-        Log::info('Payment History:', $paymentHistory->toArray());
+        // Log::info('Student Payment Bill:', $studentpaymentbill->toArray());
+        // Log::info('Payment History:', $paymentHistory->toArray());
 
         return view('schoolpayment.studentpayment', compact(
             'pagetitle',
