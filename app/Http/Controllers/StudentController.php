@@ -186,7 +186,7 @@ class StudentController extends Controller
                 'permanent_address' => 'required|string|max:255',
                 'student_category' => 'required|in:Day,Boarding',
                 'schoolclassid' => 'required|exists:schoolclass,id',
-                'schoolhouseid' => 'required|exists:schoolhouse,id',
+                'schoolhouseid' => 'required|exists:schoolhouses,id',
                 'termid' => 'required|exists:schoolterm,id',
                 'sessionid' => 'required|exists:schoolsession,id',
                 'statusId' => 'required|in:1,2',
