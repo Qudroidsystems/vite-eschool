@@ -312,7 +312,7 @@ class StudentController extends Controller
 
             $studenthouses = new Studenthouse();
             $studenthouses->studentid = $studentId;
-            $studenthouses->studenthouse = $request->studenthouseid;
+            $studenthouses->schoolhouse = $request->studenthouseid;
             $studenthouses->termid = $request->termid;
             $studenthouses->sessionid = $request->sessionid;
             $studenthouses->save();
