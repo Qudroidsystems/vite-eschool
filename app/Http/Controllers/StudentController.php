@@ -186,6 +186,7 @@ class StudentController extends Controller
                 'permanent_address' => 'required|string|max:255',
                 'student_category' => 'required|in:Day,Boarding',
                 'schoolclassid' => 'required|exists:schoolclass,id',
+                'schoolhouseid' => 'required|exists:schoolhouse,id',
                 'termid' => 'required|exists:schoolterm,id',
                 'sessionid' => 'required|exists:schoolsession,id',
                 'statusId' => 'required|in:1,2',
@@ -311,6 +312,7 @@ class StudentController extends Controller
 
             $studenthouses = new Studenthouse();
             $studenthouses->studentid = $studentId;
+            $studenthouses->studenthouse = $request->studenthouseid;
             $studenthouses->termid = $request->termid;
             $studenthouses->sessionid = $request->sessionid;
             $studenthouses->save();
@@ -850,6 +852,7 @@ class StudentController extends Controller
             throw $e;
         }
     }
+    
     public function destroy($id): JsonResponse
     {
         Log::debug("Deleting student ID {$id}");

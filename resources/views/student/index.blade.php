@@ -771,7 +771,7 @@ use Spatie\Permission\Models\Role;
                                         <div class="col-md-6">
                                             <div class="mb-3">
                                                 <label for="sport_house" class="form-label">School House</label>
-                                                <select id="schoolclassid" name="schoolclassid" class="form-control" required>
+                                                <select id="schoolhouseid" name="schoolhouseid" class="form-control" required>
                                                     <option value="">Select School House</option>
                                                     @foreach ($schoolhouses as $schoolhouse)
                                                         <option value="{{ $schoolhouse->id }}">{{ $schoolhouse->house }}</option>
