@@ -449,7 +449,7 @@ class StudentController extends Controller
         $lastAdmission = Student::max('admissionNo');
         $year = date('Y');
         $number = $lastAdmission ? (int)substr($lastAdmission, -4) + 1 : 1;
-        return sprintf('CSSK/STD/2025/%04d', $number);
+        return sprintf('TCC/2025/%04d', $number);
     }
 
     public function show($id)
@@ -1211,14 +1211,14 @@ class StudentController extends Controller
                 ], 400);
             }
 
-            $lastStudent = Student::where('admissionNo', 'LIKE', "CSSK/STD/{$year}/%")
+            $lastStudent = Student::where('admissionNo', 'LIKE', "TCC/{$year}/%")
                 ->orderBy('id', 'desc')
                 ->first();
 
             $lastNumber = 870; // Start from 870 so next number is 871
             if ($lastStudent && $lastStudent->admissionNo) {
                 $parts = explode('/', $lastStudent->admissionNo);
-                if (count($parts) === 4 && $parts[0] === 'CSSK' && $parts[1] === 'STD' && $parts[2] === $year && is_numeric($parts[3])) {
+                if (count($parts) === 4 && $parts[0] === 'TCC' && $parts[2] === $year && is_numeric($parts[3])) {
                     $lastNumber = max(870, (int)$parts[3]);
                 } else {
                     Log::warning("Invalid admission number format: {$lastStudent->admissionNo}");
@@ -1226,7 +1226,7 @@ class StudentController extends Controller
             }
 
             $nextNumber = $lastNumber + 1;
-            $admissionNo = sprintf('CSSK/STD/%s/%04d', $year, $nextNumber);
+            $admissionNo = sprintf('TCC/%s/%04d', $year, $nextNumber);
 
             return response()->json([
                 'success' => true,

@@ -458,7 +458,7 @@ use Spatie\Permission\Models\Role;
                                                     <option value="{{ $year }}" {{ $year == date('Y') ? 'selected' : '' }}>{{ $year }}</option>
                                                 @endfor
                                             </select>
-                                            <input type="text" id="admissionNo" name="admissionNo" class="form-control" placeholder="CSSK/STD/YYYY/001" required>
+                                            <input type="text" id="admissionNo" name="admissionNo" class="form-control" placeholder="TCC/YYYY/001" required>
                                         </div>
                                     </div>
 
@@ -941,7 +941,7 @@ use Spatie\Permission\Models\Role;
                                                     <option value="{{ $year }}" {{ $year == date('Y') ? 'selected' : '' }}>{{ $year }}</option>
                                                 @endfor
                                             </select>
-                                            <input type="text" id="editAdmissionNo" name="admissionNo" class="form-control" placeholder="CSSK/STD/YYYY/001" required>
+                                            <input type="text" id="editAdmissionNo" name="admissionNo" class="form-control" placeholder="TCC/YYYY/001" required>
                                         </div>
                                     </div>
 
@@ -2273,7 +2273,7 @@ function updateAdmissionNumber(prefix = '') {
     if (!yearSelect || !admissionNoInput) return;
 
     const year = yearSelect.value;
-    const baseFormat = `CSSK/STD/${year}/`;
+    const baseFormat = `TCC/${year}/`;
     
     if (admissionMode && admissionMode.value === 'auto') {
         admissionNoInput.readOnly = true;
@@ -2287,7 +2287,7 @@ function updateAdmissionNumber(prefix = '') {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Backend returns the full admission number (e.g., CSSK/STD/2025/0871)
+                // Backend returns the full admission number (e.g., TCC/2025/0871)
                 admissionNoInput.value = data.admissionNo;
             } else {
                 Swal.fire({
@@ -2332,7 +2332,7 @@ window.toggleAdmissionInput = function(prefix = '') {
     if (!admissionMode || !admissionNoInput || !yearSelect) return;
 
     const year = yearSelect.value;
-    const baseFormat = `CSSK/STD/${year}/`;
+    const baseFormat = `TCC/${year}/`;
 
     if (admissionMode.value === 'auto') {
         admissionNoInput.readOnly = true;
