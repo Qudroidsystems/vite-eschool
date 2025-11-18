@@ -224,7 +224,7 @@
                                                     <label class="form-check-label" for="add-teacher-{{ $teacher->id }}">
                                                         {{ $teacher->teachername }} ({{ $teacher->subject }} -- {{ $teacher->subjectcode }}) for
                                                         <span style="color: {{ $teacher->termname === 'First Term' ? 'green' : ($teacher->termname === 'Second Term' || $teacher->termname === 'Third Term' ? 'blue' : 'inherit') }}">
-                                                            {{ $teacher->termname }}
+                                                            {{ $teacher->termname }} {{ $teacher->sessionname }}
                                                         </span>
                                                     </label>
                                                 </div>
