@@ -23,7 +23,7 @@ use Maatwebsite\Excel\Concerns\WithStartRow;
 use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\WithProgressBar;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Maatwebsite\Excel\Concerns\WithUpsertColumns; // Added for better performance on large files
+use Maatwebsite\Excel\Concerns\WithUpsertColumns;
 
 class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpsertColumns, WithUpserts, WithValidation, WithChunkReading
 {
@@ -45,6 +45,101 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
     public function chunkSize(): int
     {
         return 1000;
+    }
+
+    
+    /**
+     * Parse Excel date with support for serial dates and multiple formats
+     * Returns only the date part without time
+     */
+    private function parseExcelDate($rawDate)
+    {
+        // Handle empty values
+        if (empty($rawDate) || $rawDate === 'N/A' || trim($rawDate) === '') {
+            return null;
+        }
+        
+        // Handle Excel serial dates (numbers)
+        if (is_numeric($rawDate)) {
+            $excelBaseDate = Carbon::create(1899, 12, 30); // Excel Windows base date
+            $parsedDate = $excelBaseDate->addDays((int)$rawDate);
+            
+            // For students, allow dates back to 1940 (for very old teachers/staff, but adjust as needed)
+            if ($parsedDate->isFuture()) {
+                // If date is in future, subtract 100 years (common Excel issue with dates)
+                $parsedDate = $parsedDate->subYears(100);
+            }
+            
+            // Return only date part without time
+            return $parsedDate->startOfDay();
+        }
+        
+        // Handle string dates - be more flexible with parsing
+        try {
+            $parsedDate = Carbon::parse($rawDate);
+            
+            // If it's a datetime string like "2012-02-07 00:00:00", extract only the date part
+            if (strpos($rawDate, ' ') !== false || strpos($rawDate, 'T') !== false) {
+                // Extract date part from datetime string
+                $datePart = explode(' ', $rawDate)[0];
+                $datePart = explode('T', $datePart)[0];
+                $parsedDate = Carbon::parse($datePart);
+            }
+            
+            // Return only date part without time
+            return $parsedDate->startOfDay();
+        } catch (\Exception $e) {
+            // Try common date formats more aggressively
+            $formats = [
+                'd/m/Y', 'm/d/Y', 'Y-m-d', 'd-m-Y', 'm-d-Y',
+                'd/M/Y', 'M/d/Y', 'd.M.Y', 'M d, Y', 'd F Y',
+                'd/m/y', 'm/d/y', 'y-m-d', 'd-m-y', 'm-d-y',
+                'd-M-Y', 'd.M.y', 'm/d', 'd/m', 'Ymd', 'dmY'
+            ];
+            
+            foreach ($formats as $format) {
+                try {
+                    $parsedDate = Carbon::createFromFormat($format, $rawDate);
+                    // If year is 2-digit, assume it's in 1900-1999 range
+                    if ($parsedDate->year < 100) {
+                        $parsedDate = $parsedDate->addYears(1900);
+                    }
+                    // Return only date part without time
+                    return $parsedDate->startOfDay();
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+            
+            // If all parsing fails, try to extract date components manually
+            preg_match('/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/', $rawDate, $matches);
+            if (count($matches) === 4) {
+                $day = (int)$matches[1];
+                $month = (int)$matches[2];
+                $year = (int)$matches[3];
+                
+                // Handle 2-digit years
+                if ($year < 100) {
+                    $year += 1900;
+                }
+                
+                if (checkdate($month, $day, $year)) {
+                    return Carbon::create($year, $month, $day)->startOfDay();
+                }
+            }
+            
+            // Last attempt: try to extract YYYY-MM-DD from datetime string
+            preg_match('/(\d{4}-\d{2}-\d{2})/', $rawDate, $matches);
+            if (count($matches) === 2) {
+                try {
+                    return Carbon::parse($matches[1])->startOfDay();
+                } catch (\Exception $e) {
+                    // Continue to throw exception
+                }
+            }
+            
+            throw new \Exception("Unable to parse date: {$rawDate}");
+        }
     }
 
     /**
@@ -99,19 +194,50 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             $gender = 'N/A'; // Fallback if invalid
         }
 
-        // Parse date of birth (handle common Excel date formats)
+        // Parse date of birth with improved logic
         $parsedDob = null;
+        $age = null;
+        
         try {
-            $parsedDob = Carbon::parse($rawDob);
+            if ($rawDob !== 'N/A') {
+                $parsedDob = $this->parseExcelDate($rawDob);
+                
+                // If date is in future, adjust it (common Excel issue)
+                if ($parsedDob && $parsedDob->isFuture()) {
+                    $parsedDob = $parsedDob->subYears(100);
+                }
+                
+                // If date is too old (before 1940), use age to estimate
+                if ($parsedDob && $parsedDob->year < 1940) {
+                    if ($rawAge !== 'N/A' && is_numeric($rawAge)) {
+                        $age = (int)$rawAge;
+                        $estimatedBirthYear = Carbon::now()->subYears($age)->year;
+                        $parsedDob = Carbon::create($estimatedBirthYear, 1, 1);
+                        \Log::warning("DOB too old ({$parsedDob->format('Y-m-d')}), using estimated DOB from age: {$parsedDob->format('Y-m-d')}");
+                    }
+                }
+            }
         } catch (\Exception $e) {
-            $parsedDob = Carbon::now()->subYears((int) ($rawAge === 'N/A' ? 11 : $rawAge))->startOfYear(); // Fallback based on age, default 11 if N/A
-        }
-        if ($parsedDob && $parsedDob->isFuture()) {
-            $parsedDob = Carbon::now()->subYears((int) ($rawAge === 'N/A' ? 11 : $rawAge))->startOfYear();
+            // If DOB parsing fails, use age to estimate birth year
+            if ($rawAge !== 'N/A' && is_numeric($rawAge)) {
+                $age = (int)$rawAge;
+                $estimatedBirthYear = Carbon::now()->subYears($age)->year;
+                $parsedDob = Carbon::create($estimatedBirthYear, 1, 1);
+                
+                \Log::warning("DOB parsing failed for '{$rawDob}', using estimated DOB from age: {$parsedDob->format('Y-m-d')}");
+            } else {
+                // If both DOB and age are invalid, use reasonable default for students (11 years old)
+                $parsedDob = Carbon::now()->subYears(11)->startOfYear();
+                \Log::warning("Both DOB and age invalid, using default DOB: {$parsedDob->format('Y-m-d')}");
+            }
         }
 
-        // Set age: if 'N/A', use null or calculate from DOB; else cast to int
-        $age = ($rawAge === 'N/A' || !is_numeric($rawAge)) ? null : (int) $rawAge;
+        // Set age: if 'N/A', calculate from DOB; else use provided age
+        if ($rawAge === 'N/A' || !is_numeric($rawAge)) {
+            $age = $parsedDob ? $parsedDob->diffInYears(Carbon::now()) : null;
+        } else {
+            $age = (int)$rawAge;
+        }
 
         // Validate required fields
         if (in_array($admissionno, ['N/A', ''], true) || in_array($surname, ['N/A', ''], true) || in_array($firstname, ['N/A', ''], true)) {
@@ -121,6 +247,16 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
         // Validate session-based fields
         if (in_array($schoolclassid, ['N/A', ''], true) || in_array($termid, ['N/A', ''], true) || in_array($sessionid, ['N/A', ''], true) || in_array($batchid, ['N/A', ''], true)) {
             throw new \Exception("Session data (schoolclassid, termid, sessionid, batchid) cannot be empty or 'N/A' in row " . ($this->startRow() + $this->id));
+        }
+
+        // Debug logging for first few rows to help with troubleshooting
+        if ($this->id < 5) {
+            \Log::info("Import Debug - Row {$this->id}:", [
+                'raw_dob' => $rawDob,
+                'raw_age' => $rawAge,
+                'parsed_dob' => $parsedDob ? $parsedDob->format('Y-m-d') : 'null',
+                'final_age' => $age
+            ]);
         }
 
         // Initialize models
@@ -147,8 +283,8 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             $studentbiodata->lastname = $surname;
             $studentbiodata->othername = $othername;
             $studentbiodata->gender = $gender;
-            $studentbiodata->future_ambition = $futureAmbition; // FIXED: Changed from home_address
-            $studentbiodata->home_address2 = 'N/A'; // Consider mapping to permanent_address if updated in model
+            $studentbiodata->future_ambition = $futureAmbition;
+            $studentbiodata->home_address2 = 'N/A';
             $studentbiodata->dateofbirth = $parsedDob;
             $studentbiodata->age = $age;
             $studentbiodata->placeofbirth = $placeofbirth;
@@ -182,7 +318,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
 
             // Populate student picture
             $picture->studentid = $studentId;
-            $picture->picture = 'unnamed.jpg'; // Updated to match store method default
+            $picture->picture = 'unnamed.jpg';
             $picture->save();
 
             // Populate student class
@@ -205,7 +341,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             $studenthouse->studentid = $studentId;
             $studenthouse->termid = $termid;
             $studenthouse->sessionid = $sessionid;
-            $studenthouse->schoolhouse = null; // Set to null instead of 'N/A' if it's an ID field
+            $studenthouse->schoolhouse = null;
             $studenthouse->save();
 
             // Populate student personality profile
@@ -246,22 +382,28 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
                         $onFailure('Gender must be Male or Female.');
                     }
                 }
-            ], // gender (column E) - normalized validation, allow N/A
+            ], // gender (column E)
             '*.7' => [
                 function ($attribute, $value, $onFailure) {
                     if ($value === 'N/A' || trim($value ?? '') === '') {
                         return; // Allow N/A or empty for DOB
                     }
+                    
+                    // Be more lenient with date validation - just check if it's somewhat parsable
                     try {
-                        $parsed = Carbon::parse($value);
-                        if ($parsed->gte(Carbon::today())) {
-                            $onFailure('Date of birth must be a valid date before today.');
+                        // For validation, just try basic parsing without strict range checks
+                        if (is_numeric($value)) {
+                            // It's an Excel serial number - accept it
+                            return;
+                        } else {
+                            // Try basic date parsing
+                            Carbon::parse($value);
                         }
                     } catch (\Exception $e) {
-                        $onFailure('Date of birth must be a valid date before today.');
+                        $onFailure('Date of birth must be in a recognizable date format.');
                     }
                 }
-            ], // dateofbirth (column G) - flexible parsing validation, allow N/A
+            ], // dateofbirth (column G) - more lenient validation
             '*.8' => [
                 function ($attribute, $value, $onFailure) {
                     if ($value === 'N/A' || trim($value ?? '') === '') {
@@ -271,9 +413,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
                         $onFailure('Age must be a number between 1 and 100.');
                     }
                 }
-            ], // age (column H) - allow N/A, validate if present
-            // Note: Removed mismatched '15','16','17' as they don't align with Excel columns; session data is from PHP session, not Excel
-            // If Excel has columns for class/term/session IDs, add them here with proper indices (e.g., '*.15' for column O)
+            ], // age (column H)
         ];
     }
 
@@ -286,7 +426,6 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             '*.1.required' => 'Admission number is required.',
             '*.2.required' => 'Surname is required.',
             '*.3.required' => 'First name is required.',
-            // Messages for closures are handled directly in $onFailure
         ];
     }
 
@@ -302,7 +441,6 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             '*.5' => 'gender',
             '*.7' => 'dateofbirth',
             '*.8' => 'age',
-            // Adjust as needed
         ];
     }
 
@@ -333,7 +471,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             'lastname',
             'othername',
             'gender',
-            'future_ambition', // FIXED: Changed from home_address
+            'future_ambition',
             'home_address2',
             'dateofbirth',
             'age',
@@ -355,8 +493,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
      */
     public function onFailure(Failure ...$failures)
     {
-        // Update batch status only if all rows fail; for partial, handle differently
-        StudentBatchModel::where('id', $this->_batchid)->update(['status' => 'Failed']); // Fixed column name to 'status'
+        StudentBatchModel::where('id', $this->_batchid)->update(['status' => 'Failed']);
         foreach ($failures as $failure) {
             \Log::error('Excel Import Failure', [
                 'row' => $failure->row(),
@@ -365,8 +502,6 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
                 'values' => $failure->values(),
             ]);
         }
-        // For partial imports, don't throw; let it continue. Remove throw if desired.
-        // throw new \Exception('Validation failed for row ' . $failures[0]->row() . ': ' . implode(', ', $failures[0]->errors()));
     }
 
     /**
@@ -374,12 +509,11 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
      */
     public function onError(\Throwable $e)
     {
-        StudentBatchModel::where('id', $this->_batchid)->update(['status' => 'Failed']); // Fixed column name to 'status'
+        StudentBatchModel::where('id', $this->_batchid)->update(['status' => 'Failed']);
         \Log::error('Excel Import Error', [
             'message' => $e->getMessage(),
             'trace' => $e->getTraceAsString(),
         ]);
-        // Re-throw to stop import on critical errors
         throw $e;
     }
 }

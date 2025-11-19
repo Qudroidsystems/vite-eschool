@@ -984,8 +984,8 @@ class StudentController extends Controller
                 ParentRegistration::where('studentId', $studentId)->delete();
                 Studentpicture::where('studentid', $studentId)->delete();
                 SubjectRegistrationStatus::where('studentId', $studentId)->delete();
-                Studenthouses::where('studentid', $studentId)->delete();
-                Studentpersonalityprofiles::where('studentid', $studentId)->delete();
+                Studenthouse::where('studentid', $studentId)->delete();
+                Studentpersonalityprofile::where('studentid', $studentId)->delete();
             }
 
             Student::where('batchid', $batch->id)->delete();
