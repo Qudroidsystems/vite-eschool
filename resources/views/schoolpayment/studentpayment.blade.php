@@ -71,6 +71,7 @@
                                                     <div class="fw-semibold fs-6 text-gray-400">Student Status | Active Mode</div>
                                                 </div>
 
+
                                                 <!-- Class Card -->
                                                 <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
                                                     <div class="d-flex align-items-center">
@@ -334,112 +335,111 @@
                                         </table>
                                     </div>
                                      <!-- Download Payment Statement Button -->
-                                    <div class="mb-3">
+                                    <div class="mb-3 mt-3">
                                         <a href="{{ route('schoolpayment.statement', ['studentId' => $studentId, 'schoolclassid' => $schoolclassId, 'termid' => $termid, 'sessionid' => $sessionid]) }}" class="btn btn-primary">
-                                            Download Payment Statement
+                                            <i class="ri-download-line me-1"></i> Download Payment Statement
                                         </a>
                                     </div>
-
                                 </div>
 
-                             
                                 <!-- School Bills Tab -->
-                               <!-- School Bills Tab -->
-<div class="tab-pane fade" id="school-bills" role="tabpanel" aria-labelledby="school-bills-tab">
-    @if ($student_bill_info->isNotEmpty())
-        <div class="row g-3">
-            @foreach ($student_bill_info as $sc)
-                @php
-                    // Get payment book entry for this specific bill, term, and session
-                    $paymentBook = \App\Models\StudentBillPaymentBook::where('student_id', $studentId)
-                        ->where('school_bill_id', $sc->schoolbillid)
-                        ->where('class_id', $schoolclassId)
-                        ->where('term_id', $termid)
-                        ->where('session_id', $sessionid)
-                        ->first();
+                                <div class="tab-pane fade" id="school-bills" role="tabpanel" aria-labelledby="school-bills-tab">
+                                    @if ($student_bill_info->isNotEmpty())
+                                        <div class="row g-3">
+                                            @foreach ($student_bill_info as $sc)
+                                                @php
+                                                    // Get payment book entry for this specific bill, term, and session
+                                                    $paymentBook = \App\Models\StudentBillPaymentBook::where([
+                                                        'student_id' => $studentId,
+                                                        'school_bill_id' => $sc->schoolbillid,
+                                                        'class_id' => $schoolclassId,
+                                                        'term_id' => $termid,
+                                                        'session_id' => $sessionid
+                                                    ])->first();
 
-                    // Initialize values
-                    $amountPaid = 0;
-                    $balance = $sc->amount;
+                                                    // Initialize values
+                                                    $amountPaid = 0;
+                                                    $balance = $sc->amount;
 
-                    // If payment book exists for this term/session, use those values
-                    if ($paymentBook) {
-                        $amountPaid = $paymentBook->amount_paid ?? 0;
-                        $balance = $paymentBook->amount_owed ?? $sc->amount;
-                    }
+                                                    // If payment book exists for this term/session, use those values
+                                                    if ($paymentBook) {
+                                                        $amountPaid = $paymentBook->amount_paid ?? 0;
+                                                        $balance = $paymentBook->amount_owed ?? $sc->amount;
+                                                    }
 
-                    // Calculate progress percentage
-                    $progressPercentage = $sc->amount > 0 ? ($amountPaid / $sc->amount) * 100 : 0;
-                    $isPaidInFull = (float)$balance <= 0;
+                                                    // Calculate progress percentage
+                                                    $progressPercentage = $sc->amount > 0 ? ($amountPaid / $sc->amount) * 100 : 0;
+                                                    $isPaidInFull = (float)$balance <= 0;
 
-                    // Check if there's a pending payment (invoice not yet generated)
-                    $paymentRecord = $studentpaymentbill->where('school_bill_id', $sc->schoolbillid)->first();
-                    $invoicePending = $paymentRecord && $paymentRecord->delete_status == '1';
-                @endphp
-                
-                <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12">
-                    <div class="card border-0 shadow-sm h-100 position-relative overflow-hidden" style="border-radius: 12px; transition: all 0.3s ease;">
-                        <!-- Status indicator stripe -->
-                        <div class="position-absolute top-0 start-0 w-100" style="height: 3px; background: {{ $isPaidInFull ? 'linear-gradient(90deg, #10b981, #059669)' : 'linear-gradient(90deg, #f59e0b, #d97706)' }};"></div>
-                        
-                        <div class="card-body p-4">
-                            <!-- Header Section -->
-                            <div class="d-flex align-items-start justify-content-between mb-3">
-                                <div class="flex-grow-1">
-                                    <h6 class="card-title mb-1 fw-bold text-gray-900" style="font-size: 1rem; line-height: 1.3;">
-                                        {{ $sc->title }}
-                                    </h6>
-                                    <span class="badge {{ $isPaidInFull ? 'bg-success' : 'bg-warning' }} bg-opacity-10 {{ $isPaidInFull ? 'text-success' : 'text-warning' }} px-2 py-1 rounded-pill fw-medium" style="font-size: 0.65rem;">
-                                        <i class="fas {{ $isPaidInFull ? 'fa-check-circle' : 'fa-clock' }} me-1"></i>
-                                        {{ $isPaidInFull ? 'Paid' : $sc->description }}
-                                    </span>
-                                </div>
-                                <!-- Payment status icon -->
-                                <div class="ms-2">
-                                    <div class="d-flex align-items-center justify-content-center rounded-circle {{ $isPaidInFull ? 'bg-success' : 'bg-warning' }} bg-opacity-10" style="width: 32px; height: 32px;">
-                                        <i class="fas {{ $isPaidInFull ? 'fa-check' : 'fa-credit-card' }} {{ $isPaidInFull ? 'text-success' : 'text-warning' }}" style="font-size: 0.9rem;"></i>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Amount Information -->
-                            <div class="mb-3">
-                                <div class="text-center mb-3">
-                                    <div class="fs-5 fw-bold text-primary">₦{{ number_format($sc->amount) }}</div>
-                                    <div class="fs-7 text-muted">Total Amount</div>
-                                </div>
-                                <div class="row g-2">
-                                    <div class="col-6">
-                                        <div class="text-center p-2 bg-success bg-opacity-10 rounded-2">
-                                            <div class="fs-7 fw-bold text-success mb-0">₦{{ number_format($amountPaid) }}</div>
-                                            <div class="fs-8 text-muted">Paid</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-6">
-                                        <div class="text-center p-2 {{ $balance > 0 ? 'bg-danger bg-opacity-10' : 'bg-success bg-opacity-10' }} rounded-2">
-                                            <div class="fs-7 fw-bold {{ $balance > 0 ? 'text-danger' : 'text-success' }} mb-0">
-                                                ₦{{ number_format($balance) }}
-                                            </div>
-                                            <div class="fs-8 text-muted">Balance</div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Progress Bar -->
-                            <div class="mb-3">
-                                <div class="d-flex align-items-center justify-content-between mb-1">
-                                    <span class="fs-8 text-muted">Progress</span>
-                                    <span class="fs-8 fw-bold {{ $isPaidInFull ? 'text-success' : 'text-primary' }}">
-                                        {{ number_format($progressPercentage, 0) }}%
-                                    </span>
-                                </div>
-                                <div class="progress rounded-pill" style="height: 6px;">
-                                    <div class="progress-bar {{ $isPaidInFull ? 'bg-success' : 'bg-primary' }} rounded-pill" role="progressbar" style="width: {{ $progressPercentage }}%; transition: width 0.6s ease;" aria-valuenow="{{ $progressPercentage }}" aria-valuemin="0" aria-valuemax="100">
-                                    </div>
-                                </div>
-                            </div>
-                            
+                                                    // Check if there's a pending payment (invoice not yet generated)
+                                                    $paymentRecord = $studentpaymentbill->where('school_bill_id', $sc->schoolbillid)->first();
+                                                    $invoicePending = $paymentRecord && $paymentRecord->delete_status == '1';
+                                                @endphp
+                                                
+                                                <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12">
+                                                    <div class="card border-0 shadow-sm h-100 position-relative overflow-hidden" style="border-radius: 12px; transition: all 0.3s ease;">
+                                                        <!-- Status indicator stripe -->
+                                                        <div class="position-absolute top-0 start-0 w-100" style="height: 3px; background: {{ $isPaidInFull ? 'linear-gradient(90deg, #10b981, #059669)' : 'linear-gradient(90deg, #f59e0b, #d97706)' }};"></div>
+                                                        
+                                                        <div class="card-body p-4">
+                                                            <!-- Header Section -->
+                                                            <div class="d-flex align-items-start justify-content-between mb-3">
+                                                                <div class="flex-grow-1">
+                                                                    <h6 class="card-title mb-1 fw-bold text-gray-900" style="font-size: 1rem; line-height: 1.3;">
+                                                                        {{ $sc->title }}
+                                                                    </h6>
+                                                                    <span class="badge {{ $isPaidInFull ? 'bg-success' : 'bg-warning' }} bg-opacity-10 {{ $isPaidInFull ? 'text-success' : 'text-warning' }} px-2 py-1 rounded-pill fw-medium" style="font-size: 0.65rem;">
+                                                                        <i class="fas {{ $isPaidInFull ? 'fa-check-circle' : 'fa-clock' }} me-1"></i>
+                                                                        {{ $isPaidInFull ? 'Paid' : $sc->description }}
+                                                                    </span>
+                                                                </div>
+                                                                <!-- Payment status icon -->
+                                                                <div class="ms-2">
+                                                                    <div class="d-flex align-items-center justify-content-center rounded-circle {{ $isPaidInFull ? 'bg-success' : 'bg-warning' }} bg-opacity-10" style="width: 32px; height: 32px;">
+                                                                        <i class="fas {{ $isPaidInFull ? 'fa-check' : 'fa-credit-card' }} {{ $isPaidInFull ? 'text-success' : 'text-warning' }}" style="font-size: 0.9rem;"></i>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <!-- Amount Information -->
+                                                            <div class="mb-3">
+                                                                <div class="text-center mb-3">
+                                                                    <div class="fs-5 fw-bold text-primary">₦{{ number_format($sc->amount) }}</div>
+                                                                    <div class="fs-7 text-muted">Total Amount</div>
+                                                                </div>
+                                                                <div class="row g-2">
+                                                                    <div class="col-6">
+                                                                        <div class="text-center p-2 bg-success bg-opacity-10 rounded-2">
+                                                                            <div class="fs-7 fw-bold text-success mb-0">₦{{ number_format($amountPaid) }}</div>
+                                                                            <div class="fs-8 text-muted">Paid</div>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-6">
+                                                                        <div class="text-center p-2 {{ $balance > 0 ? 'bg-danger bg-opacity-10' : 'bg-success bg-opacity-10' }} rounded-2">
+                                                                            <div class="fs-7 fw-bold {{ $balance > 0 ? 'text-danger' : 'text-success' }} mb-0">
+                                                                                ₦{{ number_format($balance) }}
+                                                                            </div>
+                                                                            <div class="fs-8 text-muted">Balance</div>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            <!-- Progress Bar -->
+                                                            <div class="mb-3">
+                                                                <div class="d-flex align-items-center justify-content-between mb-1">
+                                                                    <span class="fs-8 text-muted">Progress</span>
+                                                                    <span class="fs-8 fw-bold {{ $isPaidInFull ? 'text-success' : 'text-primary' }}">
+                                                                        {{ number_format($progressPercentage, 0) }}%
+                                                                    </span>
+                                                                </div>
+                                                                <div class="progress rounded-pill" style="height: 6px;">
+                                                                    <div class="progress-bar {{ $isPaidInFull ? 'bg-success' : 'bg-primary' }} rounded-pill" role="progressbar" style="width: {{ $progressPercentage }}%; transition: width 0.6s ease;" aria-valuenow="{{ $progressPercentage }}" aria-valuemin="0" aria-valuemax="100">
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            
                             <!-- Action Button -->
                             <div class="d-grid">
                                 @if ($isPaidInFull)
