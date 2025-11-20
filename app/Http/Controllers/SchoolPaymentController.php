@@ -106,13 +106,12 @@ class SchoolPaymentController extends Controller
                 'studentclass.schoolclassid as schoolclassId',
             ])
             ->first();
-            // print($studentdata->schoolclass);
 
         if (!$studentdata) {
             return redirect()->route('schoolpayment.index')->with('error', 'Student not found or not enrolled in the current session.');
         }
 
-        // Fetch new payment records (delete_status = '1')
+        // Fetch new payment records (delete_status = '1') for CURRENT term and session only
         $studentpaymentbill = StudentBillPayment::where('student_bill_payment.student_id', $studentId)
             ->where('student_bill_payment.termid_id', $termid)
             ->where('student_bill_payment.session_id', $sessionid)
@@ -144,7 +143,7 @@ class SchoolPaymentController extends Controller
             ])
             ->get();
 
-        // Fetch payment history (all records with delete_status = '0')
+        // Fetch payment history (all records with delete_status = '0') for CURRENT term and session only
         $paymentHistory = StudentBillPayment::where('student_bill_payment.student_id', $studentId)
             ->where('student_bill_payment.termid_id', $termid)
             ->where('student_bill_payment.session_id', $sessionid)
@@ -174,42 +173,39 @@ class SchoolPaymentController extends Controller
             ->orderBy('student_bill_payment_record.created_at', 'desc')
             ->get();
 
-        // Fetch school bills (fallback to all bills if school_bill_term_session doesn't exist)
+        // Fetch school bills for CURRENT term and session only
         try {
-  
-              $student_bill_info = SchoolBillTermSession::where('school_bill_class_term_session.class_id', $studentdata->schoolclassId)
-                        ->where('school_bill_class_term_session.termid_id', $request->termid)
-                        ->where('school_bill_class_term_session.session_id', $request->sessionid)
-                        ->leftJoin('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
-                        ->leftJoin('student_status', 'student_status.id', '=', 'school_bill.statusId')
-                        ->where('student_status.id', $studentdata->statusId)
-                        ->select([
-                            'school_bill_class_term_session.id as id',
-                            'school_bill.id as schoolbillid',
-                            'school_bill.title as title',
-                            'school_bill.description as description',
-                            'student_status.id as statusId',
-                            'school_bill.bill_amount as amount'
-                        ])
-                        ->get();
-                //  print_r($student_bill_info);
-
-            } catch (\Illuminate\Database\QueryException $e) {
-                if (strpos($e->getMessage(), 'school_bill_term_session') !== false) {
-                    // Fallback query: Fetch all school bills if school_bill_term_session table doesn't exist
-                    Log::warning('Table school_bill_class_term_session not found, falling back to all school bills.');
-                    $student_bill_info = SchoolBillModel::select([
-                        'school_bill.id as schoolbillid',
-                        'school_bill.title as title',
-                        'school_bill.description as description',
-                        'school_bill.bill_amount as amount',
-                    ])->get();
-                } else {
-                    throw $e; // Rethrow other database errors
-                }
+            $student_bill_info = SchoolBillTermSession::where('school_bill_class_term_session.class_id', $studentdata->schoolclassId)
+                ->where('school_bill_class_term_session.termid_id', $request->termid)
+                ->where('school_bill_class_term_session.session_id', $request->sessionid)
+                ->leftJoin('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
+                ->leftJoin('student_status', 'student_status.id', '=', 'school_bill.statusId')
+                ->where('student_status.id', $studentdata->statusId)
+                ->select([
+                    'school_bill_class_term_session.id as id',
+                    'school_bill.id as schoolbillid',
+                    'school_bill.title as title',
+                    'school_bill.description as description',
+                    'student_status.id as statusId',
+                    'school_bill.bill_amount as amount'
+                ])
+                ->get();
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (strpos($e->getMessage(), 'school_bill_class_term_session') !== false) {
+                // Fallback query: Fetch all school bills if school_bill_term_session table doesn't exist
+                Log::warning('Table school_bill_class_term_session not found, falling back to all school bills.');
+                $student_bill_info = SchoolBillModel::select([
+                    'school_bill.id as schoolbillid',
+                    'school_bill.title as title',
+                    'school_bill.description as description',
+                    'school_bill.bill_amount as amount',
+                ])->get();
+            } else {
+                throw $e; // Rethrow other database errors
             }
+        }
 
-        // Fetch payment book
+        // Fetch payment book for CURRENT term and session only
         $studentpaymentbillbook = StudentBillPaymentBook::where('student_id', $studentId)
             ->where('term_id', $termid)
             ->where('session_id', $sessionid)
@@ -219,10 +215,6 @@ class SchoolPaymentController extends Controller
         $schoolterm = Schoolterm::find($termid)->term ?? 'N/A';
         $schoolsession = Schoolsession::find($sessionid)->session ?? 'N/A';
         $schoolclassId = $studentdata->schoolclassId ?? null;
-
-        // Debug the $studentpaymentbill and $paymentHistory collections
-        // Log::info('Student Payment Bill:', $studentpaymentbill->toArray());
-        // Log::info('Payment History:', $paymentHistory->toArray());
 
         return view('schoolpayment.studentpayment', compact(
             'pagetitle',
@@ -711,7 +703,8 @@ class SchoolPaymentController extends Controller
 
         return view('schoolpayment.studentinvoice', $data);
     }
-        /**
+
+    /**
      * Generate and download a payment statement for all student payments.
      */
     public function statement(Request $request, $studentId, $schoolclassid, $termid, $sessionid)
@@ -752,7 +745,7 @@ class SchoolPaymentController extends Controller
             return redirect()->route('schoolpayment.index')->with('error', 'Student not found or not enrolled.');
         }
 
-        // Fetch school bills (fallback to all bills if school_bill_term_session doesn't exist)
+        // Fetch school bills for CURRENT term and session only
         try {
             $student_bill_info = SchoolBillModel::whereExists(function ($query) use ($termid, $sessionid, $schoolclassid) {
                     $query->select(DB::raw(1))
@@ -784,13 +777,13 @@ class SchoolPaymentController extends Controller
             }
         }
 
-        // Fetch payment book
+        // Fetch payment book for CURRENT term and session only
         $studentpaymentbillbook = StudentBillPaymentBook::where('student_id', $studentId)
             ->where('term_id', $termid)
             ->where('session_id', $sessionid)
             ->get();
 
-        // Fetch payment records for the table (all records, both delete_status = '0' and '1')
+        // Fetch payment records for the table (all records, both delete_status = '0' and '1') for CURRENT term and session only
         $studentpaymentbill = StudentBillPayment::where('student_bill_payment.student_id', $studentId)
             ->where('student_bill_payment.class_id', $schoolclassid)
             ->where('student_bill_payment.termid_id', $termid)
