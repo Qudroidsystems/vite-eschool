@@ -71,7 +71,6 @@
                                                     <div class="fw-semibold fs-6 text-gray-400">Student Status | Active Mode</div>
                                                 </div>
 
-
                                                 <!-- Class Card -->
                                                 <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
                                                     <div class="d-flex align-items-center">
@@ -349,30 +348,27 @@
                                         <div class="row g-3">
                                             @foreach ($student_bill_info as $sc)
                                                 @php
-                                                    $paymentFound = false;
+                                                    // Calculate payments for CURRENT term and session only
+                                                    $paymentBookRecord = $studentpaymentbillbook->where('school_bill_id', $sc->schoolbillid)->first();
+                                                    
+                                                    // For new term, always start with 0 paid unless there are actual payments
                                                     $amountPaid = 0;
                                                     $balance = $sc->amount;
-                                                    foreach ($studentpaymentbillbook as $paymentBook) {
-                                                        if ((int)$paymentBook->school_bill_id === (int)$sc->schoolbillid) {
-                                                            $paymentFound = true;
-                                                            $amountPaid = $paymentBook->amount_paid;
-                                                            $balance = $paymentBook->amount_owed;
-                                                            break;
-                                                        }
+                                                    
+                                                    if ($paymentBookRecord) {
+                                                        $amountPaid = $paymentBookRecord->amount_paid;
+                                                        $balance = $paymentBookRecord->amount_owed;
                                                     }
-                                                    $totalLastPayment = \App\Models\StudentBillPayment::where('student_id', $studentId)
-                                                        ->where('student_bill_payment.class_id', $schoolclassId)
-                                                        ->where('student_bill_payment.termid_id', $termid)
-                                                        ->where('student_bill_payment.session_id', $sessionid)
-                                                        ->where('school_bill_id', $sc->schoolbillid)
-                                                        ->leftJoin('student_bill_payment_record', 'student_bill_payment_record.student_bill_payment_id', '=', 'student_bill_payment.id')
-                                                        ->sum(DB::raw('CAST(student_bill_payment_record.amount_paid AS DECIMAL(10, 2))'));
-                                                    if ($totalLastPayment > 0) {
-                                                        $amountPaid = $totalLastPayment;
+                                                    
+                                                    // Double-check with actual payment records for this term
+                                                    $actualPaymentsThisTerm = $studentpaymentbill->where('school_bill_id', $sc->schoolbillid);
+                                                    if ($actualPaymentsThisTerm->isNotEmpty()) {
+                                                        $amountPaid = $actualPaymentsThisTerm->sum('totalAmountPaid');
                                                         $balance = $sc->amount - $amountPaid;
                                                     }
+                                                    
                                                     $progressPercentage = $sc->amount > 0 ? ($amountPaid / $sc->amount) * 100 : 0;
-                                                    $isPaidInFull = (float)$sc->amount === (float)$amountPaid;
+                                                    $isPaidInFull = (float)$balance <= 0;
                                                     $paymentExists = $studentpaymentbill->where('school_bill_id', $sc->schoolbillid)->isNotEmpty();
                                                     $paymentRecord = $studentpaymentbill->where('school_bill_id', $sc->schoolbillid)->first();
                                                     $invoicePending = $paymentExists && $paymentRecord && $paymentRecord->delete_status == '1';
@@ -463,27 +459,6 @@
                                                                     </button>
                                                                 @endif
                                                             </div>
-                                                            <!-- Debug: Log button data -->
-                                                            @if (!$isPaidInFull)
-                                                                <script>
-                                                                    try {
-                                                                        console.log('Make Payment Button Data for Bill {{ \Illuminate\Support\Js::from($sc->schoolbillid) }}:', {
-                                                                            student_id: {{ \Illuminate\Support\Js::from($studentId) }},
-                                                                            amount: {{ \Illuminate\Support\Js::from(number_format($sc->amount)) }},
-                                                                            amount_actual: {{ \Illuminate\Support\Js::from($sc->amount) }},
-                                                                            amount_paid: {{ \Illuminate\Support\Js::from(number_format($amountPaid)) }},
-                                                                            balance: {{ \Illuminate\Support\Js::from(number_format($balance)) }},
-                                                                            school_bill_id: {{ \Illuminate\Support\Js::from($sc->schoolbillid) }},
-                                                                            class_id: {{ \Illuminate\Support\Js::from($schoolclassId) }},
-                                                                            term_id: {{ \Illuminate\Support\Js::from($termid) }},
-                                                                            session_id: {{ \Illuminate\Support\Js::from($sessionid) }},
-                                                                            invoicePending: {{ $invoicePending ? 'true' : 'false' }}
-                                                                        });
-                                                                    } catch (e) {
-                                                                        console.error('Error logging button data for bill {{ \Illuminate\Support\Js::from($sc->schoolbillid) }}:', e);
-                                                                    }
-                                                                </script>
-                                                            @endif
                                                         </div>
                                                     </div>
                                                 </div>
