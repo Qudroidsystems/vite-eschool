@@ -47,7 +47,6 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
         return 1000;
     }
 
-    
     /**
      * Parse Excel date with support for serial dates and multiple formats
      * Returns only the date part without time
@@ -89,21 +88,38 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             // Return only date part without time
             return $parsedDate->startOfDay();
         } catch (\Exception $e) {
-            // Try common date formats more aggressively
+            // Try common date formats more aggressively - prioritize DD/MM/YYYY formats first
             $formats = [
-                'd/m/Y', 'm/d/Y', 'Y-m-d', 'd-m-Y', 'm-d-Y',
-                'd/M/Y', 'M/d/Y', 'd.M.Y', 'M d, Y', 'd F Y',
-                'd/m/y', 'm/d/y', 'y-m-d', 'd-m-y', 'm-d-y',
-                'd-M-Y', 'd.M.y', 'm/d', 'd/m', 'Ymd', 'dmY'
+                'd/m/Y', 'd/m/y', // DD/MM/YYYY or DD/MM/YY
+                'd-m-Y', 'd-m-y', // DD-MM-YYYY or DD-MM-YY
+                'Y-m-d', 'y-m-d', // YYYY-MM-DD or YY-MM-DD
+                'm/d/Y', 'm/d/y', // MM/DD/YYYY or MM/DD/YY
+                'm-d-Y', 'm-d-y', // MM-DD-YYYY or MM-DD-YY
+                'd.M.Y', 'd.M.y', // DD.MM.YYYY or DD.MM.YY
+                'd/M/Y', 'M/d/Y', // DD/MMM/YYYY or MM/DD/YYYY
+                'd F Y', 'M d, Y', // DD Month YYYY or Month DD, YYYY
+                'Ymd', 'dmY'      // YYYYMMDD or DDMMYYYY
             ];
             
             foreach ($formats as $format) {
                 try {
                     $parsedDate = Carbon::createFromFormat($format, $rawDate);
+                    
+                    // Validate the parsed date
+                    if (!$parsedDate) {
+                        continue;
+                    }
+                    
                     // If year is 2-digit, assume it's in 1900-1999 range
                     if ($parsedDate->year < 100) {
                         $parsedDate = $parsedDate->addYears(1900);
                     }
+                    
+                    // Validate reasonable date range for students (born after 1990)
+                    if ($parsedDate->year < 1990 || $parsedDate->isFuture()) {
+                        continue; // Skip unreasonable dates
+                    }
+                    
                     // Return only date part without time
                     return $parsedDate->startOfDay();
                 } catch (\Exception $e) {
@@ -111,35 +127,147 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
                 }
             }
             
-            // If all parsing fails, try to extract date components manually
-            preg_match('/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/', $rawDate, $matches);
-            if (count($matches) === 4) {
-                $day = (int)$matches[1];
-                $month = (int)$matches[2];
-                $year = (int)$matches[3];
-                
-                // Handle 2-digit years
-                if ($year < 100) {
-                    $year += 1900;
-                }
-                
-                if (checkdate($month, $day, $year)) {
-                    return Carbon::create($year, $month, $day)->startOfDay();
+            // If all parsing fails, try to extract date components manually with different separators
+            $patterns = [
+                '/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/', // DD/MM/YYYY or DD-MM-YYYY
+                '/(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})/',   // YYYY/MM/DD or YYYY-MM-DD
+            ];
+            
+            foreach ($patterns as $pattern) {
+                preg_match($pattern, $rawDate, $matches);
+                if (count($matches) === 4) {
+                    $part1 = (int)$matches[1];
+                    $part2 = (int)$matches[2];
+                    $part3 = (int)$matches[3];
+                    
+                    // Determine format (DD/MM/YYYY vs YYYY/MM/DD)
+                    if ($part3 > 31) {
+                        // YYYY/MM/DD format
+                        $year = $part1;
+                        $month = $part2;
+                        $day = $part3;
+                    } else if ($part1 > 31) {
+                        // YYYY/MM/DD format (different pattern)
+                        $year = $part1;
+                        $month = $part2;
+                        $day = $part3;
+                    } else {
+                        // Assume DD/MM/YYYY format (most common in your data)
+                        $day = $part1;
+                        $month = $part2;
+                        $year = $part3;
+                        
+                        // Handle 2-digit years
+                        if ($year < 100) {
+                            $year += 2000; // For student data, assume 2000s
+                        }
+                    }
+                    
+                    // Validate date
+                    if (checkdate($month, $day, $year)) {
+                        $parsedDate = Carbon::create($year, $month, $day);
+                        
+                        // Validate reasonable range
+                        if ($parsedDate->year >= 1990 && !$parsedDate->isFuture()) {
+                            return $parsedDate->startOfDay();
+                        }
+                    }
                 }
             }
             
-            // Last attempt: try to extract YYYY-MM-DD from datetime string
+            // Last attempt: try to extract any date-like pattern
             preg_match('/(\d{4}-\d{2}-\d{2})/', $rawDate, $matches);
             if (count($matches) === 2) {
                 try {
-                    return Carbon::parse($matches[1])->startOfDay();
+                    $parsedDate = Carbon::parse($matches[1]);
+                    if ($parsedDate->year >= 1990 && !$parsedDate->isFuture()) {
+                        return $parsedDate->startOfDay();
+                    }
                 } catch (\Exception $e) {
                     // Continue to throw exception
                 }
             }
             
-            throw new \Exception("Unable to parse date: {$rawDate}");
+            // If we get here, log the problematic date for debugging
+            \Log::warning("Unable to parse date, using fallback: '{$rawDate}'");
+            
+            // Final fallback: use current date minus 11 years (typical student age)
+            return Carbon::now()->subYears(11)->startOfYear();
         }
+    }
+
+    /**
+     * Normalize gender with comprehensive mapping
+     */
+    private function normalizeGender($rawGender)
+    {
+        if ($rawGender === 'N/A' || empty(trim($rawGender))) {
+            return 'N/A';
+        }
+
+        $cleanGender = strtolower(trim($rawGender));
+        
+        // Comprehensive gender mapping
+        $genderMap = [
+            // Male variations
+            'male' => 'Male',
+            'm' => 'Male',
+            'm.' => 'Male',
+            'boy' => 'Male',
+            'masculine' => 'Male',
+            '1' => 'Male',
+            'male.' => 'Male',
+            'm ' => 'Male',
+            ' male' => 'Male',
+            'male ' => 'Male',
+            
+            // Female variations  
+            'female' => 'Female',
+            'f' => 'Female',
+            'f.' => 'Female',
+            'girl' => 'Female',
+            'feminine' => 'Female',
+            '2' => 'Female',
+            'female.' => 'Female',
+            'f ' => 'Female',
+            ' female' => 'Female',
+            'female ' => 'Female',
+        ];
+
+        // Exact match
+        if (isset($genderMap[$cleanGender])) {
+            return $genderMap[$cleanGender];
+        }
+
+        // Remove any special characters and extra spaces
+        $cleanGender = preg_replace('/[^a-z0-9]/', '', $cleanGender);
+        
+        // Check again after cleaning
+        if (isset($genderMap[$cleanGender])) {
+            return $genderMap[$cleanGender];
+        }
+
+        // Partial matching
+        if (strpos($cleanGender, 'male') !== false || $cleanGender === 'm' || strpos($cleanGender, 'boy') !== false) {
+            return 'Male';
+        }
+        
+        if (strpos($cleanGender, 'female') !== false || $cleanGender === 'f' || strpos($cleanGender, 'girl') !== false) {
+            return 'Female';
+        }
+
+        // First character matching
+        if (strpos($cleanGender, 'm') === 0) {
+            return 'Male';
+        }
+        
+        if (strpos($cleanGender, 'f') === 0) {
+            return 'Female';
+        }
+
+        // If still not determined, log for debugging and return N/A
+        \Log::warning("Unable to normalize gender value: '{$rawGender}' (cleaned: '{$cleanGender}')");
+        return 'N/A';
     }
 
     /**
@@ -158,86 +286,66 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
         $sessionid = $naIfEmpty(Session::get('sid'));
         $batchid = $naIfEmpty(Session::get('batchid'));
 
-        // Map row data with "N/A" for missing/empty values
-        $admissionno = $naIfEmpty($row[0] ?? null);
-        $surname = $naIfEmpty($row[1] ?? null);
-        $firstname = $naIfEmpty($row[2] ?? null);
-        $othername = $naIfEmpty($row[3] ?? null);
-        $rawGender = $naIfEmpty($row[4] ?? null);
-        $futureAmbition = $naIfEmpty($row[5] ?? null);
-        $rawDob = $naIfEmpty($row[6] ?? null);
-        $rawAge = $naIfEmpty($row[7] ?? null);
-        $placeofbirth = $naIfEmpty($row[8] ?? null);
-        $nationality = $naIfEmpty($row[9] ?? null);
-        $state = $naIfEmpty($row[10] ?? null);
-        $local = $naIfEmpty($row[11] ?? null);
-        $religion = $naIfEmpty($row[12] ?? null);
-        $lastschool = $naIfEmpty($row[13] ?? null);
-        $lastclass = $naIfEmpty($row[14] ?? null);
-
-        $father_title = $naIfEmpty(Str::limit($row[18] ?? '', 3, ''));
-        $father = $naIfEmpty(Str::substr($row[18] ?? '', 3));
-        $father_phone = $naIfEmpty($row[19] ?? null);
-        $office_address = $naIfEmpty($row[20] ?? null);
-        $father_occupation = $naIfEmpty($row[21] ?? null);
-        $mother_title = $naIfEmpty(Str::limit($row[22] ?? '', 3, ''));
-        $mother = $naIfEmpty(Str::substr($row[22] ?? '', 3));
-        $mother_phone = $naIfEmpty($row[23] ?? null);
-        $mother_occupation = $naIfEmpty($row[24] ?? null);
-        $mother_office_address = $naIfEmpty($row[25] ?? null);
-        $parent_address = $naIfEmpty($row[26] ?? null);
-        $parent_religion = $naIfEmpty($row[27] ?? null);
+        // CORRECT COLUMN MAPPING based on your Excel file:
+        $admissionno = $naIfEmpty($row[0] ?? null);  // A: Admission No
+        $surname = $naIfEmpty($row[1] ?? null);      // B: Surname
+        $firstname = $naIfEmpty($row[2] ?? null);    // C: First Name
+        $othername = $naIfEmpty($row[3] ?? null);    // D: Other Names
+        $rawGender = $naIfEmpty($row[4] ?? null);    // E: Gender (this exists!)
+        $homeAddress = $naIfEmpty($row[5] ?? null);  // F: Home Address
+        $rawDob = $naIfEmpty($row[6] ?? null);       // G: DOB
+        $rawAge = $naIfEmpty($row[7] ?? null);       // H: Age
+        $placeofbirth = $naIfEmpty($row[8] ?? null); // I: Place of Birth
+        $nationality = $naIfEmpty($row[9] ?? null);  // J: Nationality
+        $state = $naIfEmpty($row[10] ?? null);       // K: State of Origin
+        $local = $naIfEmpty($row[11] ?? null);       // L: L.G.A
+        $religion = $naIfEmpty($row[12] ?? null);    // M: Religion
+        $lastschool = $naIfEmpty($row[13] ?? null);  // N: Last Sch. Attended
+        $lastclass = $naIfEmpty($row[14] ?? null);   // O: Last Class
+        // Columns P, Q, R are schoolclassid, termid, sessionid (constants)
 
         // Normalize gender
-        $gender = ucfirst(strtolower($rawGender));
-        if (!in_array($gender, ['Male', 'Female'])) {
-            $gender = 'N/A'; // Fallback if invalid
-        }
+        $gender = $this->normalizeGender($rawGender);
 
-        // Parse date of birth with improved logic
+        // Parse date of birth
         $parsedDob = null;
         $age = null;
         
         try {
             if ($rawDob !== 'N/A') {
                 $parsedDob = $this->parseExcelDate($rawDob);
-                
-                // If date is in future, adjust it (common Excel issue)
-                if ($parsedDob && $parsedDob->isFuture()) {
-                    $parsedDob = $parsedDob->subYears(100);
-                }
-                
-                // If date is too old (before 1940), use age to estimate
-                if ($parsedDob && $parsedDob->year < 1940) {
-                    if ($rawAge !== 'N/A' && is_numeric($rawAge)) {
-                        $age = (int)$rawAge;
-                        $estimatedBirthYear = Carbon::now()->subYears($age)->year;
-                        $parsedDob = Carbon::create($estimatedBirthYear, 1, 1);
-                        \Log::warning("DOB too old ({$parsedDob->format('Y-m-d')}), using estimated DOB from age: {$parsedDob->format('Y-m-d')}");
-                    }
-                }
             }
         } catch (\Exception $e) {
-            // If DOB parsing fails, use age to estimate birth year
-            if ($rawAge !== 'N/A' && is_numeric($rawAge)) {
-                $age = (int)$rawAge;
-                $estimatedBirthYear = Carbon::now()->subYears($age)->year;
-                $parsedDob = Carbon::create($estimatedBirthYear, 1, 1);
-                
-                \Log::warning("DOB parsing failed for '{$rawDob}', using estimated DOB from age: {$parsedDob->format('Y-m-d')}");
-            } else {
-                // If both DOB and age are invalid, use reasonable default for students (11 years old)
-                $parsedDob = Carbon::now()->subYears(11)->startOfYear();
-                \Log::warning("Both DOB and age invalid, using default DOB: {$parsedDob->format('Y-m-d')}");
-            }
+            \Log::warning("DOB parsing failed for '{$rawDob}', using age to estimate");
         }
 
-        // Set age: if 'N/A', calculate from DOB; else use provided age
+        // If DOB parsing failed, use age to estimate
+        if (!$parsedDob && $rawAge !== 'N/A' && is_numeric($rawAge)) {
+            $age = (int)$rawAge;
+            $estimatedBirthYear = Carbon::now()->subYears($age)->year;
+            $parsedDob = Carbon::create($estimatedBirthYear, 1, 1)->startOfDay();
+        }
+
+        // Set final age
         if ($rawAge === 'N/A' || !is_numeric($rawAge)) {
             $age = $parsedDob ? $parsedDob->diffInYears(Carbon::now()) : null;
         } else {
             $age = (int)$rawAge;
         }
+
+        // Parent data columns
+        $father_title = $naIfEmpty(Str::limit($row[18] ?? '', 3, '')); // S: Father Name
+        $father = $naIfEmpty(Str::substr($row[18] ?? '', 3));          // S: Father Name
+        $father_phone = $naIfEmpty($row[19] ?? null);                  // T: Father Phone
+        $father_occupation = $naIfEmpty($row[20] ?? null);             // U: Father Occupation
+        $office_address = $naIfEmpty($row[21] ?? null);                // V: Office Address
+        $mother_title = $naIfEmpty(Str::limit($row[22] ?? '', 3, '')); // W: Mother Name
+        $mother = $naIfEmpty(Str::substr($row[22] ?? '', 3));          // W: Mother Name
+        $mother_phone = $naIfEmpty($row[23] ?? null);                  // X: Mother Phone
+        $mother_occupation = $naIfEmpty($row[24] ?? null);             // Y: Mother Occupation
+        $mother_office_address = $naIfEmpty($row[25] ?? null);         // Z: Office Address
+        $parent_address = $naIfEmpty($row[26] ?? null);                // AA: Parent Home Address
+        $parent_religion = $naIfEmpty($row[27] ?? null);               // AB: Religion
 
         // Validate required fields
         if (in_array($admissionno, ['N/A', ''], true) || in_array($surname, ['N/A', ''], true) || in_array($firstname, ['N/A', ''], true)) {
@@ -249,9 +357,17 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             throw new \Exception("Session data (schoolclassid, termid, sessionid, batchid) cannot be empty or 'N/A' in row " . ($this->startRow() + $this->id));
         }
 
-        // Debug logging for first few rows to help with troubleshooting
+        // Debug logging for first few rows
+       // Debug logging for first few rows
         if ($this->id < 5) {
             \Log::info("Import Debug - Row {$this->id}:", [
+                'admissionno' => $admissionno,
+                'firstname' => $firstname,
+                'surname' => $surname,
+                'raw_gender' => $rawGender,
+                'raw_gender_length' => strlen($rawGender),
+                'raw_gender_chars' => array_map('ord', str_split($rawGender)),
+                'final_gender' => $gender,
                 'raw_dob' => $rawDob,
                 'raw_age' => $rawAge,
                 'parsed_dob' => $parsedDob ? $parsedDob->format('Y-m-d') : 'null',
@@ -272,19 +388,20 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
         // Use transaction to ensure data consistency
         return \DB::transaction(function () use (
             $studentbiodata, $studentclass, $promotion, $parent, $studenthouse, $picture, $studentpersonalityprofile, $studentStatus,
-            $admissionno, $surname, $firstname, $othername, $gender, $futureAmbition, $parsedDob, $age, $placeofbirth, $nationality, $state, $local, $religion, $lastschool, $lastclass,
+            $admissionno, $surname, $firstname, $othername, $gender, $homeAddress, $parsedDob, $age, $placeofbirth, $nationality, $state, $local, $religion, $lastschool, $lastclass,
             $father_title, $father, $father_phone, $office_address, $father_occupation, $mother_title, $mother, $mother_phone, $mother_occupation, $mother_office_address, $parent_address, $parent_religion,
             $schoolclassid, $termid, $sessionid, $batchid
         ) {
             // Populate student biodata
             $studentbiodata->admissionNo = $admissionno;
-            $studentbiodata->title = 'N/A'; // Hardcoded as per original
+            $studentbiodata->title = 'N/A';
             $studentbiodata->firstname = $firstname;
             $studentbiodata->lastname = $surname;
             $studentbiodata->othername = $othername;
             $studentbiodata->gender = $gender;
-            $studentbiodata->future_ambition = $futureAmbition;
-            $studentbiodata->home_address2 = 'N/A';
+            $studentbiodata->future_ambition = 'N/A';
+           
+            $studentbiodata->home_address2 = $homeAddress;
             $studentbiodata->dateofbirth = $parsedDob;
             $studentbiodata->age = $age;
             $studentbiodata->placeofbirth = $placeofbirth;
@@ -372,39 +489,35 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             '*.1' => 'required|string|max:255', // admissionno (column A)
             '*.2' => 'required|string|max:255', // surname (column B)
             '*.3' => 'required|string|max:255', // firstname (column C)
-            '*.5' => [
-                function ($attribute, $value, $onFailure) {
-                    if ($value === 'N/A' || trim($value ?? '') === '') {
-                        return; // Allow N/A or empty for gender
-                    }
-                    $normalized = ucfirst(strtolower(trim($value)));
-                    if (!in_array($normalized, ['Male', 'Female'])) {
-                        $onFailure('Gender must be Male or Female.');
-                    }
-                }
-            ], // gender (column E)
-            '*.7' => [
+            // '*.5' => [ // gender (column E)
+            //     function ($attribute, $value, $onFailure) {
+            //         if ($value === 'N/A' || trim($value ?? '') === '') {
+            //             return; // Allow N/A or empty for gender
+            //         }
+            //         $normalized = ucfirst(strtolower(trim($value)));
+            //         if (!in_array($normalized, ['Male', 'Female'])) {
+            //             $onFailure('Gender must be Male or Female.');
+            //         }
+            //     }
+            // ],
+            '*.7' => [ // dateofbirth (column G)
                 function ($attribute, $value, $onFailure) {
                     if ($value === 'N/A' || trim($value ?? '') === '') {
                         return; // Allow N/A or empty for DOB
                     }
                     
-                    // Be more lenient with date validation - just check if it's somewhat parsable
                     try {
-                        // For validation, just try basic parsing without strict range checks
                         if (is_numeric($value)) {
-                            // It's an Excel serial number - accept it
-                            return;
+                            return; // Excel serial number
                         } else {
-                            // Try basic date parsing
                             Carbon::parse($value);
                         }
                     } catch (\Exception $e) {
                         $onFailure('Date of birth must be in a recognizable date format.');
                     }
                 }
-            ], // dateofbirth (column G) - more lenient validation
-            '*.8' => [
+            ],
+            '*.8' => [ // age (column H)
                 function ($attribute, $value, $onFailure) {
                     if ($value === 'N/A' || trim($value ?? '') === '') {
                         return; // Allow N/A or empty for age
@@ -413,7 +526,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
                         $onFailure('Age must be a number between 1 and 100.');
                     }
                 }
-            ], // age (column H)
+            ],
         ];
     }
 
@@ -436,7 +549,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
     {
         return [
             '*.1' => 'admissionno',
-            '*.2' => 'surname',
+            '*.2' => 'surname', 
             '*.3' => 'firstname',
             '*.5' => 'gender',
             '*.7' => 'dateofbirth',
@@ -472,6 +585,7 @@ class StudentsImport implements ToModel, WithProgressBar, WithStartRow, WithUpse
             'othername',
             'gender',
             'future_ambition',
+            // 'home_address',
             'home_address2',
             'dateofbirth',
             'age',
