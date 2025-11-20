@@ -342,41 +342,45 @@
 
                                 </div>
 
+                             
                                 <!-- School Bills Tab -->
                                 <div class="tab-pane fade" id="school-bills" role="tabpanel" aria-labelledby="school-bills-tab">
                                     @if ($student_bill_info->isNotEmpty())
                                         <div class="row g-3">
                                             @foreach ($student_bill_info as $sc)
                                                 @php
-                                                    // Calculate payments for CURRENT term and session only
-                                                    $paymentBookRecord = $studentpaymentbillbook->where('school_bill_id', $sc->schoolbillid)->first();
-                                                    
-                                                    // For new term, always start with 0 paid unless there are actual payments
+                                                    // Get payment book entry for this specific bill, term, and session
+                                                    $paymentBook = StudentBillPaymentBook::where('student_id', $studentId)
+                                                        ->where('school_bill_id', $sc->schoolbillid)
+                                                        ->where('class_id', $schoolclassId)
+                                                        ->where('term_id', $termid)
+                                                        ->where('session_id', $sessionid)
+                                                        ->first();
+
+                                                    // Initialize values
                                                     $amountPaid = 0;
                                                     $balance = $sc->amount;
-                                                    
-                                                    if ($paymentBookRecord) {
-                                                        $amountPaid = $paymentBookRecord->amount_paid;
-                                                        $balance = $paymentBookRecord->amount_owed;
+
+                                                    // If payment book exists for this term/session, use those values
+                                                    if ($paymentBook) {
+                                                        $amountPaid = $paymentBook->amount_paid ?? 0;
+                                                        $balance = $paymentBook->amount_owed ?? $sc->amount;
                                                     }
-                                                    
-                                                    // Double-check with actual payment records for this term
-                                                    $actualPaymentsThisTerm = $studentpaymentbill->where('school_bill_id', $sc->schoolbillid);
-                                                    if ($actualPaymentsThisTerm->isNotEmpty()) {
-                                                        $amountPaid = $actualPaymentsThisTerm->sum('totalAmountPaid');
-                                                        $balance = $sc->amount - $amountPaid;
-                                                    }
-                                                    
+
+                                                    // Calculate progress percentage
                                                     $progressPercentage = $sc->amount > 0 ? ($amountPaid / $sc->amount) * 100 : 0;
                                                     $isPaidInFull = (float)$balance <= 0;
-                                                    $paymentExists = $studentpaymentbill->where('school_bill_id', $sc->schoolbillid)->isNotEmpty();
+
+                                                    // Check if there's a pending payment (invoice not yet generated)
                                                     $paymentRecord = $studentpaymentbill->where('school_bill_id', $sc->schoolbillid)->first();
-                                                    $invoicePending = $paymentExists && $paymentRecord && $paymentRecord->delete_status == '1';
+                                                    $invoicePending = $paymentRecord && $paymentRecord->delete_status == '1';
                                                 @endphp
+                                                
                                                 <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12">
                                                     <div class="card border-0 shadow-sm h-100 position-relative overflow-hidden" style="border-radius: 12px; transition: all 0.3s ease;">
                                                         <!-- Status indicator stripe -->
                                                         <div class="position-absolute top-0 start-0 w-100" style="height: 3px; background: {{ $isPaidInFull ? 'linear-gradient(90deg, #10b981, #059669)' : 'linear-gradient(90deg, #f59e0b, #d97706)' }};"></div>
+                                                        
                                                         <div class="card-body p-4">
                                                             <!-- Header Section -->
                                                             <div class="d-flex align-items-start justify-content-between mb-3">
@@ -396,6 +400,7 @@
                                                                     </div>
                                                                 </div>
                                                             </div>
+                                                            
                                                             <!-- Amount Information -->
                                                             <div class="mb-3">
                                                                 <div class="text-center mb-3">
@@ -419,6 +424,7 @@
                                                                     </div>
                                                                 </div>
                                                             </div>
+                                                            
                                                             <!-- Progress Bar -->
                                                             <div class="mb-3">
                                                                 <div class="d-flex align-items-center justify-content-between mb-1">
@@ -432,6 +438,7 @@
                                                                     </div>
                                                                 </div>
                                                             </div>
+                                                            
                                                             <!-- Action Button -->
                                                             <div class="d-grid">
                                                                 @if ($isPaidInFull)
@@ -479,47 +486,6 @@
                                             </div>
                                         </div>
                                     @endif
-                                    <!-- Custom CSS for enhanced interactions -->
-                                    <style>
-                                        .card:hover {
-                                            transform: translateY(-4px);
-                                            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
-                                        }
-                                        .make-payment:hover {
-                                            transform: translateY(-1px);
-                                            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
-                                            background: #1d4ed8 !important;
-                                        }
-                                        .progress-bar {
-                                            background: linear-gradient(90deg, #3b82f6, #1d4ed8) !important;
-                                        }
-                                        .bg-success.progress-bar {
-                                            background: linear-gradient(90deg, #10b981, #059669) !important;
-                                        }
-                                        .card-title {
-                                            color: inherit;
-                                            line-height: 1.4;
-                                        }
-                                        .badge {
-                                            font-size: 0.75rem;
-                                            font-weight: 600;
-                                            letter-spacing: 0.02em;
-                                        }
-                                        @media (max-width: 767px) {
-                                            .col-6 {
-                                                margin-bottom: 0.5rem;
-                                            }
-                                            .card-body {
-                                                padding: 1rem !important;
-                                            }
-                                            .fs-5 {
-                                                font-size: 1.1rem !important;
-                                            }
-                                        }
-                                        .fs-8 {
-                                            font-size: 0.65rem;
-                                        }
-                                    </style>
                                 </div>
                             </div>
                         </div>
