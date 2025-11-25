@@ -112,4 +112,30 @@ class Student extends Model
     {
         return $this->hasOne(ParentRegistration::class, 'studentId', 'id');
     }
+
+   
+    public function currentClass()
+    {
+        return $this->hasOne(Studentclass::class, 'studentId', 'id')
+            ->whereHas('session', function ($q) {
+                $q->where('status', 'Current');
+            })
+            ->with(['schoolclass.armRelation', 'term', 'session']);
+    }
+
+    public function classHistory()
+    {
+        return $this->hasMany(Studentclass::class, 'studentId', 'id')
+            ->with(['schoolclass.armRelation', 'term', 'session', 'promotion'])
+            ->orderByDesc('sessionid')
+            ->orderByDesc('termid');
+    }
+
+    public function promotion()
+    {
+        return $this->hasOne(PromotionStatus::class, 'studentId', 'id')
+            ->whereColumn('schoolclassid', 'studentclass.schoolclassid')
+            ->whereColumn('sessionid', 'studentclass.sessionid')
+            ->whereColumn('termid', 'studentclass.termid');
+    }
 }

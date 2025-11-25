@@ -216,7 +216,7 @@ class SchoolPaymentController extends Controller
         $schoolsession = Schoolsession::find($sessionid)->session ?? 'N/A';
         $schoolclassId = $studentdata->schoolclassId ?? null;
 
-        return view('schoolpayment.studentpayment', compact(
+    return view('schoolpayment.studentpayment', compact(
             'pagetitle',
             'studentdata',
             'studentpaymentbill',

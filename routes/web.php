@@ -164,6 +164,8 @@ Route::group(['middleware' => ['auth']], function () {
     // Route::get('/generate-admission-number/{year}', [StudentController::class, 'generateAdmissionNumber'])->name('student.generate-admission-number');
     // Route::get('/student/data', [StudentController::class, 'data'])->name('students.data');
     Route::get('/students/last-admission-number', [StudentController::class, 'getLastAdmissionNumber'])->name('student.getLastAdmissionNumber');
+    Route::get('/student/{id}/class-history', [StudentController::class, 'getStudentClassHistory'])->name('student.classHistory');
+
     
     Route::resource('classoperation', ClassOperationController::class);
 

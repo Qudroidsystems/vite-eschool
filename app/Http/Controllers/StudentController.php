@@ -24,6 +24,7 @@ use App\Models\BroadsheetRecord;
 use App\Models\StudentBatchModel;
 use Illuminate\Http\JsonResponse;
 use App\Models\ParentRegistration;
+use App\Models\StudentBillInvoice;
 use App\Models\StudentBillPayment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -33,6 +34,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Models\StudentBillPaymentBook;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use App\Models\StudentBillPaymentRecord;
 use App\Models\Studentpersonalityprofile;
 use App\Models\SubjectRegistrationStatus;
 use Illuminate\Support\Facades\Validator;
@@ -143,7 +145,7 @@ class StudentController extends Controller
             $validator = Validator::make($request->all(), [
                 'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
                 'admissionMode' => 'required|in:auto,manual',
-                'title' => 'nullable|in:Master,Miss',
+                'title' => 'required|in:Master,Miss',
                 'admissionNo' => [
                     'required',
                     'string',
@@ -160,7 +162,7 @@ class StudentController extends Controller
                 'othername' => 'nullable|string|max:255',
                 'gender' => 'required|in:Male,Female',
                 'dateofbirth' => 'required|date|before:today',
-                'placeofbirth' => 'required|string|max:255',
+                'placeofbirth' => 'nullable|string|max:255',
                 'nationality' => 'required|string|max:255',
                 'age' => 'required|integer|min:1|max:100',
                 'blood_group' => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
@@ -236,7 +238,7 @@ class StudentController extends Controller
                 $student->admissionNo = $request->admissionNo;
             }
             $student->admission_date = $request->admissionDate;
-            $student->title = $request->title;
+            $student->title = $request->title; // This is now required
             $student->admissionYear = $request->admissionYear;
             $student->firstname = $request->firstname;
             $student->lastname = $request->lastname;
@@ -247,7 +249,7 @@ class StudentController extends Controller
             $student->blood_group = $request->blood_group;
             $student->mother_tongue = $request->mother_tongue;
             $student->religion = $request->religion;
-            $student->sport_house = $request->sport_house;
+      
             $student->phone_number = $request->phone_number;
             $student->email = $request->email;
             $student->nin_number = $request->nin_number;
@@ -255,15 +257,16 @@ class StudentController extends Controller
             $student->state = $request->state;
             $student->local = $request->local;
             $student->nationality = $request->nationality;
-            $student->placeofbirth = $request->placeofbirth;
+            $student->placeofbirth = $request->placeofbirth ?? 'Not Provided';;
             $student->future_ambition = $request->future_ambition;
             $student->home_address2 = $request->permanent_address;
             $student->student_category = $request->student_category;
             $student->statusId = $request->statusId;
             $student->student_status = $request->student_status;
-            $student->last_school = $request->last_school;
-            $student->last_class = $request->last_class;
-            $student->reason_for_leaving = $request->reason_for_leaving;
+            // Handle nullable fields with defaults
+            $student->last_school = $request->last_school ?? 'Not Provided';
+            $student->last_class = $request->last_class ?? 'Not Provided';
+            $student->reason_for_leaving = $request->reason_for_leaving ?? 'Not Provided';
             $student->registeredBy = auth()->user()->id;
             $student->save();
 
@@ -409,6 +412,8 @@ class StudentController extends Controller
                 ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
                 ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
                 ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                // ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
+                // ->where('schoolsession.status', 'Current') // Only current session
                 ->select([
                     'studentRegistration.id',
                     'studentRegistration.admissionNo',
@@ -423,6 +428,7 @@ class StudentController extends Controller
                     'schoolclass.schoolclass',
                     'schoolarm.arm',
                     'studentclass.schoolclassid',
+                    
                 ])
                 ->latest()
                 ->get();
@@ -442,7 +448,40 @@ class StudentController extends Controller
         }
     }
 
-   
+   // In StudentController, update the show method or create a new method
+    public function getStudentClassHistory($id)
+    {
+        try {
+            $student = Student::findOrFail($id);
+            
+            // Get class history from PromotionStatus or Studentclass
+            $classHistory = PromotionStatus::where('studentId', $id)
+                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'promotionstatus.schoolclassid')
+                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'promotionstatus.termid')
+                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'promotionstatus.sessionid')
+                ->select([
+                    'promotionstatus.*',
+                    'schoolclass.schoolclass',
+                    'schoolarm.arm',
+                    'schoolterm.term',
+                    'schoolsession.session'
+                ])
+                ->orderBy('schoolsession.session', 'desc')
+                ->orderBy('schoolterm.term', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'classHistory' => $classHistory
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch class history'
+            ], 500);
+        }
+    }
 
     protected function generateAdmissionNumber()
     {
@@ -861,23 +900,45 @@ class StudentController extends Controller
             DB::beginTransaction();
 
             $student = Student::findOrFail($id);
+            
+            // Delete student picture and image file
             $picture = Studentpicture::where('studentid', $id)->first();
             if ($picture && $picture->picture) {
                 $this->deleteImage($picture->picture);
             }
 
+            // Delete student bill payment records and related data
+            $billPayments = StudentBillPayment::where('student_id', $id)->get();
+            foreach ($billPayments as $billPayment) {
+                // Delete payment records
+                StudentBillPaymentRecord::where('student_bill_payment_id', $billPayment->id)->delete();
+                $billPayment->delete();
+            }
+
+            // Delete student bill payment books
+            StudentBillPaymentBook::where('student_id', $id)->delete();
+
+            // Delete student bill invoices
+            StudentBillInvoice::where('student_id', $id)->delete();
+
+            // Delete other student related records
             Studentclass::where('studentId', $id)->delete();
             PromotionStatus::where('studentId', $id)->delete();
             ParentRegistration::where('studentId', $id)->delete();
             Studentpicture::where('studentid', $id)->delete();
+            
+            // Delete broadsheet records
             $broadsheetRecords = BroadsheetRecord::where('student_id', $id)->get();
             foreach ($broadsheetRecords as $record) {
                 Broadsheets::where('broadsheet_record_id', $record->id)->delete();
                 $record->delete();
             }
+            
             SubjectRegistrationStatus::where('studentId', $id)->delete();
             Studenthouse::where('studentid', $id)->delete();
             Studentpersonalityprofile::where('studentid', $id)->delete();
+            
+            // Finally delete the student
             $student->delete();
 
             DB::commit();
@@ -905,11 +966,26 @@ class StudentController extends Controller
             DB::beginTransaction();
 
             foreach ($ids as $id) {
+                // Delete student picture and image file
                 $picture = Studentpicture::where('studentid', $id)->first();
                 if ($picture && $picture->picture) {
                     $this->deleteImage($picture->picture);
                 }
 
+                // Delete student bill payment records and related data
+                $billPayments = StudentBillPayment::where('student_id', $id)->get();
+                foreach ($billPayments as $billPayment) {
+                    StudentBillPaymentRecord::where('student_bill_payment_id', $billPayment->id)->delete();
+                    $billPayment->delete();
+                }
+
+                // Delete student bill payment books
+                StudentBillPaymentBook::where('student_id', $id)->delete();
+
+                // Delete student bill invoices
+                StudentBillInvoice::where('student_id', $id)->delete();
+
+                // Delete other student related records
                 Studentclass::where('studentId', $id)->delete();
                 PromotionStatus::where('studentId', $id)->delete();
                 ParentRegistration::where('studentId', $id)->delete();
@@ -967,6 +1043,20 @@ class StudentController extends Controller
                     $this->deleteImage($picture->picture);
                 }
 
+                // Delete student bill payment records and related data
+                $billPayments = StudentBillPayment::where('student_id', $studentId)->get();
+                foreach ($billPayments as $billPayment) {
+                    StudentBillPaymentRecord::where('student_bill_payment_id', $billPayment->id)->delete();
+                    $billPayment->delete();
+                }
+
+                // Delete student bill payment books
+                StudentBillPaymentBook::where('student_id', $studentId)->delete();
+
+                // Delete student bill invoices
+                StudentBillInvoice::where('student_id', $studentId)->delete();
+
+                // Delete broadsheet records
                 $broadsheetRecords = BroadsheetRecord::where('student_id', $studentId)->get();
                 foreach ($broadsheetRecords as $record) {
                     Broadsheets::where('broadsheet_record_id', $record->id)->delete();
@@ -1241,3 +1331,4 @@ class StudentController extends Controller
         }
     }
 }
+
