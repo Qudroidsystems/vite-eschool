@@ -621,6 +621,8 @@ class StudentController extends Controller
                     'studentclass.schoolclassid',
                     'studentclass.termid',
                     'studentclass.sessionid',
+                    'schoolterm.term as term',
+                    'schoolsession.session as session',
                     'parentRegistration.father_title',
                     'parentRegistration.mother_title',
                     'parentRegistration.father as father_name',
@@ -632,8 +634,8 @@ class StudentController extends Controller
                     'parentRegistration.mother_phone',
                     'parentRegistration.parent_email',
                     'parentRegistration.parent_address',
-                    'studentpicture.picture',
-                    'studenthouses.schoolhouse',
+                    'studentpicture.picture as picture',
+                    'studenthouses.schoolhouse as schoolhouse',
               
                 ])
                 ->first();

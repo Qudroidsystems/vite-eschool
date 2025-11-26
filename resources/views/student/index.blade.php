@@ -1511,6 +1511,10 @@ use Spatie\Permission\Models\Role;
                                                 <div class="form-value" id="viewTerm"></div>
                                             </div>
                                             <div class="form-group">
+                                                <label class="form-label">Session</label>
+                                                <div class="form-value" id="viewSession">2023/2024</div>
+                                            </div>
+                                            <div class="form-group">
                                                 <label class="form-label">Category</label>
                                                 <div class="category-badges">
                                                     <span class="category-badge day active" id="dayBadge">
@@ -3115,7 +3119,10 @@ use Spatie\Permission\Models\Role;
                 document.getElementById('viewRegistrationNo').textContent = student.admissionNo || '';
                 document.getElementById('viewAdmissionDate').textContent = student.admissionDate ? new Date(student.admissionDate).toLocaleDateString() : '';
                 document.getElementById('viewClass').textContent = (student.schoolclass && student.arm) ? `${student.schoolclass} - ${student.arm}` : '';
-                document.getElementById('viewTerm').textContent = student.term_name || '';
+                
+                // Add these lines to display term and session
+                document.getElementById('viewTerm').textContent =  student.term || '';
+                document.getElementById('viewSession').textContent = student.session || '';
                 
                 // Category checkboxes
                 const categoryDay = document.getElementById('dayBadge');
@@ -3139,7 +3146,7 @@ use Spatie\Permission\Models\Role;
                 document.getElementById('viewDateOfBirth').textContent = student.dateofbirth ? new Date(student.dateofbirth).toLocaleDateString() : '';
                 document.getElementById('viewMotherTongue').textContent = student.mother_tongue || '';
                 document.getElementById('viewReligion').textContent = student.religion || '';
-                document.getElementById('viewSportHouse').textContent = student.schoolhouse || student.sport_house || '';
+                document.getElementById('viewSportHouse').textContent = student.schoolhouse || '';
                 document.getElementById('viewMobileNumber').textContent = student.phone_number || '';
                 document.getElementById('viewEmail').textContent = student.email || '';
                 document.getElementById('viewNIN').textContent = student.nin_number || '';
