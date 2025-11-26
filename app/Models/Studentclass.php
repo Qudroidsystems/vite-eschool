@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Studentclass extends Model
 {
@@ -18,5 +18,10 @@ class Studentclass extends Model
         'sessionid',
 
     ];
+
+    public function armRelation()
+    {
+        return $this->belongsTo(Schoolarm::class, 'arm');
+    }
 
 }

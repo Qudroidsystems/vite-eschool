@@ -404,49 +404,88 @@ class StudentController extends Controller
         }
     }
 
+    
     public function data(Request $request): JsonResponse
-    {
-        try {
-            Log::debug('Fetching students data');
-            $students = Student::leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-                ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
-                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                // ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-                // ->where('schoolsession.status', 'Current') // Only current session
-                ->select([
-                    'studentRegistration.id',
-                    'studentRegistration.admissionNo',
-                    'studentRegistration.firstname',
-                    'studentRegistration.lastname',
-                    'studentRegistration.othername',
-                    'studentRegistration.gender',
-                    'studentRegistration.statusId',
-                    'studentRegistration.student_status',
-                    'studentRegistration.created_at',
-                    'studentpicture.picture',
-                    'schoolclass.schoolclass',
-                    'schoolarm.arm',
-                    'studentclass.schoolclassid',
-                    
-                ])
-                ->latest()
-                ->get();
+{
+    try {
+        Log::debug('Fetching students data for table');
 
-            Log::debug('Students fetched', ['count' => $students->count()]);
+        // Subquery: Get the latest studentclass record for each student
+        $latestClassSubquery = Studentclass::query()
+            ->select('studentclass.studentId') // Explicitly select only the studentId
+            ->addSelect([
+                'studentclass.id as class_record_id',
+                'studentclass.schoolclassid',
+                'studentclass.termid',
+                'studentclass.sessionid'
+            ])
+            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
+            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
+            ->whereRaw('studentclass.id = (
+                SELECT sc2.id
+                FROM studentclass sc2
+                JOIN schoolsession ss2 ON ss2.id = sc2.sessionid
+                JOIN schoolterm st2 ON st2.id = sc2.termid
+                WHERE sc2.studentId = studentclass.studentId
+                ORDER BY ss2.session DESC, st2.id DESC
+                LIMIT 1
+            )');
 
-            return response()->json([
-                'success' => true,
-                'students' => $students,
-            ], 200);
-        } catch (\Exception $e) {
-            Log::error("Error fetching students: {$e->getMessage()}\nStack trace: {$e->getTraceAsString()}");
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch students: ' . $e->getMessage(),
-            ], 500);
-        }
+        $students = Student::query()
+            ->from('studentRegistration')
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->leftJoinSub($latestClassSubquery, 'latest_class', function ($join) {
+                $join->on('latest_class.studentId', '=', 'studentRegistration.id');
+            })
+            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'latest_class.schoolclassid')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select([
+                'studentRegistration.id',
+                'studentRegistration.admissionNo',
+                'studentRegistration.firstname',
+                'studentRegistration.lastname',
+                'studentRegistration.othername',
+                'studentRegistration.gender',
+                'studentRegistration.statusId',
+                'studentRegistration.student_status',
+                'studentRegistration.created_at',
+                'studentpicture.picture',
+                'schoolclass.schoolclass',
+                'schoolarm.arm',
+                DB::raw('COALESCE(latest_class.schoolclassid, NULL) as schoolclassid'), // Avoid ambiguity
+            ])
+            ->latest('studentRegistration.id')
+            ->get();
+
+        return response()->json([
+            'success'  => true,
+            'students' => $students->map(function ($student) {
+                return [
+                    'id'             => $student->id,
+                    'admissionNo'    => $student->admissionNo,
+                    'firstname'      => $student->firstname,
+                    'lastname'       => $student->lastname,
+                    'othername'      => $student->othername ?? '',
+                    'gender'         => $student->gender,
+                    'statusId'       => $student->statusId,
+                    'student_status' => $student->student_status,
+                    'created_at'     => $student->created_at,
+                    'picture'        => $student->picture,
+                    'schoolclass'    => $student->schoolclass ?? 'Not Assigned',
+                    'arm'            => $student->arm ?? '',
+                    'schoolclassid'  => $student->schoolclassid,
+                ];
+            }),
+        ], 200);
+
+    } catch (\Exception $e) {
+        Log::error("Error fetching students: {$e->getMessage()}\n{$e->getTraceAsString()}");
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to fetch students: ' . $e->getMessage(),
+        ], 500);
     }
+}
 
    // In StudentController, update the show method or create a new method
     public function getStudentClassHistory($id)
