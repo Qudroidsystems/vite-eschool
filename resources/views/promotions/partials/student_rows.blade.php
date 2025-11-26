@@ -4,7 +4,7 @@
         <td class="fw-medium">{{ $student->admissionno }}</td>
         <td>
             @if ($student->picture)
-                <img src="{{ asset('storage/' . $student->picture) }}" alt="Student Picture" width="50" height="50" class="rounded-circle" onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}';">
+                <img src="{{ asset('storage/student_avatars' . $student->picture) }}" alt="Student Picture" width="50" height="50" class="rounded-circle" onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}';">
             @else
                 <span class="text-muted">No Picture</span>
             @endif

@@ -2580,7 +2580,7 @@ use Spatie\Permission\Models\Role;
             let studentList;
             let allStudents = [];
             const itemsPerPage = 100;
-            const defaultAvatar = '{{ asset("storage/images/student_avatars/unnamed.jpg") }}';
+            const defaultAvatar = '{{ asset("storage/student_avatars/unnamed.jpg") }}';
 
             // Fetch students from the server
             function fetchStudents() {
@@ -2655,7 +2655,7 @@ use Spatie\Permission\Models\Role;
                 }
                 students.forEach(student => {
                     console.log('Rendering student:', student);
-                    const studentImage = student.picture ? `/storage/images/student_avatars/${student.picture}` : defaultAvatar;
+                    const studentImage = student.picture ? `/storage/student_avatars/${student.picture}` : defaultAvatar;
                 
 
                     // Get class display - handle cases where data might be missing
@@ -3433,8 +3433,8 @@ use Spatie\Permission\Models\Role;
 
                             const avatarElement = document.getElementById('editStudentAvatar');
                             if (avatarElement) {
-                                avatarElement.src = student.picture ? `/storage/images/student_avatars/${student.picture}` : defaultAvatar;
-                                avatarElement.setAttribute('data-original-src', student.picture ? `/storage/images/student_avatars/${student.picture}` : defaultAvatar);
+                                avatarElement.src = student.picture ? `/storage/student_avatars/${student.picture}` : defaultAvatar;
+                                avatarElement.setAttribute('data-original-src', student.picture ? `/storage/student_avatars/${student.picture}` : defaultAvatar);
                             } else {
                                 console.warn('Avatar element with ID "editStudentAvatar" not found');
                             }
