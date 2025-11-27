@@ -115,14 +115,21 @@ class Student extends Model
 
    
     public function currentClass()
-    {
-        return $this->hasOne(Studentclass::class, 'studentId', 'id')
-            ->whereHas('session', function ($q) {
-                $q->where('status', 'Current');
-            })
-            ->with(['schoolclass.armRelation', 'term', 'session']);
-    }
-
+{
+    return $this->hasOne(Studentclass::class, 'studentId', 'id')
+        ->whereIn('sessionid', function ($query) {
+            $query->select('id')
+                  ->from('schoolsession')
+                  ->where('status', 'Current')
+                  ->orWhereRaw('id = (SELECT MAX(id) FROM schoolsession)'); // fallback
+        })
+        ->with(['schoolclass.armRelation', 'term', 'session'])
+        ->withDefault([
+            'schoolclass' => ['schoolclass' => 'Not Assigned', 'armRelation' => null],
+            'term' => ['term' => 'N/A'],
+            'session' => ['session' => 'N/A']
+        ]);
+}
     public function classHistory()
     {
         return $this->hasMany(Studentclass::class, 'studentId', 'id')
@@ -139,5 +146,6 @@ class Student extends Model
             ->whereColumn('termid', 'studentclass.termid');
     }
 
+    
     
 }

@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Schoolarm;
+use App\Models\Classcategory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Schoolclass extends Model
 {
@@ -23,4 +25,7 @@ class Schoolclass extends Model
     {
         return $this->belongsTo(Classcategory::class, 'classcategoryid', 'id');
     }
+   
+    
+
 }
