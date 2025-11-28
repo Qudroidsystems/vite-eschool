@@ -534,8 +534,8 @@ class StudentController extends Controller
                     'schoolarm.arm',
                     'schoolterm.term',
                     'schoolsession.session',
-                    DB::raw("'CURRENT' as classstatus"),
-                    DB::raw("'PROMOTED' as promotionStatus")
+                    // DB::raw("'CURRENT' as classstatus"),
+                    // DB::raw("'PROMOTED' as promotionStatus")
                 ])
                 ->orderBy('schoolsession.session', 'desc')
                 ->orderBy('schoolterm.id', 'desc')
