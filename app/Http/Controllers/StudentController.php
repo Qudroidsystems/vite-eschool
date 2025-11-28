@@ -15,11 +15,12 @@ use App\Models\Subjectclass;
 use Illuminate\Http\Request;
 use App\Models\Schoolsession;
 use App\Models\Studenthouses;
+use App\Models\Promotiontatus;
 use App\Models\Studentpicture;
 use App\Imports\StudentsImport;
-use App\Models\BroadsheetsMock;
 use App\Models\PromotionStatus;
 use Illuminate\Validation\Rule;
+use App\Models\BroadsheeStsMock;
 use App\Models\BroadsheetRecord;
 use App\Models\StudentBatchModel;
 use Illuminate\Http\JsonResponse;
@@ -493,19 +494,19 @@ class StudentController extends Controller
         $student = Student::findOrFail($id);
        
         // Get class history from PromotionStatus
-        $classHistory = PromotionStatus::where('promotionstatus.studentId', $id)
-            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'promotionstatus.schoolclassid')
+        $classHistory = PromotionStatus::where('promotionStatus.studentId', $id)
+            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'promotionStatus.schoolclassid')
             ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'promotionstatus.termid')
-            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'promotionstatus.sessionid')
+            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'promotionStatus.termid')
+            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'promotionStatus.sessionid')
             ->select([
-                // 'promotionstatus.id',
-                'promotionstatus.studentId',
-                'promotionstatus.schoolclassid',
-                'promotionstatus.termid',
-                'promotionstatus.sessionid',
-                'promotionstatus.promotionStatus',
-                'promotionstatus.classstatus',
+                'promotionStatus.id',
+                'promotionStatus.studentId',
+                'promotionStatus.schoolclassid',
+                'promotionStatus.termid',
+                'promotionStatus.sessionid',
+                'promotionStatus.promotionStatus',
+                'promotionStatus.classstatus',
                 'schoolclass.schoolclass',
                 'schoolarm.arm',
                 'schoolterm.term',
