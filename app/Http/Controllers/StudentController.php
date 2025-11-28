@@ -499,7 +499,7 @@ class StudentController extends Controller
             ->leftJoin('schoolterm', 'schoolterm.id', '=', 'promotionstatus.termid')
             ->leftJoin('schoolsession', 'schoolsession.id', '=', 'promotionstatus.sessionid')
             ->select([
-                'promotionstatus.id',
+                // 'promotionstatus.id',
                 'promotionstatus.studentId',
                 'promotionstatus.schoolclassid',
                 'promotionstatus.termid',
@@ -534,8 +534,8 @@ class StudentController extends Controller
                     'schoolarm.arm',
                     'schoolterm.term',
                     'schoolsession.session',
-                    // DB::raw("'CURRENT' as classstatus"),
-                    // DB::raw("'PROMOTED' as promotionStatus")
+                    DB::raw("'CURRENT' as classstatus"),
+                    DB::raw("'PROMOTED' as promotionStatus")
                 ])
                 ->orderBy('schoolsession.session', 'desc')
                 ->orderBy('schoolterm.id', 'desc')
