@@ -2,27 +2,27 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BroadsheetRecordsMock;
-use App\Models\BroadsheetsMock;
-use App\Models\Schoolclass;
-use App\Models\SchoolInformation;
-use App\Models\Schoolsession;
-use App\Models\Schoolterm;
 use App\Models\Student;
-use App\Models\Studentclass;
-use App\Models\Studentpersonalityprofile;
-use App\Models\StudentPicture;
-use App\Models\StudentRegistration;
 use App\Models\Subject;
-use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
+use App\Models\Schoolterm;
+use App\Models\Schoolclass;
+use App\Models\Studentclass;
+use Illuminate\Http\Request;
+use App\Models\Schoolsession;
+use App\Models\StudentPicture;
+use App\Models\BroadsheetsMock;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\SchoolInformation;
+use Illuminate\Http\JsonResponse;
+use App\Models\StudentRegistration;
+use Illuminate\Support\Facades\Log;
+use App\Models\BroadsheetRecordsMock;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
+use App\Models\Studentpersonalityprofile;
+use Illuminate\Validation\ValidationException;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class ViewStudentMockReportController extends Controller
 {
@@ -459,8 +459,8 @@ class ViewStudentMockReportController extends Controller
                 ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
                 ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
                 ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-                ->where('schoolsession.status', '=', $current);
+                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid');
+                // ->where('schoolsession.status', '=', $current);
 
             if ($search = $request->input('search')) {
                 $query->where(function ($q) use ($search) {
