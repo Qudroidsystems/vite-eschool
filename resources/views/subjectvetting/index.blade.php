@@ -46,80 +46,110 @@
 
             <style>
                 /* Search box styling */
-                .search-box {
+                .subject-class-search-box {
                     position: relative;
+                    margin-bottom: 15px;
                 }
 
-                .search-box .search-icon {
+                .subject-class-search-box .search-icon {
                     position: absolute;
                     right: 15px;
                     top: 50%;
                     transform: translateY(-50%);
                     color: #6c757d;
+                    pointer-events: none;
                 }
 
-                /* Subject class item highlighting */
-                .subject-class-item.highlight {
-                    background-color: #e7f1ff;
-                    border-radius: 4px;
-                    padding: 5px;
-                    margin-bottom: 5px;
+                .subject-class-search-box input {
+                    width: 100%;
+                    padding: 8px 40px 8px 15px;
+                    border: 1px solid #ced4da;
+                    border-radius: 0.375rem;
+                    font-size: 14px;
+                }
+
+                .subject-class-search-box input:focus {
+                    outline: none;
+                    border-color: #86b7fe;
+                    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
                 }
 
                 /* Selection summary styling */
                 #subjectClassSelectionSummary {
                     font-size: 0.875rem;
                     border-left: 3px solid #0d6efd;
+                    margin-top: 10px;
                 }
 
                 #clearSelectionBtn {
                     text-decoration: none;
                     font-size: 0.875rem;
+                    cursor: pointer;
                 }
 
                 #clearSelectionBtn:hover {
                     text-decoration: underline;
                 }
 
-                /* Disabled items styling */
-                .subject-class-item input:disabled + label {
+                /* Non-current session items */
+                .non-current-session {
                     opacity: 0.6;
+                    pointer-events: none;
                 }
 
-                /* Search highlight */
-                .highlight-text {
-                    background-color: #fff3cd;
-                    padding: 1px 3px;
-                    border-radius: 2px;
-                    font-weight: 600;
+                .non-current-session input[type="checkbox"] {
+                    display: none !important;
+                }
+
+                .non-current-session label {
+                    color: #6c757d !important;
+                    cursor: not-allowed;
+                }
+
+                /* Current session items */
+                .current-session-item {
+                    margin-bottom: 8px;
+                }
+
+                /* Checkbox group styling */
+                .subject-class-checkbox-group {
+                    max-height: 300px;
+                    overflow-y: auto;
+                    border: 1px solid #dee2e6;
+                    border-radius: 0.375rem;
+                    padding: 15px;
+                    background-color: #f8f9fa;
                 }
 
                 /* No results message */
-                .no-results {
+                .no-results-message {
                     display: none;
                     text-align: center;
                     padding: 20px;
                     color: #6c757d;
                     font-style: italic;
+                    background-color: #f8f9fa;
+                    border-radius: 0.375rem;
+                    margin-bottom: 10px;
                 }
 
-                /* Checkbox group styling */
-                .checkbox-group {
-                    scrollbar-width: thin;
-                    scrollbar-color: #adb5bd #f8f9fa;
-                }
-
-                .checkbox-group::-webkit-scrollbar {
-                    width: 6px;
-                }
-
-                .checkbox-group::-webkit-scrollbar-track {
-                    background: #f8f9fa;
-                }
-
-                .checkbox-group::-webkit-scrollbar-thumb {
-                    background-color: #adb5bd;
+                /* Search highlight */
+                .highlight-text {
+                    background-color: #fff3cd;
+                    padding: 1px 4px;
                     border-radius: 3px;
+                    font-weight: 600;
+                }
+
+                /* Checkbox styling */
+                .form-check-input:disabled {
+                    background-color: #e9ecef;
+                    border-color: #ced4da;
+                }
+
+                .form-check-input:disabled ~ .form-check-label {
+                    color: #6c757d;
+                    cursor: not-allowed;
                 }
             </style>
 
@@ -363,43 +393,51 @@
                                         <label class="form-label">Subject-Class Assignments</label>
                                         
                                         <!-- Search Box for Subject-Class Assignments -->
-                                        <div class="search-box mb-3">
+                                        <div class="subject-class-search-box">
                                             <input type="text" class="form-control" id="subjectClassSearch" placeholder="Search by subject, class, teacher, or session...">
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
                                         
                                         <!-- No results message -->
-                                        <div class="no-results mb-2" id="noResultsMessage">
+                                        <div class="no-results-message" id="noResultsMessage">
                                             No matching subject-class assignments found.
                                         </div>
                                         
-                                        <div class="checkbox-group subject-class-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 10px;">
+                                        <div class="subject-class-checkbox-group" id="subjectClassList">
                                             @foreach ($subjectclasses as $sc)
                                                 @php
                                                     $isCurrentSession = $currentSession && $currentSession->id == $sc->sessionid;
                                                     $checkboxId = "add-subjectclass-{$sc->scid}";
-                                                    $labelClass = $isCurrentSession ? 'text-primary fw-semibold' : 'text-muted';
+                                                    $itemClass = $isCurrentSession ? 'current-session-item' : 'non-current-session';
                                                     $sessionText = $sc->sessionname . ($sc->sessionstatus == 'Current' ? ' -- Current Session' : '');
-                                                    $searchableText = strtolower($sc->subjectname . ' ' . ($sc->subjectcode ?? '') . ' ' . $sc->sclass . ' ' . ($sc->schoolarm ?? '') . ' ' . $sc->teachername . ' ' . $sc->sessionname);
+                                                    $searchableText = strtolower(($sc->subjectname ?? '') . ' ' . ($sc->subjectcode ?? '') . ' ' . ($sc->sclass ?? '') . ' ' . ($sc->schoolarm ?? '') . ' ' . ($sc->teachername ?? '') . ' ' . ($sc->sessionname ?? ''));
                                                 @endphp
-                                                <div class="form-check me-3 subject-class-item" data-search="{{ $searchableText }}">
-                                                    <input class="form-check-input modal-checkbox" 
-                                                           type="checkbox" 
-                                                           name="subjectclassid[]" 
-                                                           id="{{ $checkboxId }}" 
-                                                           value="{{ $sc->scid }}" 
-                                                           data-termid="{{ $sc->termid }}"
-                                                           @if(!$isCurrentSession) disabled @endif>
-                                                    <label class="form-check-label {{ $labelClass }}" for="{{ $checkboxId }}" id="label-{{ $checkboxId }}">
-                                                        <span class="subject-text">{{ $sc->subjectname ?? 'N/A' }}</span> 
-                                                        <span class="subject-code">{{ $sc->subjectcode ? '(' . $sc->subjectcode . ')' : '' }}</span> - 
-                                                        <span class="class-text">{{ $sc->sclass ?? 'N/A' }}</span> 
-                                                        <span class="arm-text">{{ $sc->schoolarm ? '(' . $sc->schoolarm . ')' : '' }}</span> - 
-                                                        <span class="teacher-text">{{ $sc->teachername ?? 'N/A' }}</span> -- 
-                                                        <span class="session-text">{{ $sessionText }}</span>
-                                                    </label>
-                                                    @if(!$isCurrentSession)
-                                                        <small class="text-danger d-block">(Not available for current session)</small>
+                                                <div class="form-check subject-class-item {{ $itemClass }}" data-search="{{ $searchableText }}">
+                                                    @if($isCurrentSession)
+                                                        <input class="form-check-input modal-checkbox" 
+                                                               type="checkbox" 
+                                                               name="subjectclassid[]" 
+                                                               id="{{ $checkboxId }}" 
+                                                               value="{{ $sc->scid }}" 
+                                                               data-termid="{{ $sc->termid }}">
+                                                        <label class="form-check-label" for="{{ $checkboxId }}" id="label-{{ $checkboxId }}">
+                                                            <span class="subject-text">{{ $sc->subjectname ?? 'N/A' }}</span> 
+                                                            <span class="subject-code">{{ $sc->subjectcode ? '(' . $sc->subjectcode . ')' : '' }}</span> - 
+                                                            <span class="class-text">{{ $sc->sclass ?? 'N/A' }}</span> 
+                                                            <span class="arm-text">{{ $sc->schoolarm ? '(' . $sc->schoolarm . ')' : '' }}</span> - 
+                                                            <span class="teacher-text">{{ $sc->teachername ?? 'N/A' }}</span> -- 
+                                                            <span class="session-text">{{ $sessionText }}</span>
+                                                        </label>
+                                                    @else
+                                                        <div class="text-muted">
+                                                            <span class="subject-text">{{ $sc->subjectname ?? 'N/A' }}</span> 
+                                                            <span class="subject-code">{{ $sc->subjectcode ? '(' . $sc->subjectcode . ')' : '' }}</span> - 
+                                                            <span class="class-text">{{ $sc->sclass ?? 'N/A' }}</span> 
+                                                            <span class="arm-text">{{ $sc->schoolarm ? '(' . $sc->schoolarm . ')' : '' }}</span> - 
+                                                            <span class="teacher-text">{{ $sc->teachername ?? 'N/A' }}</span> -- 
+                                                            <span class="session-text">{{ $sessionText }}</span>
+                                                            <small class="text-danger d-block">(Not available for current session)</small>
+                                                        </div>
                                                     @endif
                                                 </div>
                                             @endforeach
@@ -408,7 +446,7 @@
                                         <!-- Subject-Class Selection Summary -->
                                         <div class="alert alert-light mt-2 p-2" id="subjectClassSelectionSummary">
                                             <div class="d-flex justify-content-between align-items-center">
-                                                <span>Selected: <strong id="selectedCount">0</strong> of <span id="totalCount">{{ count($subjectclasses) }}</span> items</span>
+                                                <span>Selected: <strong id="selectedCount">0</strong> of <span id="totalCount">{{ count($subjectclasses->where('sessionid', $currentSession ? $currentSession->id : null)) }}</span> current session items</span>
                                                 <button type="button" class="btn btn-sm btn-link p-0" id="clearSelectionBtn">Clear All</button>
                                             </div>
                                         </div>
