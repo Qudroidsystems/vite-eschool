@@ -666,10 +666,10 @@
                                 @if($metadata['term'] != 'First Term')
                                 <th>g</th>
                                 @endif
-                                <th>h</th>
-                                <th>i</th>
-                                <th>j</th>
-                                <th>k</th>
+                                <th>{{ $metadata['term'] == 'First Term' ? 'g' : 'h' }}</th>
+                                <th>{{ $metadata['term'] == 'First Term' ? 'h' : 'i' }}</th>
+                                <th>{{ $metadata['term'] == 'First Term' ? 'i' : 'j' }}</th>
+                                <th>{{ $metadata['term'] == 'First Term' ? 'j' : 'k' }}</th>
                             </tr>
                             <tr>
                                 <th>S/N</th>
