@@ -44,6 +44,85 @@
                 </div>
             @endif
 
+            <style>
+                /* Search box styling */
+                .search-box {
+                    position: relative;
+                }
+
+                .search-box .search-icon {
+                    position: absolute;
+                    right: 15px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #6c757d;
+                }
+
+                /* Subject class item highlighting */
+                .subject-class-item.highlight {
+                    background-color: #e7f1ff;
+                    border-radius: 4px;
+                    padding: 5px;
+                    margin-bottom: 5px;
+                }
+
+                /* Selection summary styling */
+                #subjectClassSelectionSummary {
+                    font-size: 0.875rem;
+                    border-left: 3px solid #0d6efd;
+                }
+
+                #clearSelectionBtn {
+                    text-decoration: none;
+                    font-size: 0.875rem;
+                }
+
+                #clearSelectionBtn:hover {
+                    text-decoration: underline;
+                }
+
+                /* Disabled items styling */
+                .subject-class-item input:disabled + label {
+                    opacity: 0.6;
+                }
+
+                /* Search highlight */
+                .highlight-text {
+                    background-color: #fff3cd;
+                    padding: 1px 3px;
+                    border-radius: 2px;
+                    font-weight: 600;
+                }
+
+                /* No results message */
+                .no-results {
+                    display: none;
+                    text-align: center;
+                    padding: 20px;
+                    color: #6c757d;
+                    font-style: italic;
+                }
+
+                /* Checkbox group styling */
+                .checkbox-group {
+                    scrollbar-width: thin;
+                    scrollbar-color: #adb5bd #f8f9fa;
+                }
+
+                .checkbox-group::-webkit-scrollbar {
+                    width: 6px;
+                }
+
+                .checkbox-group::-webkit-scrollbar-track {
+                    background: #f8f9fa;
+                }
+
+                .checkbox-group::-webkit-scrollbar-thumb {
+                    background-color: #adb5bd;
+                    border-radius: 3px;
+                }
+            </style>
+
             <div id="subjectVettingList">
                 <!-- Bar Chart for Vetting Status -->
                 <div class="row">
@@ -282,15 +361,28 @@
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Subject-Class Assignments</label>
-                                        <div class="checkbox-group" style="max-height: 300px; overflow-y: auto;">
+                                        
+                                        <!-- Search Box for Subject-Class Assignments -->
+                                        <div class="search-box mb-3">
+                                            <input type="text" class="form-control" id="subjectClassSearch" placeholder="Search by subject, class, teacher, or session...">
+                                            <i class="ri-search-line search-icon"></i>
+                                        </div>
+                                        
+                                        <!-- No results message -->
+                                        <div class="no-results mb-2" id="noResultsMessage">
+                                            No matching subject-class assignments found.
+                                        </div>
+                                        
+                                        <div class="checkbox-group subject-class-list" style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 0.375rem; padding: 10px;">
                                             @foreach ($subjectclasses as $sc)
                                                 @php
                                                     $isCurrentSession = $currentSession && $currentSession->id == $sc->sessionid;
                                                     $checkboxId = "add-subjectclass-{$sc->scid}";
                                                     $labelClass = $isCurrentSession ? 'text-primary fw-semibold' : 'text-muted';
                                                     $sessionText = $sc->sessionname . ($sc->sessionstatus == 'Current' ? ' -- Current Session' : '');
+                                                    $searchableText = strtolower($sc->subjectname . ' ' . ($sc->subjectcode ?? '') . ' ' . $sc->sclass . ' ' . ($sc->schoolarm ?? '') . ' ' . $sc->teachername . ' ' . $sc->sessionname);
                                                 @endphp
-                                                <div class="form-check me-3">
+                                                <div class="form-check me-3 subject-class-item" data-search="{{ $searchableText }}">
                                                     <input class="form-check-input modal-checkbox" 
                                                            type="checkbox" 
                                                            name="subjectclassid[]" 
@@ -298,19 +390,27 @@
                                                            value="{{ $sc->scid }}" 
                                                            data-termid="{{ $sc->termid }}"
                                                            @if(!$isCurrentSession) disabled @endif>
-                                                    <label class="form-check-label {{ $labelClass }}" for="{{ $checkboxId }}">
-                                                        {{ $sc->subjectname ?? 'N/A' }} 
-                                                        {{ $sc->subjectcode ? '(' . $sc->subjectcode . ')' : '' }} - 
-                                                        {{ $sc->sclass ?? 'N/A' }} 
-                                                        {{ $sc->schoolarm ? '(' . $sc->schoolarm . ')' : '' }} - 
-                                                        {{ $sc->teachername ?? 'N/A' }} -- 
-                                                        {{ $sessionText }}
+                                                    <label class="form-check-label {{ $labelClass }}" for="{{ $checkboxId }}" id="label-{{ $checkboxId }}">
+                                                        <span class="subject-text">{{ $sc->subjectname ?? 'N/A' }}</span> 
+                                                        <span class="subject-code">{{ $sc->subjectcode ? '(' . $sc->subjectcode . ')' : '' }}</span> - 
+                                                        <span class="class-text">{{ $sc->sclass ?? 'N/A' }}</span> 
+                                                        <span class="arm-text">{{ $sc->schoolarm ? '(' . $sc->schoolarm . ')' : '' }}</span> - 
+                                                        <span class="teacher-text">{{ $sc->teachername ?? 'N/A' }}</span> -- 
+                                                        <span class="session-text">{{ $sessionText }}</span>
                                                     </label>
                                                     @if(!$isCurrentSession)
                                                         <small class="text-danger d-block">(Not available for current session)</small>
                                                     @endif
                                                 </div>
                                             @endforeach
+                                        </div>
+                                        
+                                        <!-- Subject-Class Selection Summary -->
+                                        <div class="alert alert-light mt-2 p-2" id="subjectClassSelectionSummary">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>Selected: <strong id="selectedCount">0</strong> of <span id="totalCount">{{ count($subjectclasses) }}</span> items</span>
+                                                <button type="button" class="btn btn-sm btn-link p-0" id="clearSelectionBtn">Clear All</button>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="alert alert-info">

@@ -47,6 +47,114 @@ function initializeSessionFilter() {
     });
 }
 
+// Subject-Class Search Functionality
+function initializeSubjectClassSearch() {
+    const searchInput = document.getElementById('subjectClassSearch');
+    const subjectClassItems = document.querySelectorAll('.subject-class-item');
+    const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    const totalCountSpan = document.getElementById('totalCount');
+    const noResultsMessage = document.getElementById('noResultsMessage');
+    
+    if (!searchInput || subjectClassItems.length === 0) return;
+    
+    // Remove highlighting from text
+    const removeHighlights = (element) => {
+        if (!element) return;
+        const originalHtml = element.innerHTML;
+        const cleanHtml = originalHtml.replace(/<span class="highlight-text">|<\/span>/g, '');
+        element.innerHTML = cleanHtml;
+    };
+    
+    // Add highlighting to text
+    const addHighlights = (element, searchTerm) => {
+        if (!element || !searchTerm) return;
+        const originalHtml = element.innerHTML;
+        const cleanHtml = originalHtml.replace(/<span class="highlight-text">|<\/span>/g, '');
+        
+        // Create regex for highlighting (case insensitive)
+        const escapedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${escapedSearchTerm})`, 'gi');
+        const highlightedHtml = cleanHtml.replace(regex, '<span class="highlight-text">$1</span>');
+        
+        element.innerHTML = highlightedHtml;
+    };
+    
+    // Search function
+    const filterSubjectClasses = () => {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        console.log('Searching for:', searchTerm);
+        
+        let visibleCount = 0;
+        let hasVisibleItems = false;
+        
+        subjectClassItems.forEach(item => {
+            const searchText = item.getAttribute('data-search');
+            const label = item.querySelector('label');
+            const matches = searchTerm === '' || searchText.includes(searchTerm);
+            
+            // Remove previous highlights
+            if (label) removeHighlights(label);
+            
+            if (matches) {
+                item.style.display = 'block';
+                visibleCount++;
+                hasVisibleItems = true;
+                
+                // Add highlighting if search term exists
+                if (searchTerm !== '' && label) {
+                    addHighlights(label, searchTerm);
+                }
+            } else {
+                item.style.display = 'none';
+            }
+        });
+        
+        // Show/hide no results message
+        if (noResultsMessage) {
+            noResultsMessage.style.display = hasVisibleItems || searchTerm === '' ? 'none' : 'block';
+        }
+        
+        console.log(`Found ${visibleCount} matching items`);
+    };
+    
+    // Clear selection function
+    const clearAllSelections = () => {
+        console.log('Clearing all selections');
+        subjectClassItems.forEach(item => {
+            const checkbox = item.querySelector('input[type="checkbox"]');
+            if (checkbox && !checkbox.disabled) {
+                checkbox.checked = false;
+            }
+        });
+        updateSelectionCount();
+    };
+    
+    // Update selection count
+    const updateSelectionCount = () => {
+        const checkedBoxes = document.querySelectorAll('.subject-class-item input[type="checkbox"]:checked:not(:disabled)');
+        if (selectedCountSpan) selectedCountSpan.textContent = checkedBoxes.length;
+    };
+    
+    // Event listeners
+    searchInput.addEventListener('input', debounce(filterSubjectClasses, 300));
+    
+    if (clearSelectionBtn) {
+        clearSelectionBtn.addEventListener('click', clearAllSelections);
+    }
+    
+    // Listen for checkbox changes to update count
+    document.addEventListener('change', function(e) {
+        if (e.target.matches('.subject-class-item input[type="checkbox"]')) {
+            updateSelectionCount();
+        }
+    });
+    
+    // Initial filter and count update
+    filterSubjectClasses();
+    updateSelectionCount();
+}
+
 // Check all checkbox
 const checkAll = document.getElementById("checkAll");
 if (checkAll) {
@@ -814,6 +922,9 @@ if (addModal) {
             addBtn.innerHTML = "Add Subject Vetting Assignment";
         }
 
+        // Initialize search functionality
+        initializeSubjectClassSearch();
+
         // Function to update the subject-class checkboxes based on selected terms
         const updateSubjectClassCheckboxes = () => {
             const selectedTermIds = Array.from(
@@ -833,12 +944,16 @@ if (addModal) {
                     // Only enable checkbox if it belongs to current session AND matches selected terms
                     const isEnabled = selectedTermIds.length === 0 || selectedTermIds.includes(termId);
                     checkbox.disabled = !isEnabled;
-                    checkbox.closest('.form-check').style.opacity = isEnabled ? '1' : '0.5';
+                    const formCheck = checkbox.closest('.form-check');
+                    if (formCheck) {
+                        formCheck.style.opacity = isEnabled ? '1' : '0.5';
+                    }
                     if (!isEnabled) checkbox.checked = false; // Uncheck disabled checkboxes
                 }
             });
 
             updateSubmitButton();
+            updateSelectionCount(); // Update count after enabling/disabling
         };
 
         // Function to update the submit button state
@@ -848,6 +963,15 @@ if (addModal) {
             const checkedTerms = document.querySelectorAll('#addSubjectVettingModal input[name="termid[]"]:checked').length;
             const checkedClasses = document.querySelectorAll('#addSubjectVettingModal input[name="subjectclassid[]"]:checked:not(:disabled)').length;
             if (addBtn) addBtn.disabled = !userId || !sessionId || checkedTerms === 0 || checkedClasses === 0;
+        };
+
+        // Update selection count function (for modal scope)
+        const updateSelectionCount = () => {
+            const checkedBoxes = document.querySelectorAll('#addSubjectVettingModal .subject-class-item input[type="checkbox"]:checked:not(:disabled)');
+            const selectedCountSpan = document.getElementById('selectedCount');
+            if (selectedCountSpan) {
+                selectedCountSpan.textContent = checkedBoxes.length;
+            }
         };
 
         // Remove any existing event listeners to prevent duplicates
@@ -883,12 +1007,16 @@ if (addModal) {
             if (!cb.disabled) {
                 const newCb = cb.cloneNode(true);
                 cb.parentNode.replaceChild(newCb, cb);
-                newCb.addEventListener("change", updateSubmitButton);
+                newCb.addEventListener("change", () => {
+                    updateSubmitButton();
+                    updateSelectionCount();
+                });
             }
         });
 
         // Initialize subject-class checkboxes state
         updateSubjectClassCheckboxes();
+        updateSelectionCount();
     });
 
     addModal.addEventListener("hidden.bs.modal", function () {
@@ -902,6 +1030,26 @@ if (addModal) {
             addBtn.disabled = true;
             addBtn.innerHTML = "Add Subject Vetting Assignment";
         }
+
+        // Clear search input
+        const searchInput = document.getElementById('subjectClassSearch');
+        if (searchInput) searchInput.value = '';
+
+        // Show all items again and remove highlights
+        const subjectClassItems = document.querySelectorAll('.subject-class-item');
+        subjectClassItems.forEach(item => {
+            item.style.display = 'block';
+            const label = item.querySelector('label');
+            if (label) {
+                const originalHtml = label.innerHTML;
+                const cleanHtml = originalHtml.replace(/<span class="highlight-text">|<\/span>/g, '');
+                label.innerHTML = cleanHtml;
+            }
+        });
+
+        // Hide no results message
+        const noResultsMessage = document.getElementById('noResultsMessage');
+        if (noResultsMessage) noResultsMessage.style.display = 'none';
 
         const backdrop = document.querySelector('.modal-backdrop');
         if (backdrop) {
@@ -921,7 +1069,10 @@ if (addModal) {
             const isCurrentSession = !checkbox.hasAttribute('disabled') || checkbox.disabled === false;
             if (isCurrentSession) {
                 checkbox.disabled = false;
-                checkbox.closest('.form-check').style.opacity = '1';
+                const formCheck = checkbox.closest('.form-check');
+                if (formCheck) {
+                    formCheck.style.opacity = '1';
+                }
             }
         });
     });
