@@ -564,7 +564,7 @@
                                             <td width="41%">
                                                 <div class="info-row">
                                                     <span class="result-details">Name:</span>
-                                                    <span class="info-value font-bold">{{ strtoupper($student->lastname ?? 'ILEMOBAYOEEEE') }} {{ $student->fname ?? 'Eliabeeeee' }} {{ $student->othername ?? 'eeeee' }}</span>
+                                                    <span class="info-value font-bold">{{ strtoupper($student->lastname ?? 'NO INFO') }} {{ $student->fname ?? 'Eliabeeeee' }} {{ $student->othername ?? 'eeeee' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Session:</span>
@@ -663,7 +663,9 @@
                                 <th>d</th>
                                 <th>e</th>
                                 <th>f</th>
+                                @if($metadata['term'] != 'First Term')
                                 <th>g</th>
+                                @endif
                                 <th>h</th>
                                 <th>i</th>
                                 <th>j</th>
@@ -688,8 +690,10 @@
                                         <div class="denominator">2</div>
                                     </div>
                                 </th>
+                                @if($metadata['term'] != 'First Term')
                                 <th>B/F</th>
-                                <th>Cum (f/g)/2</th>
+                                @endif
+                                <th>{{ $metadata['term'] == 'First Term' ? 'Term Total (f)' : 'Cum (f/g)/2' }}</th>
                                 <th>Grade</th>
                                 <th>PSN</th>
                                 <th>Class Avg</th>
@@ -708,7 +712,9 @@
                                     </td>
                                     <td class="@if ($score->exam < 50 && is_numeric($score->exam)) highlight-red @endif">{{ $score->exam ?? '-' }}</td>
                                     <td class="@if ($score->total < 50 && is_numeric($score->total)) highlight-red @endif">{{ $score->total ?? '-' }}</td>
+                                    @if($metadata['term'] != 'First Term')
                                     <td class="@if ($score->bf < 50 && is_numeric($score->bf)) highlight-red @endif">{{ $score->bf ?? '-' }}</td>
+                                    @endif
                                     <td class="@if ($score->cum < 50 && is_numeric($score->cum)) highlight-red @endif">{{ $score->cum ?? '-' }}</td>
                                     <td class="@if (in_array($score->grade ?? '', ['F', 'F9', 'E', 'E8'])) highlight-red @endif">{{ $score->grade ?? '-' }}</td>
                                     <td>{{ $score->position ?? '-' }}</td>
@@ -716,7 +722,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="13">No scores available.</td>
+                                    <td colspan="{{ $metadata['term'] == 'First Term' ? 12 : 13 }}">No scores available.</td>
                                 </tr>
                             @endforelse
                         </tbody>
