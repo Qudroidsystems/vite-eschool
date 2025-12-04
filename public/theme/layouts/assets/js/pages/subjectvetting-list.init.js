@@ -29,6 +29,24 @@ function debounce(func, wait) {
     };
 }
 
+// Session filter functionality
+function initializeSessionFilter() {
+    const sessionFilter = document.getElementById('session-filter');
+    if (!sessionFilter) return;
+
+    sessionFilter.addEventListener('change', function() {
+        const sessionId = this.value;
+        console.log('Session filter changed:', sessionId);
+        
+        // Reload page with filter parameter
+        if (sessionId) {
+            window.location.href = '/subjectvetting?session=' + sessionId;
+        } else {
+            window.location.href = '/subjectvetting';
+        }
+    });
+}
+
 // Check all checkbox
 const checkAll = document.getElementById("checkAll");
 if (checkAll) {
@@ -317,7 +335,7 @@ function handleEditClick(e, button) {
     }
     
     const vettingUserId = tr.querySelector(".vetting_username")?.getAttribute("data-vetting_userid") || "";
-    const subjectClassId = tr.querySelector(".sclass")?.getAttribute("data-schoolclassid") || "";
+    const subjectClassId = tr.querySelector(".subjectname")?.getAttribute("data-subjectclassid") || "";
     const termId = tr.querySelector(".termname")?.getAttribute("data-termid") || "";
     const sessionId = tr.querySelector(".sessionname")?.getAttribute("data-sessionid") || "";
     const status = tr.querySelector(".status")?.textContent || "pending";
@@ -938,6 +956,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeListJS();
     initializeVettingStatusChart();
     initializeCheckboxes();
+    initializeSessionFilter(); // Initialize session filter
 
     const searchInput = document.querySelector(".search-box input.search");
     if (searchInput) {

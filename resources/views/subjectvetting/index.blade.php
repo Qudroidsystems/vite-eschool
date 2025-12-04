@@ -50,7 +50,7 @@
                     <div class="col-lg-12">
                         <div class="card">
                             <div class="card-body">
-                                <h5 class="card-title mb-4">Vetting Status Distribution</h5>
+                                <h5 class="card-title mb-4">Vetting Status Distribution @if($currentSession) ({{ $currentSession->session }}) @endif</h5>
                                 <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
                                     <canvas id="vettingStatusChart"></canvas>
                                 </div>
@@ -70,6 +70,27 @@
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
                                     </div>
+                                    <div class="col-xxl-3">
+                                        <div class="filter-group">
+                                            <label for="session-filter" class="form-label">Filter by Session:</label>
+                                            <select class="form-control" id="session-filter">
+                                                <option value="">All Sessions</option>
+                                                @foreach ($sessions as $session)
+                                                    <option value="{{ $session->id }}" {{ $currentSession && $currentSession->id == $session->id ? 'selected' : '' }}>
+                                                        {{ $session->session }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-xxl-3">
+                                        <div class="current-session-info">
+                                            <div class="alert alert-info mb-0">
+                                                <i class="ri-information-line me-2"></i>
+                                                Currently viewing: <strong>{{ $currentSession ? $currentSession->session : 'No active session' }}</strong>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -81,7 +102,7 @@
                         <div class="card">
                             <div class="card-header d-flex align-items-center">
                                 <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">Subject Vetting Assignments <span class="badge bg-dark-subtle text-dark ms-1" id="total-records">{{ $subjectvettings->count() }}</span></h5>
+                                    <h5 class="card-title mb-0">Subject Vetting Assignments @if($currentSession) ({{ $currentSession->session }}) @endif <span class="badge bg-dark-subtle text-dark ms-1" id="total-records">{{ $subjectvettings->count() }}</span></h5>
                                 </div>
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
@@ -186,7 +207,7 @@
                                                 </tr>
                                             @empty
                                                 <tr class="noresult">
-                                                    <td colspan="12" class="text-center">No results found</td>
+                                                    <td colspan="12" class="text-center">No subject vetting assignments found for the selected session.</td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
@@ -250,22 +271,28 @@
                                         <select name="sessionid" id="sessionid" class="form-control" required>
                                             <option value="">Select Session</option>
                                             @foreach ($sessions as $session)
-                                                <option value="{{ $session->id }}">{{ $session->session }}</option>
+                                                <option value="{{ $session->id }}" {{ $currentSession && $currentSession->id == $session->id ? 'selected' : '' }}>
+                                                    {{ $session->session }}
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Subject-Class Assignments</label>
-                                        <div class="checkbox-group" style="max-height: 150px; overflow-y: auto;">
+                                        <div class="checkbox-group" style="max-height: 300px; overflow-y: auto;">
                                             @foreach ($subjectclasses as $sc)
                                                 <div class="form-check me-3">
                                                     <input class="form-check-input modal-checkbox" type="checkbox" name="subjectclassid[]" id="add-subjectclass-{{ $sc->scid }}" value="{{ $sc->scid }}" data-termid="{{ $sc->termid }}">
                                                     <label class="form-check-label" for="add-subjectclass-{{ $sc->scid }}">
-                                                        {{ $sc->subjectname ?? 'N/A' }} {{ $sc->subjectcode ? '(' . $sc->subjectcode . ')' : '' }} - {{ $sc->sclass ?? 'N/A' }} {{ $sc->schoolarm ? '(' . $sc->schoolarm . ')' : '' }} - {{ $sc->teachername ?? 'N/A' }}
+                                                        {{ $sc->subjectname ?? 'N/A' }} {{ $sc->subjectcode ? '(' . $sc->subjectcode . ')' : '' }} - {{ $sc->sclass ?? 'N/A' }} {{ $sc->schoolarm ? '(' . $sc->schoolarm . ')' : '' }} - {{ $sc->teachername ?? 'N/A' }} -- {{ $sc->sessionname ?? 'N/A' }}
                                                     </label>
                                                 </div>
                                             @endforeach
                                         </div>
+                                    </div>
+                                    <div class="alert alert-info">
+                                        <i class="ri-information-line me-2"></i>
+                                        Showing subject-class assignments for: <strong>{{ $currentSession ? $currentSession->session : 'No active session' }}</strong>
                                     </div>
                                     <div class="alert alert-danger d-none" id="alert-error-msg"></div>
                                 </div>
@@ -321,7 +348,7 @@
                                         <select name="subjectclassid" id="edit-subjectclassid" class="form-control" required>
                                             <option value="">Select Subject-Class</option>
                                             @foreach ($subjectclasses as $sc)
-                                                <option value="{{ $sc->scid }}">{{ $sc->subjectname ?? 'N/A' }} {{ $sc->subjectcode ? '(' . $sc->subjectcode . ')' : '' }} - {{ $sc->sclass ?? 'N/A' }} {{ $sc->schoolarm ? '(' . $sc->schoolarm . ')' : '' }} - {{ $sc->teachername ?? 'N/A' }}</option>
+                                                <option value="{{ $sc->scid }}">{{ $sc->subjectname ?? 'N/A' }} {{ $sc->subjectcode ? '(' . $sc->subjectcode . ')' : '' }} - {{ $sc->sclass ?? 'N/A' }} {{ $sc->schoolarm ? '(' . $sc->schoolarm . ')' : '' }} - {{ $sc->teachername ?? 'N/A' }} -- {{ $sc->sessionname ?? 'N/A' }}</option>
                                             @endforeach
                                         </select>
                                     </div>
