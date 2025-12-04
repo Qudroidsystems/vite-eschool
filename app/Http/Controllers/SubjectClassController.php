@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use App\Models\Broadsheet;
+use App\Models\Schoolterm;
 use App\Models\Broadsheets;
 use App\Models\Schoolclass;
-use App\Models\Schoolsession;
-use App\Models\Schoolterm;
 use App\Models\Subjectclass;
-use App\Models\SubjectRegistrationStatus;
-use App\Models\SubjectTeacher;
-use App\Models\User;
 use Illuminate\Http\Request;
+use App\Models\Schoolsession;
+use App\Models\SubjectTeacher;
+use App\Models\BroadsheetsMock;
+use App\Http\Controllers\Controller;
+use App\Models\SubjectRegistrationStatus;
 use Illuminate\Support\Facades\Validator;
 
 class SubjectClassController extends Controller
@@ -366,8 +368,15 @@ class SubjectClassController extends Controller
             ], 404);
         }
 
-        Broadsheets::where('subjectclassid', $id)->delete();
+        // Delete from Broadsheets (regular)
+        Broadsheets::where('subjectclass_id', $id)->delete();
+        
+        // Delete from BroadsheetsMock (mock/exam)
+        BroadsheetsMock::where('subjectclass_id', $id)->delete();
+        
+        // Delete from SubjectRegistrationStatus
         SubjectRegistrationStatus::where('subjectclassid', $id)->delete();
+        
         $subjectclass->delete();
 
         return response()->json([
@@ -386,8 +395,15 @@ class SubjectClassController extends Controller
             ], 404);
         }
 
-        Broadsheets::where('subjectclassid', $request->subjectclassid)->delete();
+        // Delete from Broadsheets (regular)
+        Broadsheets::where('subjectclass_id', $request->subjectclassid)->delete();
+        
+        // Delete from BroadsheetsMock (mock/exam)
+        BroadsheetsMock::where('subjectclass_id', $request->subjectclassid)->delete();
+        
+        // Delete from SubjectRegistrationStatus
         SubjectRegistrationStatus::where('subjectclassid', $request->subjectclassid)->delete();
+        
         $subjectclass->delete();
 
         return response()->json([
