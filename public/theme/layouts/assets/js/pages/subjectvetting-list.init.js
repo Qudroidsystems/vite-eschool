@@ -49,63 +49,37 @@ function initializeSessionFilter() {
 }
 
 // Subject-Class Search Functionality
+// Subject-Class Search Functionality - SIMPLIFIED VERSION
 function initializeSubjectClassSearch() {
+    console.log('Initializing subject class search...');
+    
     const searchInput = document.getElementById('subjectClassSearch');
     const subjectClassItems = document.querySelectorAll('.subject-class-item');
     const clearSelectionBtn = document.getElementById('clearSelectionBtn');
     const selectedCountSpan = document.getElementById('selectedCount');
-    const totalCountSpan = document.getElementById('totalCount');
     const noResultsMessage = document.getElementById('noResultsMessage');
     
-    if (!searchInput || subjectClassItems.length === 0) return;
+    if (!searchInput) {
+        console.error('Search input not found!');
+        return;
+    }
     
-    // Remove highlighting from text
-    const removeHighlights = (element) => {
-        if (!element) return;
-        const originalHtml = element.innerHTML;
-        const cleanHtml = originalHtml.replace(/<span class="highlight-text">|<\/span>/g, '');
-        element.innerHTML = cleanHtml;
-    };
+    console.log(`Found ${subjectClassItems.length} subject class items`);
     
-    // Add highlighting to text
-    const addHighlights = (element, searchTerm) => {
-        if (!element || !searchTerm) return;
-        const originalHtml = element.innerHTML;
-        const cleanHtml = originalHtml.replace(/<span class="highlight-text">|<\/span>/g, '');
-        
-        // Create regex for highlighting (case insensitive)
-        const escapedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`(${escapedSearchTerm})`, 'gi');
-        const highlightedHtml = cleanHtml.replace(regex, '<span class="highlight-text">$1</span>');
-        
-        element.innerHTML = highlightedHtml;
-    };
-    
-    // Search function
+    // Simple search function - NO debounce for immediate feedback
     const filterSubjectClasses = () => {
         const searchTerm = searchInput.value.toLowerCase().trim();
         console.log('Searching for:', searchTerm);
         
         let visibleCount = 0;
-        let hasVisibleItems = false;
         
         subjectClassItems.forEach(item => {
             const searchText = item.getAttribute('data-search');
-            const label = item.querySelector('label');
             const matches = searchTerm === '' || searchText.includes(searchTerm);
-            
-            // Remove previous highlights
-            if (label) removeHighlights(label);
             
             if (matches) {
                 item.style.display = 'block';
                 visibleCount++;
-                hasVisibleItems = true;
-                
-                // Add highlighting if search term exists
-                if (searchTerm !== '' && label) {
-                    addHighlights(label, searchTerm);
-                }
             } else {
                 item.style.display = 'none';
             }
@@ -113,7 +87,7 @@ function initializeSubjectClassSearch() {
         
         // Show/hide no results message
         if (noResultsMessage) {
-            noResultsMessage.style.display = hasVisibleItems || searchTerm === '' ? 'none' : 'block';
+            noResultsMessage.style.display = visibleCount === 0 && searchTerm !== '' ? 'block' : 'none';
         }
         
         console.log(`Found ${visibleCount} matching items`);
@@ -137,41 +111,15 @@ function initializeSubjectClassSearch() {
         if (selectedCountSpan) selectedCountSpan.textContent = checkedBoxes.length;
     };
     
-    // Event listeners - FIXED: Proper event handling
-    const debouncedFilter = debounce(filterSubjectClasses, 300);
-    
-    // Use event capture to prevent issues
-    searchInput.addEventListener('input', function(e) {
-        e.stopPropagation();
-        debouncedFilter();
-    }, true);
-    
-    searchInput.addEventListener('keydown', function(e) {
-        e.stopPropagation();
-        // Allow Enter key to work normally
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            filterSubjectClasses();
-        }
-    }, true);
-    
-    searchInput.addEventListener('click', function(e) {
-        e.stopPropagation();
-    }, true);
-    
-    searchInput.addEventListener('focus', function(e) {
-        e.stopPropagation();
-    }, true);
+    // SIMPLE event listener - direct and immediate
+    searchInput.addEventListener('input', filterSubjectClasses);
+    searchInput.addEventListener('keyup', filterSubjectClasses);
     
     if (clearSelectionBtn) {
-        clearSelectionBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            clearAllSelections();
-        });
+        clearSelectionBtn.addEventListener('click', clearAllSelections);
     }
     
-    // Listen for checkbox changes to update count
+    // Listen for checkbox changes
     document.addEventListener('change', function(e) {
         if (e.target.matches('.subject-class-item input[type="checkbox"]')) {
             updateSelectionCount();
@@ -182,10 +130,14 @@ function initializeSubjectClassSearch() {
     filterSubjectClasses();
     updateSelectionCount();
     
-    // Return the search input element for reference
+    // Make search input focusable and usable
+    searchInput.removeAttribute('readonly');
+    searchInput.removeAttribute('disabled');
+    searchInput.style.pointerEvents = 'auto';
+    
+    console.log('Subject class search initialized successfully');
     return searchInput;
 }
-
 // Check all checkbox
 const checkAll = document.getElementById("checkAll");
 if (checkAll) {
@@ -939,10 +891,11 @@ if (editSubjectVettingForm) {
 }
 
 // Modal events
+// Modal events
 const addModal = document.getElementById("addSubjectVettingModal");
 if (addModal) {
     addModal.addEventListener("show.bs.modal", function (e) {
-        console.log("Add modal show event");
+        console.log("Add modal show event - SIMPLIFIED");
 
         const modalLabel = document.getElementById("addModalLabel");
         const addBtn = document.getElementById("add-btn");
@@ -953,43 +906,19 @@ if (addModal) {
             addBtn.innerHTML = "Add Subject Vetting Assignment";
         }
 
-        // Initialize search functionality - FIXED: Call after modal is shown
+        // Initialize search functionality IMMEDIATELY
         setTimeout(() => {
+            console.log('Setting up search after modal shown...');
             initializeSubjectClassSearch();
-        }, 100);
+            
+            // Focus on search input for user convenience
+            const searchInput = document.getElementById('subjectClassSearch');
+            if (searchInput) {
+                searchInput.focus();
+            }
+        }, 50);
 
-        // Function to update the subject-class checkboxes based on selected terms
-        const updateSubjectClassCheckboxes = () => {
-            const selectedTermIds = Array.from(
-                document.querySelectorAll('#addSubjectVettingModal input[name="termid[]"]:checked')
-            ).map(checkbox => checkbox.value);
-
-            const subjectClassCheckboxes = document.querySelectorAll(
-                '#addSubjectVettingModal input[name="subjectclassid[]"]'
-            );
-
-            subjectClassCheckboxes.forEach(checkbox => {
-                const termId = checkbox.getAttribute('data-termid');
-                // Check if checkbox is already disabled due to non-current session
-                const isAlreadyDisabled = checkbox.disabled;
-                
-                if (!isAlreadyDisabled) {
-                    // Only enable checkbox if it belongs to current session AND matches selected terms
-                    const isEnabled = selectedTermIds.length === 0 || selectedTermIds.includes(termId);
-                    checkbox.disabled = !isEnabled;
-                    const formCheck = checkbox.closest('.form-check');
-                    if (formCheck) {
-                        formCheck.style.opacity = isEnabled ? '1' : '0.5';
-                    }
-                    if (!isEnabled) checkbox.checked = false; // Uncheck disabled checkboxes
-                }
-            });
-
-            updateSubmitButton();
-            updateSelectionCount(); // Update count after enabling/disabling
-        };
-
-        // Function to update the submit button state
+        // Simple function to update submit button
         const updateSubmitButton = () => {
             const userId = document.getElementById("userid")?.value;
             const sessionId = document.getElementById("sessionid")?.value;
@@ -998,7 +927,7 @@ if (addModal) {
             if (addBtn) addBtn.disabled = !userId || !sessionId || checkedTerms === 0 || checkedClasses === 0;
         };
 
-        // Update selection count function (for modal scope)
+        // Update selection count
         const updateSelectionCount = () => {
             const checkedBoxes = document.querySelectorAll('#addSubjectVettingModal .subject-class-item input[type="checkbox"]:checked:not(:disabled)');
             const selectedCountSpan = document.getElementById('selectedCount');
@@ -1007,35 +936,26 @@ if (addModal) {
             }
         };
 
-        // Remove any existing event listeners to prevent duplicates - FIXED: Use fresh references
+        // Simple event listeners without cloning
         const userIdSelect = document.getElementById("userid");
         const sessionIdSelect = document.getElementById("sessionid");
         const termCheckboxes = document.querySelectorAll('#addSubjectVettingModal input[name="termid[]"]');
         const subjectClassCheckboxes = document.querySelectorAll('#addSubjectVettingModal input[name="subjectclassid[]"]');
 
-        // Set up fresh event listeners
         if (userIdSelect) {
-            userIdSelect.onchange = null;
             userIdSelect.addEventListener("change", updateSubmitButton);
         }
 
         if (sessionIdSelect) {
-            sessionIdSelect.onchange = null;
             sessionIdSelect.addEventListener("change", updateSubmitButton);
         }
 
         termCheckboxes.forEach(cb => {
-            cb.onchange = null;
-            cb.addEventListener("change", () => {
-                updateSubjectClassCheckboxes();
-                updateSubmitButton();
-            });
+            cb.addEventListener("change", updateSubmitButton);
         });
 
-        // Only add change listeners to checkboxes that are not disabled (current session ones)
         subjectClassCheckboxes.forEach(cb => {
             if (!cb.disabled) {
-                cb.onchange = null;
                 cb.addEventListener("change", () => {
                     updateSubmitButton();
                     updateSelectionCount();
@@ -1043,8 +963,8 @@ if (addModal) {
             }
         });
 
-        // Initialize subject-class checkboxes state
-        updateSubjectClassCheckboxes();
+        // Initial update
+        updateSubmitButton();
         updateSelectionCount();
     });
 
@@ -1064,7 +984,7 @@ if (addModal) {
         const searchInput = document.getElementById('subjectClassSearch');
         if (searchInput) {
             searchInput.value = '';
-            // Trigger search to show all items
+            // Manually trigger search to show all items
             const event = new Event('input', { bubbles: true });
             searchInput.dispatchEvent(event);
         }
@@ -1073,30 +993,13 @@ if (addModal) {
         const noResultsMessage = document.getElementById('noResultsMessage');
         if (noResultsMessage) noResultsMessage.style.display = 'none';
 
-        const backdrop = document.querySelector('.modal-backdrop');
-        if (backdrop) {
-            backdrop.remove();
-        }
-
-        document.body.classList.remove('modal-open');
-        document.body.style.overflow = '';
-        document.body.style.paddingRight = '';
-
-        // Reset subject-class checkboxes - only enable current session ones
-        const subjectClassCheckboxes = document.querySelectorAll(
-            '#addSubjectVettingModal input[name="subjectclassid[]"]'
-        );
-        subjectClassCheckboxes.forEach(checkbox => {
-            // Keep non-current session checkboxes disabled
-            const isCurrentSession = !checkbox.hasAttribute('disabled') || checkbox.disabled === false;
-            if (isCurrentSession) {
-                checkbox.disabled = false;
-                const formCheck = checkbox.closest('.form-check');
-                if (formCheck) {
-                    formCheck.style.opacity = '1';
-                }
+        // Clean up backdrop if needed
+        setTimeout(() => {
+            const backdrop = document.querySelector('.modal-backdrop');
+            if (backdrop && backdrop.parentNode) {
+                backdrop.parentNode.removeChild(backdrop);
             }
-        });
+        }, 300);
     });
 }
 
