@@ -210,7 +210,7 @@ class SubjectVettingController extends Controller
 
             $staff = User::get(['id', 'name', 'avatar'])->sortBy('name');
             $terms = Schoolterm::get(['id', 'term'])->sortBy('term');
-            $sessions = Schoolsession::get(['id', 'session'])->sortBy('session');
+            $sessions = Schoolsession::get(['id', 'session', 'status'])->sortBy('session');
 
             // Filter subjectvettings to show only current session by default
             $subjectvettings = SubjectVetting::leftJoin('subjectclass', 'subject_vettings.subjectclassid', '=', 'subjectclass.id')
@@ -287,7 +287,7 @@ class SubjectVettingController extends Controller
                 ->with('sessions', $sessions)
                 ->with('pagetitle', $pagetitle)
                 ->with('statusCounts', $statusCounts)
-                ->with('currentSession', $currentSession); // Pass current session to view
+                ->with('currentSession', $currentSession);
         } catch (\Exception $e) {
             Log::error('Error loading subject vetting index: ' . $e->getMessage());
             if ($request->header('X-Requested-With') === 'XMLHttpRequest') {
@@ -325,21 +325,15 @@ class SubjectVettingController extends Controller
                 $currentSession = Schoolsession::latest()->first();
             }
             
-            // Filter subjectclasses by current session
-            $subjectclassesQuery = Subjectclass::leftJoin('schoolclass', 'subjectclass.schoolclassid', '=', 'schoolclass.id')
+            // Get all subjectclasses with session status
+            $subjectclasses = Subjectclass::leftJoin('schoolclass', 'subjectclass.schoolclassid', '=', 'schoolclass.id')
                 ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
                 ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
                 ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
                 ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
                 ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm');
-            
-            // Filter by current session if exists
-            if ($currentSession) {
-                $subjectclassesQuery = $subjectclassesQuery->where('subjectteacher.sessionid', $currentSession->id);
-            }
-            
-            $subjectclasses = $subjectclassesQuery->get([
+                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->get([
                     'subjectclass.id as scid',
                     'schoolclass.id as schoolclassid',
                     'schoolclass.schoolclass as sclass',
@@ -353,13 +347,14 @@ class SubjectVettingController extends Controller
                     'schoolterm.id as termid',
                     'schoolterm.term as termname',
                     'schoolsession.id as sessionid',
-                    'schoolsession.session as sessionname'
+                    'schoolsession.session as sessionname',
+                    'schoolsession.status as sessionstatus'
                 ])
                 ->sortBy('sclass');
 
             $staff = User::get(['id', 'name', 'avatar'])->sortBy('name');
             $terms = Schoolterm::get(['id', 'term'])->sortBy('term');
-            $sessions = Schoolsession::get(['id', 'session'])->sortBy('session');
+            $sessions = Schoolsession::get(['id', 'session', 'status'])->sortBy('session');
 
             return view('subjectvetting.create')
                 ->with('subjectclasses', $subjectclasses)
@@ -367,7 +362,7 @@ class SubjectVettingController extends Controller
                 ->with('staff', $staff)
                 ->with('terms', $terms)
                 ->with('sessions', $sessions)
-                ->with('currentSession', $currentSession); // Pass current session to view
+                ->with('currentSession', $currentSession);
         } catch (\Exception $e) {
             Log::error('Error loading subject vetting create page: ' . $e->getMessage());
             return redirect()->route('subjectvetting.index')
@@ -390,21 +385,15 @@ class SubjectVettingController extends Controller
                 $currentSession = Schoolsession::latest()->first();
             }
             
-            // Filter subjectclasses by current session
-            $subjectclassesQuery = Subjectclass::leftJoin('schoolclass', 'subjectclass.schoolclassid', '=', 'schoolclass.id')
+            // Get all subjectclasses with session status
+            $subjectclasses = Subjectclass::leftJoin('schoolclass', 'subjectclass.schoolclassid', '=', 'schoolclass.id')
                 ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
                 ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
                 ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
                 ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
                 ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm');
-            
-            // Filter by current session if exists
-            if ($currentSession) {
-                $subjectclassesQuery = $subjectclassesQuery->where('subjectteacher.sessionid', $currentSession->id);
-            }
-            
-            $subjectclasses = $subjectclassesQuery->get([
+                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->get([
                     'subjectclass.id as scid',
                     'schoolclass.id as schoolclassid',
                     'schoolclass.schoolclass as sclass',
@@ -418,13 +407,14 @@ class SubjectVettingController extends Controller
                     'schoolterm.id as termid',
                     'schoolterm.term as termname',
                     'schoolsession.id as sessionid',
-                    'schoolsession.session as sessionname'
+                    'schoolsession.session as sessionname',
+                    'schoolsession.status as sessionstatus'
                 ])
                 ->sortBy('sclass');
 
             $staff = User::get(['id', 'name', 'avatar'])->sortBy('name');
             $terms = Schoolterm::get(['id', 'term'])->sortBy('term');
-            $sessions = Schoolsession::get(['id', 'session'])->sortBy('session');
+            $sessions = Schoolsession::get(['id', 'session', 'status'])->sortBy('session');
 
             $subjectvetting = SubjectVetting::where('subject_vettings.id', $id)
                 ->leftJoin('subjectclass', 'subject_vettings.subjectclassid', '=', 'subjectclass.id')

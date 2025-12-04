@@ -77,7 +77,7 @@
                                                 <option value="">All Sessions</option>
                                                 @foreach ($sessions as $session)
                                                     <option value="{{ $session->id }}" {{ $currentSession && $currentSession->id == $session->id ? 'selected' : '' }}>
-                                                        {{ $session->session }}
+                                                        {{ $session->session }} @if($session->status == 'Current') (Current) @endif
                                                     </option>
                                                 @endforeach
                                             </select>
@@ -88,6 +88,9 @@
                                             <div class="alert alert-info mb-0">
                                                 <i class="ri-information-line me-2"></i>
                                                 Currently viewing: <strong>{{ $currentSession ? $currentSession->session : 'No active session' }}</strong>
+                                                @if($currentSession && $currentSession->status == 'Current')
+                                                    <span class="badge bg-success ms-2">Current Session</span>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -272,7 +275,7 @@
                                             <option value="">Select Session</option>
                                             @foreach ($sessions as $session)
                                                 <option value="{{ $session->id }}" {{ $currentSession && $currentSession->id == $session->id ? 'selected' : '' }}>
-                                                    {{ $session->session }}
+                                                    {{ $session->session }} @if($session->status == 'Current') (Current Session) @endif
                                                 </option>
                                             @endforeach
                                         </select>
@@ -281,18 +284,38 @@
                                         <label class="form-label">Subject-Class Assignments</label>
                                         <div class="checkbox-group" style="max-height: 300px; overflow-y: auto;">
                                             @foreach ($subjectclasses as $sc)
+                                                @php
+                                                    $isCurrentSession = $currentSession && $currentSession->id == $sc->sessionid;
+                                                    $checkboxId = "add-subjectclass-{$sc->scid}";
+                                                    $labelClass = $isCurrentSession ? 'text-primary fw-semibold' : 'text-muted';
+                                                    $sessionText = $sc->sessionname . ($sc->sessionstatus == 'Current' ? ' -- Current Session' : '');
+                                                @endphp
                                                 <div class="form-check me-3">
-                                                    <input class="form-check-input modal-checkbox" type="checkbox" name="subjectclassid[]" id="add-subjectclass-{{ $sc->scid }}" value="{{ $sc->scid }}" data-termid="{{ $sc->termid }}">
-                                                    <label class="form-check-label" for="add-subjectclass-{{ $sc->scid }}">
-                                                        {{ $sc->subjectname ?? 'N/A' }} {{ $sc->subjectcode ? '(' . $sc->subjectcode . ')' : '' }} - {{ $sc->sclass ?? 'N/A' }} {{ $sc->schoolarm ? '(' . $sc->schoolarm . ')' : '' }} - {{ $sc->teachername ?? 'N/A' }} -- {{ $sc->sessionname ?? 'N/A' }}
+                                                    <input class="form-check-input modal-checkbox" 
+                                                           type="checkbox" 
+                                                           name="subjectclassid[]" 
+                                                           id="{{ $checkboxId }}" 
+                                                           value="{{ $sc->scid }}" 
+                                                           data-termid="{{ $sc->termid }}"
+                                                           @if(!$isCurrentSession) disabled @endif>
+                                                    <label class="form-check-label {{ $labelClass }}" for="{{ $checkboxId }}">
+                                                        {{ $sc->subjectname ?? 'N/A' }} 
+                                                        {{ $sc->subjectcode ? '(' . $sc->subjectcode . ')' : '' }} - 
+                                                        {{ $sc->sclass ?? 'N/A' }} 
+                                                        {{ $sc->schoolarm ? '(' . $sc->schoolarm . ')' : '' }} - 
+                                                        {{ $sc->teachername ?? 'N/A' }} -- 
+                                                        {{ $sessionText }}
                                                     </label>
+                                                    @if(!$isCurrentSession)
+                                                        <small class="text-danger d-block">(Not available for current session)</small>
+                                                    @endif
                                                 </div>
                                             @endforeach
                                         </div>
                                     </div>
                                     <div class="alert alert-info">
                                         <i class="ri-information-line me-2"></i>
-                                        Showing subject-class assignments for: <strong>{{ $currentSession ? $currentSession->session : 'No active session' }}</strong>
+                                        <strong>Note:</strong> Only subject-class assignments from the current session ({{ $currentSession ? $currentSession->session : 'No active session' }}) are available for selection. Other sessions are disabled.
                                     </div>
                                     <div class="alert alert-danger d-none" id="alert-error-msg"></div>
                                 </div>
@@ -339,7 +362,9 @@
                                         <select name="sessionid" id="edit-sessionid" class="form-control" required>
                                             <option value="">Select Session</option>
                                             @foreach ($sessions as $session)
-                                                <option value="{{ $session->id }}">{{ $session->session }}</option>
+                                                <option value="{{ $session->id }}">
+                                                    {{ $session->session }} @if($session->status == 'Current') (Current Session) @endif
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -348,9 +373,22 @@
                                         <select name="subjectclassid" id="edit-subjectclassid" class="form-control" required>
                                             <option value="">Select Subject-Class</option>
                                             @foreach ($subjectclasses as $sc)
-                                                <option value="{{ $sc->scid }}">{{ $sc->subjectname ?? 'N/A' }} {{ $sc->subjectcode ? '(' . $sc->subjectcode . ')' : '' }} - {{ $sc->sclass ?? 'N/A' }} {{ $sc->schoolarm ? '(' . $sc->schoolarm . ')' : '' }} - {{ $sc->teachername ?? 'N/A' }} -- {{ $sc->sessionname ?? 'N/A' }}</option>
+                                                @php
+                                                    $isCurrentSession = $currentSession && $currentSession->id == $sc->sessionid;
+                                                    $sessionText = $sc->sessionname . ($sc->sessionstatus == 'Current' ? ' -- Current Session' : '');
+                                                @endphp
+                                                <option value="{{ $sc->scid }}" @if(!$isCurrentSession) disabled @endif>
+                                                    {{ $sc->subjectname ?? 'N/A' }} 
+                                                    {{ $sc->subjectcode ? '(' . $sc->subjectcode . ')' : '' }} - 
+                                                    {{ $sc->sclass ?? 'N/A' }} 
+                                                    {{ $sc->schoolarm ? '(' . $sc->schoolarm . ')' : '' }} - 
+                                                    {{ $sc->teachername ?? 'N/A' }} -- 
+                                                    {{ $sessionText }}
+                                                    @if(!$isCurrentSession) (Not available) @endif
+                                                </option>
                                             @endforeach
                                         </select>
+                                        <small class="text-muted">Note: Only current session subject-classes are available for editing</small>
                                     </div>
                                     <div class="mb-3">
                                         <label for="edit-status" class="form-label">Status</label>
@@ -415,7 +453,9 @@
 <script>
     // Pass status counts to JavaScript
     window.vettingStatusCounts = @json($statusCounts);
+    window.currentSessionId = @json($currentSession ? $currentSession->id : null);
     console.log('Initial vettingStatusCounts:', window.vettingStatusCounts);
+    console.log('Current Session ID:', window.currentSessionId);
 </script>
 
 @endsection

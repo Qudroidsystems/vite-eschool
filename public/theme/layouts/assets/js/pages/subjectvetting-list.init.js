@@ -626,7 +626,10 @@ if (addSubjectVettingForm) {
         const userId = formData.get('userid');
         const termIds = formData.getAll('termid[]');
         const sessionId = formData.get('sessionid');
-        const subjectClassIds = [...new Set(formData.getAll('subjectclassid[]'))]; // Remove duplicates
+        
+        // Only get checkboxes that are enabled (current session ones)
+        const subjectClassCheckboxes = document.querySelectorAll('#addSubjectVettingModal input[name="subjectclassid[]"]:checked:not(:disabled)');
+        const subjectClassIds = [...new Set(Array.from(subjectClassCheckboxes).map(cb => cb.value))];
 
         console.log("Form data (before sending):", { userId, termIds, sessionId, subjectClassIds });
 
@@ -656,7 +659,7 @@ if (addSubjectVettingForm) {
         
         if (subjectClassIds.length === 0) {
             if (errorMsg) {
-                errorMsg.innerHTML = "Please select at least one subject-class";
+                errorMsg.innerHTML = "Please select at least one subject-class from current session";
                 errorMsg.classList.remove("d-none");
             }
             return;
@@ -823,11 +826,16 @@ if (addModal) {
 
             subjectClassCheckboxes.forEach(checkbox => {
                 const termId = checkbox.getAttribute('data-termid');
-                // Enable checkbox if no terms are selected or if its termId matches any selected term
-                const isEnabled = selectedTermIds.length === 0 || selectedTermIds.includes(termId);
-                checkbox.disabled = !isEnabled;
-                checkbox.closest('.form-check').style.opacity = isEnabled ? '1' : '0.5';
-                if (!isEnabled) checkbox.checked = false; // Uncheck disabled checkboxes
+                // Check if checkbox is already disabled due to non-current session
+                const isAlreadyDisabled = checkbox.disabled;
+                
+                if (!isAlreadyDisabled) {
+                    // Only enable checkbox if it belongs to current session AND matches selected terms
+                    const isEnabled = selectedTermIds.length === 0 || selectedTermIds.includes(termId);
+                    checkbox.disabled = !isEnabled;
+                    checkbox.closest('.form-check').style.opacity = isEnabled ? '1' : '0.5';
+                    if (!isEnabled) checkbox.checked = false; // Uncheck disabled checkboxes
+                }
             });
 
             updateSubmitButton();
@@ -838,7 +846,7 @@ if (addModal) {
             const userId = document.getElementById("userid")?.value;
             const sessionId = document.getElementById("sessionid")?.value;
             const checkedTerms = document.querySelectorAll('#addSubjectVettingModal input[name="termid[]"]:checked').length;
-            const checkedClasses = document.querySelectorAll('#addSubjectVettingModal input[name="subjectclassid[]"]:checked').length;
+            const checkedClasses = document.querySelectorAll('#addSubjectVettingModal input[name="subjectclassid[]"]:checked:not(:disabled)').length;
             if (addBtn) addBtn.disabled = !userId || !sessionId || checkedTerms === 0 || checkedClasses === 0;
         };
 
@@ -870,10 +878,13 @@ if (addModal) {
             });
         });
 
+        // Only add change listeners to checkboxes that are not disabled (current session ones)
         subjectClassCheckboxes.forEach(cb => {
-            const newCb = cb.cloneNode(true);
-            cb.parentNode.replaceChild(newCb, cb);
-            newCb.addEventListener("change", updateSubmitButton);
+            if (!cb.disabled) {
+                const newCb = cb.cloneNode(true);
+                cb.parentNode.replaceChild(newCb, cb);
+                newCb.addEventListener("change", updateSubmitButton);
+            }
         });
 
         // Initialize subject-class checkboxes state
@@ -901,13 +912,17 @@ if (addModal) {
         document.body.style.overflow = '';
         document.body.style.paddingRight = '';
 
-        // Reset subject-class checkboxes to enabled state
+        // Reset subject-class checkboxes - only enable current session ones
         const subjectClassCheckboxes = document.querySelectorAll(
             '#addSubjectVettingModal input[name="subjectclassid[]"]'
         );
         subjectClassCheckboxes.forEach(checkbox => {
-            checkbox.disabled = false;
-            checkbox.closest('.form-check').style.opacity = '1';
+            // Keep non-current session checkboxes disabled
+            const isCurrentSession = !checkbox.hasAttribute('disabled') || checkbox.disabled === false;
+            if (isCurrentSession) {
+                checkbox.disabled = false;
+                checkbox.closest('.form-check').style.opacity = '1';
+            }
         });
     });
 }
