@@ -24,8 +24,9 @@ if (!csrfToken) console.warn("CSRF token not found");
 function debounce(func, wait) {
     let timeout;
     return function (...args) {
+        const context = this;
         clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), wait);
+        timeout = setTimeout(() => func.apply(context, args), wait);
     };
 }
 
@@ -136,11 +137,38 @@ function initializeSubjectClassSearch() {
         if (selectedCountSpan) selectedCountSpan.textContent = checkedBoxes.length;
     };
     
-    // Event listeners
-    searchInput.addEventListener('input', debounce(filterSubjectClasses, 300));
+    // Event listeners - FIXED: Proper event handling
+    const debouncedFilter = debounce(filterSubjectClasses, 300);
+    
+    // Use event capture to prevent issues
+    searchInput.addEventListener('input', function(e) {
+        e.stopPropagation();
+        debouncedFilter();
+    }, true);
+    
+    searchInput.addEventListener('keydown', function(e) {
+        e.stopPropagation();
+        // Allow Enter key to work normally
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            filterSubjectClasses();
+        }
+    }, true);
+    
+    searchInput.addEventListener('click', function(e) {
+        e.stopPropagation();
+    }, true);
+    
+    searchInput.addEventListener('focus', function(e) {
+        e.stopPropagation();
+    }, true);
     
     if (clearSelectionBtn) {
-        clearSelectionBtn.addEventListener('click', clearAllSelections);
+        clearSelectionBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            clearAllSelections();
+        });
     }
     
     // Listen for checkbox changes to update count
@@ -153,6 +181,9 @@ function initializeSubjectClassSearch() {
     // Initial filter and count update
     filterSubjectClasses();
     updateSelectionCount();
+    
+    // Return the search input element for reference
+    return searchInput;
 }
 
 // Check all checkbox
@@ -922,8 +953,10 @@ if (addModal) {
             addBtn.innerHTML = "Add Subject Vetting Assignment";
         }
 
-        // Initialize search functionality
-        initializeSubjectClassSearch();
+        // Initialize search functionality - FIXED: Call after modal is shown
+        setTimeout(() => {
+            initializeSubjectClassSearch();
+        }, 100);
 
         // Function to update the subject-class checkboxes based on selected terms
         const updateSubjectClassCheckboxes = () => {
@@ -974,29 +1007,26 @@ if (addModal) {
             }
         };
 
-        // Remove any existing event listeners to prevent duplicates
+        // Remove any existing event listeners to prevent duplicates - FIXED: Use fresh references
         const userIdSelect = document.getElementById("userid");
         const sessionIdSelect = document.getElementById("sessionid");
         const termCheckboxes = document.querySelectorAll('#addSubjectVettingModal input[name="termid[]"]');
         const subjectClassCheckboxes = document.querySelectorAll('#addSubjectVettingModal input[name="subjectclassid[]"]');
 
-        // Clone elements to remove existing listeners
+        // Set up fresh event listeners
         if (userIdSelect) {
-            const newUserIdSelect = userIdSelect.cloneNode(true);
-            userIdSelect.parentNode.replaceChild(newUserIdSelect, userIdSelect);
-            newUserIdSelect.addEventListener("change", updateSubmitButton);
+            userIdSelect.onchange = null;
+            userIdSelect.addEventListener("change", updateSubmitButton);
         }
 
         if (sessionIdSelect) {
-            const newSessionIdSelect = sessionIdSelect.cloneNode(true);
-            sessionIdSelect.parentNode.replaceChild(newSessionIdSelect, sessionIdSelect);
-            newSessionIdSelect.addEventListener("change", updateSubmitButton);
+            sessionIdSelect.onchange = null;
+            sessionIdSelect.addEventListener("change", updateSubmitButton);
         }
 
         termCheckboxes.forEach(cb => {
-            const newCb = cb.cloneNode(true);
-            cb.parentNode.replaceChild(newCb, cb);
-            newCb.addEventListener("change", () => {
+            cb.onchange = null;
+            cb.addEventListener("change", () => {
                 updateSubjectClassCheckboxes();
                 updateSubmitButton();
             });
@@ -1005,9 +1035,8 @@ if (addModal) {
         // Only add change listeners to checkboxes that are not disabled (current session ones)
         subjectClassCheckboxes.forEach(cb => {
             if (!cb.disabled) {
-                const newCb = cb.cloneNode(true);
-                cb.parentNode.replaceChild(newCb, cb);
-                newCb.addEventListener("change", () => {
+                cb.onchange = null;
+                cb.addEventListener("change", () => {
                     updateSubmitButton();
                     updateSelectionCount();
                 });
@@ -1033,19 +1062,12 @@ if (addModal) {
 
         // Clear search input
         const searchInput = document.getElementById('subjectClassSearch');
-        if (searchInput) searchInput.value = '';
-
-        // Show all items again and remove highlights
-        const subjectClassItems = document.querySelectorAll('.subject-class-item');
-        subjectClassItems.forEach(item => {
-            item.style.display = 'block';
-            const label = item.querySelector('label');
-            if (label) {
-                const originalHtml = label.innerHTML;
-                const cleanHtml = originalHtml.replace(/<span class="highlight-text">|<\/span>/g, '');
-                label.innerHTML = cleanHtml;
-            }
-        });
+        if (searchInput) {
+            searchInput.value = '';
+            // Trigger search to show all items
+            const event = new Event('input', { bubbles: true });
+            searchInput.dispatchEvent(event);
+        }
 
         // Hide no results message
         const noResultsMessage = document.getElementById('noResultsMessage');
