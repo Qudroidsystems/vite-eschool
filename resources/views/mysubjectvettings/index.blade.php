@@ -136,9 +136,16 @@
                                                         <ul class="d-flex gap-2 list-unstyled mb-0">
                                                             @can('View my-subject-vettings')
                                                                 <li>
-                                                                    <a href="{{ route('mysubjectvettings.classbroadsheet', [$sv->schoolclassid,$sv->subjectclassid,$sv->staffid,$sv->termid, $sv->sessionid]) }}" title="Broadsheet for {{ $sv->sclass }} {{ $sv->schoolarm }}" class="btn btn-subtle-success btn-icon"><i class="ph-eye"></i></a>
+                                                                    {{-- <a href="{{ route('mysubjectvettings.classbroadsheet', [$sv->schoolclassid,$sv->subjectclassid,$sv->staffid,$sv->termid, $sv->sessionid]) }}" title="Broadsheet for {{ $sv->sclass }} {{ $sv->schoolarm }}" class="btn btn-subtle-success btn-icon"><i class="ph-eye"></i></a> --}}
                                                                 </li>
                                                               {{-- {{ dd($sv->schoolclassid, $sv->subjectclassid, $sv->staffid, $sv->termid, $sv->sessionid) }} --}}
+{{ dd(route('mysubjectvettings.classbroadsheet', [
+    $sv->schoolclassid,
+    $sv->subjectclassid,
+    $sv->staffid,
+    $sv->termid,
+    $sv->sessionid
+])) }}
 
                                                                 {{-- <li>
                                                                     <a href="{{ route('classbroadsheetmock', [$sv->schoolclassid, $sv->termid, $sv->sessionid]) }}" title="Mock Broadsheet for {{ $sv->sclass }} {{ $sv->schoolarm }}" class="btn btn-subtle-info btn-icon"><i class="ph-eye"></i></a>
