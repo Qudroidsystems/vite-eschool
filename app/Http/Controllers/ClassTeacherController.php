@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ClassTeacher;
-use App\Models\Schoolclass;
-use App\Models\Schoolterm;
-use App\Models\Schoolsession;
 use App\Models\User;
+use App\Models\Schoolterm;
+use App\Models\Schoolclass;
+use App\Models\ClassTeacher;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use App\Models\Schoolsession;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Validator;
 
 class ClassTeacherController extends Controller
 {
@@ -54,7 +55,15 @@ class ClassTeacherController extends Controller
             ->paginate(100);
 
         if ($request->ajax()) {
-            $html = view('classteacher.index', compact('classteachers', 'schoolclass', 'subjectteachers', 'schoolterms', 'schoolsessions', 'pagetitle'))->render();
+            $html = view('classteacher.index', compact(
+                'classteachers',
+                'schoolclass',
+                'subjectteachers',
+                'schoolterms',
+                'schoolsessions',
+                'pagetitle'
+            ))->render();
+
             if (empty($html)) {
                 Log::error("Empty HTML response in ClassTeacherController::index for AJAX request", ['url' => $request->fullUrl()]);
                 return response()->json([
@@ -62,7 +71,13 @@ class ClassTeacherController extends Controller
                     'message' => 'Failed to render view',
                 ], 500);
             }
-            Log::info("AJAX response generated", ['html_length' => strlen($html), 'count' => $classteachers->count(), 'total' => $classteachers->total()]);
+
+            Log::info("AJAX response generated", [
+                'html_length' => strlen($html),
+                'count' => $classteachers->count(),
+                'total' => $classteachers->total()
+            ]);
+
             return response()->json([
                 'success' => true,
                 'html' => $html,
@@ -106,66 +121,67 @@ class ClassTeacherController extends Controller
             ], 422);
         }
 
-        $createdRecords = [];
+        $staffId = $request->input('staffid');
+        $termId = $request->input('termid');
+        $sessionId = $request->input('sessionid');
+        $classIds = $request->input('schoolclassid');
+
         $duplicateClasses = [];
         $assignedClasses = [];
 
-        foreach ($request->input('schoolclassid') as $classId) {
-            $exists = ClassTeacher::where('staffid', $request->input('staffid'))
+        foreach ($classIds as $classId) {
+            // Check if this teacher already has this class in this term/session
+            $exists = ClassTeacher::where('staffid', $staffId)
                 ->where('schoolclassid', $classId)
-                ->where('termid', $request->input('termid'))
-                ->where('sessionid', $request->input('sessionid'))
+                ->where('termid', $termId)
+                ->where('sessionid', $sessionId)
                 ->exists();
 
             if ($exists) {
-                $schoolclass = Schoolclass::find($classId);
-                $duplicateClasses[] = $schoolclass ? $schoolclass->schoolclass : $classId;
+                $className = Schoolclass::find($classId)?->schoolclass ?? $classId;
+                $duplicateClasses[] = $className;
                 continue;
             }
 
+            // Check if another teacher has this class
             $otherTeacher = ClassTeacher::where('schoolclassid', $classId)
-                ->where('termid', $request->input('termid'))
-                ->where('sessionid', $request->input('sessionid'))
-                ->where('staffid', '!=', $request->input('staffid'))
-                ->first();
+                ->where('termid', $termId)
+                ->where('sessionid', $sessionId)
+                ->where('staffid', '!=', $staffId)
+                ->exists();
 
             if ($otherTeacher) {
-                $schoolclass = Schoolclass::find($classId);
-                $assignedClasses[] = $schoolclass ? $schoolclass->schoolclass : $classId;
-                continue;
+                $className = Schoolclass::find($classId)?->schoolclass ?? $classId;
+                $assignedClasses[] = $className;
             }
-
-            $classteacher = ClassTeacher::create([
-                'staffid' => $request->input('staffid'),
-                'schoolclassid' => $classId,
-                'termid' => $request->input('termid'),
-                'sessionid' => $request->input('sessionid'),
-            ]);
-            $createdRecords[] = $classteacher;
         }
 
         if (!empty($duplicateClasses)) {
             return response()->json([
                 'success' => false,
-                'message' => 'This teacher is already assigned to the following class(es) for the selected term and session: ' . implode(', ', $duplicateClasses)
+                'message' => 'This teacher is already assigned to: ' . implode(', ', $duplicateClasses)
             ], 422);
         }
 
         if (!empty($assignedClasses)) {
             return response()->json([
                 'success' => false,
-                'message' => 'The following class(es) are already assigned to another teacher for the selected term and session: ' . implode(', ', $assignedClasses)
+                'message' => 'The following class(es) are already assigned to another teacher: ' . implode(', ', $assignedClasses)
             ], 422);
         }
 
-        if (empty($createdRecords)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No new class teachers were added due to duplicates or existing assignments.'
-            ], 422);
+        $createdRecords = [];
+        foreach ($classIds as $classId) {
+            $createdRecords[] = ClassTeacher::create([
+                'staffid' => $staffId,
+                'schoolclassid' => $classId,
+                'termid' => $termId,
+                'sessionid' => $sessionId,
+            ]);
         }
 
-        Log::info("Class teacher(s) added", ['records' => count($createdRecords)]);
+        Log::info("Class teacher(s) added", ['records' => count($createdRecords), 'staffid' => $staffId]);
+
         return response()->json([
             'success' => true,
             'message' => 'Class Teacher(s) added successfully.',
@@ -203,78 +219,91 @@ class ClassTeacherController extends Controller
         if (!$primaryRecord) {
             return response()->json([
                 'success' => false,
-                'message' => 'Class Teacher not found.'
+                'message' => 'Class Teacher record not found.'
             ], 404);
         }
 
-        $existingRecords = ClassTeacher::where('staffid', $primaryRecord->staffid)
-            ->where('termid', $primaryRecord->termid)
-            ->where('sessionid', $primaryRecord->sessionid)
-            ->get();
+        $oldStaffId = $primaryRecord->staffid;
+        $oldTermId = $primaryRecord->termid;
+        $oldSessionId = $primaryRecord->sessionid;
+
+        $newStaffId = $request->input('staffid');
+        $newTermId = $request->input('termid');
+        $newSessionId = $request->input('sessionid');
+        $newClassIds = $request->input('schoolclassid');
 
         $duplicateClasses = [];
-        $assignedClasses = [];
-        foreach ($request->input('schoolclassid') as $classId) {
-            $exists = ClassTeacher::where('staffid', $request->input('staffid'))
+        $assignedToOthers = [];
+
+        foreach ($newClassIds as $classId) {
+            // 1. Prevent: New teacher already has this class (outside the group we're replacing)
+            $alreadyWithNewTeacher = ClassTeacher::where('staffid', $newStaffId)
                 ->where('schoolclassid', $classId)
-                ->where('termid', $request->input('termid'))
-                ->where('sessionid', $request->input('sessionid'))
-                ->whereNotIn('id', $existingRecords->pluck('id')->toArray())
+                ->where('termid', $newTermId)
+                ->where('sessionid', $newSessionId)
+                ->where('staffid', '!=', $oldStaffId) // Exclude old teacher's records (they will be deleted)
                 ->exists();
 
-            if ($exists) {
-                $schoolclass = Schoolclass::find($classId);
-                $duplicateClasses[] = $schoolclass ? $schoolclass->schoolclass : $classId;
+            if ($alreadyWithNewTeacher) {
+                $className = Schoolclass::find($classId)?->schoolclass ?? $classId;
+                $duplicateClasses[] = $className;
                 continue;
             }
 
-            $otherTeacher = ClassTeacher::where('schoolclassid', $classId)
-                ->where('termid', $request->input('termid'))
-                ->where('sessionid', $request->input('sessionid'))
-                ->where('staffid', '!=', $request->input('staffid'))
-                ->first();
+            // 2. Prevent: Class is assigned to a completely different teacher (not old, not new)
+            $assignedToThirdParty = ClassTeacher::where('schoolclassid', $classId)
+                ->where('termid', $newTermId)
+                ->where('sessionid', $newSessionId)
+                ->whereNotIn('staffid', [$oldStaffId, $newStaffId])
+                ->exists();
 
-            if ($otherTeacher) {
-                $schoolclass = Schoolclass::find($classId);
-                $assignedClasses[] = $schoolclass ? $schoolclass->schoolclass : $classId;
-                continue;
+            if ($assignedToThirdParty) {
+                $className = Schoolclass::find($classId)?->schoolclass ?? $classId;
+                $assignedToOthers[] = $className;
             }
         }
 
         if (!empty($duplicateClasses)) {
             return response()->json([
                 'success' => false,
-                'message' => 'This teacher is already assigned to the following class(es) for the selected term and session: ' . implode(', ', $duplicateClasses)
+                'message' => 'This teacher is already assigned to the following class(es): ' . implode(', ', $duplicateClasses)
             ], 422);
         }
 
-        if (!empty($assignedClasses)) {
+        if (!empty($assignedToOthers)) {
             return response()->json([
                 'success' => false,
-                'message' => 'The following class(es) are already assigned to another teacher for the selected term and session: ' . implode(', ', $assignedClasses)
+                'message' => 'The following class(es) are already assigned to another teacher: ' . implode(', ', $assignedToOthers)
             ], 422);
         }
 
-        ClassTeacher::where('staffid', $primaryRecord->staffid)
-            ->where('termid', $primaryRecord->termid)
-            ->where('sessionid', $primaryRecord->sessionid)
+        // Safe to delete old assignments and create new ones
+        ClassTeacher::where('staffid', $oldStaffId)
+            ->where('termid', $oldTermId)
+            ->where('sessionid', $oldSessionId)
             ->delete();
 
         $createdRecords = [];
-        foreach ($request->input('schoolclassid') as $classId) {
-            $classteacher = ClassTeacher::create([
-                'staffid' => $request->input('staffid'),
+        foreach ($newClassIds as $classId) {
+            $createdRecords[] = ClassTeacher::create([
+                'staffid' => $newStaffId,
                 'schoolclassid' => $classId,
-                'termid' => $request->input('termid'),
-                'sessionid' => $request->input('sessionid'),
+                'termid' => $newTermId,
+                'sessionid' => $newSessionId,
             ]);
-            $createdRecords[] = $classteacher;
         }
 
-        Log::info("Class teacher(s) updated", ['records' => count($createdRecords)]);
+        Log::info("Class teacher assignment updated successfully", [
+            'old_staff' => $oldStaffId,
+            'new_staff' => $newStaffId,
+            'term' => $newTermId,
+            'session' => $newSessionId,
+            'classes' => $newClassIds
+        ]);
+
         return response()->json([
             'success' => true,
-            'message' => 'Class Teacher updated successfully.',
+            'message' => 'Class teacher assignment updated successfully.',
             'data' => $createdRecords
         ], 200);
     }
@@ -290,7 +319,9 @@ class ClassTeacherController extends Controller
         }
 
         $classteacher->delete();
+
         Log::info("Class teacher deleted", ['id' => $id]);
+
         return response()->json([
             'success' => true,
             'message' => 'Class Teacher deleted successfully.'
@@ -308,7 +339,9 @@ class ClassTeacherController extends Controller
         }
 
         $deleted = ClassTeacher::whereIn('id', $ids)->delete();
+
         Log::info("Multiple class teachers deleted", ['count' => $deleted, 'ids' => $ids]);
+
         return response()->json([
             'success' => true,
             'message' => "$deleted class teacher(s) deleted successfully."
