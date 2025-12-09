@@ -68,7 +68,7 @@ class ClassTeacherController extends Controller
             ->orderBy('schoolclass.schoolclass')
             ->orderBy('schoolarm.arm')
             ->orderBy('users.name')
-            ->paginate(100);
+            ->paginate(1000);
 
         if ($request->ajax()) {
             $html = view('classteacher.index', compact(
