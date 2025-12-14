@@ -2,15 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Broadsheets;
-use App\Models\BroadsheetsMock;
-use App\Models\Schoolclass;
-use App\Models\Schoolsession;
-use App\Models\Schoolterm;
 use App\Models\Student;
-use App\Models\Studentpersonalityprofile;
+use App\Models\Schoolterm;
+use App\Models\Broadsheets;
+use App\Models\Schoolclass;
 use Illuminate\Http\Request;
+use App\Models\Schoolsession;
+use App\Models\BroadsheetsMock;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Models\Studentpersonalityprofile;
 
 class StudentpersonalityprofileController extends Controller
 {
@@ -34,7 +35,7 @@ class StudentpersonalityprofileController extends Controller
                 'studentRegistration.id as id',
                 'studentRegistration.admissionNo as admissionNo',
                 'studentRegistration.firstname as fname',
-                'studentRegistration.home_address as homeaddress',
+                'studentRegistration.home_address2 as homeaddress',
                 'studentRegistration.lastname as lastname',
                 'studentRegistration.othername as othername',
                 'studentRegistration.dateofbirth as dateofbirth',
