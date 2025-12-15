@@ -42,26 +42,24 @@
         position: fixed;
         bottom: 20px;
         right: 20px;
-        z-index: 9999;
+        z-index: 99999;
         min-width: 250px;
     }
 
     /* Floating Tooltip */
     .grades-tooltip {
         position: fixed;
-        left: 50%;
-        transform: translateX(-50%);
         background: white;
-        border: 1px solid #e0e0e0;
+        border: 2px solid #667eea;
         border-radius: 20px;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.2);
-        width: 360px;
-        max-height: 480px;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        width: 380px;
+        max-height: 500px;
         overflow: hidden;
-        z-index: 9999;
+        z-index: 10001;
         opacity: 0;
         visibility: hidden;
-        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         pointer-events: none;
     }
 
@@ -69,75 +67,154 @@
         opacity: 1;
         visibility: visible;
         pointer-events: auto;
+        animation: tooltipFadeIn 0.3s ease-out;
+    }
+
+    @keyframes tooltipFadeIn {
+        from {
+            opacity: 0;
+            transform: translate(-50%, -48%) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
     }
 
     .grades-tooltip.position-top {
         top: 15%;
+        left: 50%;
+        transform: translateX(-50%);
     }
     .grades-tooltip.position-bottom {
         bottom: 15%;
+        left: 50%;
+        transform: translateX(-50%);
     }
 
     .grades-tooltip .tooltip-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
-        padding: 18px 24px;
-        font-weight: 600;
-        font-size: 1.1rem;
-        text-align: center;
-        border-radius: 20px 20px 0 0;
-        margin: -20px -20px 20px -20px;
-        box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+        padding: 20px 60px 20px 24px;
+        font-weight: 700;
+        font-size: 1.2rem;
+        text-align: left;
+        border-radius: 18px 18px 0 0;
+        margin: -2px -2px 20px -2px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        position: relative;
+        min-height: 70px;
+        display: flex;
+        align-items: center;
+    }
+
+    .grades-tooltip .tooltip-header .tooltip-close {
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        border: 2px solid rgba(255,255,255,0.3);
+        color: white;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        z-index: 10;
+        padding: 0;
+        margin: 0;
+    }
+
+    .grades-tooltip .tooltip-header .tooltip-close:hover {
+        background: rgba(255,255,255,0.3);
+        border-color: rgba(255,255,255,0.5);
+        transform: translateY(-50%) scale(1.1);
+        box-shadow: 0 0 15px rgba(255,255,255,0.3);
+    }
+
+    .grades-tooltip .tooltip-header .tooltip-close:active {
+        transform: translateY(-50%) scale(0.95);
     }
 
     .grades-tooltip .tooltip-body {
-        padding: 0 24px 24px 24px;
-        max-height: 360px;
+        padding: 0 20px 20px 20px;
+        max-height: 380px;
         overflow-y: auto;
     }
 
     .grades-tooltip .tooltip-body::-webkit-scrollbar {
-        width: 8px;
+        width: 6px;
     }
     .grades-tooltip .tooltip-body::-webkit-scrollbar-track {
-        background: #f1f1f1;
+        background: #f8f9fa;
         border-radius: 10px;
     }
     .grades-tooltip .tooltip-body::-webkit-scrollbar-thumb {
-        background: #c0c0c0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         border-radius: 10px;
     }
     .grades-tooltip .tooltip-body::-webkit-scrollbar-thumb:hover {
-        background: #a0a0a0;
+        background: linear-gradient(135deg, #5a6fd8 0%, #68448f 100%);
     }
 
     .grades-tooltip table {
         width: 100%;
         border-collapse: separate;
-        border-spacing: 0 10px;
+        border-spacing: 0 8px;
     }
     .grades-tooltip th {
         color: #6c757d;
         font-weight: 600;
         font-size: 0.9rem;
-        padding: 10px 8px;
+        padding: 12px 8px;
+        border-bottom: 2px solid #e9ecef;
     }
     .grades-tooltip td {
-        padding: 14px 8px;
+        padding: 14px 12px;
         background: #f8f9fa;
         border-radius: 12px;
         transition: all 0.3s ease;
+        font-size: 0.95rem;
     }
     .grades-tooltip tr:hover td {
         background: #e3f2fd;
         transform: translateY(-2px);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
     .grades-tooltip .grade-badge {
-        font-weight: 700;
-        padding: 8px 16px;
-        border-radius: 30px;
-        font-size: 0.9rem;
+        font-weight: 800;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        min-width: 50px;
+        display: inline-block;
+        text-align: center;
+    }
+
+    /* Overlay for mobile */
+    .tooltip-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.7);
+        z-index: 10000;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(3px);
+    }
+
+    .tooltip-overlay.show {
+        opacity: 1;
+        visibility: visible;
     }
 
     /* Mobile Card Styles */
@@ -203,18 +280,102 @@
         font-size: 0.95rem;
     }
 
-    /* Responsive */
+    /* Mobile specific styles */
     @media (max-width: 991px) {
         .desktop-table { display: none; }
         .mobile-cards { display: block; }
+        
         .grades-tooltip {
-            width: 92%;
-            max-width: 380px;
+            width: 92% !important;
+            max-width: 400px !important;
+            max-height: 85vh !important;
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            bottom: auto !important;
+            z-index: 10002 !important;
+            border-width: 3px !important;
+            border-color: #667eea !important;
+            box-shadow: 0 25px 80px rgba(0,0,0,0.4) !important;
+        }
+        
+        .grades-tooltip.show {
+            animation: mobileTooltipFadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        @keyframes mobileTooltipFadeIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -45%) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+        
+        .grades-tooltip .tooltip-header {
+            padding: 22px 70px 22px 24px;
+            font-size: 1.3rem;
+            min-height: 80px;
+        }
+        
+        .grades-tooltip .tooltip-header .tooltip-close {
+            width: 42px;
+            height: 42px;
+            font-size: 1.8rem;
+            right: 15px;
+            background: rgba(255,255,255,0.25);
+            border: 2px solid rgba(255,255,255,0.4);
+        }
+        
+        .grades-tooltip .tooltip-body {
+            max-height: 65vh;
+            padding: 0 16px 20px 16px;
+        }
+        
+        .grades-tooltip table {
+            border-spacing: 0 10px;
+        }
+        
+        .grades-tooltip th {
+            font-size: 0.95rem;
+            padding: 14px 8px;
+        }
+        
+        .grades-tooltip td {
+            padding: 16px 12px;
+            font-size: 1rem;
+        }
+        
+        .grades-tooltip .grade-badge {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            min-width: 55px;
+        }
+        
+        .comment-info-icon {
+            right: 35px;
+        }
+        
+        .tooltip-overlay {
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(5px);
         }
     }
+    
     @media (min-width: 992px) {
         .mobile-cards { display: none; }
         .desktop-table { display: block; }
+        
+        .grades-tooltip {
+            max-height: 550px;
+        }
+        
+        .grades-tooltip .tooltip-body {
+            max-height: 430px;
+        }
     }
 </style>
 
@@ -261,11 +422,6 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
-
-            <!-- Debug Info (remove in production) -->
-            <div class="alert alert-info d-none" id="debugInfo">
-                Route URL: {{ route('myprincipalscomment.updateComments', [$schoolclassid, $sessionid, $termid]) }}
-            </div>
 
             @if ($students->isNotEmpty())
                 <form id="commentsForm" action="{{ route('myprincipalscomment.updateComments', [$schoolclassid, $sessionid, $termid]) }}" method="POST">
@@ -368,7 +524,10 @@
                                                                 <!-- Floating Tooltip -->
                                                                 <div class="grades-tooltip position-bottom" id="tooltip-{{ $student->id }}">
                                                                     <div class="tooltip-header" id="header-{{ $student->id }}">
-                                                                        Grades
+                                                                        <span id="tooltip-title-{{ $student->id }}">Grades</span>
+                                                                        <button type="button" class="tooltip-close" aria-label="Close">
+                                                                            <i class="ri-close-line"></i>
+                                                                        </button>
                                                                     </div>
 
                                                                     <div class="tooltip-body">
@@ -475,7 +634,10 @@
                                                         <!-- Mobile Tooltip -->
                                                         <div class="grades-tooltip position-bottom mt-3" id="tooltip-{{ $student->id }}">
                                                             <div class="tooltip-header" id="header-{{ $student->id }}">
-                                                                Grades
+                                                                <span id="tooltip-title-{{ $student->id }}">Grades</span>
+                                                                <button type="button" class="tooltip-close" aria-label="Close">
+                                                                    <i class="ri-close-line"></i>
+                                                                </button>
                                                             </div>
 
                                                             <div class="tooltip-body">
@@ -515,13 +677,16 @@
     </div>
 </div>
 
+<!-- Overlay for mobile tooltips -->
+<div class="tooltip-overlay" id="tooltipOverlay"></div>
+
 <script>
 // Grades data
 window.studentGrades = @json($studentGrades);
+let activeTooltip = null;
 
 // Toast notification function
 function showToast(message, type = 'info') {
-    // Remove any existing toast
     const existingToast = document.querySelector('.auto-save-toast');
     if (existingToast) existingToast.remove();
     
@@ -538,12 +703,84 @@ function showToast(message, type = 'info') {
     
     document.body.appendChild(toast);
     
-    // Auto remove after 3 seconds
     setTimeout(() => {
         if (toast.parentNode) {
             toast.remove();
         }
     }, 3000);
+}
+
+// Function to close all tooltips
+function closeAllTooltips() {
+    document.querySelectorAll('.grades-tooltip.show').forEach(tooltip => {
+        tooltip.classList.remove('show');
+    });
+    document.getElementById('tooltipOverlay').classList.remove('show');
+    activeTooltip = null;
+    
+    // Remove any active states
+    document.querySelectorAll('.grades-trigger.active').forEach(trigger => {
+        trigger.classList.remove('active');
+    });
+}
+
+// Function to show a specific tooltip
+function showTooltip(tooltipId, studentId, studentName) {
+    const tooltip = document.getElementById(tooltipId);
+    if (!tooltip) return;
+    
+    // Close any open tooltip first
+    closeAllTooltips();
+    
+    // Show overlay on mobile
+    if (window.innerWidth <= 991) {
+        document.getElementById('tooltipOverlay').classList.add('show');
+    }
+    
+    // Mark the trigger as active
+    const trigger = document.querySelector(`.grades-trigger[data-student-id="${studentId}"]`);
+    if (trigger) {
+        trigger.classList.add('active');
+    }
+    
+    // Set content
+    const title = document.getElementById(`tooltip-title-${studentId}`);
+    if (title) {
+        title.textContent = studentName + "'s Grades";
+    }
+    
+    const grades = window.studentGrades[studentId] || [];
+    const tbody = document.getElementById(`grades-body-${studentId}`);
+    const noGrades = document.getElementById(`no-grades-${studentId}`);
+    
+    tbody.innerHTML = '';
+    
+    if (grades.length === 0) {
+        noGrades.classList.remove('d-none');
+    } else {
+        noGrades.classList.add('d-none');
+        grades.forEach(g => {
+            const row = document.createElement('tr');
+            const gradeColor = g.grade[0] === 'A' ? 'success' :
+                               g.grade[0] === 'B' || g.grade === 'C' ? 'info' :
+                               g.grade[0] === 'D' || g.grade[0] === 'E' ? 'warning' : 'danger';
+
+            row.innerHTML = `
+                <td><strong>${g.subject}</strong></td>
+                <td class="text-center fw-bold ${g.score < 50 ? 'text-danger' : 'text-success'}">${g.score}</td>
+                <td class="text-center">
+                    <span class="badge bg-${gradeColor} grade-badge">${g.grade}</span>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+    
+    // Show the tooltip
+    setTimeout(() => {
+        tooltip.classList.add('show');
+        activeTooltip = tooltipId;
+    }, 50);
 }
 
 // Auto-save on dropdown change
@@ -553,33 +790,27 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
         const comment = this.value;
         const originalValue = this.getAttribute('data-original-value');
         
-        // Don't save if value didn't change
         if (comment === originalValue) {
             return;
         }
 
-        // Show saving indicator
         const originalBorderColor = this.style.borderColor;
         const originalBackgroundColor = this.style.backgroundColor;
         this.style.borderColor = '#ffc107';
         this.style.backgroundColor = '#fff3cd';
         this.disabled = true;
         
-        // Store the current option text
         const selectedOption = this.options[this.selectedIndex];
         const originalText = selectedOption ? selectedOption.text : '';
         
-        // Change dropdown text to show saving
         if (selectedOption) {
             selectedOption.text = 'Saving...';
         }
 
-        // Create form data
         const formData = new FormData();
         formData.append('_token', '{{ csrf_token() }}');
         formData.append('teacher_comments[' + studentId + ']', comment);
 
-        // Build URL
         const saveUrl = '{{ route("myprincipalscomment.updateComments", [$schoolclassid, $sessionid, $termid]) }}';
         
         fetch(saveUrl, {
@@ -592,19 +823,15 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
             }
         })
         .then(response => {
-            // First check if response is OK
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            // Check if response is JSON
             const contentType = response.headers.get("content-type");
             if (contentType && contentType.includes("application/json")) {
                 return response.json();
             } else {
-                // If not JSON, try to parse as text
                 return response.text().then(text => {
-                    // If it's HTML, it might be a redirect or error page
                     if (text.includes('<!DOCTYPE html>') || text.includes('<html')) {
                         throw new Error('Server returned HTML instead of JSON');
                     }
@@ -614,20 +841,15 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
         })
         .then(data => {
             if (data.success) {
-                // Update original value attribute
                 this.setAttribute('data-original-value', comment);
-                
-                // Show success
                 this.style.borderColor = '#28a745';
                 this.style.backgroundColor = '#d1e7dd';
                 showToast(data.message || 'Comment saved successfully!', 'success');
                 
-                // Restore original option text
                 if (selectedOption) {
                     selectedOption.text = originalText;
                 }
                 
-                // Reset styling after delay
                 setTimeout(() => {
                     this.style.borderColor = originalBorderColor;
                     this.style.backgroundColor = originalBackgroundColor;
@@ -640,18 +862,15 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
         .catch(err => {
             console.error('Auto-save error:', err);
             
-            // Revert to original value on error
             this.value = originalValue;
             this.style.borderColor = '#dc3545';
             this.style.backgroundColor = '#f8d7da';
             this.disabled = false;
             
-            // Restore original option text
             if (selectedOption) {
                 selectedOption.text = originalText;
             }
             
-            // Show error message
             let errorMsg = 'Error saving comment';
             if (err.message.includes('403')) {
                 errorMsg = 'Unauthorized: You are not assigned to this class';
@@ -665,7 +884,6 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
             
             showToast(errorMsg, 'error');
             
-            // Reset styling after delay
             setTimeout(() => {
                 this.style.borderColor = originalBorderColor;
                 this.style.backgroundColor = originalBackgroundColor;
@@ -676,96 +894,98 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
 
 // Tooltip functionality
 document.querySelectorAll('.grades-trigger').forEach(trigger => {
-    const tooltipId = `tooltip-${trigger.getAttribute('data-student-id')}`;
-    const tooltip = document.getElementById(tooltipId);
-    if (!tooltip) return;
-
-    const header = tooltip.querySelector('.tooltip-header');
-    const body = tooltip.querySelector('.tooltip-body');
-    const noGrades = tooltip.querySelector('.text-center.py-4');
-
-    let hideTimeout;
-
-    const positionTooltip = () => {
-        const rect = trigger.getBoundingClientRect();
-        const tooltipHeight = 480;
-        const viewportHeight = window.innerHeight;
-        const spaceBelow = viewportHeight - rect.bottom;
-        const spaceAbove = rect.top;
-
-        tooltip.classList.remove('position-top', 'position-bottom');
-
-        if (spaceBelow < tooltipHeight && spaceAbove > spaceBelow) {
-            tooltip.classList.add('position-top');
-        } else {
-            tooltip.classList.add('position-bottom');
-        }
-    };
-
-    const showTooltip = () => {
-        clearTimeout(hideTimeout);
-        document.querySelectorAll('.grades-tooltip.show').forEach(t => t.classList.remove('show'));
+    trigger.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
         
-        positionTooltip();
-        tooltip.classList.add('show');
-
-        const studentId = trigger.getAttribute('data-student-id');
-        const studentName = trigger.getAttribute('data-student-name') || 'Student';
-        header.textContent = studentName + "'s Grades";
-
-        const grades = window.studentGrades[studentId] || [];
-        const tbody = document.getElementById(`grades-body-${studentId}`);
-        tbody.innerHTML = '';
-
-        if (grades.length === 0) {
-            noGrades.classList.remove('d-none');
+        const studentId = this.getAttribute('data-student-id');
+        const studentName = this.getAttribute('data-student-name');
+        const tooltipId = `tooltip-${studentId}`;
+        
+        // If clicking on the same tooltip that's already open, close it
+        if (activeTooltip === tooltipId) {
+            closeAllTooltips();
         } else {
-            noGrades.classList.add('d-none');
-            grades.forEach(g => {
-                const row = document.createElement('tr');
-                const gradeColor = g.grade[0] === 'A' ? 'success' :
-                                   g.grade[0] === 'B' || g.grade === 'C' ? 'info' :
-                                   g.grade[0] === 'D' || g.grade[0] === 'E' ? 'warning' : 'danger';
-
-                row.innerHTML = `
-                    <td><strong>${g.subject}</strong></td>
-                    <td class="text-center fw-bold ${g.score < 50 ? 'text-danger' : 'text-success'}">${g.score}</td>
-                    <td class="text-center">
-                        <span class="badge bg-${gradeColor} grade-badge">${g.grade}</span>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
+            showTooltip(tooltipId, studentId, studentName);
         }
-    };
+    });
+});
 
-    const hideTooltip = () => {
-        hideTimeout = setTimeout(() => tooltip.classList.remove('show'), 300);
-    };
+// Close tooltips when clicking close button
+document.querySelectorAll('.tooltip-close').forEach(closeBtn => {
+    closeBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        closeAllTooltips();
+    });
+});
 
-    // Desktop: hover
-    if (window.innerWidth > 991) {
-        trigger.addEventListener('mouseenter', showTooltip);
-        trigger.addEventListener('focus', showTooltip);
-        trigger.addEventListener('mouseleave', hideTooltip);
-        trigger.addEventListener('blur', hideTooltip);
-    } else {
-        // Mobile: click
-        trigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (tooltip.classList.contains('show')) {
-                tooltip.classList.remove('show');
-            } else {
-                showTooltip();
-            }
-        });
-        document.addEventListener('click', (e) => {
-            if (!tooltip.contains(e.target) && !trigger.contains(e.target)) {
-                tooltip.classList.remove('show');
-            }
-        });
+// Close tooltips when clicking overlay (mobile)
+document.getElementById('tooltipOverlay').addEventListener('click', function(e) {
+    e.stopPropagation();
+    closeAllTooltips();
+});
+
+// Close tooltips with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeAllTooltips();
     }
 });
+
+// Close tooltips when clicking outside (desktop only)
+if (window.innerWidth > 991) {
+    document.addEventListener('click', function(e) {
+        if (activeTooltip) {
+            const tooltip = document.getElementById(activeTooltip);
+            const trigger = document.querySelector(`.grades-trigger[data-student-id="${activeTooltip.replace('tooltip-', '')}"]`);
+            
+            if (tooltip && !tooltip.contains(e.target) && (!trigger || !trigger.contains(e.target))) {
+                closeAllTooltips();
+            }
+        }
+    });
+}
+
+// Desktop hover behavior
+if (window.innerWidth > 991) {
+    document.querySelectorAll('.grades-trigger').forEach(trigger => {
+        let hoverTimeout;
+        
+        trigger.addEventListener('mouseenter', function() {
+            if (!activeTooltip) {
+                hoverTimeout = setTimeout(() => {
+                    const studentId = this.getAttribute('data-student-id');
+                    const studentName = this.getAttribute('data-student-name');
+                    const tooltipId = `tooltip-${studentId}`;
+                    
+                    if (!activeTooltip) {
+                        showTooltip(tooltipId, studentId, studentName);
+                    }
+                }, 300);
+            }
+        });
+        
+        trigger.addEventListener('mouseleave', function() {
+            clearTimeout(hoverTimeout);
+            
+            if (activeTooltip && !this.classList.contains('active')) {
+                setTimeout(() => {
+                    const tooltip = document.getElementById(activeTooltip);
+                    if (tooltip && !tooltip.matches(':hover')) {
+                        closeAllTooltips();
+                    }
+                }, 100);
+            }
+        });
+    });
+    
+    // Keep tooltip open when hovering over it
+    document.addEventListener('mouseover', function(e) {
+        if (activeTooltip && e.target.closest('.grades-tooltip')) {
+            clearTimeout(window.tooltipCloseTimeout);
+        }
+    });
+}
 
 // Search functionality
 document.addEventListener('DOMContentLoaded', () => {
@@ -793,7 +1013,6 @@ document.addEventListener('DOMContentLoaded', () => {
 document.getElementById('commentsForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
     
-    // Show loading on submit button
     const submitBtn = this.querySelector('button[type="submit"]');
     const originalBtnText = submitBtn.innerHTML;
     submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
@@ -830,7 +1049,6 @@ document.getElementById('commentsForm')?.addEventListener('submit', function(e) 
         if (data.success) {
             showToast(data.message || 'All comments saved successfully!', 'success');
             
-            // Update all original values
             document.querySelectorAll('.auto-save-comment').forEach(select => {
                 select.setAttribute('data-original-value', select.value);
                 select.style.borderColor = '#28a745';
@@ -841,7 +1059,6 @@ document.getElementById('commentsForm')?.addEventListener('submit', function(e) 
                 }, 2000);
             });
             
-            // Reload page after successful save
             setTimeout(() => {
                 window.location.reload();
             }, 1500);
@@ -866,7 +1083,6 @@ document.getElementById('commentsForm')?.addEventListener('submit', function(e) 
         showToast(errorMsg, 'error');
     })
     .finally(() => {
-        // Restore button state
         submitBtn.innerHTML = originalBtnText;
         submitBtn.disabled = false;
     });
@@ -874,17 +1090,9 @@ document.getElementById('commentsForm')?.addEventListener('submit', function(e) 
 
 // Keyboard shortcuts
 document.addEventListener('keydown', function(e) {
-    // Ctrl+S or Cmd+S to save
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         document.getElementById('commentsForm')?.dispatchEvent(new Event('submit'));
-    }
-    
-    // Escape to close tooltips
-    if (e.key === 'Escape') {
-        document.querySelectorAll('.grades-tooltip.show').forEach(tooltip => {
-            tooltip.classList.remove('show');
-        });
     }
 });
 
@@ -893,10 +1101,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.auto-save-comment').forEach(select => {
         select.setAttribute('data-original-value', select.value);
     });
-    
-    // Add debug info
-    console.log('Route URL:', '{{ route("myprincipalscomment.updateComments", [$schoolclassid, $sessionid, $termid]) }}');
-    console.log('Student grades loaded:', Object.keys(window.studentGrades || {}).length, 'students');
 });
 </script>
 @endsection
