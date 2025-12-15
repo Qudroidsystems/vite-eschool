@@ -89,12 +89,6 @@ class MyPrincipalsCommentController extends Controller
                 'studentpicture.picture as picture',
             ]);
 
-        // Create student names array for quick lookup
-        $studentNames = [];
-        foreach ($students as $student) {
-            $studentNames[$student->id] = $student->fname . ' ' . $student->lastname;
-        }
-
         // All subjects for this class/session/term
         $subjects = Broadsheets::where('broadsheet_records.schoolclass_id', $schoolclassid)
             ->where('broadsheets.term_id', $termid)
@@ -172,15 +166,15 @@ class MyPrincipalsCommentController extends Controller
             $gradeLetter = 'F'; // Just the letter (A, B, C, D, E, F)
             
             if ($isSenior) {
-                if ($total >= 75) { $grade = 'A1'; $gradeLetter = 'A'; }
-                elseif ($total >= 70) { $grade = 'B2'; $gradeLetter = 'B'; }
-                elseif ($total >= 65) { $grade = 'B3'; $gradeLetter = 'B'; }
-                elseif ($total >= 60) { $grade = 'C4'; $gradeLetter = 'C'; }
-                elseif ($total >= 55) { $grade = 'C5'; $gradeLetter = 'C'; }
-                elseif ($total >= 50) { $grade = 'C6'; $gradeLetter = 'C'; }
-                elseif ($total >= 45) { $grade = 'D7'; $gradeLetter = 'D'; }
-                elseif ($total >= 40) { $grade = 'E8'; $gradeLetter = 'E'; }
-                else { $grade = 'F9'; $gradeLetter = 'F'; }
+                if ($total >= 75) { $grade = 'A1'; $gradeLetter = 'A1'; }
+                elseif ($total >= 70) { $grade = 'B2'; $gradeLetter = 'B2'; }
+                elseif ($total >= 65) { $grade = 'B3'; $gradeLetter = 'B3'; }
+                elseif ($total >= 60) { $grade = 'C4'; $gradeLetter = 'C4'; }
+                elseif ($total >= 55) { $grade = 'C5'; $gradeLetter = 'C5'; }
+                elseif ($total >= 50) { $grade = 'C6'; $gradeLetter = 'C6'; }
+                elseif ($total >= 45) { $grade = 'D7'; $gradeLetter = 'D7'; }
+                elseif ($total >= 40) { $grade = 'E8'; $gradeLetter = 'E8'; }
+                else { $grade = 'F9'; $gradeLetter = 'F9'; }
             } else {
                 if ($total >= 70) { $grade = 'A'; $gradeLetter = 'A'; }
                 elseif ($total >= 60) { $grade = 'B'; $gradeLetter = 'B'; }
@@ -219,10 +213,10 @@ class MyPrincipalsCommentController extends Controller
             }
         }
 
-        // Generate intelligent comments based on performance with student names
+        // Generate intelligent comments based on performance with student first names only
         foreach ($students as $student) {
             $studentId = $student->id;
-            $studentName = $student->fname;
+            $studentFirstName = $student->fname; // Using only first name
             $analysis = $studentGradeAnalysis[$studentId] ?? ['counts' => [], 'weak_subjects' => []];
             
             $comment = '';
@@ -251,9 +245,9 @@ class MyPrincipalsCommentController extends Controller
             $goodGrades = ($analysis['counts']['A'] ?? 0) + ($analysis['counts']['B'] ?? 0) + ($analysis['counts']['C'] ?? 0);
             $percentageGood = $totalGrades > 0 ? ($goodGrades / $totalGrades) * 100 : 0;
             
-            // Base comment with student name and grade summary
+            // Base comment with student first name and grade summary
             if (!empty($gradeSummary)) {
-                $comment = $studentName . " has " . $gradeSummary . ". ";
+                $comment = $studentFirstName . " has " . $gradeSummary . ". ";
             }
             
             // Add performance assessment
@@ -282,11 +276,11 @@ class MyPrincipalsCommentController extends Controller
                 }
                 
                 if (count($subjectList) == 1) {
-                    $comment .= "\n" . $studentName . " should work harder to achieve a higher average in " . $subjectList[0] . ".";
+                    $comment .= "\n" . $studentFirstName . " should work harder to achieve a higher average in " . $subjectList[0] . ".";
                 } elseif (count($subjectList) == 2) {
-                    $comment .= "\n" . $studentName . " should work harder to achieve a higher average in " . implode(' and ', $subjectList) . ".";
+                    $comment .= "\n" . $studentFirstName . " should work harder to achieve a higher average in " . implode(' and ', $subjectList) . ".";
                 } elseif (count($subjectList) > 2) {
-                    $comment .= "\n" . $studentName . " should work harder to achieve a higher average in " . implode(', ', array_slice($subjectList, 0, -1)) . " and " . end($subjectList) . ".";
+                    $comment .= "\n" . $studentFirstName . " should work harder to achieve a higher average in " . implode(', ', array_slice($subjectList, 0, -1)) . " and " . end($subjectList) . ".";
                 }
             }
             
