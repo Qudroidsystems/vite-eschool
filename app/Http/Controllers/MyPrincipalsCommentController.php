@@ -31,15 +31,15 @@ class MyPrincipalsCommentController extends Controller
         $assignments = Principalscomment::where('staffId', Auth::id())
             ->join('schoolclass', 'principalscomments.schoolclassid', '=', 'schoolclass.id')
             ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->leftJoin('schoolsessions', 'principalscomments.sessionid', '=', 'schoolsessions.id')
-            ->leftJoin('schoolterms', 'principalscomments.termid', '=', 'schoolterms.id')
+            ->leftJoin('schoolsession', 'principalscomments.sessionid', '=', 'schoolsession.id')
+            ->leftJoin('schoolterm', 'principalscomments.termid', '=', 'schoolterm.id')
             ->select([
                 'principalscomments.id',
                 'schoolclass.id as schoolclassid',
                 'schoolclass.schoolclass as sclass',
                 'schoolarm.arm as schoolarm',
-                'schoolsessions.session as session_name',
-                'schoolterms.term as term_name',
+                'schoolsession.session as session_name',
+                'schoolterm.term as term_name',
                 'principalscomments.updated_at'
             ])
             ->orderBy('schoolclass.schoolclass')
