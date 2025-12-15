@@ -31,15 +31,15 @@ class MyPrincipalsCommentController extends Controller
         $assignments = Principalscomment::where('staffId', Auth::id())
             ->join('schoolclass', 'principalscomments.schoolclassid', '=', 'schoolclass.id')
             ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->leftJoin('schoolsession', 'principalscomments.sessionid', '=', 'schoolsession.id')
-            ->leftJoin('schoolterm', 'principalscomments.termid', '=', 'schoolterm.id')
+            ->leftJoin('schoolsessions', 'principalscomments.sessionid', '=', 'schoolsessions.id')
+            ->leftJoin('schoolterms', 'principalscomments.termid', '=', 'schoolterms.id')
             ->select([
                 'principalscomments.id',
                 'schoolclass.id as schoolclassid',
                 'schoolclass.schoolclass as sclass',
                 'schoolarm.arm as schoolarm',
-                'schoolsession.session as session_name',
-                'schoolterm.term as term_name',
+                'schoolsessions.session as session_name',
+                'schoolterms.term as term_name',
                 'principalscomments.updated_at'
             ])
             ->orderBy('schoolclass.schoolclass')
@@ -89,6 +89,12 @@ class MyPrincipalsCommentController extends Controller
                 'studentpicture.picture as picture',
             ]);
 
+        // Create student names array for quick lookup
+        $studentNames = [];
+        foreach ($students as $student) {
+            $studentNames[$student->id] = $student->fname . ' ' . $student->lastname;
+        }
+
         // All subjects for this class/session/term
         $subjects = Broadsheets::where('broadsheet_records.schoolclass_id', $schoolclassid)
             ->where('broadsheets.term_id', $termid)
@@ -116,7 +122,8 @@ class MyPrincipalsCommentController extends Controller
         $profiles = Studentpersonalityprofile::where('schoolclassid', $schoolclassid)
             ->where('termid', $termid)
             ->where('sessionid', $sessionid)
-            ->pluck('principalscomment', 'studentid');
+            ->pluck('principalscomment', 'studentid')
+            ->toArray();
 
         // Class info
         $schoolclass = Schoolclass::with('arm')->findOrFail($schoolclassid);
@@ -142,35 +149,148 @@ class MyPrincipalsCommentController extends Controller
             ])
             ->get();
 
-        // Group and calculate grades
+        // Group and calculate grades with detailed analysis
         $studentGrades = [];
+        $studentGradeAnalysis = []; // New array for detailed analysis
+        $intelligentComments = []; // Array for intelligent comments
+        
         foreach ($rawGrades as $row) {
             $total = $row->total ?? 0;
-
-            $grade = 'F';
-            if ($isSenior) {
-                if ($total >= 75) $grade = 'A1';
-                elseif ($total >= 70) $grade = 'B2';
-                elseif ($total >= 65) $grade = 'B3';
-                elseif ($total >= 60) $grade = 'C4';
-                elseif ($total >= 55) $grade = 'C5';
-                elseif ($total >= 50) $grade = 'C6';
-                elseif ($total >= 45) $grade = 'D7';
-                elseif ($total >= 40) $grade = 'E8';
-                else $grade = 'F9';
-            } else {
-                if ($total >= 70) $grade = 'A';
-                elseif ($total >= 60) $grade = 'B';
-                elseif ($total >= 50) $grade = 'C';
-                elseif ($total >= 40) $grade = 'D';
-                else $grade = 'F';
+            $studentId = $row->student_id;
+            $subjectName = $row->subject_name;
+            
+            // Initialize arrays if not exists
+            if (!isset($studentGradeAnalysis[$studentId])) {
+                $studentGradeAnalysis[$studentId] = [
+                    'grades' => [],
+                    'counts' => ['A' => 0, 'B' => 0, 'C' => 0, 'D' => 0, 'E' => 0, 'F' => 0],
+                    'weak_subjects' => [] // Subjects with D or F
+                ];
             }
 
-            $studentGrades[$row->student_id][] = [
-                'subject' => $row->subject_name,
+            $grade = 'F';
+            $gradeLetter = 'F'; // Just the letter (A, B, C, D, E, F)
+            
+            if ($isSenior) {
+                if ($total >= 75) { $grade = 'A1'; $gradeLetter = 'A'; }
+                elseif ($total >= 70) { $grade = 'B2'; $gradeLetter = 'B'; }
+                elseif ($total >= 65) { $grade = 'B3'; $gradeLetter = 'B'; }
+                elseif ($total >= 60) { $grade = 'C4'; $gradeLetter = 'C'; }
+                elseif ($total >= 55) { $grade = 'C5'; $gradeLetter = 'C'; }
+                elseif ($total >= 50) { $grade = 'C6'; $gradeLetter = 'C'; }
+                elseif ($total >= 45) { $grade = 'D7'; $gradeLetter = 'D'; }
+                elseif ($total >= 40) { $grade = 'E8'; $gradeLetter = 'E'; }
+                else { $grade = 'F9'; $gradeLetter = 'F'; }
+            } else {
+                if ($total >= 70) { $grade = 'A'; $gradeLetter = 'A'; }
+                elseif ($total >= 60) { $grade = 'B'; $gradeLetter = 'B'; }
+                elseif ($total >= 50) { $grade = 'C'; $gradeLetter = 'C'; }
+                elseif ($total >= 40) { $grade = 'D'; $gradeLetter = 'D'; }
+                else { $grade = 'F'; $gradeLetter = 'F'; }
+            }
+
+            // Store grade for display
+            $studentGrades[$studentId][] = [
+                'subject' => $subjectName,
                 'score'   => $total,
                 'grade'   => $grade,
+                'grade_letter' => $gradeLetter
             ];
+            
+            // Update grade analysis
+            $studentGradeAnalysis[$studentId]['grades'][] = [
+                'subject' => $subjectName,
+                'score' => $total,
+                'grade' => $grade,
+                'grade_letter' => $gradeLetter
+            ];
+            
+            // Update grade counts
+            if (isset($studentGradeAnalysis[$studentId]['counts'][$gradeLetter])) {
+                $studentGradeAnalysis[$studentId]['counts'][$gradeLetter]++;
+            }
+            
+            // Track weak subjects (D or F) with grade
+            if ($gradeLetter === 'D' || $gradeLetter === 'F') {
+                $studentGradeAnalysis[$studentId]['weak_subjects'][] = [
+                    'subject' => $subjectName,
+                    'grade' => $gradeLetter
+                ];
+            }
+        }
+
+        // Generate intelligent comments based on performance with student names
+        foreach ($students as $student) {
+            $studentId = $student->id;
+            $studentName = $student->fname;
+            $analysis = $studentGradeAnalysis[$studentId] ?? ['counts' => [], 'weak_subjects' => []];
+            
+            $comment = '';
+            $gradeSummary = '';
+            
+            // Build grade summary: "5 A's, 2 B's, 1 C, 1 D (Yoruba) and 1 F (French)"
+            $gradeParts = [];
+            foreach (['A', 'B', 'C', 'D', 'F'] as $gradeLetter) {
+                $count = $analysis['counts'][$gradeLetter] ?? 0;
+                if ($count > 0) {
+                    $gradeParts[] = $count . " " . $gradeLetter . ($count > 1 ? "'s" : '');
+                }
+            }
+            
+            if (!empty($gradeParts)) {
+                $gradeSummary = implode(', ', array_slice($gradeParts, 0, -1));
+                if (count($gradeParts) > 1) {
+                    $gradeSummary .= ' and ' . end($gradeParts);
+                } else {
+                    $gradeSummary = $gradeParts[0];
+                }
+            }
+            
+            // Determine overall performance comment
+            $totalGrades = array_sum($analysis['counts']);
+            $goodGrades = ($analysis['counts']['A'] ?? 0) + ($analysis['counts']['B'] ?? 0) + ($analysis['counts']['C'] ?? 0);
+            $percentageGood = $totalGrades > 0 ? ($goodGrades / $totalGrades) * 100 : 0;
+            
+            // Base comment with student name and grade summary
+            if (!empty($gradeSummary)) {
+                $comment = $studentName . " has " . $gradeSummary . ". ";
+            }
+            
+            // Add performance assessment
+            if ($percentageGood >= 80) {
+                $comment .= "Excellent result, keep it up!";
+            } elseif ($percentageGood >= 70) {
+                $comment .= "A very good result, keep it up!";
+            } elseif ($percentageGood >= 60) {
+                $comment .= "Good result, keep it up!";
+            } elseif ($percentageGood >= 50) {
+                $comment .= "Average result, there's still room for improvement next term.";
+            } elseif ($percentageGood >= 40) {
+                $comment .= "You can do better next term.";
+            } elseif ($percentageGood >= 30) {
+                $comment .= "You need to sit up and be serious.";
+            } else {
+                $comment .= "Wake up and be serious.";
+            }
+            
+            // Add subject-specific advice for weak subjects with subject names
+            $weakSubjects = $analysis['weak_subjects'] ?? [];
+            if (!empty($weakSubjects)) {
+                $subjectList = [];
+                foreach ($weakSubjects as $weak) {
+                    $subjectList[] = $weak['subject'] . " (" . $weak['grade'] . ")";
+                }
+                
+                if (count($subjectList) == 1) {
+                    $comment .= "\n" . $studentName . " should work harder to achieve a higher average in " . $subjectList[0] . ".";
+                } elseif (count($subjectList) == 2) {
+                    $comment .= "\n" . $studentName . " should work harder to achieve a higher average in " . implode(' and ', $subjectList) . ".";
+                } elseif (count($subjectList) > 2) {
+                    $comment .= "\n" . $studentName . " should work harder to achieve a higher average in " . implode(', ', array_slice($subjectList, 0, -1)) . " and " . end($subjectList) . ".";
+                }
+            }
+            
+            $intelligentComments[$studentId] = $comment;
         }
 
         return view('myprincipalscomment.classbroadsheet')
@@ -186,7 +306,9 @@ class MyPrincipalsCommentController extends Controller
                 'sessionid',
                 'termid',
                 'pagetitle',
-                'studentGrades'
+                'studentGrades',
+                'studentGradeAnalysis',
+                'intelligentComments'
             ));
     }
 
@@ -218,7 +340,6 @@ class MyPrincipalsCommentController extends Controller
 
             DB::transaction(function () use ($comments, $schoolclassid, $sessionid, $termid) {
                 foreach ($comments as $studentId => $comment) {
-                    // Only update if the record exists - use the old version's logic
                     Studentpersonalityprofile::where('studentid', $studentId)
                         ->where('schoolclassid', $schoolclassid)
                         ->where('sessionid', $sessionid)
@@ -226,7 +347,7 @@ class MyPrincipalsCommentController extends Controller
                         ->update([
                             'staffid' => Auth::id(),
                             'principalscomment' => $comment ? trim($comment) : null,
-                            'updated_at' => now(), // Add this to track when it was updated
+                            'updated_at' => now(),
                         ]);
                 }
             });

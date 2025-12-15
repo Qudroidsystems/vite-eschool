@@ -46,6 +46,44 @@
         min-width: 250px;
     }
 
+    /* Intelligent Comment Styles */
+    .intelligent-comment-section {
+        border-left: 4px solid #28a745;
+        background-color: #f8fff8 !important;
+        margin-bottom: 15px;
+        border-radius: 8px;
+    }
+    
+    .intelligent-comment-preview {
+        font-size: 0.9rem;
+        line-height: 1.4;
+        white-space: pre-line;
+        background-color: white;
+        border: 1px solid #dee2e6;
+        border-radius: 6px;
+        padding: 10px;
+        margin-top: 8px;
+    }
+    
+    .intelligent-comment-text {
+        color: #155724;
+        font-weight: 500;
+    }
+    
+    .intelligent-comment-badge {
+        font-size: 0.75rem;
+        padding: 2px 8px;
+        margin-left: 8px;
+    }
+    
+    .intelligent-option {
+        background-color: #e8f5e8 !important;
+        border-top: 2px solid #28a745 !important;
+        font-weight: 600 !important;
+        color: #155724 !important;
+        margin-top: 5px;
+    }
+
     /* Floating Tooltip for Desktop */
     .grades-tooltip {
         position: fixed;
@@ -130,36 +168,10 @@
         margin: 0;
     }
 
-    .grades-tooltip .tooltip-header .tooltip-close:hover {
-        background: rgba(255,255,255,0.3);
-        border-color: rgba(255,255,255,0.5);
-        transform: translateY(-50%) scale(1.1);
-        box-shadow: 0 0 15px rgba(255,255,255,0.3);
-    }
-
-    .grades-tooltip .tooltip-header .tooltip-close:active {
-        transform: translateY(-50%) scale(0.95);
-    }
-
     .grades-tooltip .tooltip-body {
         padding: 0 20px 20px 20px;
         max-height: 380px;
         overflow-y: auto;
-    }
-
-    .grades-tooltip .tooltip-body::-webkit-scrollbar {
-        width: 6px;
-    }
-    .grades-tooltip .tooltip-body::-webkit-scrollbar-track {
-        background: #f8f9fa;
-        border-radius: 10px;
-    }
-    .grades-tooltip .tooltip-body::-webkit-scrollbar-thumb {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        border-radius: 10px;
-    }
-    .grades-tooltip .tooltip-body::-webkit-scrollbar-thumb:hover {
-        background: linear-gradient(135deg, #5a6fd8 0%, #68448f 100%);
     }
 
     .grades-tooltip table {
@@ -180,11 +192,6 @@
         border-radius: 12px;
         transition: all 0.3s ease;
         font-size: 0.95rem;
-    }
-    .grades-tooltip tr:hover td {
-        background: #e3f2fd;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     }
     .grades-tooltip .grade-badge {
         font-weight: 800;
@@ -251,10 +258,6 @@
         border-radius: 10px;
         border: 1px solid #e9ecef;
         transition: all 0.2s ease;
-    }
-    .subject-item:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     .subject-name {
         font-size: 0.75rem;
@@ -419,6 +422,10 @@
                                         Broadsheet: {{ $schoolclass->schoolclass }} {{ $schoolclass->arm_name }} 
                                         - {{ $schoolterm }} {{ $schoolsession }}
                                     </h5>
+                                    <div class="alert alert-info mt-2 mb-0">
+                                        <i class="ri-lightbulb-line me-2"></i>
+                                        <strong>Intelligent Comment Feature:</strong> The system now analyzes student grades and suggests personalized comments with student names and subject names. Look for the "💡 Use Intelligent Comment" option in the dropdown.
+                                    </div>
                                 </div>
                                 <div class="card-body">
                                     <!-- Search Box -->
@@ -449,6 +456,8 @@
                                                             $picture = $student->picture ? basename($student->picture) : 'unnamed.jpg';
                                                             $imagePath = asset('storage/student_avatars/' . $picture);
                                                             $studentGradesList = $studentGrades[$student->id] ?? [];
+                                                            $intelligentComment = $intelligentComments[$student->id] ?? '';
+                                                            $hasWeakSubjects = !empty($studentGradeAnalysis[$student->id]['weak_subjects'] ?? []);
                                                         @endphp
                                                         <tr>
                                                             <td>{{ $index + 1 }}</td>
@@ -478,10 +487,26 @@
                                                                 </td>
                                                             @endforeach
                                                             <td class="comment-cell">
+                                                                <!-- Intelligent Comment Preview -->
+                                                                @if($intelligentComment)
+                                                                <div class="intelligent-comment-section">
+                                                                    <small class="text-muted d-block mb-1">
+                                                                        <i class="ri-lightbulb-line"></i> Suggested personalized comment:
+                                                                        @if($hasWeakSubjects)
+                                                                        <span class="badge bg-warning intelligent-comment-badge">Includes weak subjects</span>
+                                                                        @endif
+                                                                    </small>
+                                                                    <div class="intelligent-comment-preview mb-2">
+                                                                        <div class="intelligent-comment-text">{{ $intelligentComment }}</div>
+                                                                    </div>
+                                                                </div>
+                                                                @endif
+
                                                                 <select class="form-select teacher-comment-dropdown auto-save-comment"
                                                                         name="teacher_comments[{{ $student->id }}]"
                                                                         data-student-id="{{ $student->id }}"
-                                                                        data-original-value="{{ $profiles[$student->id] ?? '' }}">
+                                                                        data-original-value="{{ $profiles[$student->id] ?? '' }}"
+                                                                        data-intelligent-comment="{{ $intelligentComment }}">
                                                                     <option value="">-- Select Comment --</option>
                                                                     <option value="Excellent result, keep it up!" {{ ($profiles[$student->id] ?? '') == 'Excellent result, keep it up!' ? 'selected' : '' }}>
                                                                         Excellent result, keep it up!
@@ -504,6 +529,14 @@
                                                                     <option value="Wake up and be serious." {{ ($profiles[$student->id] ?? '') == 'Wake up and be serious.' ? 'selected' : '' }}>
                                                                         Wake up and be serious.
                                                                     </option>
+                                                                    @if($intelligentComment)
+                                                                    <option value="{{ $intelligentComment }}" class="intelligent-option">
+                                                                        💡 Use Personalized Intelligent Comment
+                                                                        @if($hasWeakSubjects)
+                                                                        <span class="badge bg-warning ms-2">Includes weak subjects</span>
+                                                                        @endif
+                                                                    </option>
+                                                                    @endif
                                                                 </select>
 
                                                                 <button type="button"
@@ -553,6 +586,8 @@
                                                 $picture = $student->picture ? basename($student->picture) : 'unnamed.jpg';
                                                 $imagePath = asset('storage/student_avatars/' . $picture);
                                                 $studentGradesList = $studentGrades[$student->id] ?? [];
+                                                $intelligentComment = $intelligentComments[$student->id] ?? '';
+                                                $hasWeakSubjects = !empty($studentGradeAnalysis[$student->id]['weak_subjects'] ?? []);
                                                 
                                                 // Calculate performance summary
                                                 $totalSubjects = count($subjects);
@@ -571,7 +606,7 @@
                                                 }
                                                 
                                                 foreach ($studentGradesList as $grade) {
-                                                    $firstLetter = strtoupper(substr($grade['grade'], 0, 1));
+                                                    $firstLetter = strtoupper(substr($grade['grade_letter'] ?? $grade['grade'], 0, 1));
                                                     if (in_array($firstLetter, ['A', 'B', 'C', 'D', 'E', 'F'])) {
                                                         $gradeCounts[$firstLetter]++;
                                                     }
@@ -599,6 +634,9 @@
                                                         <div class="summary-title">
                                                             <i class="ri-bar-chart-line"></i>
                                                             Performance Summary
+                                                            @if($hasWeakSubjects)
+                                                            <span class="badge bg-warning ms-auto">Has weak subjects</span>
+                                                            @endif
                                                         </div>
                                                         <div class="summary-grid">
                                                             <div class="summary-item">
@@ -642,7 +680,7 @@
                                                                 foreach ($studentGradesList as $g) {
                                                                     if ($g['subject'] == $subject) {
                                                                         $grade = $g['grade'];
-                                                                        $firstLetter = strtoupper(substr($grade, 0, 1));
+                                                                        $firstLetter = strtoupper(substr($g['grade_letter'] ?? $g['grade'], 0, 1));
                                                                         $gradeClass = 'grade-' . strtolower($firstLetter);
                                                                         break;
                                                                     }
@@ -662,6 +700,24 @@
                                                         @endforeach
                                                     </div>
 
+                                                    <!-- Intelligent Comment Preview for Mobile -->
+                                                    @if($intelligentComment)
+                                                    <div class="intelligent-comment-section">
+                                                        <div class="comment-label-mobile">
+                                                            <i class="ri-lightbulb-line"></i>
+                                                            Personalized Comment Suggestion
+                                                        </div>
+                                                        <div class="intelligent-comment-preview mb-3">
+                                                            <div class="intelligent-comment-text">{{ $intelligentComment }}</div>
+                                                            @if($hasWeakSubjects)
+                                                            <small class="text-muted d-block mt-2">
+                                                                <i class="ri-alert-line"></i> Includes specific advice for weak subjects
+                                                            </small>
+                                                            @endif
+                                                        </div>
+                                                    </div>
+                                                    @endif
+
                                                     <!-- Principal's Comment Section -->
                                                     <div class="comment-section-mobile">
                                                         <div class="comment-label-mobile">
@@ -672,7 +728,8 @@
                                                             <select class="form-select teacher-comment-dropdown auto-save-comment"
                                                                     name="teacher_comments[{{ $student->id }}]"
                                                                     data-student-id="{{ $student->id }}"
-                                                                    data-original-value="{{ $profiles[$student->id] ?? '' }}">
+                                                                    data-original-value="{{ $profiles[$student->id] ?? '' }}"
+                                                                    data-intelligent-comment="{{ $intelligentComment }}">
                                                                 <option value="">-- Select Comment --</option>
                                                                 <option value="Excellent result, keep it up!" {{ ($profiles[$student->id] ?? '') == 'Excellent result, keep it up!' ? 'selected' : '' }}>
                                                                     Excellent result, keep it up!
@@ -695,6 +752,14 @@
                                                                 <option value="Wake up and be serious." {{ ($profiles[$student->id] ?? '') == 'Wake up and be serious.' ? 'selected' : '' }}>
                                                                     Wake up and be serious.
                                                                 </option>
+                                                                @if($intelligentComment)
+                                                                <option value="{{ $intelligentComment }}" class="intelligent-option">
+                                                                    💡 Use Personalized Intelligent Comment
+                                                                    @if($hasWeakSubjects)
+                                                                    <span class="badge bg-warning ms-2">Includes weak subjects</span>
+                                                                    @endif
+                                                                </option>
+                                                                @endif
                                                             </select>
                                                         </div>
                                                     </div>
@@ -813,14 +878,21 @@ function showTooltip(tooltipId, studentId, studentName) {
     activeTooltip = tooltipId;
 }
 
-// Auto-save on dropdown change
+// Auto-save on dropdown change with intelligent comment support
 document.querySelectorAll('.auto-save-comment').forEach(select => {
     select.addEventListener('change', function () {
         const studentId = this.getAttribute('data-student-id');
         const comment = this.value;
         const originalValue = this.getAttribute('data-original-value');
+        const intelligentComment = this.getAttribute('data-intelligent-comment');
         
-        if (comment === originalValue) {
+        // If user selected the intelligent comment option, use the actual comment
+        let finalComment = comment;
+        if (comment === intelligentComment) {
+            // This is the intelligent comment
+        }
+        
+        if (finalComment === originalValue) {
             return;
         }
 
@@ -839,7 +911,7 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
 
         const formData = new FormData();
         formData.append('_token', '{{ csrf_token() }}');
-        formData.append('teacher_comments[' + studentId + ']', comment);
+        formData.append('teacher_comments[' + studentId + ']', finalComment);
 
         const saveUrl = '{{ route("myprincipalscomment.updateComments", [$schoolclassid, $sessionid, $termid]) }}';
         
@@ -871,7 +943,7 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
         })
         .then(data => {
             if (data.success) {
-                this.setAttribute('data-original-value', comment);
+                this.setAttribute('data-original-value', finalComment);
                 this.style.borderColor = '#28a745';
                 this.style.backgroundColor = '#d1e7dd';
                 showToast(data.message || 'Comment saved successfully!', 'success');
