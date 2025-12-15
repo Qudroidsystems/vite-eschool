@@ -186,6 +186,10 @@
         @include('layouts.pages-assets.css.principalscomment-list-css')
     @endif
 
+    @if (Route::is('myprincipalscomment.*'))
+        @include('layouts.pages-assets.css.myprincipalscomment-list-css')
+    @endif
+
     @if (Route::is('compulsorysubjectclass.*'))
         @include('layouts.pages-assets.css.compulsorysubjectclass-list-css')
     @endif
@@ -422,11 +426,11 @@
                                         </li>
                                   @endcan  
                                   
-                                   {{-- @can('View principals-comment')
+                                   @can('View my-principals-comment')
                                           <li class="nav-item">
-                                              <a href="{{ route('mysubjectvettings.index') }}" class="nav-link" data-key="t-products">Subjects to Vet</a>
+                                              <a href="{{ route('myprincipalscomment.index') }}" class="nav-link" data-key="t-products">Principal's Comment</a>
                                         </li>
-                                  @endcan    --}}
+                                  @endcan   
                                 </ul>
                             </div>
                         </li>
@@ -2104,6 +2108,10 @@
 
       @if (Route::is('principalscomment.*'))
             @include('layouts.pages-assets.js.principalscomment-list-js')
+      @endif
+
+      @if (Route::is('myprincipalscomment.*'))
+            @include('layouts.pages-assets.js.myprincipalscomment-list-js')
       @endif
 
       @if (Route::is('compulsorysubjectclass.*'))

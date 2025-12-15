@@ -26,6 +26,10 @@ class Schoolclass extends Model
         return $this->belongsTo(Classcategory::class, 'classcategoryid', 'id');
     }
    
+    public function arm()
+    {
+        return $this->belongsTo(Schoolarm::class, 'arm');
+    }
     
 
 }

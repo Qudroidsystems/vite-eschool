@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\SubjectVetting;
-use App\Models\Schoolclass;
-use App\Models\Subjectclass;
-use App\Models\SubjectTeacher;
-use App\Models\Schoolterm;
-use App\Models\Schoolsession;
 use App\Models\User;
-use App\Models\Studentclass;
 use App\Models\Subject;
+use App\Models\Schoolterm;
 use App\Models\Broadsheets;
+use App\Models\Schoolclass;
+use App\Models\Studentclass;
+use App\Models\Subjectclass;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Schoolsession;
+use App\Models\SubjectTeacher;
+use App\Models\SubjectVetting;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 
 class MySubjectVettingsController extends Controller
@@ -340,87 +341,87 @@ class MySubjectVettingsController extends Controller
  
 
     public function updateVettedStatus(Request $request)
-{
-    $request->validate([
-        'broadsheet_id' => 'required|exists:broadsheets,id',
-        'vettedstatus' => 'required|in:0,1',
-    ]);
-
-    try {
-        // Find the broadsheet
-        $broadsheet = Broadsheets::findOrFail($request->broadsheet_id);
-        
-        // Update vetted status and vettedby
-        $broadsheet->vettedstatus = $request->vettedstatus;
-        $broadsheet->vettedby = Auth::id();
-        $broadsheet->save();
-
-        Log::info('Vetted status updated', [
-            'broadsheet_id' => $broadsheet->id,
-            'vettedstatus' => $broadsheet->vettedstatus,
-            'vettedby' => $broadsheet->vettedby,
+    {
+        $request->validate([
+            'broadsheet_id' => 'required|exists:broadsheets,id',
+            'vettedstatus' => 'required|in:0,1',
         ]);
 
-        // Check if all broadsheets for the term_id and subjectclass_id are vetted (vettedstatus = 1)
-        $allVetted = $this->checkAllBroadsheetsVetted(
-            $broadsheet->term_id,
-            $broadsheet->subjectclass_id,
-            Auth::id()
-        );
+        try {
+            // Find the broadsheet
+            $broadsheet = Broadsheets::findOrFail($request->broadsheet_id);
+            
+            // Update vetted status and vettedby
+            $broadsheet->vettedstatus = $request->vettedstatus;
+            $broadsheet->vettedby = Auth::id();
+            $broadsheet->save();
 
-        if ($allVetted) {
-            // Update the corresponding SubjectVetting status to 'completed'
-            $subjectVetting = SubjectVetting::where('userid', Auth::id())
-                ->where('termid', $broadsheet->term_id)
-                ->where('subjectclassid', $broadsheet->subjectclass_id)
-                ->first();
+            Log::info('Vetted status updated', [
+                'broadsheet_id' => $broadsheet->id,
+                'vettedstatus' => $broadsheet->vettedstatus,
+                'vettedby' => $broadsheet->vettedby,
+            ]);
 
-            if ($subjectVetting && $subjectVetting->status !== 'completed') {
-                $subjectVetting->status = 'completed';
-                $subjectVetting->save();
+            // Check if all broadsheets for the term_id and subjectclass_id are vetted (vettedstatus = 1)
+            $allVetted = $this->checkAllBroadsheetsVetted(
+                $broadsheet->term_id,
+                $broadsheet->subjectclass_id,
+                Auth::id()
+            );
 
-                Log::info('SubjectVetting status updated to completed', [
-                    'subjectvetting_id' => $subjectVetting->id,
-                    'userid' => $subjectVetting->userid,
-                    'termid' => $subjectVetting->termid,
-                    'subjectclassid' => $subjectVetting->subjectclassid,
-                    'status' => $subjectVetting->status,
-                ]);
+            if ($allVetted) {
+                // Update the corresponding SubjectVetting status to 'completed'
+                $subjectVetting = SubjectVetting::where('userid', Auth::id())
+                    ->where('termid', $broadsheet->term_id)
+                    ->where('subjectclassid', $broadsheet->subjectclass_id)
+                    ->first();
+
+                if ($subjectVetting && $subjectVetting->status !== 'completed') {
+                    $subjectVetting->status = 'completed';
+                    $subjectVetting->save();
+
+                    Log::info('SubjectVetting status updated to completed', [
+                        'subjectvetting_id' => $subjectVetting->id,
+                        'userid' => $subjectVetting->userid,
+                        'termid' => $subjectVetting->termid,
+                        'subjectclassid' => $subjectVetting->subjectclassid,
+                        'status' => $subjectVetting->status,
+                    ]);
+                }
+            } else {
+                // Ensure the status is 'pending' if not all broadsheets are vetted
+                $subjectVetting = SubjectVetting::where('userid', Auth::id())
+                    ->where('termid', $broadsheet->term_id)
+                    ->where('subjectclassid', $broadsheet->subjectclass_id)
+                    ->first();
+
+                if ($subjectVetting && $subjectVetting->status !== 'pending') {
+                    $subjectVetting->status = 'pending';
+                    $subjectVetting->save();
+
+                    Log::info('SubjectVetting status reverted to pending', [
+                        'subjectvetting_id' => $subjectVetting->id,
+                        'userid' => $subjectVetting->userid,
+                        'termid' => $subjectVetting->termid,
+                        'subjectclassid' => $subjectVetting->subjectclassid,
+                        'status' => $subjectVetting->status,
+                    ]);
+                }
             }
-        } else {
-            // Ensure the status is 'pending' if not all broadsheets are vetted
-            $subjectVetting = SubjectVetting::where('userid', Auth::id())
-                ->where('termid', $broadsheet->term_id)
-                ->where('subjectclassid', $broadsheet->subjectclass_id)
-                ->first();
 
-            if ($subjectVetting && $subjectVetting->status !== 'pending') {
-                $subjectVetting->status = 'pending';
-                $subjectVetting->save();
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            Log::error('Failed to update vetted status', [
+                'broadsheet_id' => $request->broadsheet_id,
+                'error' => $e->getMessage(),
+            ]);
 
-                Log::info('SubjectVetting status reverted to pending', [
-                    'subjectvetting_id' => $subjectVetting->id,
-                    'userid' => $subjectVetting->userid,
-                    'termid' => $subjectVetting->termid,
-                    'subjectclassid' => $subjectVetting->subjectclassid,
-                    'status' => $subjectVetting->status,
-                ]);
-            }
+            return response()->json(['success' => false, 'message' => 'Failed to update vetted status: ' . $e->getMessage()], 500);
         }
-
-        return response()->json(['success' => true]);
-    } catch (\Exception $e) {
-        Log::error('Failed to update vetted status', [
-            'broadsheet_id' => $request->broadsheet_id,
-            'error' => $e->getMessage(),
-        ]);
-
-        return response()->json(['success' => false, 'message' => 'Failed to update vetted status: ' . $e->getMessage()], 500);
     }
-}
 
 
-  protected function checkAllBroadsheetsVetted($termId, $subjectClassId, $userId)
+    protected function checkAllBroadsheetsVetted($termId, $subjectClassId, $userId)
     {
         $totalBroadsheets = Broadsheets::where('term_id', $termId)
             ->where('subjectclass_id', $subjectClassId)
@@ -443,7 +444,7 @@ class MySubjectVettingsController extends Controller
         return $totalBroadsheets > 0 && $totalBroadsheets === $vettedBroadsheets;
     }
 
-     public function results()
+    public function results()
     {
         try {
             $subjectclass_id = session('subjectclass_id');
@@ -495,9 +496,7 @@ class MySubjectVettingsController extends Controller
                 'message' => 'Internal server error: ' . $e->getMessage(),
             ], 500);
         }
-    }
-
-    
+    }  
     
     protected function updateClassMetrics($subjectclassid, $staffid, $termid, $sessionid)
     {
@@ -577,52 +576,50 @@ class MySubjectVettingsController extends Controller
         ]);
     }
 
+    protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
+    {
+        Log::info('updateSubjectPositions called', compact('subjectclass_id', 'staff_id', 'term_id', 'session_id'));
+        $broadsheets = Broadsheets::where('subjectclass_id', $subjectclass_id)
+            ->where('staff_id', $staff_id)
+            ->where('term_id', $term_id)
+            ->where('broadsheet_records.session_id', $session_id)
+            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+            ->orderByDesc('broadsheets.cum')
+            ->orderBy('broadsheets.id')
+            ->get();
 
-
-protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
-{
-    Log::info('updateSubjectPositions called', compact('subjectclass_id', 'staff_id', 'term_id', 'session_id'));
-    $broadsheets = Broadsheets::where('subjectclass_id', $subjectclass_id)
-        ->where('staff_id', $staff_id)
-        ->where('term_id', $term_id)
-        ->where('broadsheet_records.session_id', $session_id)
-        ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-        ->orderByDesc('broadsheets.cum')
-        ->orderBy('broadsheets.id')
-        ->get();
-
-    if ($broadsheets->isEmpty()) {
-        Log::warning('No broadsheets found for position update', compact('subjectclass_id', 'staff_id', 'term_id', 'session_id'));
-        return;
-    }
-
-    $rank = 0;
-    $lastCum = null;
-    $lastPosition = 0;
-
-    foreach ($broadsheets as $broadsheet) {
-        $rank++;
-        if ($lastCum !== null && $broadsheet->cum == $lastCum) {
-            // Tied rank
-        } else {
-            $lastPosition = $rank;
-            $lastCum = $broadsheet->cum;
+        if ($broadsheets->isEmpty()) {
+            Log::warning('No broadsheets found for position update', compact('subjectclass_id', 'staff_id', 'term_id', 'session_id'));
+            return;
         }
-        if ($broadsheet->subject_position_class != $lastPosition) {
-            $broadsheet->subject_position_class = $lastPosition;
-            $broadsheet->save();
-            Log::info('Updated position', [
-                'broadsheet_id' => $broadsheet->id,
-                'student_id' => $broadsheet->student_id,
-                'admissionno' => $broadsheet->admissionno,
-                'cum' => $broadsheet->cum,
-                'subject_position_class' => $lastPosition,
-            ]);
-        }
-    }
 
-    Log::info('Subject positions updated', ['total_records' => $broadsheets->count()]);
-}
+        $rank = 0;
+        $lastCum = null;
+        $lastPosition = 0;
+
+        foreach ($broadsheets as $broadsheet) {
+            $rank++;
+            if ($lastCum !== null && $broadsheet->cum == $lastCum) {
+                // Tied rank
+            } else {
+                $lastPosition = $rank;
+                $lastCum = $broadsheet->cum;
+            }
+            if ($broadsheet->subject_position_class != $lastPosition) {
+                $broadsheet->subject_position_class = $lastPosition;
+                $broadsheet->save();
+                Log::info('Updated position', [
+                    'broadsheet_id' => $broadsheet->id,
+                    'student_id' => $broadsheet->student_id,
+                    'admissionno' => $broadsheet->admissionno,
+                    'cum' => $broadsheet->cum,
+                    'subject_position_class' => $lastPosition,
+                ]);
+            }
+        }
+
+        Log::info('Subject positions updated', ['total_records' => $broadsheets->count()]);
+    }
 
     protected function updateClassPositions($schoolclassid, $termid, $sessionid)
     {

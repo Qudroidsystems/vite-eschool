@@ -3,19 +3,20 @@
 namespace App\Http\Controllers;
 
 use App\Models\Student;
-use App\Models\Studentclass;
-use App\Models\Studentpersonalityprofile;
-use App\Models\Broadsheets;
-use App\Models\Schoolclass;
-use App\Models\Schoolterm;
-use App\Models\Schoolsession;
 use App\Models\Subject;
 use App\Models\Schoolarm;
+use App\Models\Schoolterm;
+use App\Models\Broadsheets;
+use App\Models\Schoolclass;
+use App\Models\Studentclass;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Models\Schoolsession;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use App\Models\Studentpersonalityprofile;
 
 class ClassBroadsheetController extends Controller
 {

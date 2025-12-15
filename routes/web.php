@@ -48,6 +48,7 @@ use App\Http\Controllers\ViewStudentReportController;
 use \App\Http\Controllers\SchoolInformationController;
 use App\Http\Controllers\MockSubjectVettingController;
 use App\Http\Controllers\StudentImageUploadController;
+use App\Http\Controllers\MyPrincipalsCommentController;
 use App\Http\Controllers\MyMockSubjectVettingsController;
 use App\Http\Controllers\SchoolBillTermSessionController;
 use App\Http\Controllers\ViewStudentMockReportController;
@@ -320,7 +321,12 @@ Route::group(['middleware' => ['auth']], function () {
 
     //principal's comment
     Route::resource('principalscomment', PrincipalsCommentController::class);
-
+    
+    Route::prefix('myprincipalscomment')->name('myprincipalscomment.')->group(function () {
+        Route::get('/', [MyPrincipalsCommentController::class, 'index'])->name('index');
+        Route::get('/broadsheet/{schoolclassid}/{sessionid}/{termid}', [MyPrincipalsCommentController::class, 'classBroadsheet'])->name('classbroadsheet');
+        Route::post('/broadsheet/{schoolclassid}/{sessionid}/{termid}', [MyPrincipalsCommentController::class, 'updateComments'])->name('updateComments');
+    });
     //subject vettings
     Route::resource('subjectvetting', SubjectVettingController::class);
     Route::resource('mocksubjectvetting', MockSubjectVettingController::class);
@@ -369,7 +375,7 @@ Route::group(['middleware' => ['auth']], function () {
 
    
     // Promotion Routes
-Route::get('/promotions', [PromotionController::class, 'index'])->name('promotions.index');
-Route::put('/promotions/{studentId}', [PromotionController::class, 'update'])->name('promotions.update');
-Route::delete('/promotions/{studentId}', [PromotionController::class, 'destroy'])->name('promotions.destroy');
+    Route::get('/promotions', [PromotionController::class, 'index'])->name('promotions.index');
+    Route::put('/promotions/{studentId}', [PromotionController::class, 'update'])->name('promotions.update');
+    Route::delete('/promotions/{studentId}', [PromotionController::class, 'destroy'])->name('promotions.destroy');
 });

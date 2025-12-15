@@ -14,6 +14,7 @@ use App\Models\SubjectVetting;
 use App\Models\BroadsheetsMock;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 
 class SubjectVettingController extends Controller
