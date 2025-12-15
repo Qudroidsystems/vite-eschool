@@ -20,8 +20,8 @@ return new class extends Migration
             // Foreign keys
             $table->foreign('staffId')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('schoolclassid')->references('id')->on('schoolclass')->onDelete('cascade');
-            $table->foreign('sessionid')->references('id')->on('schoolsessions')->onDelete('cascade'); // or your table name
-            $table->foreign('termid')->references('id')->on('schoolterms')->onDelete('cascade'); // or your table name
+            $table->foreign('sessionid')->references('id')->on('schoolsession')->onDelete('cascade'); // or your table name
+            $table->foreign('termid')->references('id')->on('schoolterm')->onDelete('cascade'); // or your table name
 
             // Unique constraint: one assignment per staff/class/session/term
             $table->unique(['staffId', 'schoolclassid', 'sessionid', 'termid']);
