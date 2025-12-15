@@ -46,7 +46,7 @@
         min-width: 250px;
     }
 
-    /* Floating Tooltip */
+    /* Floating Tooltip for Desktop */
     .grades-tooltip {
         position: fixed;
         background: white;
@@ -56,7 +56,7 @@
         width: 380px;
         max-height: 500px;
         overflow: hidden;
-        z-index: 10001;
+        z-index: 10050;
         opacity: 0;
         visibility: hidden;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -197,32 +197,20 @@
         text-align: center;
     }
 
-    /* Overlay for mobile */
-    .tooltip-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.7);
-        z-index: 10000;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
-        backdrop-filter: blur(3px);
-    }
-
-    .tooltip-overlay.show {
-        opacity: 1;
-        visibility: visible;
-    }
+    /* Grade badge colors */
+    .grade-a { background-color: #28a745; color: white; }
+    .grade-b { background-color: #17a2b8; color: white; }
+    .grade-c { background-color: #6c757d; color: white; }
+    .grade-d { background-color: #ffc107; color: black; }
+    .grade-e { background-color: #fd7e14; color: white; }
+    .grade-f { background-color: #dc3545; color: white; }
 
     /* Mobile Card Styles */
     .student-card {
         background: #fff;
         border: 1px solid #dee2e6;
         border-radius: 12px;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
         box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         overflow: hidden;
     }
@@ -248,29 +236,96 @@
     .student-body {
         padding: 15px;
     }
+    
+    /* Updated subjects grid for mobile with grades */
     .subjects-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-        gap: 12px;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 10px;
         margin-bottom: 20px;
     }
     .subject-item {
         text-align: center;
-        padding: 10px;
+        padding: 12px 8px;
         background: #f8f9fa;
-        border-radius: 8px;
+        border-radius: 10px;
         border: 1px solid #e9ecef;
+        transition: all 0.2s ease;
+    }
+    .subject-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
     .subject-name {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         font-weight: 600;
         color: #495057;
+        margin-bottom: 5px;
+        line-height: 1.2;
+        height: 2.4em;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
     }
     .subject-score {
-        font-size: 1.2rem;
+        font-size: 1.3rem;
         font-weight: bold;
-        margin-top: 4px;
+        margin: 5px 0;
+        color: #212529;
     }
+    .subject-grade {
+        font-size: 0.8rem;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 12px;
+        display: inline-block;
+        min-width: 35px;
+    }
+    
+    /* Performance summary for mobile */
+    .performance-summary {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 15px;
+        border: 1px solid #e9ecef;
+    }
+    .summary-title {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #495057;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .summary-title i {
+        color: #667eea;
+    }
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        text-align: center;
+    }
+    .summary-item {
+        padding: 8px 5px;
+        background: white;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+    }
+    .summary-label {
+        font-size: 0.75rem;
+        color: #6c757d;
+        margin-bottom: 4px;
+    }
+    .summary-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #212529;
+    }
+    
     .comment-section-mobile {
         margin-top: 15px;
     }
@@ -278,91 +333,20 @@
         font-weight: 600;
         margin-bottom: 8px;
         font-size: 0.95rem;
+        color: #495057;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .comment-label-mobile i {
+        color: #667eea;
     }
 
-    /* Mobile specific styles */
+    /* Remove comment info icon on mobile */
     @media (max-width: 991px) {
         .desktop-table { display: none; }
         .mobile-cards { display: block; }
-        
-        .grades-tooltip {
-            width: 92% !important;
-            max-width: 400px !important;
-            max-height: 85vh !important;
-            position: fixed !important;
-            top: 50% !important;
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            bottom: auto !important;
-            z-index: 10002 !important;
-            border-width: 3px !important;
-            border-color: #667eea !important;
-            box-shadow: 0 25px 80px rgba(0,0,0,0.4) !important;
-        }
-        
-        .grades-tooltip.show {
-            animation: mobileTooltipFadeIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        
-        @keyframes mobileTooltipFadeIn {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -45%) scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1);
-            }
-        }
-        
-        .grades-tooltip .tooltip-header {
-            padding: 22px 70px 22px 24px;
-            font-size: 1.3rem;
-            min-height: 80px;
-        }
-        
-        .grades-tooltip .tooltip-header .tooltip-close {
-            width: 42px;
-            height: 42px;
-            font-size: 1.8rem;
-            right: 15px;
-            background: rgba(255,255,255,0.25);
-            border: 2px solid rgba(255,255,255,0.4);
-        }
-        
-        .grades-tooltip .tooltip-body {
-            max-height: 65vh;
-            padding: 0 16px 20px 16px;
-        }
-        
-        .grades-tooltip table {
-            border-spacing: 0 10px;
-        }
-        
-        .grades-tooltip th {
-            font-size: 0.95rem;
-            padding: 14px 8px;
-        }
-        
-        .grades-tooltip td {
-            padding: 16px 12px;
-            font-size: 1rem;
-        }
-        
-        .grades-tooltip .grade-badge {
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            min-width: 55px;
-        }
-        
-        .comment-info-icon {
-            right: 35px;
-        }
-        
-        .tooltip-overlay {
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(5px);
-        }
+        .comment-info-icon { display: none; }
     }
     
     @media (min-width: 992px) {
@@ -443,7 +427,7 @@
                                         <i class="ri-search-line search-icon"></i>
                                     </div>
 
-                                    <!-- Desktop Table -->
+                                    <!-- Desktop Table (with tooltips) -->
                                     <div class="desktop-table">
                                         <div class="table-responsive">
                                             <table class="table table-centered align-middle">
@@ -464,6 +448,7 @@
                                                         @php
                                                             $picture = $student->picture ? basename($student->picture) : 'unnamed.jpg';
                                                             $imagePath = asset('storage/student_avatars/' . $picture);
+                                                            $studentGradesList = $studentGrades[$student->id] ?? [];
                                                         @endphp
                                                         <tr>
                                                             <td>{{ $index + 1 }}</td>
@@ -480,6 +465,13 @@
                                                                     $score = $scores->where('student_id', $student->id)
                                                                                    ->where('subject_name', $subject)
                                                                                    ->first();
+                                                                    $grade = '';
+                                                                    foreach ($studentGradesList as $g) {
+                                                                        if ($g['subject'] == $subject) {
+                                                                            $grade = $g['grade'];
+                                                                            break;
+                                                                        }
+                                                                    }
                                                                 @endphp
                                                                 <td class="{{ ($score && $score->total < 50) ? 'highlight-red' : '' }}">
                                                                     {{ $score?->total ?? '-' }}
@@ -521,7 +513,7 @@
                                                                     <i class="ri-eye-line" aria-hidden="true"></i>
                                                                 </button>
 
-                                                                <!-- Floating Tooltip -->
+                                                                <!-- Floating Tooltip for Desktop -->
                                                                 <div class="grades-tooltip position-bottom" id="tooltip-{{ $student->id }}">
                                                                     <div class="tooltip-header" id="header-{{ $student->id }}">
                                                                         <span id="tooltip-title-{{ $student->id }}">Grades</span>
@@ -554,12 +546,38 @@
                                         </div>
                                     </div>
 
-                                    <!-- Mobile Card View -->
+                                    <!-- Mobile Card View (with grades displayed) -->
                                     <div class="mobile-cards">
                                         @foreach ($students as $index => $student)
                                             @php
                                                 $picture = $student->picture ? basename($student->picture) : 'unnamed.jpg';
                                                 $imagePath = asset('storage/student_avatars/' . $picture);
+                                                $studentGradesList = $studentGrades[$student->id] ?? [];
+                                                
+                                                // Calculate performance summary
+                                                $totalSubjects = count($subjects);
+                                                $subjectsWithScores = 0;
+                                                $totalScore = 0;
+                                                $gradeCounts = ['A' => 0, 'B' => 0, 'C' => 0, 'D' => 0, 'E' => 0, 'F' => 0];
+                                                
+                                                foreach ($subjects as $subject) {
+                                                    $score = $scores->where('student_id', $student->id)
+                                                                   ->where('subject_name', $subject)
+                                                                   ->first();
+                                                    if ($score) {
+                                                        $subjectsWithScores++;
+                                                        $totalScore += $score->total;
+                                                    }
+                                                }
+                                                
+                                                foreach ($studentGradesList as $grade) {
+                                                    $firstLetter = strtoupper(substr($grade['grade'], 0, 1));
+                                                    if (in_array($firstLetter, ['A', 'B', 'C', 'D', 'E', 'F'])) {
+                                                        $gradeCounts[$firstLetter]++;
+                                                    }
+                                                }
+                                                
+                                                $averageScore = $subjectsWithScores > 0 ? round($totalScore / $subjectsWithScores, 1) : 0;
                                             @endphp
                                             <div class="student-card">
                                                 <div class="student-header">
@@ -576,24 +594,80 @@
                                                     </div>
                                                 </div>
                                                 <div class="student-body">
+                                                    <!-- Performance Summary -->
+                                                    <div class="performance-summary">
+                                                        <div class="summary-title">
+                                                            <i class="ri-bar-chart-line"></i>
+                                                            Performance Summary
+                                                        </div>
+                                                        <div class="summary-grid">
+                                                            <div class="summary-item">
+                                                                <div class="summary-label">Avg. Score</div>
+                                                                <div class="summary-value {{ $averageScore < 50 ? 'text-danger' : 'text-success' }}">
+                                                                    {{ $averageScore }}
+                                                                </div>
+                                                            </div>
+                                                            <div class="summary-item">
+                                                                <div class="summary-label">Subjects</div>
+                                                                <div class="summary-value">{{ $subjectsWithScores }}/{{ $totalSubjects }}</div>
+                                                            </div>
+                                                            <div class="summary-item">
+                                                                <div class="summary-label">Best Grade</div>
+                                                                <div class="summary-value">
+                                                                    @php
+                                                                        $bestGrade = 'N/A';
+                                                                        foreach (['A', 'B', 'C', 'D', 'E', 'F'] as $grade) {
+                                                                            if ($gradeCounts[$grade] > 0) {
+                                                                                $bestGrade = $grade;
+                                                                                break;
+                                                                            }
+                                                                        }
+                                                                    @endphp
+                                                                    <span class="subject-grade grade-{{ strtolower($bestGrade) }}">{{ $bestGrade }}</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Subjects with Scores and Grades -->
                                                     <div class="subjects-grid">
                                                         @foreach ($subjects as $subject)
                                                             @php
                                                                 $score = $scores->where('student_id', $student->id)
                                                                                ->where('subject_name', $subject)
                                                                                ->first();
+                                                                $grade = '';
+                                                                $gradeClass = '';
+                                                                
+                                                                foreach ($studentGradesList as $g) {
+                                                                    if ($g['subject'] == $subject) {
+                                                                        $grade = $g['grade'];
+                                                                        $firstLetter = strtoupper(substr($grade, 0, 1));
+                                                                        $gradeClass = 'grade-' . strtolower($firstLetter);
+                                                                        break;
+                                                                    }
+                                                                }
                                                             @endphp
                                                             <div class="subject-item">
                                                                 <div class="subject-name">{{ $subject }}</div>
                                                                 <div class="subject-score {{ ($score && $score->total < 50) ? 'highlight-red' : '' }}">
                                                                     {{ $score?->total ?? '-' }}
                                                                 </div>
+                                                                @if($grade)
+                                                                    <div class="subject-grade {{ $gradeClass }}">{{ $grade }}</div>
+                                                                @else
+                                                                    <div class="subject-grade" style="visibility: hidden;">-</div>
+                                                                @endif
                                                             </div>
                                                         @endforeach
                                                     </div>
 
+                                                    <!-- Principal's Comment Section -->
                                                     <div class="comment-section-mobile">
-                                                        <div class="comment-label-mobile">Principal's Comment</div>
+                                                        <div class="comment-label-mobile">
+                                                            <i class="ri-chat-3-line"></i>
+                                                            Principal's Comment
+                                                        </div>
                                                         <div class="position-relative">
                                                             <select class="form-select teacher-comment-dropdown auto-save-comment"
                                                                     name="teacher_comments[{{ $student->id }}]"
@@ -622,39 +696,6 @@
                                                                     Wake up and be serious.
                                                                 </option>
                                                             </select>
-
-                                                            <button type="button"
-                                                                    class="comment-info-icon grades-trigger btn btn-link p-0"
-                                                                    data-student-id="{{ $student->id }}"
-                                                                    data-student-name="{{ $student->lastname }} {{ $student->firstname }} {{ $student->othername }}">
-                                                                <i class="ri-eye-line" aria-hidden="true"></i>
-                                                            </button>
-                                                        </div>
-
-                                                        <!-- Mobile Tooltip -->
-                                                        <div class="grades-tooltip position-bottom mt-3" id="tooltip-{{ $student->id }}">
-                                                            <div class="tooltip-header" id="header-{{ $student->id }}">
-                                                                <span id="tooltip-title-{{ $student->id }}">Grades</span>
-                                                                <button type="button" class="tooltip-close" aria-label="Close">
-                                                                    <i class="ri-close-line"></i>
-                                                                </button>
-                                                            </div>
-
-                                                            <div class="tooltip-body">
-                                                                <table>
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th>Subject</th>
-                                                                            <th>Score</th>
-                                                                            <th>Grade</th>
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody id="grades-body-{{ $student->id }}"></tbody>
-                                                                </table>
-                                                                <div class="text-center py-4 text-muted d-none" id="no-grades-{{ $student->id }}">
-                                                                    No grades available
-                                                                </div>
-                                                            </div>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -676,9 +717,6 @@
         </div>
     </div>
 </div>
-
-<!-- Overlay for mobile tooltips -->
-<div class="tooltip-overlay" id="tooltipOverlay"></div>
 
 <script>
 // Grades data
@@ -710,12 +748,11 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
-// Function to close all tooltips
+// Function to close all tooltips (desktop only)
 function closeAllTooltips() {
     document.querySelectorAll('.grades-tooltip.show').forEach(tooltip => {
         tooltip.classList.remove('show');
     });
-    document.getElementById('tooltipOverlay').classList.remove('show');
     activeTooltip = null;
     
     // Remove any active states
@@ -724,18 +761,13 @@ function closeAllTooltips() {
     });
 }
 
-// Function to show a specific tooltip
+// Function to show a specific tooltip (desktop only)
 function showTooltip(tooltipId, studentId, studentName) {
     const tooltip = document.getElementById(tooltipId);
     if (!tooltip) return;
     
     // Close any open tooltip first
     closeAllTooltips();
-    
-    // Show overlay on mobile
-    if (window.innerWidth <= 991) {
-        document.getElementById('tooltipOverlay').classList.add('show');
-    }
     
     // Mark the trigger as active
     const trigger = document.querySelector(`.grades-trigger[data-student-id="${studentId}"]`);
@@ -777,10 +809,8 @@ function showTooltip(tooltipId, studentId, studentName) {
     }
     
     // Show the tooltip
-    setTimeout(() => {
-        tooltip.classList.add('show');
-        activeTooltip = tooltipId;
-    }, 50);
+    tooltip.classList.add('show');
+    activeTooltip = tooltipId;
 }
 
 // Auto-save on dropdown change
@@ -892,48 +922,43 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
     });
 });
 
-// Tooltip functionality
-document.querySelectorAll('.grades-trigger').forEach(trigger => {
-    trigger.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const studentId = this.getAttribute('data-student-id');
-        const studentName = this.getAttribute('data-student-name');
-        const tooltipId = `tooltip-${studentId}`;
-        
-        // If clicking on the same tooltip that's already open, close it
-        if (activeTooltip === tooltipId) {
+// Desktop tooltip functionality
+if (window.innerWidth > 991) {
+    // Tooltip click for desktop
+    document.querySelectorAll('.grades-trigger').forEach(trigger => {
+        trigger.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const studentId = this.getAttribute('data-student-id');
+            const studentName = this.getAttribute('data-student-name');
+            const tooltipId = `tooltip-${studentId}`;
+            
+            // If clicking on the same tooltip that's already open, close it
+            if (activeTooltip === tooltipId) {
+                closeAllTooltips();
+            } else {
+                showTooltip(tooltipId, studentId, studentName);
+            }
+        });
+    });
+    
+    // Close tooltips when clicking close button
+    document.querySelectorAll('.tooltip-close').forEach(closeBtn => {
+        closeBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
             closeAllTooltips();
-        } else {
-            showTooltip(tooltipId, studentId, studentName);
+        });
+    });
+    
+    // Close tooltips with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeAllTooltips();
         }
     });
-});
-
-// Close tooltips when clicking close button
-document.querySelectorAll('.tooltip-close').forEach(closeBtn => {
-    closeBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        closeAllTooltips();
-    });
-});
-
-// Close tooltips when clicking overlay (mobile)
-document.getElementById('tooltipOverlay').addEventListener('click', function(e) {
-    e.stopPropagation();
-    closeAllTooltips();
-});
-
-// Close tooltips with Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        closeAllTooltips();
-    }
-});
-
-// Close tooltips when clicking outside (desktop only)
-if (window.innerWidth > 991) {
+    
+    // Close tooltips when clicking outside
     document.addEventListener('click', function(e) {
         if (activeTooltip) {
             const tooltip = document.getElementById(activeTooltip);
@@ -944,10 +969,8 @@ if (window.innerWidth > 991) {
             }
         }
     });
-}
-
-// Desktop hover behavior
-if (window.innerWidth > 991) {
+    
+    // Desktop hover behavior
     document.querySelectorAll('.grades-trigger').forEach(trigger => {
         let hoverTimeout;
         
@@ -977,13 +1000,6 @@ if (window.innerWidth > 991) {
                 }, 100);
             }
         });
-    });
-    
-    // Keep tooltip open when hovering over it
-    document.addEventListener('mouseover', function(e) {
-        if (activeTooltip && e.target.closest('.grades-tooltip')) {
-            clearTimeout(window.tooltipCloseTimeout);
-        }
     });
 }
 
