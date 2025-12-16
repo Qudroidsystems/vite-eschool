@@ -312,7 +312,7 @@
                                                                     <option value="">-- Select Comment --</option>
 
                                                                     @foreach ($standardPersonalizedComments[$student->id] ?? [] as $comment)
-                                                                        <option value="{{ $comment }}">
+                                                                        <option value="{{ $comment }}" {{ $currentComment == $comment ? 'selected' : '' }}>
                                                                             {{ Str::limit($comment, 80, '...') }}
                                                                             @if(str_contains($comment, 'should work harder'))
                                                                                 <span class="badge bg-warning ms-2">+ Advice</span>
@@ -321,7 +321,7 @@
                                                                     @endforeach
 
                                                                     @if(isset($intelligentComments[$student->id]) && !in_array($intelligentComments[$student->id], $standardPersonalizedComments[$student->id] ?? []))
-                                                                        <option value="{{ $intelligentComments[$student->id] }}" class="intelligent-option">
+                                                                        <option value="{{ $intelligentComments[$student->id] }}" class="intelligent-option" {{ $currentComment == $intelligentComments[$student->id] ? 'selected' : '' }}>
                                                                             💡 Use Grade Summary Comment
                                                                             @if($hasWeakAdvice)<span class="badge bg-warning ms-2">Improvement advice</span>@endif
                                                                         </option>
@@ -507,7 +507,7 @@
                                                             <option value="">-- Select Comment --</option>
 
                                                             @foreach ($standardPersonalizedComments[$student->id] ?? [] as $comment)
-                                                                <option value="{{ $comment }}">
+                                                                <option value="{{ $comment }}" {{ $currentComment == $comment ? 'selected' : '' }}>
                                                                     {{ Str::limit($comment, 80, '...') }}
                                                                     @if(str_contains($comment, 'should work harder'))
                                                                         <span class="badge bg-warning ms-2">+ Advice</span>
@@ -516,7 +516,7 @@
                                                             @endforeach
 
                                                             @if(isset($intelligentComments[$student->id]) && !in_array($intelligentComments[$student->id], $standardPersonalizedComments[$student->id] ?? []))
-                                                                <option value="{{ $intelligentComments[$student->id] }}" class="intelligent-option">
+                                                                <option value="{{ $intelligentComments[$student->id] }}" class="intelligent-option" {{ $currentComment == $intelligentComments[$student->id] ? 'selected' : '' }}>
                                                                     💡 Use Grade Summary Comment
                                                                     @if($hasWeakAdvice)<span class="badge bg-warning ms-2">Improvement advice</span>@endif
                                                                 </option>
@@ -607,52 +607,94 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
         const comment = this.value.trim();
         const original = this.dataset.originalValue || '';
 
+        // Skip if no change
         if (comment === original) return;
 
-        const border = this.style.borderColor;
-        const bg = this.style.backgroundColor;
+        // Store original state for restoration
+        const originalBorder = this.style.borderColor;
+        const originalBg = this.style.backgroundColor;
+        
+        // Visual feedback
         this.style.borderColor = '#ffc107';
         this.style.backgroundColor = '#fff3cd';
         this.disabled = true;
 
+        // Store original text and show saving state
         const option = this.selectedOptions[0];
-        const text = option ? option.text : '';
-        if (option) option.text = 'Saving...';
+        const originalText = option ? option.textContent : '';
+        if (option) {
+            option.textContent = 'Saving...';
+            option.disabled = true;
+        }
 
+        // Prepare form data
         const formData = new FormData();
         formData.append('_token', '{{ csrf_token() }}');
         formData.append(`teacher_comments[${studentId}]`, comment);
 
+        // Make the request
         fetch('{{ route("myprincipalscomment.updateComments", [$schoolclassid, $sessionid, $termid]) }}', {
             method: 'POST',
             body: formData,
-            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            headers: { 
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
         })
-        .then(r => r.ok ? r.json().catch(() => ({success: true, message: 'Saved'})) : Promise.reject())
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
-            this.dataset.originalValue = comment;
-            this.style.borderColor = '#28a745';
-            this.style.backgroundColor = '#d1e7dd';
-            showToast(data.message || 'Comment saved!', 'success');
-            setTimeout(() => {
-                this.style.borderColor = border;
-                this.style.backgroundColor = bg;
-                this.disabled = false;
-            }, 1500);
+            if (data.success) {
+                // Update original value marker
+                this.dataset.originalValue = comment;
+                
+                // Show success feedback
+                this.style.borderColor = '#28a745';
+                this.style.backgroundColor = '#d1e7dd';
+                
+                // Show success toast
+                showToast(data.message || 'Comment saved successfully!', 'success');
+                
+                // Restore normal state after delay
+                setTimeout(() => {
+                    this.style.borderColor = originalBorder;
+                    this.style.backgroundColor = originalBg;
+                    this.disabled = false;
+                }, 2000);
+            } else {
+                throw new Error(data.message || 'Server returned error');
+            }
         })
-        .catch(() => {
+        .catch(error => {
+            console.error('Auto-save error:', error);
+            
+            // Revert to original value on error
             this.value = original;
+            
+            // Show error feedback
             this.style.borderColor = '#dc3545';
             this.style.backgroundColor = '#f8d7da';
-            showToast('Error saving comment', 'danger');
+            
+            // Show error toast with more specific message
+            showToast('Error saving comment: ' + error.message, 'danger');
+            
+            // Restore normal state after delay
             setTimeout(() => {
-                this.style.borderColor = border;
-                this.style.backgroundColor = bg;
+                this.style.borderColor = originalBorder;
+                this.style.backgroundColor = originalBg;
                 this.disabled = false;
             }, 3000);
         })
         .finally(() => {
-            if (option) option.text = text;
+            // Always restore option text
+            if (option) {
+                option.textContent = originalText;
+                option.disabled = false;
+            }
         });
     });
 });
