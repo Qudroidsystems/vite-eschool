@@ -632,22 +632,45 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
         formData.append('_token', '{{ csrf_token() }}');
         formData.append(`teacher_comments[${studentId}]`, comment);
 
+        console.log('Attempting to save comment for student:', studentId, 'Comment:', comment);
+        console.log('CSRF Token present:', !!document.querySelector('meta[name="csrf-token"]')?.content);
+        
         // Make the request
         fetch('{{ route("myprincipalscomment.updateComments", [$schoolclassid, $sessionid, $termid]) }}', {
             method: 'POST',
             body: formData,
             headers: { 
                 'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}' // Add this header explicitly
             }
         })
-        .then(response => {
+        .then(async response => {
+            console.log('Response status:', response.status, response.statusText);
+            
             if (!response.ok) {
-                throw new Error('Network response was not ok');
+                // Try to get error message from response
+                let errorMsg = `HTTP ${response.status}: ${response.statusText}`;
+                try {
+                    const errorData = await response.json();
+                    errorMsg = errorData.message || errorMsg;
+                } catch (e) {
+                    // If response is not JSON, try to get text
+                    try {
+                        const text = await response.text();
+                        if (text) errorMsg += ` - ${text.substring(0, 100)}`;
+                    } catch (e2) {
+                        // Ignore if can't read text
+                    }
+                }
+                throw new Error(errorMsg);
             }
+            
             return response.json();
         })
         .then(data => {
+            console.log('Save successful:', data);
+            
             if (data.success) {
                 // Update original value marker
                 this.dataset.originalValue = comment;
@@ -666,11 +689,12 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
                     this.disabled = false;
                 }, 2000);
             } else {
-                throw new Error(data.message || 'Server returned error');
+                throw new Error(data.message || 'Server returned error: ' + JSON.stringify(data));
             }
         })
         .catch(error => {
-            console.error('Auto-save error:', error);
+            console.error('Auto-save error details:', error);
+            console.error('Full error object:', error);
             
             // Revert to original value on error
             this.value = original;
@@ -680,7 +704,8 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
             this.style.backgroundColor = '#f8d7da';
             
             // Show error toast with more specific message
-            showToast('Error saving comment: ' + error.message, 'danger');
+            const errorMessage = error.message || 'Unknown error occurred';
+            showToast('Error saving comment: ' + errorMessage, 'danger');
             
             // Restore normal state after delay
             setTimeout(() => {
@@ -742,14 +767,37 @@ document.getElementById('commentsForm')?.addEventListener('submit', function(e) 
     fetch(this.action, {
         method: 'POST',
         body: new FormData(this),
-        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        headers: { 
+            'Accept': 'application/json', 
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
     })
-    .then(r => r.ok ? r.json().catch(() => ({success: true})) : Promise.reject())
-    .then(() => {
-        showToast('All comments saved successfully!', 'success');
-        setTimeout(() => location.reload(), 1500);
+    .then(async response => {
+        if (!response.ok) {
+            let errorMsg = `HTTP ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMsg = errorData.message || errorMsg;
+            } catch (e) {
+                // Ignore
+            }
+            throw new Error(errorMsg);
+        }
+        return response.json();
     })
-    .catch(() => showToast('Error saving comments', 'danger'))
+    .then(data => {
+        if (data.success) {
+            showToast('All comments saved successfully!', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            throw new Error(data.message || 'Save failed');
+        }
+    })
+    .catch(error => {
+        console.error('Bulk save error:', error);
+        showToast('Error saving comments: ' + error.message, 'danger');
+    })
     .finally(() => {
         btn.innerHTML = originalText;
         btn.disabled = false;
@@ -760,6 +808,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.auto-save-comment').forEach(s => {
         s.dataset.originalValue = s.value;
     });
+    
+    // Check CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+    if (!csrfToken) {
+        console.warn('CSRF token not found in meta tag');
+    }
 });
 </script>
 @endsection

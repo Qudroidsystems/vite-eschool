@@ -368,65 +368,90 @@ class MyPrincipalsCommentController extends Controller
     }
 
     public function updateComments(Request $request, $schoolclassid, $sessionid, $termid)
-    {
-        $isAssigned = Principalscomment::where('staffId', Auth::id())
-            ->where('schoolclassid', $schoolclassid)
-            ->where('sessionid', $sessionid)
-            ->where('termid', $termid)
-            ->exists();
+{
+    $isAssigned = Principalscomment::where('staffId', Auth::id())
+        ->where('schoolclassid', $schoolclassid)
+        ->where('sessionid', $sessionid)
+        ->where('termid', $termid)
+        ->exists();
 
-        if (!$isAssigned) {
-            return $request->ajax() || $request->wantsJson()
-                ? response()->json(['success' => false, 'message' => 'Unauthorized'], 403)
-                : redirect()->back()->with('error', 'Unauthorized');
-        }
-
-        $request->validate(['teacher_comments.*' => 'nullable|string|max:2000']);
-
-        $comments = $request->input('teacher_comments', []);
-        $updatedCount = 0;
-
-        DB::beginTransaction();
-        try {
-            foreach ($comments as $studentId => $comment) {
-                $comment = $comment ? trim($comment) : null;
-
-                $existing = Studentpersonalityprofile::where('studentid', $studentId)
-                    ->where('schoolclassid', $schoolclassid)
-                    ->where('sessionid', $sessionid)
-                    ->where('termid', $termid)
-                    ->first();
-
-                if ($existing) {
-                    if ($existing->principalscomment !== $comment) {
-                        $existing->update(['staffid' => Auth::id(), 'principalscomment' => $comment]);
-                        $updatedCount++;
-                    }
-                } elseif ($comment) {
-                    Studentpersonalityprofile::create([
-                        'studentid' => $studentId,
-                        'schoolclassid' => $schoolclassid,
-                        'sessionid' => $sessionid,
-                        'termid' => $termid,
-                        'staffid' => Auth::id(),
-                        'principalscomment' => $comment,
-                    ]);
-                    $updatedCount++;
-                }
-            }
-
-            DB::commit();
-
-            $message = $updatedCount > 0 ? "$updatedCount comment(s) saved" : "No changes";
-
-            return $request->ajax() || $request->wantsJson()
-                ? response()->json(['success' => true, 'message' => $message])
-                : redirect()->back()->with('success', $message);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return $request->ajax() || $request->wantsJson()
-                ? response()->json(['success' => false, 'message' => 'Error saving'], 500)
-                : redirect()->back()->with('error', 'Error saving comments');
-        }
+    if (!$isAssigned) {
+        return response()->json([
+            'success' => false, 
+            'message' => 'Unauthorized: You are not assigned to enter comments for this class.'
+        ], 403);
     }
+
+    $request->validate(['teacher_comments.*' => 'nullable|string|max:2000']);
+
+    $comments = $request->input('teacher_comments', []);
+    $updatedCount = 0;
+
+    DB::beginTransaction();
+    try {
+        foreach ($comments as $studentId => $comment) {
+            $comment = $comment ? trim($comment) : null;
+            
+            // Log what's being processed
+            \Log::info("Processing principal comment", [
+                'student_id' => $studentId,
+                'comment_length' => strlen($comment ?? ''),
+                'schoolclassid' => $schoolclassid,
+                'sessionid' => $sessionid,
+                'termid' => $termid,
+                'staff_id' => Auth::id()
+            ]);
+
+            $existing = Studentpersonalityprofile::where('studentid', $studentId)
+                ->where('schoolclassid', $schoolclassid)
+                ->where('sessionid', $sessionid)
+                ->where('termid', $termid)
+                ->first();
+
+            if ($existing) {
+                if ($existing->principalscomment !== $comment) {
+                    $existing->update(['staffid' => Auth::id(), 'principalscomment' => $comment]);
+                    $updatedCount++;
+                    \Log::info("Updated existing comment", ['student_id' => $studentId]);
+                }
+            } elseif ($comment) {
+                Studentpersonalityprofile::create([
+                    'studentid' => $studentId,
+                    'schoolclassid' => $schoolclassid,
+                    'sessionid' => $sessionid,
+                    'termid' => $termid,
+                    'staffid' => Auth::id(),
+                    'principalscomment' => $comment,
+                ]);
+                $updatedCount++;
+                \Log::info("Created new comment", ['student_id' => $studentId]);
+            }
+        }
+
+        DB::commit();
+
+        $message = $updatedCount > 0 
+            ? "$updatedCount comment(s) saved successfully" 
+            : "No changes detected";
+
+        return response()->json([
+            'success' => true, 
+            'message' => $message,
+            'count' => $updatedCount
+        ]);
+            
+    } catch (\Exception $e) {
+        DB::rollBack();
+        \Log::error('Error saving principals comments', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'request_data' => array_keys($comments)
+        ]);
+        
+        return response()->json([
+            'success' => false, 
+            'message' => 'Server error: ' . $e->getMessage()
+        ], 500);
+    }
+}
 }
