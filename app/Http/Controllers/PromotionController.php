@@ -28,7 +28,6 @@ class PromotionController extends Controller
     public function index(Request $request): View|JsonResponse
     {
         $pagetitle = "Student Promotion Management";
-        $current = "Current";
 
         $allstudents = new LengthAwarePaginator([], 0, 10);
 
@@ -41,7 +40,6 @@ class PromotionController extends Controller
                 ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
                 ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
                 ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid');
-                //->where('schoolsession.status', '=', $current);
 
             if ($search = $request->input('search')) {
                 $query->where(function ($q) use ($search) {
@@ -54,12 +52,12 @@ class PromotionController extends Controller
 
             try {
                 $allstudents = $query->select([
+                    'studentRegistration.id as stid',                    // Primary Key (Debug)
                     'studentRegistration.admissionNo as admissionno',
                     'studentRegistration.firstname as firstname',
                     'studentRegistration.lastname as lastname',
                     'studentRegistration.othername as othername',
                     'studentRegistration.gender as gender',
-                    'studentRegistration.id as stid',
                     'studentpicture.picture as picture',
                     'studentclass.schoolclassid as schoolclassID',
                     'studentclass.sessionid as sessionid',
@@ -69,7 +67,7 @@ class PromotionController extends Controller
                     'schoolsession.session as session',
                 ])->latest('studentclass.created_at')->paginate(100);
 
-                // Fetch promotion statuses separately to avoid join issues
+                // Fetch promotion statuses
                 $studentKeys = $allstudents->map(function ($student) {
                     return $student->stid . '_' . $student->schoolclassID . '_' . $student->sessionid;
                 })->toArray();
@@ -81,7 +79,6 @@ class PromotionController extends Controller
                     return $item->studentId . '_' . $item->schoolclassid . '_' . $item->sessionid;
                 });
 
-                // Attach promotion status to each student
                 $allstudents->getCollection()->transform(function ($student) use ($promotionStatuses) {
                     $key = $student->stid . '_' . $student->schoolclassID . '_' . $student->sessionid;
                     $student->promotion_status = $promotionStatuses[$key]->promotionStatus ?? 'N/A';
@@ -118,7 +115,7 @@ class PromotionController extends Controller
         $request->validate([
             'new_schoolclassid' => 'required|exists:schoolclass,id',
             'new_sessionid' => 'required|exists:schoolsession,id',
-            'new_termid' => 'required|integer|min:1|max:3',  // Assuming terms are 1-3
+            'new_termid' => 'required|integer|min:1|max:3',
             'promotion' => 'boolean',
             'repeat' => 'boolean',
         ]);
@@ -131,10 +128,8 @@ class PromotionController extends Controller
 
         try {
             DB::transaction(function () use ($studentId, $request, $promotionStatus) {
-                // Find or create the new class ID (assuming arm is part of schoolclass, or adjust if separate)
-                $newClassId = $request->new_schoolclassid;  // Assuming schoolclassid includes arm logic
+                $newClassId = $request->new_schoolclassid;
 
-                // Update Studentclass for new placement
                 Studentclass::updateOrCreate(
                     [
                         'studentId' => $studentId,
@@ -146,7 +141,6 @@ class PromotionController extends Controller
                     ]
                 );
 
-                // Update or create PromotionStatus
                 PromotionStatus::updateOrCreate(
                     [
                         'studentId' => $studentId,
@@ -157,7 +151,7 @@ class PromotionController extends Controller
                     [
                         'promotionStatus' => $promotionStatus,
                         'classstatus' => 'CURRENT',
-                        'position' => null,  // Reset position if needed
+                        'position' => null,
                     ]
                 );
             });
@@ -168,9 +162,8 @@ class PromotionController extends Controller
                 'studentId' => $studentId,
                 'request' => $request->all(),
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['success' => false, 'message' => 'Failed to update promotion: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Failed to update promotion.'], 500);
         }
     }
 
@@ -188,14 +181,12 @@ class PromotionController extends Controller
 
         try {
             DB::transaction(function () use ($studentId, $schoolclassid, $sessionid, $termid) {
-                // Delete Studentclass record
                 Studentclass::where('studentId', $studentId)
                     ->where('schoolclassid', $schoolclassid)
                     ->where('sessionid', $sessionid)
                     ->where('termid', $termid)
                     ->delete();
 
-                // Delete PromotionStatus record
                 PromotionStatus::where('studentId', $studentId)
                     ->where('schoolclassid', $schoolclassid)
                     ->where('sessionid', $sessionid)
@@ -209,9 +200,8 @@ class PromotionController extends Controller
                 'studentId' => $studentId,
                 'request' => $request->all(),
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
             ]);
-            return response()->json(['success' => false, 'message' => 'Failed to remove student: ' . $e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => 'Failed to remove student.'], 500);
         }
     }
 }

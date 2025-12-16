@@ -1,10 +1,20 @@
 {{-- resources/views/promotions/partials/student_rows.blade.php --}}
+
 @forelse ($allstudents as $student)
     <tr>
+        @if(config('app.debug'))
+            <td class="text-muted small fw-medium">{{ $student->stid }}</td>
+        @endif
+
         <td class="fw-medium">{{ $student->admissionno }}</td>
         <td>
             @if ($student->picture)
-                <img src="{{ asset('storage/student_avatars' . $student->picture) }}" alt="Student Picture" width="50" height="50" class="rounded-circle" onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}';">
+                <img src="{{ asset('storage/student_avatars/' . $student->picture) }}"
+                     alt="Student Picture"
+                     width="50"
+                     height="50"
+                     class="rounded-circle"
+                     onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}';">
             @else
                 <span class="text-muted">No Picture</span>
             @endif
@@ -30,12 +40,12 @@
             @php
                 $status = strtolower($student->promotion_status ?? 'n/a');
             @endphp
-            
+
             @if($status === 'promoted')
                 <span class="badge bg-success-subtle text-success fs-6 px-3 py-2">
                     <i class="ri-arrow-up-circle-line me-1"></i>Promoted
                 </span>
-            @elseif($status === 'repeated')
+            @elseif($status === 'repeat' || $status === 'repeated')
                 <span class="badge bg-warning-subtle text-warning fs-6 px-3 py-2">
                     <i class="ri-repeat-line me-1"></i>Repeated
                 </span>
@@ -47,26 +57,25 @@
         </td>
         <td>
             <div class="d-flex gap-2">
-                <button type="button" 
+                <button type="button"
                         class="btn btn-sm btn-primary d-inline-flex align-items-center"
                         onclick="openPromotionModal(
                             '{{ $student->stid }}',
                             '{{ $student->admissionno }}',
                             '{{ $student->firstname }}',
                             '{{ $student->lastname }}',
-                            '{{ $student->othername }}',
+                            '{{ $student->othername ?? '' }}',
                             '{{ $student->picture }}',
                             '{{ $student->schoolclass }}',
-                            '{{ $student->schoolarm }}',
+                            '{{ $student->schoolarm ?? '' }}',
                             '{{ $student->session }}',
                             '{{ $student->termid }}',
-                            '{{ $student->promotion_status }}'
+                            '{{ $student->promotion_status ?? '' }}'
                         )">
-                    <i class="ri-edit-line me-1"></i>
-                    Manage
+                    <i class="ri-edit-line me-1"></i> Manage
                 </button>
-                
-                <button type="button" 
+
+                <button type="button"
                         class="btn btn-sm btn-danger d-inline-flex align-items-center"
                         onclick="removeStudent(
                             '{{ $student->stid }}',
@@ -78,22 +87,14 @@
                             '{{ $student->lastname }}'
                         )"
                         title="Remove from Class">
-                    <i class="ri-delete-bin-line me-1"></i>
-                    Remove
+                    <i class="ri-delete-bin-line me-1"></i> Remove
                 </button>
-                
-                {{-- <a href="{{ route('students.show', $student->stid) }}" 
-                   class="btn btn-sm btn-info d-inline-flex align-items-center"
-                   title="View Details">
-                    <i class="ri-eye-line me-1"></i>
-                    View
-                </a> --}}
             </div>
         </td>
     </tr>
 @empty
     <tr>
-        <td colspan="11" class="text-center py-4">
+        <td colspan="{{ config('app.debug') ? 12 : 11 }}" class="text-center py-4">
             <div class="text-muted">
                 <i class="ri-inbox-line fs-1 d-block mb-2"></i>
                 <p class="mb-0">No students found</p>
@@ -103,7 +104,6 @@
 @endforelse
 
 <style>
-    /* Badge Subtle Backgrounds */
     .bg-success-subtle {
         background-color: rgba(25, 135, 84, 0.1) !important;
     }
@@ -124,7 +124,6 @@
         background-color: rgba(220, 53, 69, 0.1) !important;
     }
     
-    /* Text Colors */
     .text-success {
         color: #198754 !important;
     }
@@ -145,7 +144,6 @@
         color: #dc3545 !important;
     }
     
-    /* Button Improvements */
     .btn-sm {
         padding: 0.375rem 0.75rem;
         font-size: 0.875rem;
@@ -163,14 +161,18 @@
         font-size: 1rem;
     }
     
-    /* Badge Styling */
     .badge {
         font-weight: 500;
         letter-spacing: 0.3px;
     }
     
-    /* Table Row Hover Effect */
     #studentListTable tbody tr:hover {
         background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    /* Debug ID column styling */
+    td.text-muted.small {
+        font-size: 0.8rem;
+        color: #6c757d !important;
     }
 </style>
