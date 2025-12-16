@@ -327,6 +327,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/broadsheet/{schoolclassid}/{sessionid}/{termid}', [MyPrincipalsCommentController::class, 'classBroadsheet'])->name('classbroadsheet');
         Route::post('/broadsheet/{schoolclassid}/{sessionid}/{termid}', [MyPrincipalsCommentController::class, 'updateComments'])->name('updateComments');
     });
+    Route::get('/my-principals-comment/broadsheet-pdf/{schoolclassid}/{sessionid}/{termid}', [MyPrincipalsCommentController::class, 'exportPdf'])
+    ->name('myprincipalscomment.exportPdf');
+    
     //subject vettings
     Route::resource('subjectvetting', SubjectVettingController::class);
     Route::resource('mocksubjectvetting', MockSubjectVettingController::class);
