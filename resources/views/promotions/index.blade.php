@@ -88,6 +88,7 @@
                                             <tr>
                                                 @if(config('app.debug'))
                                                     <th>ID (Debug)</th>
+                                                    <th>Promotion ID (Debug)</th>
                                                 @endif
                                                 <th>Admission No</th>
                                                 <th>Picture</th>
@@ -404,14 +405,14 @@
         const searchValue = document.getElementById("searchInput").value.trim();
 
         if (classValue === 'ALL' || sessionValue === 'ALL') {
-            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="{{ config('app.debug') ? 12 : 11 }}" class="text-center">Select class and session to view students.</td></tr>';
+            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="{{ config('app.debug') ? 13 : 11 }}" class="text-center">Select class and session to view students.</td></tr>';
             document.getElementById('pagination-container').innerHTML = '';
             document.getElementById('studentcount').innerText = '0';
             return;
         }
 
         const tableBody = document.getElementById('studentTableBody');
-        tableBody.innerHTML = '<tr><td colspan="{{ config('app.debug') ? 12 : 11 }}" class="text-center">Loading...</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="{{ config('app.debug') ? 13 : 11 }}" class="text-center">Loading...</td></tr>';
 
         axios.get('{{ route("promotions.index") }}', {
             params: {
@@ -424,13 +425,13 @@
                 'X-Requested-With': 'XMLHttpRequest'
             }
         }).then(function (response) {
-            document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="{{ config('app.debug') ? 12 : 11 }}" class="text-center">No students found.</td></tr>';
+            document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="{{ config('app.debug') ? 13 : 11 }}" class="text-center">No students found.</td></tr>';
             document.getElementById('pagination-container').innerHTML = response.data.pagination || '';
             document.getElementById('studentcount').innerText = response.data.studentCount || '0';
             setupPaginationLinks();
         }).catch(function (error) {
             console.error('AJAX Error:', error);
-            tableBody.innerHTML = '<tr><td colspan="{{ config('app.debug') ? 12 : 11 }}" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="{{ config('app.debug') ? 13 : 11 }}" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
             Swal.fire({
                 icon: "error",
                 title: "Error",
@@ -455,7 +456,7 @@
 
     function loadPage(url) {
         const tableBody = document.getElementById('studentTableBody');
-        tableBody.innerHTML = '<tr><td colspan="{{ config('app.debug') ? 12 : 11 }}" class="text-center">Loading...</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="{{ config('app.debug') ? 13 : 11 }}" class="text-center">Loading...</td></tr>';
 
         axios.get(url, {
             headers: {
@@ -463,13 +464,13 @@
                 'X-Requested-With': 'XMLHttpRequest'
             }
         }).then(function (response) {
-            document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="{{ config('app.debug') ? 12 : 11 }}" class="text-center">No students found.</td></tr>';
+            document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="{{ config('app.debug') ? 13 : 11 }}" class="text-center">No students found.</td></tr>';
             document.getElementById('pagination-container').innerHTML = response.data.pagination || '';
             document.getElementById('studentcount').innerText = response.data.studentCount || '0';
             setupPaginationLinks();
         }).catch(function (error) {
             console.error('Page load error:', error);
-            tableBody.innerHTML = '<tr><td colspan="{{ config('app.debug') ? 12 : 11 }}" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="{{ config('app.debug') ? 13 : 11 }}" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
             Swal.fire({
                 icon: "error",
                 title: "Error",
@@ -683,7 +684,7 @@
         document.getElementById("idclass").addEventListener("change", function () {
             updateSearchButtonVisibility();
             if (this.value === 'ALL') {
-                document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="{{ config('app.debug') ? 12 : 11 }}" class="text-center">Select class and session to view students.</td></tr>';
+                document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="{{ config('app.debug') ? 13 : 11 }}" class="text-center">Select class and session to view students.</td></tr>';
                 document.getElementById('pagination-container').innerHTML = '';
                 document.getElementById('studentcount').innerText = '0';
             }
@@ -692,7 +693,7 @@
         document.getElementById("idsession").addEventListener("change", function () {
             updateSearchButtonVisibility();
             if (document.getElementById("idclass").value === 'ALL') {
-                document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="{{ config('app.debug') ? 12 : 11 }}" class="text-center">Select class and session to view students.</td></tr>';
+                document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="{{ config('app.debug') ? 13 : 11 }}" class="text-center">Select class and session to view students.</td></tr>';
                 document.getElementById('pagination-container').innerHTML = '';
                 document.getElementById('studentcount').innerText = '0';
             }

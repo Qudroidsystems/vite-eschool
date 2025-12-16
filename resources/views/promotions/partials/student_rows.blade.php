@@ -4,6 +4,7 @@
     <tr>
         @if(config('app.debug'))
             <td class="text-muted small fw-medium">{{ $student->stid }}</td>
+            <td class="text-muted small fw-medium">{{ $student->promotion_id ?? '-' }}</td>
         @endif
 
         <td class="fw-medium">{{ $student->admissionno }}</td>
@@ -11,8 +12,7 @@
             @if ($student->picture)
                 <img src="{{ asset('storage/student_avatars/' . $student->picture) }}"
                      alt="Student Picture"
-                     width="50"
-                     height="50"
+                     width="50" height="50"
                      class="rounded-circle"
                      onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}';">
             @else
@@ -94,7 +94,7 @@
     </tr>
 @empty
     <tr>
-        <td colspan="{{ config('app.debug') ? 12 : 11 }}" class="text-center py-4">
+        <td colspan="{{ config('app.debug') ? 13 : 11 }}" class="text-center py-4">
             <div class="text-muted">
                 <i class="ri-inbox-line fs-1 d-block mb-2"></i>
                 <p class="mb-0">No students found</p>
@@ -104,46 +104,18 @@
 @endforelse
 
 <style>
-    .bg-success-subtle {
-        background-color: rgba(25, 135, 84, 0.1) !important;
-    }
-    
-    .bg-warning-subtle {
-        background-color: rgba(255, 193, 7, 0.1) !important;
-    }
-    
-    .bg-secondary-subtle {
-        background-color: rgba(108, 117, 125, 0.1) !important;
-    }
-    
-    .bg-primary-subtle {
-        background-color: rgba(13, 110, 253, 0.1) !important;
-    }
-    
-    .bg-danger-subtle {
-        background-color: rgba(220, 53, 69, 0.1) !important;
-    }
-    
-    .text-success {
-        color: #198754 !important;
-    }
-    
-    .text-warning {
-        color: #ffc107 !important;
-    }
-    
-    .text-secondary {
-        color: #6c757d !important;
-    }
-    
-    .text-primary {
-        color: #0d6efd !important;
-    }
-    
-    .text-danger {
-        color: #dc3545 !important;
-    }
-    
+    .bg-success-subtle { background-color: rgba(25, 135, 84, 0.1) !important; }
+    .bg-warning-subtle { background-color: rgba(255, 193, 7, 0.1) !important; }
+    .bg-secondary-subtle { background-color: rgba(108, 117, 125, 0.1) !important; }
+    .bg-primary-subtle { background-color: rgba(13, 110, 253, 0.1) !important; }
+    .bg-danger-subtle { background-color: rgba(220, 53, 69, 0.1) !important; }
+
+    .text-success { color: #198754 !important; }
+    .text-warning { color: #ffc107 !important; }
+    .text-secondary { color: #6c757d !important; }
+    .text-primary { color: #0d6efd !important; }
+    .text-danger { color: #dc3545 !important; }
+
     .btn-sm {
         padding: 0.375rem 0.75rem;
         font-size: 0.875rem;
@@ -151,26 +123,20 @@
         font-weight: 500;
         transition: all 0.15s ease-in-out;
     }
-    
+
     .btn-sm:hover {
         transform: translateY(-1px);
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
-    
-    .btn-sm i {
-        font-size: 1rem;
-    }
-    
-    .badge {
-        font-weight: 500;
-        letter-spacing: 0.3px;
-    }
-    
+
+    .btn-sm i { font-size: 1rem; }
+
+    .badge { font-weight: 500; letter-spacing: 0.3px; }
+
     #studentListTable tbody tr:hover {
         background-color: rgba(0, 0, 0, 0.02);
     }
 
-    /* Debug ID column styling */
     td.text-muted.small {
         font-size: 0.8rem;
         color: #6c757d !important;

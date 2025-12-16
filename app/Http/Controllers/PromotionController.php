@@ -3,8 +3,6 @@
 namespace App\Http\Controllers;
 
 use Exception;
-use App\Models\Student;
-use App\Models\Schoolarm;
 use Illuminate\View\View;
 use App\Models\Schoolclass;
 use App\Models\Studentclass;
@@ -52,7 +50,7 @@ class PromotionController extends Controller
 
             try {
                 $allstudents = $query->select([
-                    'studentRegistration.id as stid',                    // Primary Key (Debug)
+                    'studentRegistration.id as stid',                    // Student primary key
                     'studentRegistration.admissionNo as admissionno',
                     'studentRegistration.firstname as firstname',
                     'studentRegistration.lastname as lastname',
@@ -67,7 +65,7 @@ class PromotionController extends Controller
                     'schoolsession.session as session',
                 ])->latest('studentclass.created_at')->paginate(100);
 
-                // Fetch promotion statuses
+                // Fetch promotion statuses including the primary key ID
                 $studentKeys = $allstudents->map(function ($student) {
                     return $student->stid . '_' . $student->schoolclassID . '_' . $student->sessionid;
                 })->toArray();
@@ -75,13 +73,21 @@ class PromotionController extends Controller
                 $promotionStatuses = PromotionStatus::whereIn(
                     DB::raw('CONCAT(studentId, "_", schoolclassid, "_", sessionid)'),
                     $studentKeys
-                )->get()->keyBy(function ($item) {
-                    return $item->studentId . '_' . $item->schoolclassid . '_' . $item->sessionid;
-                });
+                )->select(['id', 'studentId', 'schoolclassid', 'sessionid', 'promotionStatus'])
+                 ->get()
+                 ->keyBy(function ($item) {
+                     return $item->studentId . '_' . $item->schoolclassid . '_' . $item->sessionid;
+                 });
 
                 $allstudents->getCollection()->transform(function ($student) use ($promotionStatuses) {
                     $key = $student->stid . '_' . $student->schoolclassID . '_' . $student->sessionid;
-                    $student->promotion_status = $promotionStatuses[$key]->promotionStatus ?? 'N/A';
+                    if (isset($promotionStatuses[$key])) {
+                        $student->promotion_status = $promotionStatuses[$key]->promotionStatus ?? 'N/A';
+                        $student->promotion_id = $promotionStatuses[$key]->id; // PromotionStatus table ID
+                    } else {
+                        $student->promotion_status = 'N/A';
+                        $student->promotion_id = null;
+                    }
                     return $student;
                 });
 
