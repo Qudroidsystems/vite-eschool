@@ -182,7 +182,56 @@ class MyPrincipalsCommentController extends Controller
             }
         }
 
-        // Generate original intelligent comments (kept for optional use)
+        // Generate the 7 personalized standard comments for each student
+        $standardPersonalizedComments = [];
+
+        $baseTemplates = [
+            "Excellent result {NAME}, keep it up!",
+            "A very good result {NAME}, keep it up!",
+            "Good result {NAME}, keep it up!",
+            "Average result {NAME}, there's still room for improvement next term.",
+            "You can do better next term, {NAME}.",
+            "You need to sit up and be serious, {NAME}.",
+            "Wake up and be serious, {NAME}.",
+        ];
+
+        foreach ($students as $student) {
+            $studentId = $student->id;
+            $firstName = $student->fname; // Original case
+            $upperName = strtoupper($student->fname); // For advice line
+
+            $weakSubjects = $studentGradeAnalysis[$studentId]['weak_subjects'] ?? [];
+
+            $advice = '';
+            if (!empty($weakSubjects)) {
+                // Sort from worst to best: F > E > D > C
+                usort($weakSubjects, function($a, $b) {
+                    $order = ['F' => 0, 'E' => 1, 'D' => 2, 'C' => 3];
+                    return $order[$a['grade']] <=> $order[$b['grade']];
+                });
+
+                $subjectList = array_map(fn($ws) => strtoupper($ws['subject']) . " (" . $ws['grade'] . ")", $weakSubjects);
+
+                if (count($subjectList) == 1) {
+                    $advice = "\n\n$upperName should work harder in " . $subjectList[0] . " to improve.";
+                } elseif (count($subjectList) == 2) {
+                    $advice = "\n\n$upperName should work harder in " . implode(' and ', $subjectList) . " to improve.";
+                } else {
+                    $last = array_pop($subjectList);
+                    $advice = "\n\n$upperName should work harder in " . implode(', ', $subjectList) . " and $last to improve.";
+                }
+            }
+
+            $options = [];
+            foreach ($baseTemplates as $template) {
+                $comment = str_replace('{NAME}', $firstName, $template);
+                $options[] = $comment . $advice;
+            }
+
+            $standardPersonalizedComments[$studentId] = $options;
+        }
+
+        // Keep original intelligent comment (grade summary version) as extra option
         $intelligentComments = [];
         foreach ($students as $student) {
             $studentId = $student->id;
@@ -211,87 +260,28 @@ class MyPrincipalsCommentController extends Controller
             elseif ($percentageGood >= 40) $baseComment = "You can do better next term.";
             elseif ($percentageGood >= 30) $baseComment = "You need to sit up and be serious.";
 
-            $intelligentComment = "$studentFirstName has $gradeSummary. $baseComment";
+            $comment = "$studentFirstName has $gradeSummary. $baseComment";
 
             $weakSubjects = $analysis['weak_subjects'] ?? [];
             if (!empty($weakSubjects)) {
-                $subjectList = array_map(fn($ws) => $ws['subject'] . " (" . $ws['grade'] . ")", $weakSubjects);
-                $advice = count($subjectList) == 1
-                    ? "$studentFirstName should work harder in " . $subjectList[0] . " to improve."
-                    : "$studentFirstName should work harder in " . (count($subjectList) == 2 ? implode(' and ', $subjectList) : implode(', ', array_slice($subjectList, 0, -1)) . " and " . end($subjectList)) . " to improve.";
-                $intelligentComment .= "\n\n" . $advice;
-            }
-
-            $intelligentComments[$studentId] = $intelligentComment;
-        }
-
-        // Generate personalized standard comments (with name + multiple weak subjects advice)
-        $personalizedStandardComments = [];
-
-        $standardTemplates = [
-            80 => "Excellent result {NAME}, keep it up!",
-            70 => "A very good result {NAME}, keep it up!",
-            60 => "Good result {NAME}, keep it up!",
-            50 => "Average result {NAME}, there's still room for improvement next term.",
-            40 => "You can do better next term, {NAME}.",
-            30 => "You need to sit up and be serious, {NAME}.",
-            0  => "Wake up and be serious, {NAME}.",
-        ];
-
-        foreach ($students as $student) {
-            $studentId = $student->id;
-            $firstName = strtoupper($student->fname);
-            $analysis = $studentGradeAnalysis[$studentId] ?? ['counts' => [], 'weak_subjects' => []];
-
-            $totalGrades = array_sum($analysis['counts']);
-            $goodGrades = ($analysis['counts']['A'] ?? 0) + ($analysis['counts']['B'] ?? 0);
-            $percentageGood = $totalGrades > 0 ? ($goodGrades / $totalGrades) * 100 : 0;
-
-            // Select base template
-            $key = 0;
-            if ($percentageGood >= 80) $key = 80;
-            elseif ($percentageGood >= 70) $key = 70;
-            elseif ($percentageGood >= 60) $key = 60;
-            elseif ($percentageGood >= 50) $key = 50;
-            elseif ($percentageGood >= 40) $key = 40;
-            elseif ($percentageGood >= 30) $key = 30;
-
-            $baseComment = $standardTemplates[$key];
-            $baseComment = str_replace('{NAME}', $firstName, $baseComment);
-
-            // Add advice for multiple weak subjects
-            $weakSubjects = $analysis['weak_subjects'] ?? [];
-
-            if (!empty($weakSubjects)) {
-                // Sort by severity: F → E → D → C
                 usort($weakSubjects, function($a, $b) {
                     $order = ['F' => 0, 'E' => 1, 'D' => 2, 'C' => 3];
                     return $order[$a['grade']] <=> $order[$b['grade']];
                 });
 
-                $subjectList = array_map(function($ws) {
-                    return strtoupper($ws['subject']) . " (" . $ws['grade'] . ")";
-                }, $weakSubjects);
+                $subjectList = array_map(fn($ws) => $ws['subject'] . " (" . $ws['grade'] . ")", $weakSubjects);
 
-                if (count($subjectList) == 1) {
-                    $list = $subjectList[0];
-                    $advice = "$firstName should work harder in $list to improve.";
-                } elseif (count($subjectList) == 2) {
-                    $list = implode(' and ', $subjectList);
-                    $advice = "$firstName should work harder in $list to improve.";
-                } else {
-                    $last = array_pop($subjectList);
-                    $list = implode(', ', $subjectList) . " and $last";
-                    $advice = "$firstName should work harder in $list to improve.";
-                }
+                $advice = count($subjectList) == 1
+                    ? "$studentFirstName should work harder in " . $subjectList[0] . " to improve."
+                    : "$studentFirstName should work harder in " . (count($subjectList) == 2 ? implode(' and ', $subjectList) : implode(', ', array_slice($subjectList, 0, -1)) . " and " . end($subjectList)) . " to improve.";
 
-                $baseComment .= "\n\n" . $advice;
+                $comment .= "\n\n" . $advice;
             }
 
-            $personalizedStandardComments[$studentId] = $baseComment;
+            $intelligentComments[$studentId] = $comment;
         }
 
-        // Student Analytics: Total, Average, Position
+        // Student Analytics (unchanged)
         $studentTotals = [];
         foreach ($students as $student) {
             $sid = $student->id;
@@ -308,7 +298,6 @@ class MyPrincipalsCommentController extends Controller
             $studentTotals[$sid] = ['total' => $total, 'average' => $average, 'subjects' => $count];
         }
 
-        // Sort students by average for position
         $sortedStudents = $students->sortByDesc(fn($s) => $studentTotals[$s->id]['average'] ?? 0)->values();
 
         $positions = [];
@@ -331,7 +320,6 @@ class MyPrincipalsCommentController extends Controller
             };
         }
 
-        // Class Average
         $classTotalScore = array_sum(array_column($studentTotals, 'total'));
         $classTotalSubjects = array_sum(array_column($studentTotals, 'subjects'));
         $classAverage = $classTotalSubjects > 0 ? round($classTotalScore / $classTotalSubjects, 1) : 0;
@@ -341,7 +329,6 @@ class MyPrincipalsCommentController extends Controller
             'total_students' => $students->count(),
         ];
 
-        // Final Student Analytics
         $studentAnalytics = [];
         foreach ($students as $student) {
             $sid = $student->id;
@@ -374,7 +361,7 @@ class MyPrincipalsCommentController extends Controller
                 'studentGrades',
                 'studentGradeAnalysis',
                 'intelligentComments',
-                'personalizedStandardComments',  // New variable
+                'standardPersonalizedComments', // New: array of 7 personalized options per student
                 'studentAnalytics',
                 'classAnalytics'
             ));

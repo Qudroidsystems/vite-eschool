@@ -261,8 +261,7 @@
                                                             $imagePath = asset('storage/student_avatars/' . $picture);
                                                             $currentComment = $profiles[$student->id] ?? '';
                                                             $intelligentComment = $intelligentComments[$student->id] ?? '';
-                                                            $persComment = $personalizedStandardComments[$student->id] ?? '';
-                                                            $hasWeakAdvice = str_contains($persComment, 'should work harder') || !empty($studentGradeAnalysis[$student->id]['weak_subjects'] ?? []);
+                                                            $hasWeakAdvice = !empty($studentGradeAnalysis[$student->id]['weak_subjects'] ?? []);
                                                             $analytics = $studentAnalytics[$student->id] ?? [];
                                                         @endphp
                                                         <tr>
@@ -288,7 +287,7 @@
                                                                 @if($intelligentComment)
                                                                 <div class="intelligent-comment-section mb-3">
                                                                     <small class="text-muted d-block mb-1">
-                                                                        <i class="ri-lightbulb-line"></i> Original personalized suggestion
+                                                                        <i class="ri-lightbulb-line"></i> Grade summary comment
                                                                         @if($hasWeakAdvice)<span class="badge bg-warning intelligent-comment-badge">Includes improvement advice</span>@endif
                                                                     </small>
                                                                     <div class="intelligent-comment-preview">
@@ -312,26 +311,18 @@
                                                                         data-original-value="{{ $currentComment }}">
                                                                     <option value="">-- Select Comment --</option>
 
-                                                                    @if($persComment)
-                                                                        <option value="{{ $persComment }}" class="intelligent-option fw-bold">
-                                                                            📝 Recommended Personalized Comment
-                                                                            @if(str_contains($persComment, 'should work harder'))
-                                                                                <span class="badge bg-warning ms-2">+ Improvement advice</span>
+                                                                    @foreach ($standardPersonalizedComments[$student->id] ?? [] as $comment)
+                                                                        <option value="{{ $comment }}">
+                                                                            {{ Str::limit($comment, 80, '...') }}
+                                                                            @if(str_contains($comment, 'should work harder'))
+                                                                                <span class="badge bg-warning ms-2">+ Advice</span>
                                                                             @endif
                                                                         </option>
-                                                                    @else
-                                                                        <option value="Excellent result, keep it up!">Excellent result, keep it up!</option>
-                                                                        <option value="A very good result, keep it up!">A very good result, keep it up!</option>
-                                                                        <option value="Good result, keep it up!">Good result, keep it up!</option>
-                                                                        <option value="Average result, there's still room for improvement next term.">Average result, there's still room for improvement next term.</option>
-                                                                        <option value="You can do better next term.">You can do better next term.</option>
-                                                                        <option value="You need to sit up and be serious.">You need to sit up and be serious.</option>
-                                                                        <option value="Wake up and be serious.">Wake up and be serious.</option>
-                                                                    @endif
+                                                                    @endforeach
 
-                                                                    @if($intelligentComment && $intelligentComment !== $persComment)
-                                                                        <option value="{{ $intelligentComment }}" class="intelligent-option">
-                                                                            💡 Use Full Intelligent Comment
+                                                                    @if(isset($intelligentComments[$student->id]) && !in_array($intelligentComments[$student->id], $standardPersonalizedComments[$student->id] ?? []))
+                                                                        <option value="{{ $intelligentComments[$student->id] }}" class="intelligent-option">
+                                                                            💡 Use Grade Summary Comment
                                                                             @if($hasWeakAdvice)<span class="badge bg-warning ms-2">Improvement advice</span>@endif
                                                                         </option>
                                                                     @endif
@@ -404,8 +395,7 @@
                                                 $imagePath = asset('storage/student_avatars/' . $picture);
                                                 $currentComment = $profiles[$student->id] ?? '';
                                                 $intelligentComment = $intelligentComments[$student->id] ?? '';
-                                                $persComment = $personalizedStandardComments[$student->id] ?? '';
-                                                $hasWeakAdvice = str_contains($persComment, 'should work harder') || !empty($studentGradeAnalysis[$student->id]['weak_subjects'] ?? []);
+                                                $hasWeakAdvice = !empty($studentGradeAnalysis[$student->id]['weak_subjects'] ?? []);
                                                 $analytics = $studentAnalytics[$student->id] ?? [];
                                                 $myAvg = $analytics['average'] ?? 0;
                                                 $diff = $myAvg - $classAnalytics['average'];
@@ -491,7 +481,7 @@
 
                                                     @if($intelligentComment)
                                                     <div class="intelligent-comment-section mb-3">
-                                                        <div class="comment-label-mobile"><i class="ri-lightbulb-line"></i> Original Personalized Suggestion</div>
+                                                        <div class="comment-label-mobile"><i class="ri-lightbulb-line"></i> Grade Summary Comment</div>
                                                         <div class="intelligent-comment-preview">
                                                             <div class="intelligent-comment-text">{{ $intelligentComment }}</div>
                                                             @if($hasWeakAdvice)<small class="text-muted d-block mt-2"><i class="ri-alert-line"></i> Includes improvement advice</small>@endif
@@ -516,26 +506,18 @@
                                                                 data-original-value="{{ $currentComment }}">
                                                             <option value="">-- Select Comment --</option>
 
-                                                            @if($persComment)
-                                                                <option value="{{ $persComment }}" class="intelligent-option fw-bold">
-                                                                    📝 Recommended Personalized Comment
-                                                                    @if(str_contains($persComment, 'should work harder'))
-                                                                        <span class="badge bg-warning ms-2">+ Improvement advice</span>
+                                                            @foreach ($standardPersonalizedComments[$student->id] ?? [] as $comment)
+                                                                <option value="{{ $comment }}">
+                                                                    {{ Str::limit($comment, 80, '...') }}
+                                                                    @if(str_contains($comment, 'should work harder'))
+                                                                        <span class="badge bg-warning ms-2">+ Advice</span>
                                                                     @endif
                                                                 </option>
-                                                            @else
-                                                                <option value="Excellent result, keep it up!">Excellent result, keep it up!</option>
-                                                                <option value="A very good result, keep it up!">A very good result, keep it up!</option>
-                                                                <option value="Good result, keep it up!">Good result, keep it up!</option>
-                                                                <option value="Average result, there's still room for improvement next term.">Average result, there's still room for improvement next term.</option>
-                                                                <option value="You can do better next term.">You can do better next term.</option>
-                                                                <option value="You need to sit up and be serious.">You need to sit up and be serious.</option>
-                                                                <option value="Wake up and be serious.">Wake up and be serious.</option>
-                                                            @endif
+                                                            @endforeach
 
-                                                            @if($intelligentComment && $intelligentComment !== $persComment)
-                                                                <option value="{{ $intelligentComment }}" class="intelligent-option">
-                                                                    💡 Use Full Intelligent Comment
+                                                            @if(isset($intelligentComments[$student->id]) && !in_array($intelligentComments[$student->id], $standardPersonalizedComments[$student->id] ?? []))
+                                                                <option value="{{ $intelligentComments[$student->id] }}" class="intelligent-option">
+                                                                    💡 Use Grade Summary Comment
                                                                     @if($hasWeakAdvice)<span class="badge bg-warning ms-2">Improvement advice</span>@endif
                                                                 </option>
                                                             @endif
