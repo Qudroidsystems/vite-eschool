@@ -78,20 +78,12 @@
             display: block;
         }
 
-        span.text-space-on-dots,
         span.text-dot-space2 {
             border-bottom: 1px dotted #666;
             display: inline-block;
             min-height: 14px;
             font-weight: bold;
-            font-size: 12px; /* Increased font size */
-        }
-
-        span.text-space-on-dots {
-            width: 250px;
-        }
-
-        span.text-dot-space2 {
+            font-size: 12px;
             width: 150px;
         }
 
@@ -334,7 +326,7 @@
 
         .remarks-table td {
             border: 1px solid #000000;
-            padding: 6px;
+            padding: 8px;
             background: white;
             vertical-align: top;
         }
@@ -342,18 +334,53 @@
         .remarks-table .h6 {
             color: #050505;
             font-weight: 600;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             font-size: 12px;
         }
 
-        .remarks-table .text-space-on-dots {
-            color: #000000;
+        /* Full-width dotted underline for remarks */
+        .full-width-dots {
+            display: block;
+            width: 100%;
+            border-bottom: 1px dotted #666;
+            min-height: 18px;
+            padding: 4px 0 8px 0;
             font-weight: bold;
+            font-size: 12px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
-        .remarks-table .promotion-status {
-            color: #000000;
-            font-weight: bold;
+        .principal-remark {
+            min-height: 100px;
+        }
+
+        .promotion-status {
+            font-weight: 900 !important;
+            margin-left: 5px;
+            font-size: 10px !important;
+        }
+
+        /* Promotion status color classes */
+        .promotion-status.promotion-promoted {
+            color: #1e40af !important;
+            font-weight: 900 !important;
+        }
+
+        .promotion-status.promotion-repeat {
+            color: #dc2626 !important;
+            font-weight: 900 !important;
+        }
+
+        .promotion-status.promotion-parents {
+            color: #dc2626 !important;
+            font-weight: 900 !important;
+        }
+
+        .promotion-status.promotion-default {
+            color: #6b7280 !important;
+            font-weight: 900 !important;
         }
 
         .footer-section {
@@ -440,55 +467,6 @@
             font-weight: 700;
             margin-top: 6px;
         }
-
-        /* FIXED PROMOTION STATUS STYLES - Higher specificity and better coverage */
-        .promotion-status {
-            font-weight: 900 !important;
-            margin-left: 5px;
-            font-size: 10px !important;
-        }
-
-        /* Promotion status color classes with higher specificity */
-        .remarks-table .promotion-status.promotion-promoted,
-        .promotion-status.promotion-promoted {
-            color: #1e40af !important; /* Blue for PROMOTED */
-            font-weight: 900 !important;
-        }
-
-        .remarks-table .promotion-status.promotion-repeat,
-        .promotion-status.promotion-repeat {
-            color: #dc2626 !important; /* Red for REPEAT/TRIAL */
-            font-weight: 900 !important;
-        }
-
-        .remarks-table .promotion-status.promotion-parents,
-        .promotion-status.promotion-parents {
-            color: #dc2626 !important; /* Red for PARENTS TO SEE PRINCIPAL */
-            font-weight: 900 !important;
-        }
-
-        .remarks-table .promotion-status.promotion-default,
-        .promotion-status.promotion-default {
-            color: #6b7280 !important; /* Gray for default/not applicable */
-            font-weight: 900 !important;
-        }
-
-        /* Additional specific color classes for common statuses */
-        .promotion-status.status-promoted {
-            color: #1e40af !important;
-        }
-
-        .promotion-status.status-trial {
-            color: #f59e0b !important; /* Amber for trial */
-        }
-
-        .promotion-status.status-repeat {
-            color: #dc2626 !important;
-        }
-
-        .promotion-status.status-see-principal {
-            color: #dc2626 !important;
-        }
     </style>
 </head>
 <body>
@@ -564,7 +542,7 @@
                                             <td width="41%">
                                                 <div class="info-row">
                                                     <span class="result-details">Name:</span>
-                                                    <span class="info-value font-bold">{{ strtoupper($student->lastname ?? 'NO INFO') }} {{ $student->fname ?? 'Eliabeeeee' }} {{ $student->othername ?? 'eeeee' }}</span>
+                                                    <span class="info-value font-bold">{{ strtoupper($student->lastname ?? 'NO INFO') }} {{ $student->fname ?? '' }} {{ $student->othername ?? '' }}</span>
                                                 </div>
                                                 <div class="info-row">
                                                     <span class="result-details">Session:</span>
@@ -732,56 +710,48 @@
                 <!-- Remarks Section -->
                 <table class="remarks-table">
                     <tbody>
-                        <!-- First row: Class Teacher and Guidance Counselor side by side -->
+                        <!-- Row 1: Class Teacher & Guidance Counselor side by side -->
                         <tr>
                             <td width="50%">
                                 <div class="h6">Class Teacher's Remark Signature/Date</div>
-                                <div>
-                                    <span class="text-space-on-dots">
-                                        {{ $profile ? ($profile->classteachercomment ?? 'NO INFO') : 'NO INFO' }}
-                                    </span>
+                                <div class="full-width-dots">
+                                    {{ $profile ? ($profile->classteachercomment ?? 'NO INFO') : 'NO INFO' }}
                                 </div>
                             </td>
                             <td width="50%">
                                 <div class="h6">Guidance Counselor's Remark Signature/Date</div>
-                                <div>
-                                    <span class="text-space-on-dots">
-                                        {{ $profile ? ($profile->guidancescomment ?? 'NO INFO') : 'NO INFO' }}
-                                    </span>
+                                <div class="full-width-dots">
+                                    {{ $profile ? ($profile->guidancescomment ?? 'NO INFO') : 'NO INFO' }}
                                 </div>
                             </td>
                         </tr>
 
-                        <!-- Second row: Principal's Remark & Promotion Status (full width) -->
+                        <!-- Row 2: Principal's Remark & Promotion Status (full width) -->
                         <tr>
                             <td colspan="2">
                                 <div class="h6">Principal's Remark & Promotion Status</div>
-                                <div>
-                                    <span class="text-space-on-dots">
-                                        {{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}
-                                        @php
-                                            $status = $studentData['promotionStatusValue'] ?? null;
-                                            
-                                            // Enhanced status classification
-                                            $statusUpper = strtoupper(trim($status ?? ''));
-                                            $statusClass = 'promotion-default';
-                                            
-                                            if (str_contains($statusUpper, 'PROMOTED') && !str_contains($statusUpper, 'TRIAL')) {
-                                                $statusClass = 'promotion-promoted';
-                                            } elseif (str_contains($statusUpper, 'TRIAL') || str_contains($statusUpper, 'PROMOTED ON TRIAL')) {
-                                                $statusClass = 'promotion-repeat';
-                                            } elseif (str_contains($statusUpper, 'REPEAT')) {
-                                                $statusClass = 'promotion-repeat';
-                                            } elseif (str_contains($statusUpper, 'PRINCIPAL') || str_contains($statusUpper, 'PARENTS')) {
-                                                $statusClass = 'promotion-parents';
-                                            }
-                                            
-                                            $statusText = $status ?? 'Not applicable for this term';
-                                        @endphp
-                                        <br>
-                                        <span class="promotion-status {{ $statusClass }}">
-                                            PROMOTION STATUS: {{ $statusText }}
-                                        </span>
+                                <div class="full-width-dots principal-remark">
+                                    {{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}
+                                    @php
+                                        $status = $studentData['promotionStatusValue'] ?? null;
+                                        $statusUpper = strtoupper(trim($status ?? ''));
+                                        $statusClass = 'promotion-default';
+
+                                        if (str_contains($statusUpper, 'PROMOTED') && !str_contains($statusUpper, 'TRIAL')) {
+                                            $statusClass = 'promotion-promoted';
+                                        } elseif (str_contains($statusUpper, 'TRIAL') || str_contains($statusUpper, 'PROMOTED ON TRIAL')) {
+                                            $statusClass = 'promotion-repeat';
+                                        } elseif (str_contains($statusUpper, 'REPEAT')) {
+                                            $statusClass = 'promotion-repeat';
+                                        } elseif (str_contains($statusUpper, 'PRINCIPAL') || str_contains($statusUpper, 'PARENTS')) {
+                                            $statusClass = 'promotion-parents';
+                                        }
+
+                                        $statusText = $status ?? 'Not applicable for this term';
+                                    @endphp
+                                    <br><br>
+                                    <span class="promotion-status {{ $statusClass }}">
+                                        PROMOTION STATUS: {{ $statusText }}
                                     </span>
                                 </div>
                             </td>
@@ -795,12 +765,11 @@
                         <tr>
                             <td>
                                 <span class="font-bold">This Result was issued on  </span>
-                                <span class="text-dot-space2"> 18th December, 2025</span>
+                                <span class="text-dot-space2"> .......................</span>
                         
                                 <span class="font-bold">and collected by</span>
                                 <span class="">.......................................</span>
                             </td>
-                            
                         </tr>
                         <tr>
                             <td>
