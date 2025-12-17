@@ -144,31 +144,71 @@ class MyPrincipalsCommentController extends Controller
                 ];
             }
 
+            // CORRECTED GRADE CALCULATION
+            $grade = 'F';
             $gradeLetter = 'F';
+            
             if ($isSenior) {
-                if ($total >= 75) $gradeLetter = 'A';
-                elseif ($total >= 70) $gradeLetter = 'B';
-                elseif ($total >= 60) $gradeLetter = 'C';
-                elseif ($total >= 50) $gradeLetter = 'D';
-                elseif ($total >= 40) $gradeLetter = 'E';
+                // Senior grading system (WAEC/NECO style)
+                if ($total >= 75 && $total <= 100) {
+                    $grade = 'A1';
+                    $gradeLetter = 'A';
+                } elseif ($total >= 70) {
+                    $grade = 'B2';
+                    $gradeLetter = 'B';
+                } elseif ($total >= 65) {
+                    $grade = 'B3';
+                    $gradeLetter = 'B';
+                } elseif ($total >= 60) {
+                    $grade = 'C4';
+                    $gradeLetter = 'C';
+                } elseif ($total >= 55) {
+                    $grade = 'C5';
+                    $gradeLetter = 'C';
+                } elseif ($total >= 50) {
+                    $grade = 'C6';
+                    $gradeLetter = 'C';
+                } elseif ($total >= 45) {
+                    $grade = 'D7';
+                    $gradeLetter = 'D';
+                } elseif ($total >= 40) {
+                    $grade = 'E8';
+                    $gradeLetter = 'E';
+                } else {
+                    $grade = 'F9';
+                    $gradeLetter = 'F';
+                }
             } else {
-                if ($total >= 70) $gradeLetter = 'A';
-                elseif ($total >= 60) $gradeLetter = 'B';
-                elseif ($total >= 50) $gradeLetter = 'C';
-                elseif ($total >= 40) $gradeLetter = 'D';
+                // Junior grading system
+                if ($total >= 70 && $total <= 100) {
+                    $grade = 'A';
+                    $gradeLetter = 'A';
+                } elseif ($total >= 60) {
+                    $grade = 'B';
+                    $gradeLetter = 'B';
+                } elseif ($total >= 50) {
+                    $grade = 'C';
+                    $gradeLetter = 'C';
+                } elseif ($total >= 40) {
+                    $grade = 'D';
+                    $gradeLetter = 'D';
+                } else {
+                    $grade = 'F';
+                    $gradeLetter = 'F';
+                }
             }
 
             $studentGrades[$studentId][] = [
                 'subject' => $subjectName,
                 'score'   => $total,
-                'grade'   => $gradeLetter,
-                'grade_letter' => $gradeLetter
+                'grade'   => $grade,           // Full grade (A1, B2, C4, etc. for senior)
+                'grade_letter' => $gradeLetter // Letter for CSS classes (A, B, C, etc.)
             ];
 
             $studentGradeAnalysis[$studentId]['grades'][] = [
                 'subject' => $subjectName,
                 'score' => $total,
-                'grade' => $gradeLetter,
+                'grade' => $grade,
                 'grade_letter' => $gradeLetter
             ];
 
@@ -177,7 +217,8 @@ class MyPrincipalsCommentController extends Controller
             if (in_array($gradeLetter, ['C', 'D', 'E', 'F'])) {
                 $studentGradeAnalysis[$studentId]['weak_subjects'][] = [
                     'subject' => $subjectName,
-                    'grade' => $gradeLetter
+                    'grade' => $grade,
+                    'grade_letter' => $gradeLetter
                 ];
             }
         }
@@ -210,7 +251,7 @@ class MyPrincipalsCommentController extends Controller
             if (!empty($weakSubjects)) {
                 usort($weakSubjects, function($a, $b) {
                     $order = ['F' => 0, 'E' => 1, 'D' => 2, 'C' => 3];
-                    return $order[$a['grade']] <=> $order[$b['grade']];
+                    return $order[$a['grade_letter']] <=> $order[$b['grade_letter']];
                 });
 
                 $subjectList = array_map(fn($ws) => strtoupper($ws['subject']) . " (" . $ws['grade'] . ")", $weakSubjects);
@@ -270,7 +311,7 @@ class MyPrincipalsCommentController extends Controller
             if (!empty($weakSubjects)) {
                 usort($weakSubjects, function($a, $b) {
                     $order = ['F' => 0, 'E' => 1, 'D' => 2, 'C' => 3];
-                    return $order[$a['grade']] <=> $order[$b['grade']];
+                    return $order[$a['grade_letter']] <=> $order[$b['grade_letter']];
                 });
 
                 $subjectList = array_map(fn($ws) => $ws['subject'] . " (" . $ws['grade'] . ")", $weakSubjects);
@@ -285,7 +326,7 @@ class MyPrincipalsCommentController extends Controller
             $intelligentComments[$studentId] = $comment;
         }
 
-        // Student Analytics (unchanged)
+        // Student Analytics
         $studentTotals = [];
         foreach ($students as $student) {
             $sid = $student->id;
@@ -367,7 +408,8 @@ class MyPrincipalsCommentController extends Controller
                 'intelligentComments',
                 'standardPersonalizedComments',
                 'studentAnalytics',
-                'classAnalytics'
+                'classAnalytics',
+                'isSenior'
             ));
     }
 

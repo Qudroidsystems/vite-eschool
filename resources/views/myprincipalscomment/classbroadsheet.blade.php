@@ -139,12 +139,22 @@
     .grades-tooltip th { color: #6c757d; font-weight: 600; font-size: 0.9rem; padding: 12px 8px; border-bottom: 2px solid #e9ecef; }
     .grades-tooltip td { padding: 14px 12px; background: #f8f9fa; border-radius: 12px; font-size: 0.95rem; }
     .grade-badge { font-weight: 800; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; min-width: 50px; text-align: center; }
+    
+    /* Grade color classes */
     .grade-a { background-color: #28a745; color: white; }
     .grade-b { background-color: #17a2b8; color: white; }
     .grade-c { background-color: #6c757d; color: white; }
     .grade-d { background-color: #ffc107; color: black; }
     .grade-e { background-color: #fd7e14; color: white; }
     .grade-f { background-color: #dc3545; color: white; }
+    
+    /* Senior grade specific colors */
+    .grade-a1, .grade-a { background-color: #28a745; color: white; }
+    .grade-b2, .grade-b3, .grade-b { background-color: #17a2b8; color: white; }
+    .grade-c4, .grade-c5, .grade-c6, .grade-c { background-color: #6c757d; color: white; }
+    .grade-d7, .grade-d { background-color: #ffc107; color: black; }
+    .grade-e8, .grade-e { background-color: #fd7e14; color: white; }
+    .grade-f9, .grade-f { background-color: #dc3545; color: white; }
 
     .student-card { background: #fff; border: 1px solid #dee2e6; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
     .student-header { background: #f8f9fa; padding: 15px; border-bottom: 1px solid #dee2e6; }
@@ -227,11 +237,21 @@
                                 <div class="card-header">
                                     <h5 class="card-title mb-0">
                                         Broadsheet: {{ $schoolclass->schoolclass }} {{ $schoolclass->arm_name }} - {{ $schoolterm }} {{ $schoolsession }}
+                                        @if($isSenior)
+                                            <span class="badge bg-warning ms-2">Senior Class</span>
+                                        @else
+                                            <span class="badge bg-info ms-2">Junior Class</span>
+                                        @endif
                                     </h5>
                                     <div class="alert alert-info mt-2 mb-0">
                                         <i class="ri-bar-chart-line me-2"></i>
                                         <strong>Class Average:</strong> {{ $classAnalytics['average'] }} | 
                                         <strong>Students:</strong> {{ $classAnalytics['total_students'] }}
+                                        @if($isSenior)
+                                            <span class="ms-3"><strong>Grading:</strong> Senior (A1-F9)</span>
+                                        @else
+                                            <span class="ms-3"><strong>Grading:</strong> Junior (A-F)</span>
+                                        @endif
                                     </div>
                                 </div>
                                 <div class="card-body">
@@ -474,7 +494,14 @@
                                                             <div class="subject-item">
                                                                 <div class="subject-name">{{ $subject }}</div>
                                                                 <div class="subject-score {{ ($score && $score->total < 50) ? 'highlight-red' : '' }}">{{ $score?->total ?? '-' }}</div>
-                                                                @if($g)<div class="subject-grade grade-{{ strtolower($g['grade_letter']) }}">{{ $g['grade'] }}</div>@endif
+                                                                @if($g)
+                                                                    <div class="subject-grade grade-{{ strtolower($g['grade']) }}">
+                                                                        {{ $g['grade'] }}
+                                                                        @if($isSenior)
+                                                                            <br><small style="font-size:0.7em;">({{ $g['grade_letter'] }})</small>
+                                                                        @endif
+                                                                    </div>
+                                                                @endif
                                                             </div>
                                                         @endforeach
                                                     </div>
@@ -527,10 +554,6 @@
                                             </div>
                                         @endforeach
                                     </div>
-
-                                    {{-- <div class="text-end mt-4">
-                                        <button type="submit" class="btn btn-success btn-lg">Save All Comments</button>
-                                    </div> --}}
                                 </div>
                             </div>
                         </div>
@@ -586,14 +609,26 @@ function showTooltip(tooltipId, studentId, studentName) {
     } else {
         noGrades.classList.add('d-none');
         grades.forEach(g => {
-            const color = g.grade_letter === 'A' ? 'success' :
-                          ['B','C'].includes(g.grade_letter) ? 'info' :
-                          ['D','E','F'].includes(g.grade_letter) ? (g.grade_letter === 'F' ? 'danger' : 'warning') : 'secondary';
+            // Determine color based on grade letter
+            let color = 'secondary';
+            const gradeLetter = g.grade_letter || g.grade.charAt(0);
+            
+            if (gradeLetter === 'A') color = 'success';
+            else if (gradeLetter === 'B') color = 'info';
+            else if (gradeLetter === 'C') color = 'secondary';
+            else if (gradeLetter === 'D') color = 'warning';
+            else if (gradeLetter === 'E') color = 'warning';
+            else if (gradeLetter === 'F') color = 'danger';
+            
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td><strong>${g.subject}</strong></td>
                 <td class="text-center fw-bold ${g.score < 50 ? 'text-danger' : 'text-success'}">${g.score}</td>
-                <td class="text-center"><span class="badge bg-${color} grade-badge">${g.grade}</span></td>`;
+                <td class="text-center">
+                    <span class="badge bg-${color} grade-badge grade-${g.grade.toLowerCase()}">
+                        ${g.grade}
+                    </span>
+                </td>`;
             tbody.appendChild(row);
         });
     }
