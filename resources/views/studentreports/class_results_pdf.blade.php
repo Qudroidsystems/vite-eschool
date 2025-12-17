@@ -732,22 +732,29 @@
                 <!-- Remarks Section -->
                 <table class="remarks-table">
                     <tbody>
+                        <!-- First row: Class Teacher and Guidance Counselor side by side -->
                         <tr>
                             <td width="50%">
                                 <div class="h6">Class Teacher's Remark Signature/Date</div>
                                 <div>
-                                    <span class="text-space-on-dots">{{ $profile ? ($profile->classteachercomment ?? 'NO INFO') : 'NO INFO' }}</span>
+                                    <span class="text-space-on-dots">
+                                        {{ $profile ? ($profile->classteachercomment ?? 'NO INFO') : 'NO INFO' }}
+                                    </span>
                                 </div>
                             </td>
-                        </tr>
-                        <tr>
                             <td width="50%">
                                 <div class="h6">Guidance Counselor's Remark Signature/Date</div>
                                 <div>
-                                    <span class="text-space-on-dots">{{ $profile ? ($profile->guidancescomment ?? 'NO INFO') : 'NO INFO' }}</span>
+                                    <span class="text-space-on-dots">
+                                        {{ $profile ? ($profile->guidancescomment ?? 'NO INFO') : 'NO INFO' }}
+                                    </span>
                                 </div>
                             </td>
-                            <td width="50%">
+                        </tr>
+
+                        <!-- Second row: Principal's Remark & Promotion Status (full width) -->
+                        <tr>
+                            <td colspan="2">
                                 <div class="h6">Principal's Remark & Promotion Status</div>
                                 <div>
                                     <span class="text-space-on-dots">
@@ -755,11 +762,10 @@
                                         @php
                                             $status = $studentData['promotionStatusValue'] ?? null;
                                             
-                                            // Enhanced status classification with better string matching
+                                            // Enhanced status classification
                                             $statusUpper = strtoupper(trim($status ?? ''));
                                             $statusClass = 'promotion-default';
                                             
-                                            // More comprehensive matching
                                             if (str_contains($statusUpper, 'PROMOTED') && !str_contains($statusUpper, 'TRIAL')) {
                                                 $statusClass = 'promotion-promoted';
                                             } elseif (str_contains($statusUpper, 'TRIAL') || str_contains($statusUpper, 'PROMOTED ON TRIAL')) {
