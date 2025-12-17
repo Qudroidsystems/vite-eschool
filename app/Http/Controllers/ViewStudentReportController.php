@@ -397,10 +397,12 @@ class ViewStudentReportController extends Controller
                 'grades' => $scores->pluck('grade')->toArray(),
             ]);
 
+            // === FIXED: Fetch the LATEST personality profile by updated_at ===
             $studentpp = Studentpersonalityprofile::where('studentid', $id)
                 ->where('schoolclassid', $schoolclassid)
                 ->where('sessionid', $sessionid)
                 ->where('termid', $termid)
+                ->orderByDesc('updated_at')  // This ensures the most recent comment is used
                 ->first();
 
             $promotionStatus = PromotionStatus::where('studentId', $id)
