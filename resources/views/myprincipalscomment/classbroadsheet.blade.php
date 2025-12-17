@@ -528,9 +528,9 @@
                                         @endforeach
                                     </div>
 
-                                    <div class="text-end mt-4">
+                                    {{-- <div class="text-end mt-4">
                                         <button type="submit" class="btn btn-success btn-lg">Save All Comments</button>
-                                    </div>
+                                    </div> --}}
                                 </div>
                             </div>
                         </div>
