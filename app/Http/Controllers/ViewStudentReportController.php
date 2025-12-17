@@ -402,7 +402,7 @@ class ViewStudentReportController extends Controller
                 ->where('schoolclassid', $schoolclassid)
                 ->where('sessionid', $sessionid)
                 ->where('termid', $termid)
-                ->orderByDesc('updated_at')  // This ensures the most recent comment is used
+                // ->orderByDesc('updated_at')  // This ensures the most recent comment is used
                 ->first();
 
             $promotionStatus = PromotionStatus::where('studentId', $id)
