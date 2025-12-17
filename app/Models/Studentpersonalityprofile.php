@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Student;
+use App\Models\StudentRegistration;
 use Illuminate\Database\Eloquent\Model;
 
 class Studentpersonalityprofile extends Model
@@ -44,7 +46,13 @@ class Studentpersonalityprofile extends Model
         'music',
         'signature'
     ];
-    
+
+    // In app/Models/Studentpersonalityprofile.php
+    public function student()
+    {
+        return $this->belongsTo(Student::class, 'studentid', 'id');
+    }
+        
     // Add this boot method to log model events
     protected static function boot()
     {

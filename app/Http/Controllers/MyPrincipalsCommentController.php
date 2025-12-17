@@ -190,21 +190,24 @@ class MyPrincipalsCommentController extends Controller
             "A very good result {NAME}, keep it up!",
             "Good result {NAME}, keep it up!",
             "Average result {NAME}, there's still room for improvement next term.",
-            "You can do better next term, {NAME}.",
-            "You need to sit up and be serious, {NAME}.",
-            "Wake up and be serious, {NAME}.",
+            "{NAME}, you can do better next term.",
+            "{NAME}, you need to sit up and be serious.",
+            "{NAME}, wake up and be serious.",
         ];
 
         foreach ($students as $student) {
             $studentId = $student->id;
-            $firstName = $student->fname; // Original case
-            $upperName = strtoupper($student->fname); // For advice line
+            $firstName = $student->fname;
 
+            // Pronoun setup
+            $pronoun = strtoupper($student->gender) === 'MALE' ? 'He' : 'She';
+            $possessive = strtoupper($student->gender) === 'MALE' ? 'his' : 'her';
+
+            // Weak subjects advice
             $weakSubjects = $studentGradeAnalysis[$studentId]['weak_subjects'] ?? [];
-
             $advice = '';
+
             if (!empty($weakSubjects)) {
-                // Sort from worst to best: F > E > D > C
                 usort($weakSubjects, function($a, $b) {
                     $order = ['F' => 0, 'E' => 1, 'D' => 2, 'C' => 3];
                     return $order[$a['grade']] <=> $order[$b['grade']];
@@ -212,14 +215,11 @@ class MyPrincipalsCommentController extends Controller
 
                 $subjectList = array_map(fn($ws) => strtoupper($ws['subject']) . " (" . $ws['grade'] . ")", $weakSubjects);
 
-                if (count($subjectList) == 1) {
-                    $advice = "\n\n$upperName should work harder in " . $subjectList[0] . " to improve.";
-                } elseif (count($subjectList) == 2) {
-                    $advice = "\n\n$upperName should work harder in " . implode(' and ', $subjectList) . " to improve.";
-                } else {
-                    $last = array_pop($subjectList);
-                    $advice = "\n\n$upperName should work harder in " . implode(', ', $subjectList) . " and $last to improve.";
-                }
+                $subjectsText = count($subjectList) == 1
+                    ? $subjectList[0]
+                    : (count($subjectList) == 2 ? implode(' and ', $subjectList) : implode(', ', array_slice($subjectList, 0, -1)) . " and " . end($subjectList));
+
+                $advice = "\n\n$pronoun should work harder in $subjectsText to improve $possessive performance.";
             }
 
             $options = [];
@@ -231,15 +231,15 @@ class MyPrincipalsCommentController extends Controller
             $standardPersonalizedComments[$studentId] = $options;
         }
 
-        // Keep original intelligent comment (grade summary version) as extra option
+        // Intelligent (auto-generated) comment with name + pronoun advice
         $intelligentComments = [];
         foreach ($students as $student) {
             $studentId = $student->id;
-            $studentFirstName = $student->fname;
+            $firstName = $student->fname;
             $analysis = $studentGradeAnalysis[$studentId] ?? ['counts' => [], 'weak_subjects' => []];
 
             $gradeParts = [];
-            foreach (['A', 'B', 'C', 'D', 'F'] as $g) {
+            foreach (['A', 'B', 'C', 'D', 'E', 'F'] as $g) {
                 $count = $analysis['counts'][$g] ?? 0;
                 if ($count > 0) $gradeParts[] = "$count " . $g . ($count > 1 ? "'s" : '');
             }
@@ -252,15 +252,19 @@ class MyPrincipalsCommentController extends Controller
             $goodGrades = ($analysis['counts']['A'] ?? 0) + ($analysis['counts']['B'] ?? 0);
             $percentageGood = $totalGrades > 0 ? ($goodGrades / $totalGrades) * 100 : 0;
 
-            $baseComment = "Wake up and be serious.";
-            if ($percentageGood >= 80) $baseComment = "Excellent result, keep it up!";
-            elseif ($percentageGood >= 70) $baseComment = "A very good result, keep it up!";
-            elseif ($percentageGood >= 60) $baseComment = "Good result, keep it up!";
-            elseif ($percentageGood >= 50) $baseComment = "Average result, there's still room for improvement next term.";
-            elseif ($percentageGood >= 40) $baseComment = "You can do better next term.";
-            elseif ($percentageGood >= 30) $baseComment = "You need to sit up and be serious.";
+            $baseComment = "{NAME}, wake up and be serious.";
+            if ($percentageGood >= 80) $baseComment = "Excellent result {NAME}, keep it up!";
+            elseif ($percentageGood >= 70) $baseComment = "A very good result {NAME}, keep it up!";
+            elseif ($percentageGood >= 60) $baseComment = "Good result {NAME}, keep it up!";
+            elseif ($percentageGood >= 50) $baseComment = "Average result {NAME}, there's still room for improvement next term.";
+            elseif ($percentageGood >= 40) $baseComment = "{NAME}, you can do better next term.";
+            elseif ($percentageGood >= 30) $baseComment = "{NAME}, you need to sit up and be serious.";
 
-            $comment = "$studentFirstName has $gradeSummary. $baseComment";
+            $comment = "$firstName has $gradeSummary. " . str_replace('{NAME}', $firstName, $baseComment);
+
+            // Pronoun-based advice
+            $pronoun = strtoupper($student->gender) === 'MALE' ? 'He' : 'She';
+            $possessive = strtoupper($student->gender) === 'MALE' ? 'his' : 'her';
 
             $weakSubjects = $analysis['weak_subjects'] ?? [];
             if (!empty($weakSubjects)) {
@@ -271,11 +275,11 @@ class MyPrincipalsCommentController extends Controller
 
                 $subjectList = array_map(fn($ws) => $ws['subject'] . " (" . $ws['grade'] . ")", $weakSubjects);
 
-                $advice = count($subjectList) == 1
-                    ? "$studentFirstName should work harder in " . $subjectList[0] . " to improve."
-                    : "$studentFirstName should work harder in " . (count($subjectList) == 2 ? implode(' and ', $subjectList) : implode(', ', array_slice($subjectList, 0, -1)) . " and " . end($subjectList)) . " to improve.";
+                $subjectsText = count($subjectList) == 1
+                    ? $subjectList[0]
+                    : (count($subjectList) == 2 ? implode(' and ', $subjectList) : implode(', ', array_slice($subjectList, 0, -1)) . " and " . end($subjectList));
 
-                $comment .= "\n\n" . $advice;
+                $comment .= "\n\n$pronoun should work harder in $subjectsText to improve $possessive performance.";
             }
 
             $intelligentComments[$studentId] = $comment;
@@ -361,97 +365,96 @@ class MyPrincipalsCommentController extends Controller
                 'studentGrades',
                 'studentGradeAnalysis',
                 'intelligentComments',
-                'standardPersonalizedComments', // New: array of 7 personalized options per student
+                'standardPersonalizedComments',
                 'studentAnalytics',
                 'classAnalytics'
             ));
     }
 
     public function updateComments(Request $request, $schoolclassid, $sessionid, $termid)
-{
-    $isAssigned = Principalscomment::where('staffId', Auth::id())
-        ->where('schoolclassid', $schoolclassid)
-        ->where('sessionid', $sessionid)
-        ->where('termid', $termid)
-        ->exists();
+    {
+        $isAssigned = Principalscomment::where('staffId', Auth::id())
+            ->where('schoolclassid', $schoolclassid)
+            ->where('sessionid', $sessionid)
+            ->where('termid', $termid)
+            ->exists();
 
-    if (!$isAssigned) {
-        return response()->json([
-            'success' => false, 
-            'message' => 'Unauthorized: You are not assigned to enter comments for this class.'
-        ], 403);
-    }
+        if (!$isAssigned) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Unauthorized: You are not assigned to enter comments for this class.'
+            ], 403);
+        }
 
-    $request->validate(['teacher_comments.*' => 'nullable|string|max:2000']);
+        $request->validate(['teacher_comments.*' => 'nullable|string|max:2000']);
 
-    $comments = $request->input('teacher_comments', []);
-    $updatedCount = 0;
+        $comments = $request->input('teacher_comments', []);
+        $updatedCount = 0;
 
-    DB::beginTransaction();
-    try {
-        foreach ($comments as $studentId => $comment) {
-            $comment = $comment ? trim($comment) : null;
-            
-            // Log what's being processed
-            \Log::info("Processing principal comment", [
-                'student_id' => $studentId,
-                'comment_length' => strlen($comment ?? ''),
-                'schoolclassid' => $schoolclassid,
-                'sessionid' => $sessionid,
-                'termid' => $termid,
-                'staff_id' => Auth::id()
-            ]);
-
-            $existing = Studentpersonalityprofile::where('studentid', $studentId)
-                ->where('schoolclassid', $schoolclassid)
-                ->where('sessionid', $sessionid)
-                ->where('termid', $termid)
-                ->first();
-
-            if ($existing) {
-                if ($existing->principalscomment !== $comment) {
-                    $existing->update(['staffid' => Auth::id(), 'principalscomment' => $comment]);
-                    $updatedCount++;
-                    \Log::info("Updated existing comment", ['student_id' => $studentId]);
-                }
-            } elseif ($comment) {
-                Studentpersonalityprofile::create([
-                    'studentid' => $studentId,
+        DB::beginTransaction();
+        try {
+            foreach ($comments as $studentId => $comment) {
+                $comment = $comment ? trim($comment) : null;
+                
+                \Log::info("Processing principal comment", [
+                    'student_id' => $studentId,
+                    'comment_length' => strlen($comment ?? ''),
                     'schoolclassid' => $schoolclassid,
                     'sessionid' => $sessionid,
                     'termid' => $termid,
-                    'staffid' => Auth::id(),
-                    'principalscomment' => $comment,
+                    'staff_id' => Auth::id()
                 ]);
-                $updatedCount++;
-                \Log::info("Created new comment", ['student_id' => $studentId]);
+
+                $existing = Studentpersonalityprofile::where('studentid', $studentId)
+                    ->where('schoolclassid', $schoolclassid)
+                    ->where('sessionid', $sessionid)
+                    ->where('termid', $termid)
+                    ->first();
+
+                if ($existing) {
+                    if ($existing->principalscomment !== $comment) {
+                        $existing->update(['staffid' => Auth::id(), 'principalscomment' => $comment]);
+                        $updatedCount++;
+                        \Log::info("Updated existing comment", ['student_id' => $studentId]);
+                    }
+                } elseif ($comment) {
+                    Studentpersonalityprofile::create([
+                        'studentid' => $studentId,
+                        'schoolclassid' => $schoolclassid,
+                        'sessionid' => $sessionid,
+                        'termid' => $termid,
+                        'staffid' => Auth::id(),
+                        'principalscomment' => $comment,
+                    ]);
+                    $updatedCount++;
+                    \Log::info("Created new comment", ['student_id' => $studentId]);
+                }
             }
-        }
 
-        DB::commit();
+            DB::commit();
 
-        $message = $updatedCount > 0 
-            ? "$updatedCount comment(s) saved successfully" 
-            : "No changes detected";
+            $message = $updatedCount > 0 
+                ? "$updatedCount comment(s) saved successfully" 
+                : "No changes detected";
 
-        return response()->json([
-            'success' => true, 
-            'message' => $message,
-            'count' => $updatedCount
-        ]);
+            return response()->json([
+                'success' => true, 
+                'message' => $message,
+                'count' => $updatedCount
+            ]);
+                
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error saving principals comments', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => array_keys($comments)
+            ]);
             
-    } catch (\Exception $e) {
-        DB::rollBack();
-        \Log::error('Error saving principals comments', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-            'request_data' => array_keys($comments)
-        ]);
-        
-        return response()->json([
-            'success' => false, 
-            'message' => 'Server error: ' . $e->getMessage()
-        ], 500);
+            return response()->json([
+                'success' => false, 
+                'message' => 'Server error: ' . $e->getMessage()
+            ], 500);
+        }
     }
-}
 }
