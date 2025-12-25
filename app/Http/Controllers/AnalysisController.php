@@ -326,7 +326,7 @@ class AnalysisController extends Controller
     /**
      * School-wide payment analysis.
      */
-    public function schoolWidePaymentAnalysis($termid_id = 1, $session_id = 1, $action = 'view', $format = 'pdf')
+    public function schoolWidePaymentAnalysis($termid_id = 1, $session_id = 2, $action = 'view', $format = 'pdf')
     {
         // Validate parameters
         $validator = Validator::make([
