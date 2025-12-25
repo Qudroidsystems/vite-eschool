@@ -3,18 +3,18 @@
 namespace App\Http\Controllers;
 
 use PDF;
-use Illuminate\Support\Facades\View;
-use App\Models\SchoolBillTermSession;
-use App\Models\Schoolclass;
-use App\Models\Schoolsession;
-use App\Models\Schoolterm;
 use App\Models\Student;
-use App\Models\StudentBillPayment;
-use App\Models\StudentBillPaymentBook;
+use App\Models\Schoolterm;
+use App\Models\Schoolclass;
 use App\Models\Studentclass;
+use Illuminate\Http\Request;
+use App\Models\Schoolsession;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
-use Illuminate\Http\Request;
+use App\Models\StudentBillPayment;
+use Illuminate\Support\Facades\View;
+use App\Models\SchoolBillTermSession;
+use App\Models\StudentBillPaymentBook;
 use Illuminate\Support\Facades\Validator;
 
 class AnalysisController extends Controller
@@ -326,7 +326,7 @@ class AnalysisController extends Controller
     /**
      * School-wide payment analysis.
      */
-    public function schoolWidePaymentAnalysis($termid_id = 2, $session_id = 1, $action = 'view', $format = 'pdf')
+    public function schoolWidePaymentAnalysis($termid_id = 1, $session_id = 2, $action = 'view', $format = 'pdf')
     {
         // Validate parameters
         $validator = Validator::make([
