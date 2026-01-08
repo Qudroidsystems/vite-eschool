@@ -23,11 +23,48 @@
         .pagination-wrap .page-link { padding: 5px 10px; }
         .pagination-wrap .active .page-link { background-color: #007bff; color: white; }
         .pagination-wrap .disabled .page-link { pointer-events: none; opacity: 0.5; }
+/* Add these styles to your existing CSS */
+.cropper-container {
+    max-height: 300px;
+    overflow: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 10px;
+    background: #f8f9fa;
+}
+
+.cropper-controls {
+    padding: 10px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    margin-top: 10px;
+}
+
+.cropper-controls .row {
+    margin-bottom: 10px;
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.img-thumbnail {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 4px;
+    background: white;
+}
     </style>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-     
- 
+
+
     @if (Route::is('dashboard'))
                 @include('layouts.pages-assets.css.users-list-css')
     @endif
@@ -36,6 +73,9 @@
                 @include('layouts.pages-assets.css.users-list-css')
     @endif
 
+    @if (Route::is('profile.*'))
+                @include('layouts.pages-assets.css.users-list-css')
+    @endif
     @if (Route::is('roles.*'))
          @include('layouts.pages-assets.css.roles-list-css')
     @endif
@@ -43,12 +83,16 @@
     @if (Route::is('permissions.*'))
           @include('layouts.pages-assets.css.permission-list-css')
    @endif
-     
+
    @if (Route::is('session.*'))
         @include('layouts.pages-assets.css.session-list-css')
    @endif
 
    @if (Route::is('school-information.*'))
+        @include('layouts.pages-assets.css.schoolinformation-list-css')
+   @endif
+
+    @if (Route::is('admin.school-info.*'))
         @include('layouts.pages-assets.css.schoolinformation-list-css')
    @endif
 
@@ -71,7 +115,7 @@
    @if (Route::is('schoolclass.*'))
          @include('layouts.pages-assets.css.schoolclass-list-css')
    @endif
-       
+
    @if (Route::is('classteacher.*'))
         @include('layouts.pages-assets.css.classteacher-list-css')
    @endif
@@ -80,7 +124,7 @@
        @include('layouts.pages-assets.css.subject-list-css')
    @endif
 
-   
+
    @if (Route::is('subjects.*'))
        @include('layouts.pages-assets.css.subject-list-css')
    @endif
@@ -88,23 +132,23 @@
 
    @if (Route::is('subjectteacher.*'))
         @include('layouts.pages-assets.css.subjectteacher-list-css')
-   @endif   
+   @endif
 
    @if (Route::is('subjectclass.*'))
         @include('layouts.pages-assets.css.subjectclass-list-css')
-   @endif   
+   @endif
 
    @if (Route::is('schoolbill.*'))
         @include('layouts.pages-assets.css.schoolbill-list-css')
-   @endif  
+   @endif
 
    @if (Route::is('schoolbilltermsession.*'))
         @include('layouts.pages-assets.css.schoolbilltermsession-list-css')
-   @endif  
+   @endif
 
    @if (Route::is('student.*'))
         @include('layouts.pages-assets.css.student-list-css')
-   @endif  
+   @endif
 
     @if (Route::is('studentbatchindex'))
         @include('layouts.pages-assets.css.student-list-css')
@@ -112,31 +156,31 @@
 
    @if (Route::is('myclass.*'))
        @include('layouts.pages-assets.css.myclass-list-css')
-   @endif 
+   @endif
 
     @if (Route::is('mysubject.*'))
          @include('layouts.pages-assets.css.mysubject-list-css')
-    @endif 
+    @endif
 
     @if (Route::is('viewstudent'))
         @include('layouts.pages-assets.css.viewstudent-list-css')
-    @endif 
+    @endif
 
     @if (Route::is('studentreports.*'))
             @include('layouts.pages-assets.css.studentreport-list-css')
-    @endif 
+    @endif
 
     @if (Route::is('studentmockreports.*'))
             @include('layouts.pages-assets.css.studentreport-list-css')
-    @endif 
+    @endif
 
     @if (Route::is('subjectoperation.*'))
         @include('layouts.pages-assets.css.subjectoperation-list-css')
-    @endif 
+    @endif
 
     @if (Route::is('subjects.subjectinfo'))
         @include('layouts.pages-assets.css.subjectinfo-list-css')
-    @endif 
+    @endif
 
     @if (Route::is('myresultroom.*'))
         @include('layouts.pages-assets.css.myresultroom-list-css')
@@ -222,28 +266,53 @@
 
         <!-- ========== App Menu ========== -->
         <div class="app-menu navbar-menu">
+
+
             <!-- LOGO -->
-            <div class="navbar-brand-box">
-                <a href="index.html" class="logo logo-dark">
-                    <span class="logo-sm">
-                        <img src="{{ asset('theme/layouts/assets/images/logo-sm.png')}}" alt="" height="22">
-                    </span>
-                    <span class="logo-lg">
-                        <img src="{{ asset('theme/layouts/assets/images/logo-dark.png')}}" alt="" height="22">
-                    </span>
-                </a>
-                <a href="index.html" class="logo logo-light">
-                    <span class="logo-sm">
-                        <img src="{{ asset('theme/layouts/assets/images/logo-sm.png')}}" alt="" height="22">
-                    </span>
-                    <span class="logo-lg">
-                        <img src="{{ asset('theme/layouts/assets/images/logo-light.png')}}" alt="" height="22">
-                    </span>
-                </a>
-                <button type="button" class="btn btn-sm p-0 fs-3xl header-item float-end btn-vertical-sm-hover" id="vertical-hover">
-                    <i class="ri-record-circle-line"></i>
-                </button>
-            </div>
+                <div class="navbar-brand-box">
+                    @php
+                        use App\Models\SchoolInformation;
+                        $schoolInfo = SchoolInformation::getActiveSchool();
+                        $schoolName = $schoolInfo?->school_name ?? config('app.name', 'School System');
+
+                        // Use app_logo if available, otherwise fall back to school_logo
+                        $appLogoUrl = $schoolInfo?->app_logo_url ?? $schoolInfo?->logo_url ?? asset('theme/layouts/assets/images/logo-dark.png');
+                    @endphp
+
+                    <a href="{{ url('/') }}" class="logo logo-dark">
+                        <span class="logo-sm">
+                            <img src="{{ $appLogoUrl }}"
+                                alt="{{ $schoolName }}"
+                                style="height: 40px; width: auto; border-radius: 8px; object-fit: contain;"
+                                onerror="this.onerror=null; this.src='{{ asset('theme/layouts/assets/images/logo-sm.png') }}'">
+                        </span>
+                        <span class="logo-lg">
+                            <img src="{{ $appLogoUrl }}"
+                                alt="{{ $schoolName }}"
+                                style="height: 50px; width: auto; border-radius: 10px; object-fit: contain;"
+                                onerror="this.onerror=null; this.src='{{ asset('theme/layouts/assets/images/logo-dark.png') }}'">
+                        </span>
+                    </a>
+
+                    <a href="{{ url('/') }}" class="logo logo-light">
+                        <span class="logo-sm">
+                            <img src="{{ $appLogoUrl }}"
+                                alt="{{ $schoolName }}"
+                                style="height: 40px; width: auto; border-radius: 8px; object-fit: contain;"
+                                onerror="this.onerror=null; this.src='{{ asset('theme/layouts/assets/images/logo-sm.png') }}'">
+                        </span>
+                        <span class="logo-lg">
+                            <img src="{{ $appLogoUrl }}"
+                                alt="{{ $schoolName }}"
+                                style="height: 50px; width: auto; border-radius: 10px; object-fit: contain;"
+                                onerror="this.onerror=null; this.src='{{ asset('theme/layouts/assets/images/logo-light.png') }}'">
+                        </span>
+                    </a>
+
+                    <button type="button" class="btn btn-sm p-0 fs-3xl header-item float-end btn-vertical-sm-hover" id="vertical-hover">
+                        <i class="ri-record-circle-line"></i>
+                    </button>
+                </div>
 
             <div id="scrollbar">
                 <div class="container-fluid">
@@ -259,11 +328,11 @@
                             </a>
                             <div class="collapse menu-dropdown" id="sidebarDashboards">
                                 <ul class="nav nav-sm flex-column">
-                                  
+
                                         <li class="nav-item">
                                             <a href="{{ route('dashboard') }}" class="nav-link" data-key="t-analytics"> Administration Analytics </a>
-                                        </li> 
-                                  
+                                        </li>
+
                                     @can('finance dashboard')
                                     <li class="nav-item">
                                         <a href="dashboard-crm.html" class="nav-link" data-key="t-crm"> Finance Analytics</a>
@@ -274,7 +343,7 @@
                                         <a href="index.html" class="nav-link" data-key="t-ecommerce"> Academics Analytics </a>
                                     </li>
                                     @endcan
-                                    
+
                                 </ul>
                             </div>
                         </li>
@@ -288,11 +357,11 @@
                                 </a>
                                 <div class="collapse menu-dropdown" id="sidebarusers">
                                     <ul class="nav nav-sm flex-column">
-                                    
+
                                             <li class="nav-item">
                                             <a href="{{ route('users.index') }}" class="nav-link" role="button" data-key="t-signin"> Users </a>
                                         </li>
-                                    
+
                                     </ul>
                                 </div>
                             </li>
@@ -314,32 +383,101 @@
                                         <a href="{{ route('permissions.index') }}" class="nav-link" data-key="t-profile"> Permissions </a>
                                     </li>
                                    @endcan
-                                   
+
                                 </ul>
                             </div>
                         </li>
                         @endcan
-                      
 
-                        <li class="nav-item">
-                            <a class="nav-link menu-link collapsed" href="#sidebaraccount" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebaraccoun">
-                                <i class="ph-address-book"></i> <span data-key="t-pages">User Account</span>
+
+                       <li class="nav-item">
+                            <a class="nav-link menu-link collapsed" href="#sidebaraccount" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebaraccount">
+                                <i class="ph-address-book"></i> <span data-key="t-pages">My Account</span>
                             </a>
-                            <div class="collapse menu-dropdown" id="sidebaraccount">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="pages-starter.html" class="nav-link" data-key="t-starter"> My Account </a>
-                                    </li>
-                                </ul>
-                            </div>
+                                <div class="collapse menu-dropdown" id="sidebaraccount">
+                                    <ul class="nav nav-sm flex-column">
+                                        <!-- General Profile -->
+                                        <li class="nav-item">
+                                            <a href="{{ route('users.overview', ['id' => Auth::id()]) }}" class="nav-link">
+                                                <i class="ri-profile-line me-2"></i> My Profile
+                                            </a>
+                                        </li>
+
+                                        <li class="nav-item">
+                                            <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}" class="nav-link">
+                                                <i class="ri-settings-3-line me-2"></i> Account Settings
+                                            </a>
+                                        </li>
+
+                                        <!-- Staff Section -->
+                                        @if(Auth::user()->isStaff())
+                                        <li class="nav-item">
+                                            <div class="nav-link text-muted small px-0">
+                                                <i class="ri-briefcase-line me-2"></i> STAFF SECTION
+                                            </div>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#employmentInfo" class="nav-link ps-4">
+                                                <i class="ri-building-line me-2"></i> Employment Details
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#qualifications" class="nav-link ps-4">
+                                                <i class="ri-graduation-cap-line me-2"></i> Academic Qualifications
+                                            </a>
+                                        </li>
+                                        @endif
+
+                                        <!-- Student Section -->
+                                        @if(Auth::user()->isStudent())
+                                        <li class="nav-item">
+                                            <div class="nav-link text-muted small px-0">
+                                                <i class="ri-user-star-line me-2"></i> STUDENT SECTION
+                                            </div>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#studentInfo" class="nav-link ps-4">
+                                                <i class="ri-user-line me-2"></i> Student Details
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#parentInfo" class="nav-link ps-4">
+                                                <i class="ri-parent-line me-2"></i> Parent Information
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#academicInfo" class="nav-link ps-4">
+                                                <i class="ri-book-open-line me-2"></i> Academic Details
+                                            </a>
+                                        </li>
+                                        @endif
+
+                                        <!-- Security Section -->
+                                        <li class="nav-item">
+                                            <div class="nav-link text-muted small px-0">
+                                                <i class="ri-shield-keyhole-line me-2"></i> SECURITY
+                                            </div>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#security" class="nav-link ps-4">
+                                                <i class="ri-lock-password-line me-2"></i> Change Password
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="{{ route('profile.settings', ['id' => Auth::id()]) }}#security" class="nav-link ps-4">
+                                                <i class="ri-mail-settings-line me-2"></i> Change Email
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
                         </li>
 
 
-                        
+
 
                         <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">STUDENT & PARENTS</span></li>
 
-                    
+
 
                         <li class="nav-item">
                             <a href="#sidebarStudentmanagement" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentmanagement">
@@ -357,7 +495,7 @@
                                               <a href="{{ route('studentbatchindex') }}" class="nav-link" data-key="t-products-grid">Batch Student Registration</a>
                                        </li>
                                    @endcan
-                                    
+
                                 </ul>
                             </div>
                         </li>
@@ -372,13 +510,13 @@
                                     <li class="nav-item">
                                         <a href="apps-ecommerce-products.html" class="nav-link" data-key="t-products">All Parents</a>
                                     </li>
-                                    
+
                                 </ul>
                             </div>
                         </li>
 
                         <li class="menu-title"><i class="ph-folder-open"></i> <span data-key="t-apps">SUBJECT REGISTRATION</span></li>
-                        
+
                         <li class="nav-item">
                             <a href="#sidebarsubjectoperaton" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarsubjectoperaton">
                                 <i class="ph-folder-open"></i> <span data-key="t-ecommerce">Subject Registration </span>
@@ -390,14 +528,14 @@
                                                <a href="{{ route('subjectoperation.index') }}" class="nav-link" data-key="t-products">Student Subject Registration</a>
                                          </li>
                                     @endcan
-                               
-                                                             
+
+
                                 </ul>
                             </div>
                         </li>
 
                         <li class="menu-title"><i class="ph-folder-open"></i> <span data-key="t-apps">CLASSES & RECORDS</span></li>
-                        
+
                         <li class="nav-item">
                             <a href="#sidebarClasses" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarClasses">
                                 <i class="ph-folder-open"></i> <span data-key="t-ecommerce">Classes & Subjects </span>
@@ -413,24 +551,24 @@
                                           <li class="nav-item">
                                               <a href="{{ route('mysubject.index') }}" class="nav-link" data-key="t-products">My Subject</a>
                                         </li>
-                                  @endcan       
-                                  
+                                  @endcan
+
                                    @can('View my-subject-vettings')
                                           <li class="nav-item">
                                               <a href="{{ route('mysubjectvettings.index') }}" class="nav-link" data-key="t-products">Subjects to Vet</a>
                                         </li>
-                                  @endcan   
+                                  @endcan
                                   @can('View my-mock-subject-vettings')
                                           <li class="nav-item">
                                               <a href="{{ route('mymocksubjectvettings.index') }}" class="nav-link" data-key="t-products">Mock Subjects to Vet</a>
                                         </li>
-                                  @endcan  
-                                  
+                                  @endcan
+
                                    @can('View my-principals-comment')
                                           <li class="nav-item">
                                               <a href="{{ route('myprincipalscomment.index') }}" class="nav-link" data-key="t-products">Principal's Comment</a>
                                         </li>
-                                  @endcan   
+                                  @endcan
                                 </ul>
                             </div>
                         </li>
@@ -446,8 +584,8 @@
                                               <a href="{{ route('myresultroom.index') }}" class="nav-link" data-key="t-products">Terminal & Mock Records</a>
                                         </li>
                                     @endcan
-                                  
-                                 
+
+
                                    @can('View student-report')
                                        <li class="nav-item">
                                         <a href="{{ route('studentreports.index') }}" class="nav-link" data-key="t-products">Terminal Result Reports</a>
@@ -459,8 +597,8 @@
                                         <a href="{{ route('studentmockreports.index') }}" class="nav-link" data-key="t-products">Mock Result Reports</a>
                                     </li>
                                    @endcan
-                                    
-                                    
+
+
                                 </ul>
                             </div>
                         </li>
@@ -527,7 +665,7 @@
                                     <li class="nav-item">
                                         <a href="apps-ecommerce-products.html" class="nav-link" data-key="t-products">All Examinations</a>
                                     </li>
-                                
+
                                 </ul>
                             </div>
                         </li>
@@ -541,7 +679,7 @@
                                     <li class="nav-item">
                                         <a href="apps-ecommerce-products.html" class="nav-link" data-key="t-products">CBT Exercise</a>
                                     </li>
-                                
+
                                 </ul>
                             </div>
                         </li>
@@ -562,11 +700,11 @@
                                              <a href="{{ route('school-information.index') }}" class="nav-link" data-key="t-list-view">School Information</a>
                                           </li>
                                     @endcan
-                                   
-                                    
+
+
                                 </ul>
                             </div>
-                        </li> 
+                        </li>
 
 
 
@@ -591,10 +729,10 @@
                                              <a href="{{ route('schoolhouse.index') }}" class="nav-link" data-key="t-create-invoice">School House</a>
                                        </li>
                                    @endcan
-                                    
+
                                 </ul>
                             </div>
-                        </li> 
+                        </li>
 
                         <li class="nav-item">
                             <a href="#sidebarClassessettings" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarClassessettings">
@@ -607,7 +745,7 @@
                                             <a href="{{ route('schoolarm.index') }}" class="nav-link" data-key="t-list-view">Class Arm</a>
                                         </li>
                                     @endcan
-                                   
+
                                     @can('View class-category')
                                         <li class="nav-item">
                                              <a href="{{ route('classcategories.index') }}" class="nav-link" data-key="t-overview">Class Category</a>
@@ -623,11 +761,11 @@
                                             <a href="{{ route('classteacher.index') }}" class="nav-link" data-key="t-create-invoice">Class Teacher</a>
                                         </li>
                                     @endcan
-                                   
-                                    
+
+
                                 </ul>
                             </div>
-                        </li> 
+                        </li>
 
 
                         <li class="nav-item">
@@ -659,10 +797,10 @@
                                             <a href="{{ route('compulsorysubjectclass.index') }}" class="nav-link" data-key="t-create-invoice">Assign Compulsory  Subject to classes</a>
                                           </li>
                                     @endcan
-                                
+
                                 </ul>
                             </div>
-                        </li> 
+                        </li>
 
                         <li class="nav-item">
                             <a href="#sidebarPrincipal" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSub">
@@ -677,7 +815,7 @@
                                     @endcan
                                 </ul>
                             </div>
-                        </li> 
+                        </li>
 
                         <li class="nav-item">
                             <a href="#sidebarSubjectvetting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSub">
@@ -692,7 +830,7 @@
                                     @endcan
                                 </ul>
                             </div>
-                        </li> 
+                        </li>
 
 
                          <li class="nav-item">
@@ -708,9 +846,9 @@
                                     @endcan
                                 </ul>
                             </div>
-                        </li> 
+                        </li>
 
-                        
+
 
 
                         <li class="nav-item">
@@ -723,16 +861,16 @@
                                           <li class="nav-item">
                                             <a href="{{ route('schoolbill.index') }}" class="nav-link" data-key="t-list-view">Bills</a>
                                           </li>
-                                    @endcan  
+                                    @endcan
                                     @can('View school-bill-for-term-session')
                                            <li class="nav-item">
                                                 <a href="{{ route('schoolbilltermsession.index') }}" class="nav-link" data-key="t-overview">Appy Bills</a>
                                           </li>
                                     @endcan
-                                    
+
                                 </ul>
                             </div>
-                        </li> 
+                        </li>
 
                     </ul>
                 </div>
@@ -790,7 +928,7 @@
                                     <div class="dropdown-header">
                                         <h6 class="text-overflow text-muted mb-0 text-uppercase">Recent Searches</h6>
                                     </div>
-                
+
                                     <div class="dropdown-item bg-transparent text-wrap">
                                         <a href="index.html" class="btn btn-subtle-secondary btn-sm btn-rounded">how to setup <i class="mdi mdi-magnify ms-1"></i></a>
                                         <a href="index.html" class="btn btn-subtle-secondary btn-sm btn-rounded">buttons <i class="mdi mdi-magnify ms-1"></i></a>
@@ -799,30 +937,30 @@
                                     <div class="dropdown-header mt-2">
                                         <h6 class="text-overflow text-muted mb-1 text-uppercase">Pages</h6>
                                     </div>
-                
+
                                     <!-- item-->
                                     <a href="javascript:void(0);" class="dropdown-item notify-item">
                                         <i class="ri-bubble-chart-line align-middle fs-18 text-muted me-2"></i>
                                         <span>Analytics Dashboard</span>
                                     </a>
-                
+
                                     <!-- item-->
                                     <a href="javascript:void(0);" class="dropdown-item notify-item">
                                         <i class="ri-lifebuoy-line align-middle fs-18 text-muted me-2"></i>
                                         <span>Help Center</span>
                                     </a>
-                
+
                                     <!-- item-->
                                     <a href="javascript:void(0);" class="dropdown-item notify-item">
                                         <i class="ri-user-settings-line align-middle fs-18 text-muted me-2"></i>
                                         <span>My account settings</span>
                                     </a>
-                
+
                                     <!-- item-->
                                     <div class="dropdown-header mt-2">
                                         <h6 class="text-overflow text-muted mb-2 text-uppercase">Members</h6>
                                     </div>
-                
+
                                     <div class="notification-list">
                                         <!-- item -->
                                         <a href="javascript:void(0);" class="dropdown-item notify-item py-2">
@@ -856,7 +994,7 @@
                                         </a>
                                     </div>
                                 </div>
-                
+
                                 <div class="text-center pt-3 pb-1">
                                     <a href="#" class="btn btn-primary btn-sm">View All Results <i class="ri-arrow-right-line ms-1"></i></a>
                                 </div>
@@ -931,7 +1069,7 @@
 
 
 
-                       
+
 
                         {{-- <div class="ms-1 header-item d-none d-sm-flex">
                             <button type="button" class="btn btn-icon btn-topbar btn-ghost-dark rounded-circle" data-toggle="fullscreen">
@@ -1100,37 +1238,69 @@
                             </div>
                         </div> --}}
 
-                     
-                      
-                        <div class="dropdown ms-sm-3 header-item topbar-user">
+
+<!-- Place this in your header blade file -->
+
+<div class="dropdown ms-sm-3 header-item topbar-user">
     <button type="button" class="btn shadow-none" id="page-header-user-dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
         <span class="d-flex align-items-center">
             @php
                 use App\Models\User;
                 use App\Models\Student;
+                use Illuminate\Support\Facades\Storage;
+                use Illuminate\Support\Facades\Auth;
+
                 $userdata = Auth::user();
                 $isStudent = $userdata->hasRole('student');
                 $avatarPath = '';
                 $fullName = $userdata->name ?? 'User';
                 $studentPicture = null;
+                $srcPath = '';
+                $fallbackSrc = '';
+
                 if ($isStudent) {
                     $student = Student::where('id', $userdata->student_id)->first();
                     $studentPicture = $student ? $student->picture : null;
-                    $avatarPath = $studentPicture ? 'student_avatars/' . basename($studentPicture) : 'student_avatars/unnamed.jpg';
-                    $srcPath = asset('storage/' . $avatarPath);
-                    $fallbackSrc = asset('storage/student_avatars/unnamed.jpg');
+
+                    // Check if picture exists in storage
+                    if ($studentPicture && Storage::disk('public')->exists('student_avatars/' . basename($studentPicture))) {
+                        $srcPath = asset('storage/student_avatars/' . basename($studentPicture));
+                    } else if ($studentPicture && Storage::disk('public')->exists($studentPicture)) {
+                        $srcPath = asset('storage/' . $studentPicture);
+                    } else {
+                        // Use default avatar for students
+                        $srcPath = asset('assets/images/users/avatar-1.jpg');
+                    }
+                    $fallbackSrc = asset('assets/images/users/avatar-1.jpg');
                 } else {
-                    $avatarPath = $userdata->avatar ? 'staff_avatars/' . basename($userdata->avatar) : 'staff_avatars/unnamed.png';
-                    $srcPath = Storage::url($avatarPath);
-                    $fallbackSrc = Storage::url('student_avatars/unnamed.jpg');
+                    // For staff/admin users
+                    if ($userdata->avatar && Storage::disk('public')->exists('staff_avatars/' . basename($userdata->avatar))) {
+                        $srcPath = asset('storage/staff_avatars/' . basename($userdata->avatar));
+                    } else if ($userdata->avatar && Storage::disk('public')->exists($userdata->avatar)) {
+                        $srcPath = asset('storage/' . $userdata->avatar);
+                    } else {
+                        // Use default avatar for staff
+                        $srcPath = asset('assets/images/users/avatar-1.jpg');
+                    }
+                    $fallbackSrc = asset('assets/images/users/avatar-1.jpg');
                 }
+
+                // For the modal data attribute
                 $dataPicture = $isStudent ? ($studentPicture ?? 'none') : ($userdata->avatar ?? 'none');
             @endphp
-        
-            <div class="avatar-sm me-2">
-                <img src="{{ $srcPath }}" alt="{{ $fullName }}" class="rounded-circle w-100 header-profile-user" data-bs-toggle="modal" data-bs-target="#imageViewModal" data-image="{{ $srcPath }}" data-picture="{{ $dataPicture }}" onerror="this.src='{{ $fallbackSrc }}';">
+
+            <!-- Enhanced Profile Picture with rounded corners -->
+            <div class="avatar-lg me-2 position-relative">
+                <img src="{{ $srcPath }}"
+                     alt="{{ $fullName }}"
+                     class="w-100 header-profile-user-enhanced"
+                     data-bs-toggle="modal"
+                     data-bs-target="#imageViewModal"
+                     data-image="{{ $srcPath }}"
+                     data-picture="{{ $dataPicture }}"
+                     onerror="this.onerror=null; this.src='{{ $fallbackSrc }}';">
             </div>
-            
+
             @if ($userdata)
                 <span class="text-start ms-xl-2">
                     <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">{{ $userdata->name }}</span>
@@ -1139,36 +1309,95 @@
                     @endphp
                     <span class="d-none d-xl-block ms-1 fs-sm user-name-sub-text">{{ $roles }}</span>
                 </span>
-            </span>
-        </button>
-        <div class="dropdown-menu dropdown-menu-end">
-            <h6 class="dropdown-header">Welcome {{ $userdata->name }}!</h6>
-            @php
-                $userRoles = $userdata->roles->pluck('name')->implode(', ') ?? 'No Role';
-            @endphp
-            <p class="dropdown-item-text text-muted mb-1">Roles: {{ $userRoles }}</p>
-            <a class="dropdown-item" href="{{ route('user.overview', $userdata->id) }}">
-                <i class="mdi mdi-account-circle text-muted fs-lg align-middle me-1"></i> 
+            @endif
+        </span>
+    </button>
+
+    <div class="dropdown-menu dropdown-menu-end">
+        <h6 class="dropdown-header">Welcome {{ $userdata->name }}!</h6>
+        @php
+            $userRoles = $userdata->roles->pluck('name')->implode(', ') ?? 'No Role';
+        @endphp
+        <p class="dropdown-item-text text-muted mb-1">Roles: {{ $userRoles }}</p>
+
+        @if (!$isStudent)
+            <a class="dropdown-item" href="{{ route('users.overview', $userdata->id) }}">
+                <i class="mdi mdi-account-circle text-muted fs-lg align-middle me-1"></i>
                 <span class="align-middle">Profile</span>
             </a>
-            <div class="dropdown-divider"></div>
-            <a class="dropdown-item" href="auth-lockscreen.html">
-                <i class="mdi mdi-lock text-muted fs-lg align-middle me-1"></i> 
-                <span class="align-middle">Lock screen</span>
-            </a>
-        
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); this.closest('form').submit();">
-                    <i class="mdi mdi-logout text-muted fs-lg align-middle me-1"></i> 
-                    <span class="align-middle" data-key="t-logout">Logout</span>
-                </a>
-            </form>
-        </div>
         @endif
-        
+
+        <a class="dropdown-item" href="{{ route('profile.settings', ['id' => $userdata->id]) }}">
+            <i class="mdi mdi-cog text-muted fs-lg align-middle me-1"></i>
+            <span class="align-middle">Settings</span>
+        </a>
+
+        <form method="POST" action="{{ route('logout') }}" class="d-inline">
+            @csrf
+            <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); this.closest('form').submit();">
+                <i class="mdi mdi-logout text-muted fs-lg align-middle me-1"></i>
+                <span class="align-middle" data-key="t-logout">Logout</span>
+            </a>
+        </form>
     </div>
-                </div>
+</div>
+
+<!-- Add this CSS to your main CSS file or in a <style> tag -->
+<style>
+/* Enhanced Profile Picture Styles */
+.header-profile-user-enhanced {
+    border-radius: 12px !important;
+    object-fit: cover;
+    height: 48px !important;
+    width: 48px !important;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border: 2px solid #fff;
+}
+
+.header-profile-user-enhanced:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Adjust avatar container size */
+.avatar-lg {
+    height: 48px;
+    width: 48px;
+}
+
+/* Dark mode support */
+[data-bs-theme="dark"] .header-profile-user-enhanced {
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+[data-bs-theme="dark"] .header-profile-user-enhanced:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* Optional: Add a subtle ring effect on hover */
+@keyframes ring-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(var(--bs-primary-rgb), 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(var(--bs-primary-rgb), 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(var(--bs-primary-rgb), 0);
+    }
+}
+
+.header-profile-user-enhanced:active {
+    animation: ring-pulse 0.6s ease-out;
+}
+</style>
+
+
+
+                    </div>
             </div>
         </header>
 
@@ -1223,20 +1452,20 @@
       </footer>
       </div>
       <!-- end main content-->
-      
+
       </div>
       <!-- END layout-wrapper -->
-      
-      
 
 
-      
+
+
+
       <!--start back-to-top-->
       <button class="btn btn-dark btn-icon" id="back-to-top">
       <i class="bi bi-caret-up fs-3xl"></i>
       </button>
       <!--end back-to-top-->
-      
+
       <!--preloader-->
       <div id="preloader">
       <div id="status">
@@ -1246,7 +1475,7 @@
       </div>
       </div>
 
-      
+
 
 
 
@@ -1256,7 +1485,7 @@
       <i class="bi bi-gear mb-1"></i> Customizer
       </div>
       </div>
-      
+
       <!-- Theme Settings -->
       <div class="offcanvas offcanvas-end border-0" tabindex="-1" id="theme-settings-offcanvas">
             <div class="d-flex align-items-center bg-primary bg-gradient p-3 offcanvas-header">
@@ -1264,7 +1493,7 @@
                 <h5 class="mb-1 text-white">Steex Builder</h5>
                 <p class="text-white text-opacity-75 mb-0">Choose your themes & layouts etc.</p>
             </div>
-            
+
             <button type="button" class="btn-close btn-close-white ms-auto" id="customizerclose-btn" data-bs-dismiss="offcanvas" aria-label="Close"></button>
             </div>
             <div class="offcanvas-body p-0">
@@ -1272,7 +1501,7 @@
                 <div class="p-4">
                     <h6 class="fs-md mb-1">Layout</h6>
                     <p class="text-muted fs-sm">Choose your layout</p>
-            
+
                     <div class="row">
                         <div class="col-4">
                             <div class="form-check card-radio">
@@ -1349,10 +1578,10 @@
                         </div>
                         <!-- end col -->
                     </div>
-            
+
                     <h6 class="mt-4 fs-md mb-1">Theme</h6>
                     <p class="text-muted fs-sm">Choose your suitable Theme.</p>
-            
+
                     <div class="row">
                         <div class="col-6">
                             <div class="form-check card-radio">
@@ -1410,10 +1639,10 @@
                             <h5 class="fs-sm text-center fw-medium mt-2">Interaction</h5>
                         </div><!-- end col -->
                     </div>
-            
+
                     <h6 class="mt-4 fs-md mb-1">Color Scheme</h6>
                     <p class="text-muted fs-sm">Choose Light or Dark Scheme.</p>
-            
+
                     <div class="colorscheme-cardradio">
                         <div class="row g-3">
                             <div class="col-6">
@@ -1425,7 +1654,7 @@
                                 </div>
                                 <h5 class="fs-sm text-center fw-medium mt-2">Light</h5>
                             </div>
-            
+
                             <div class="col-6">
                                 <div class="form-check card-radio dark">
                                     <input class="form-check-input" type="radio" name="data-bs-theme" id="layout-mode-dark" value="dark">
@@ -1435,15 +1664,15 @@
                                 </div>
                                 <h5 class="fs-sm text-center fw-medium mt-2">Dark</h5>
                             </div>
-            
-                            
+
+
                         </div>
                     </div>
-            
+
                     <div id="layout-width">
                         <h6 class="mt-4 fs-md mb-1">Layout Width</h6>
                         <p class="text-muted fs-sm">Choose Fluid or Boxed layout.</p>
-            
+
                         <div class="row">
                             <div class="col-4">
                                 <div class="form-check card-radio">
@@ -1495,23 +1724,23 @@
                             </div>
                         </div>
                     </div>
-            
+
                     <div id="layout-position">
                         <h6 class="mt-4 fs-md mb-1">Layout Position</h6>
                         <p class="text-muted fs-sm">Choose Fixed or Scrollable Layout Position.</p>
-            
+
                         <div class="btn-group radio" role="group">
                             <input type="radio" class="btn-check" name="data-layout-position" id="layout-position-fixed" value="fixed">
                             <label class="btn btn-light w-sm" for="layout-position-fixed">Fixed</label>
-            
+
                             <input type="radio" class="btn-check" name="data-layout-position" id="layout-position-scrollable" value="scrollable">
                             <label class="btn btn-light w-sm ms-0" for="layout-position-scrollable">Scrollable</label>
                         </div>
                     </div>
-            
+
                     <h6 class="mt-4 fs-md mb-1">Topbar Color</h6>
                     <p class="text-muted fs-sm">Choose Light or Dark Topbar Color.</p>
-            
+
                     <div class="row">
                         <div class="col-4">
                             <div class="form-check card-radio">
@@ -1562,11 +1791,11 @@
                             <h5 class="fs-sm text-center fw-medium mt-2">Dark</h5>
                         </div>
                     </div>
-            
+
                     <div id="sidebar-size">
                         <h6 class="mt-4 fs-md mb-1">Sidebar Size</h6>
                         <p class="text-muted fs-sm">Choose a size of Sidebar.</p>
-            
+
                         <div class="row">
                             <div class="col-4">
                                 <div class="form-check sidebar-setting card-radio">
@@ -1592,7 +1821,7 @@
                                 </div>
                                 <h5 class="fs-sm text-center fw-medium mt-2">Default</h5>
                             </div>
-            
+
                             <div class="col-4">
                                 <div class="form-check sidebar-setting card-radio">
                                     <input class="form-check-input" type="radio" name="data-sidebar-size" id="sidebar-size-compact" value="md">
@@ -1617,7 +1846,7 @@
                                 </div>
                                 <h5 class="fs-sm text-center fw-medium mt-2">Compact</h5>
                             </div>
-            
+
                             <div class="col-4">
                                 <div class="form-check sidebar-setting card-radio">
                                     <input class="form-check-input" type="radio" name="data-sidebar-size" id="sidebar-size-small" value="sm">
@@ -1642,7 +1871,7 @@
                                 </div>
                                 <h5 class="fs-sm text-center fw-medium mt-2">Small (Icon View)</h5>
                             </div>
-            
+
                             <div class="col-4">
                                 <div class="form-check sidebar-setting card-radio">
                                     <input class="form-check-input" type="radio" name="data-sidebar-size" id="sidebar-size-small-hover" value="sm-hover">
@@ -1669,11 +1898,11 @@
                             </div>
                         </div>
                     </div>
-            
+
                     <div id="sidebar-view">
                         <h6 class="mt-4 fs-md mb-1">Sidebar View</h6>
                         <p class="text-muted fs-sm">Choose Default or Detached Sidebar view.</p>
-            
+
                         <div class="row">
                             <div class="col-4">
                                 <div class="form-check sidebar-setting card-radio">
@@ -1729,7 +1958,7 @@
                     <div id="sidebar-color">
                         <h6 class="mt-4 fs-md mb-1">Sidebar Color</h6>
                         <p class="text-muted fs-sm">Choose a color of Sidebar.</p>
-            
+
                         <div class="row">
                             <div class="col-4">
                                 <div class="form-check sidebar-setting card-radio" data-bs-toggle="collapse" data-bs-target="#collapseBgGradient.show">
@@ -1802,10 +2031,10 @@
                             </div>
                         </div>
                         <!-- end row -->
-            
+
                         <div class="collapse" id="collapseBgGradient">
                             <div class="d-flex gap-2 flex-wrap img-switch p-2 px-3 bg-light rounded">
-            
+
                                 <div class="form-check sidebar-setting card-radio">
                                     <input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-gradient" value="gradient">
                                     <label class="form-check-label p-0 avatar-xs rounded-circle" for="sidebar-color-gradient">
@@ -1833,11 +2062,11 @@
                             </div>
                         </div>
                     </div>
-            
+
                     <div id="sidebar-img">
                         <h6 class="mt-4 fw-semibold fs-base">Sidebar Images</h6>
                         <p class="text-muted fs-sm">Choose a image of Sidebar.</p>
-            
+
                         <div class="d-flex gap-2 flex-wrap img-switch">
                             <div class="form-check sidebar-setting card-radio">
                                 <input class="form-check-input" type="radio" name="data-sidebar-image" id="sidebarimg-none" value="none">
@@ -1847,14 +2076,14 @@
                                     </span>
                                 </label>
                             </div>
-            
+
                             <div class="form-check sidebar-setting card-radio">
                                 <input class="form-check-input" type="radio" name="data-sidebar-image" id="sidebarimg-01" value="img-1">
                                 <label class="form-check-label p-0 avatar-sm h-auto" for="sidebarimg-01">
                                     <img src="{{ asset('theme/layouts/assets/images/sidebar/img-sm-1.jpg')}}" alt="" class="avatar-md w-auto object-cover">
                                 </label>
                             </div>
-            
+
                             <div class="form-check sidebar-setting card-radio">
                                 <input class="form-check-input" type="radio" name="data-sidebar-image" id="sidebarimg-02" value="img-2">
                                 <label class="form-check-label p-0 avatar-sm h-auto" for="sidebarimg-02">
@@ -1875,11 +2104,11 @@
                             </div>
                         </div>
                     </div>
-            
+
                     <div id="preloader-menu">
                         <h6 class="mt-4 fw-semibold fs-base">Preloader</h6>
                         <p class="text-muted fs-sm">Choose a preloader.</p>
-            
+
                         <div class="row">
                             <div class="col-4">
                                 <div class="form-check sidebar-setting card-radio">
@@ -1937,48 +2166,56 @@
                                 <h5 class="fs-sm text-center fw-medium mt-2">Disable</h5>
                             </div>
                         </div>
-            
+
                     </div><!-- end preloader-menu -->
                 </div>
             </div>
-            
+
             </div>
             <div class="offcanvas-footer border-top p-3 text-center">
             <div class="row">
                 <div class="col-6">
                     <button type="button" class="btn btn-light w-100" id="reset-layout">Reset</button>
                 </div>
-                
+
             </div>
             </div>
       </div>
-      
+
 
       @if (Route::is('dashboard'))
             @include('layouts.pages-assets.js.dashboard-list-js')
       @endif
-      
+
       @if (Route::is('users.*'))
             @include('layouts.pages-assets.js.users-list-js')
-      @endif 
+      @endif
+
+      @if (Route::is('profile.*'))
+            @include('layouts.pages-assets.js.users-list-js')
+      @endif
 
       @if (Route::is('roles.*'))
              @include('layouts.pages-assets.js.role-list-js')
-      @endif 
+      @endif
 
       @if (Route::is('permissions.*'))
             @include('layouts.pages-assets.js.permissions-list-js')
-      @endif  
+      @endif
 
       @if (Route::is('session.*'))
            @include('layouts.pages-assets.js.session-list-js')
-      @endif  
+      @endif
 
       @if (Route::is('term.*'))
          @include('layouts.pages-assets.js.term-list-js')
       @endif
 
       @if (Route::is('school-information.*'))
+            @include('layouts.pages-assets.js.schoolinformation-list-js')
+      @endif
+
+         @if (Route::is('admin.school-info.*'))
             @include('layouts.pages-assets.js.schoolinformation-list-js')
       @endif
 
@@ -2036,19 +2273,19 @@
 
       @if (Route::is('myclass.*'))
           @include('layouts.pages-assets.js.myclass-list-js')
-      @endif 
+      @endif
 
       @if (Route::is('mysubject.*'))
         @include('layouts.pages-assets.js.mysubject-list-js')
-      @endif 
+      @endif
 
       @if (Route::is('viewstudent'))
           @include('layouts.pages-assets.js.viewstudent-list-js')
-      @endif 
+      @endif
 
        @if (Route::is('studentreports.*'))
           @include('layouts.pages-assets.js.studentreport-list-js')
-      @endif 
+      @endif
 
       @if (Route::is('studentmockreports.*'))
           @include('layouts.pages-assets.js.studentmockreport-list-js')
@@ -2056,11 +2293,11 @@
 
       @if (Route::is('subjectoperation.*'))
           @include('layouts.pages-assets.js.subjectoperation-list-js')
-      @endif 
+      @endif
 
       @if (Route::is('subjects.subjectinfo'))
           @include('layouts.pages-assets.js.subjectinfo-list-js')
-      @endif 
+      @endif
 
       @if (Route::is('myresultroom.*'))
             @include('layouts.pages-assets.js.myresultroom-list-js')
@@ -2078,7 +2315,7 @@
             @include('layouts.pages-assets.js.studentresults-list-js')
       @endif
 
-      @if (Route::is('schoolbill*')) 
+      @if (Route::is('schoolbill*'))
             @include('layouts.pages-assets.js.schoolbill-list-js')
       @endif
 
@@ -2141,5 +2378,5 @@
       @endif
 
       </body>
-      
+
       </html>

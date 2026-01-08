@@ -188,68 +188,34 @@ class UserController extends Controller
         }
     }
 
-    // public function store(Request $request): JsonResponse
-    // {
-    //     \Log::debug("Creating user", $request->all());
 
-    //     if (!auth()->user()->hasPermissionTo('Create user')) {
-    //         \Log::warning("User ID " . auth()->user()->id . " attempted to create user without 'Create user' permission");
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'User does not have the right permissions',
-    //         ], 403);
-    //     }
-
-    //     try {
-    //         $validated = $request->validate([
-    //             'name' => 'required|string|max:255',
-    //             'email' => 'required|email:rfc,dns|unique:users,email',
-    //             'password' => 'required|string|min:8|confirmed',
-    //             'roles' => 'required|array',
-    //             'roles.*' => 'exists:roles,name',
-    //         ]);
-
-    //         $user = User::create([
-    //             'name' => $validated['name'],
-    //             'email' => $validated['email'],
-    //             'password' => Hash::make($validated['password']),
-    //         ]);
-    //         $user->assignRole($validated['roles']);
-
-    //         \Log::debug("User created successfully: ID {$user->id}");
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'User created successfully',
-    //             'user' => [
-    //                 'id' => $user->id,
-    //                 'name' => $user->name,
-    //                 'email' => $user->email,
-    //                 'roles' => $user->roles->pluck('name')->toArray(),
-    //             ],
-    //         ], 201);
-    //     } catch (ValidationException $e) {
-    //         \Log::error("Validation error creating user: " . json_encode($e->errors()));
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Validation failed',
-    //             'errors' => $e->errors(),
-    //         ], 422);
-    //     } catch (\Exception $e) {
-    //         \Log::error("Create user error: {$e->getMessage()}\nStack trace: {$e->getTraceAsString()}");
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Failed to create user: ' . $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
-
-    public function show($id): View
+public function show($id): View
     {
         $pagetitle = "User Overview";
-        $user = User::find($id);
-        $userroles = $user->roles->all();
+
+        // Eager load necessary relations
+        $user = User::with(['roles', 'bio', 'student', 'staffemploymentDetails', 'staffPicture'])->findOrFail($id);
+
         $userbio = $user->bio;
-        return view('users.useroverview', compact('user', 'userroles', 'userbio', 'pagetitle'));
+
+        // Initialize variables to prevent undefined errors
+        $staffInfo = $user->staffemploymentDetails;
+        $staffPicture = $user->staffPicture;
+        $studentPicture = null;
+
+        // Load student picture if student
+        if ($user->isStudent() && $user->student_id) {
+            $studentPicture = Studentpicture::where('studentid', $user->student_id)->first();
+        }
+
+        return view('users.overview', compact(
+            'user',
+            'userbio',
+            'staffInfo',
+            'staffPicture',
+            'studentPicture',
+            'pagetitle'
+        ));
     }
 
     public function edit($id): View
@@ -260,60 +226,7 @@ class UserController extends Controller
         return view('users.edit', compact('user', 'roles', 'userRole'));
     }
 
-    // public function update(Request $request, $id): JsonResponse
-    // {
-    //     \Log::debug("Updating user ID: {$id}", $request->all());
-
-    //     try {
-    //         $validated = $request->validate([
-    //             'name' => 'required|string|max:255',
-    //             'email' => 'required|email|unique:users,email,' . $id,
-    //             'password' => 'nullable|min:8|confirmed',
-    //             'roles' => 'required|array',
-    //             'roles.*' => 'exists:roles,name',
-    //         ]);
-
-    //         $input = $request->all();
-    //         if (!empty($input['password'])) {
-    //             $input['password'] = Hash::make($input['password']);
-    //         } else {
-    //             $input = Arr::except($input, ['password']);
-    //         }
-
-    //         $user = User::findOrFail($id);
-    //         $user->update($input);
-    //         \DB::table('model_has_roles')->where('model_id', $id)->delete();
-
-    //         \Log::debug("Roles to assign:", $request->input('roles'));
-    //         $user->assignRole($request->input('roles'));
-
-    //         \Log::debug("User ID: {$id} updated successfully");
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'User updated successfully',
-    //             'user' => [
-    //                 'id' => $user->id,
-    //                 'name' => $user->name,
-    //                 'email' => $user->email,
-    //                 'roles' => $user->roles->pluck('name')->toArray(),
-    //             ],
-    //         ], 200);
-    //     } catch (ValidationException $e) {
-    //         \Log::error("Validation error updating user ID {$id}: " . json_encode($e->errors()));
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Validation failed',
-    //             'errors' => $e->errors(),
-    //         ], 422);
-    //     } catch (\Exception $e) {
-    //         \Log::error("Update user error for ID {$id}: {$e->getMessage()}\nStack trace: {$e->getTraceAsString()}");
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Failed to update user: ' . $e->getMessage(),
-    //         ], 500);
-    //     }
-    // }
+   
 
     public function createFromStudentForm(): View
     {
@@ -393,4 +306,12 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+
+    // Add this method to your User model
+public function isActive(): bool
+{
+    // You can customize this based on your actual logic
+    return true; // Default to active
+}
 }

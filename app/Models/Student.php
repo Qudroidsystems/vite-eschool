@@ -2,20 +2,22 @@
 
 namespace App\Models;
 
-use App\Models\Schoolterm;
-use App\Models\Schoolclass;
-use App\Models\Studentclass;
-use App\Models\Schoolsession;
-use App\Models\Studentpicture;
 use App\Models\ParentRegistration;
-use Illuminate\Database\Eloquent\Model;
+use App\Models\Schoolclass;
+use App\Models\Schoolsession;
+use App\Models\Schoolterm;
+use App\Models\Studentclass;
+use App\Models\Studentpicture;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Student extends Model
 {
     use HasFactory;
 
     protected $table = 'studentRegistration';
+
 
     protected $fillable = [
         'userid',
@@ -26,7 +28,7 @@ class Student extends Model
         'nationality',
         'gender',
         'phone_number',
-        'future_ambition', // Updated from home_address
+        'future_ambition',
         'home_address2',
         'placeofbirth',
         'dateofbirth',
@@ -46,22 +48,29 @@ class Student extends Model
         'mother_tongue',
         'reason_for_leaving',
         'admissionNo',
-        'admission_date', // Added
-        'admissionYear', // Added (optional, remove if not needed)
-        'present_address', // Added
-        'permanent_address', // Added
-        'sport_house', // Added (from the store method)
-        'email', // Added (from the store method)
-        'city', // Added (from the store method)
+        'admission_date',
+        'admissionYear',
+        'present_address',
+        'permanent_address',
+        'sport_house',
+        'email',
+        'city',
     ];
 
     protected $casts = [
         'dateofbirth' => 'date',
-        'admission_date' => 'date', // Added
+        'admission_date' => 'date',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
+    // Add relationship to User
+    public function user(): HasOne
+    {
+        return $this->hasOne(User::class, 'student_id', 'id');
+    }
+
+    // ... rest of your existing methods stay the same
     public function picture()
     {
         return $this->hasOne(Studentpicture::class, 'studentid', 'id');
@@ -77,10 +86,10 @@ class Student extends Model
         return $this->hasOneThrough(
             Schoolclass::class,
             Studentclass::class,
-            'studentId', // Foreign key on the intermediate model (Studentclass)
-            'id',        // Foreign key on the target model (Schoolclass)
-            'id',        // Local key on the parent model (Student)
-            'schoolclassid' // Local key on the intermediate model (Studentclass)
+            'studentId',
+            'id',
+            'id',
+            'schoolclassid'
         );
     }
 
@@ -89,10 +98,10 @@ class Student extends Model
         return $this->hasOneThrough(
             Schoolterm::class,
             Studentclass::class,
-            'studentId', // Foreign key on the intermediate model (Studentclass)
-            'id',        // Foreign key on the target model (Schoolterm)
-            'id',        // Local key on the parent model (Student)
-            'termid'     // Local key on the intermediate model (Studentclass)
+            'studentId',
+            'id',
+            'id',
+            'termid'
         );
     }
 
@@ -101,10 +110,10 @@ class Student extends Model
         return $this->hasOneThrough(
             Schoolsession::class,
             Studentclass::class,
-            'studentId', // Foreign key on the intermediate model (Studentclass)
-            'id',        // Foreign key on the target model (Schoolsession)
-            'id',        // Local key on the parent model (Student)
-            'sessionid'  // Local key on the intermediate model (Studentclass)
+            'studentId',
+            'id',
+            'id',
+            'sessionid'
         );
     }
 
@@ -113,23 +122,23 @@ class Student extends Model
         return $this->hasOne(ParentRegistration::class, 'studentId', 'id');
     }
 
-   
     public function currentClass()
-{
-    return $this->hasOne(Studentclass::class, 'studentId', 'id')
-        ->whereIn('sessionid', function ($query) {
-            $query->select('id')
-                  ->from('schoolsession')
-                  ->where('status', 'Current')
-                  ->orWhereRaw('id = (SELECT MAX(id) FROM schoolsession)'); // fallback
-        })
-        ->with(['schoolclass.armRelation', 'term', 'session'])
-        ->withDefault([
-            'schoolclass' => ['schoolclass' => 'Not Assigned', 'armRelation' => null],
-            'term' => ['term' => 'N/A'],
-            'session' => ['session' => 'N/A']
-        ]);
-}
+    {
+        return $this->hasOne(Studentclass::class, 'studentId', 'id')
+            ->whereIn('sessionid', function ($query) {
+                $query->select('id')
+                      ->from('schoolsession')
+                      ->where('status', 'Current')
+                      ->orWhereRaw('id = (SELECT MAX(id) FROM schoolsession)');
+            })
+            ->with(['schoolclass.armRelation', 'term', 'session'])
+            ->withDefault([
+                'schoolclass' => ['schoolclass' => 'Not Assigned', 'armRelation' => null],
+                'term' => ['term' => 'N/A'],
+                'session' => ['session' => 'N/A']
+            ]);
+    }
+
     public function classHistory()
     {
         return $this->hasMany(Studentclass::class, 'studentId', 'id')
@@ -145,7 +154,4 @@ class Student extends Model
             ->whereColumn('sessionid', 'studentclass.sessionid')
             ->whereColumn('termid', 'studentclass.termid');
     }
-
-    
-    
 }
