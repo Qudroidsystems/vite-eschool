@@ -78,7 +78,7 @@ class RoleController extends Controller
     {
         #page title
         $pagetitle = "Role Management";
-    
+
         $this->validate($request, [
             'name' => 'required|unique:roles,name',
             'permission' => 'required|array', // Ensure permission is an array
@@ -86,21 +86,21 @@ class RoleController extends Controller
             'title' => 'nullable|string', // Optional validation for title
             'badge' => 'nullable|string', // Optional validation for badge
         ]);
-    
+
         // Create the role
         $role = Role::create([
             'name' => $request->input('name'),
             'title' => $request->input('title'),
             'badge' => $request->input('badge'),
         ]);
-    
+
         // Find permissions by their IDs
         $permissionIds = $request->input('permission');
         $permissions = Permission::whereIn('id', $permissionIds)->pluck('name')->toArray();
-    
+
         // Sync permissions to the role
         $role->syncPermissions($permissions);
-    
+
         return redirect()->route('roles.index')
                         ->with('success', 'Role created successfully')
                         ->with('pagetitle', $pagetitle);
@@ -114,10 +114,10 @@ class RoleController extends Controller
     public function show($id)
     {
         $pagetitle = "Role Management";
-    
+
         // Count users with the role
         $userRoleCount = DB::table('model_has_roles')->where('role_id', $id)->count();
-    
+
         // Fetch paginated users with the specified role
         $usersWithRole = User::leftJoin("roles", "roles.id", "=", "users.id")
             ->join("model_has_roles", "model_has_roles.model_id", "=", "users.id")
@@ -130,7 +130,7 @@ class RoleController extends Controller
                 'model_has_roles.role_id as roleid'
             ])
             ->paginate(5); // Set per-page limit to match frontend (perPage = 5)
-    
+
         $role = Role::find($id);
         $rolePermissions = Permission::join("role_has_permissions", "role_has_permissions.permission_id", "=", "permissions.id")
             ->where("role_has_permissions.role_id", $id)
@@ -139,19 +139,19 @@ class RoleController extends Controller
             ->where("role_has_permissions.role_id", $id)
             ->pluck('role_has_permissions.permission_id', 'role_has_permissions.permission_id')
             ->all();
-    
+
         $permission = Permission::get();
         $perm_title = Permission::get(['title']);
         $array = [];
         foreach ($perm_title as $title) {
             $array[] = $title->title;
         }
-    
+
         $ar = implode(',', $array);
         $ex = explode(',', $ar);
-    
+
         Session::put('role_url', request()->fullUrl());
-    
+
         return view('roles.show', compact(
             'role',
             'rolePermissions',
@@ -205,33 +205,33 @@ class RoleController extends Controller
     {
         #page title
         $pagetitle = "Role Management";
-    
+
         $this->validate($request, [
             'name' => 'required|unique:roles,name,' . $id, // Ensure name is unique except for current role
             'permission' => 'required|array', // Ensure permission is an array
             'permission.*' => 'exists:permissions,id', // Validate each permission ID exists
             'badge' => 'nullable|string', // Optional validation for badge
         ]);
-    
+
         $role = Role::findOrFail($id); // Use findOrFail for safety
         $role->update([
             'name' => $request->input('name'),
             'badge' => $request->input('badge'),
         ]);
-    
+
         // Convert permission IDs to permission names
         $permissionIds = $request->input('permission');
         $permissions = Permission::whereIn('id', $permissionIds)->pluck('name')->toArray();
-    
+
         // Sync permissions to the role
         $role->syncPermissions($permissions);
-    
+
         if (session('role_url')) {
             return redirect(session('role_url'))
                 ->with('success', 'Role Updated successfully')
                 ->with('pagetitle', $pagetitle);
         }
-    
+
         return redirect()->route('roles.index')
             ->with('success', 'Role Updated successfully')
             ->with('pagetitle', $pagetitle);
@@ -270,21 +270,21 @@ class RoleController extends Controller
     {
         #page title
         $pagetitle = "Role Management";
-    
+
         $this->validate($request, [
             'users' => 'required|array', // Validate users as an array
             'users.*' => 'exists:users,id', // Ensure each user ID exists
             'roleid' => 'required|exists:roles,id', // Validate role ID
         ]);
-    
+
         $role = Role::findOrFail($request->input('roleid')); // Find role by ID
         $userIds = $request->input('users'); // Get array of user IDs
-    
+
         foreach ($userIds as $userId) {
             $user = User::findOrFail($userId); // Find user or fail
             $user->assignRole($role->name); // Assign role to each user
         }
-    
+
         return redirect()->route('roles.show', $role->id)
                         ->with('success', 'Users added to role successfully')
                         ->with('pagetitle', $pagetitle);
@@ -353,5 +353,99 @@ class RoleController extends Controller
                         ->with('success','Role deleted successfully')->with('pagetitle',$pagetitle);
     }
 
+public function bulkRemoveUsers(Request $request)
+{
+    try {
+        $request->validate([
+            'role_id' => 'required|exists:roles,id',
+            'selected_users' => 'required|array',
+            'selected_users.*' => 'exists:users,id'
+        ]);
 
+        $role = Role::findOrFail($request->role_id);
+        $users = User::whereIn('id', $request->selected_users)->get();
+
+        $removedCount = 0;
+        $removedNames = [];
+
+        foreach ($users as $user) {
+            if ($user->hasRole($role->name)) {
+                $user->removeRole($role);
+                $removedCount++;
+                $removedNames[] = $user->name;
+            }
+        }
+
+        if ($removedCount > 0) {
+            return response()->json([
+                'success' => true,
+                'message' => "Successfully removed {$removedCount} user(s) from the {$role->name} role.",
+                'removed_count' => $removedCount,
+                'removed_users' => $removedNames
+            ]);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'No users were removed. They may not have had this role.'
+            ]);
+        }
+
+    } catch (\Exception $e) {
+        \Log::error('Bulk remove users error: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to remove users: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
+
+public function getRoleUsers(Role $role, Request $request)
+{
+    try {
+        $perPage = $request->get('per_page', 10);
+        $page = $request->get('page', 1);
+
+        $usersWithRole = $role->users()
+            ->with(['student.currentClass.class', 'staffemploymentDetails'])
+            ->orderBy('name')
+            ->paginate($perPage, ['*'], 'page', $page);
+
+        // Get total count
+        $userRoleCount = $role->users()->count();
+
+        if ($request->ajax()) {
+            $html = view('roles.partials.users_table_rows', [
+                'users' => $usersWithRole,
+                'role' => $role
+            ])->render();
+
+            $pagination = view('roles.partials.pagination', [
+                'users' => $usersWithRole
+            ])->render();
+
+            return response()->json([
+                'success' => true,
+                'html' => $html,
+                'pagination' => $pagination,
+                'total' => $userRoleCount,
+                'current_page' => $usersWithRole->currentPage(),
+                'last_page' => $usersWithRole->lastPage(),
+                'per_page' => $usersWithRole->perPage()
+            ]);
+        }
+
+        return view('roles.show', compact('role', 'usersWithRole', 'userRoleCount'));
+
+    } catch (\Exception $e) {
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load users: ' . $e->getMessage()
+            ], 500);
+        }
+
+        return back()->with('error', 'Failed to load users: ' . $e->getMessage());
+    }
+}
 }
