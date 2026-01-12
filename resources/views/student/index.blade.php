@@ -3,7 +3,6 @@
 <?php
 use Spatie\Permission\Models\Role;
 ?>
-
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
@@ -22,7 +21,6 @@ use Spatie\Permission\Models\Role;
                 </div>
             </div>
             <!-- End page title -->
-
             <style>
                 .card {
                     border: none;
@@ -268,8 +266,307 @@ use Spatie\Permission\Models\Role;
                 .view-container {
                     transition: all 0.3s ease;
                 }
-            </style>
 
+                /* Progress Steps */
+                .progress-steps {
+                    display: flex;
+                    justify-content: space-between;
+                    position: relative;
+                    margin-bottom: 30px;
+                    counter-reset: step;
+                }
+
+                .progress-steps::before {
+                    content: '';
+                    position: absolute;
+                    top: 50%;
+                    left: 0;
+                    right: 0;
+                    height: 2px;
+                    background: #e9ecef;
+                    transform: translateY(-50%);
+                    z-index: 1;
+                }
+
+                .progress-steps .step {
+                    width: 40px;
+                    height: 40px;
+                    border-radius: 50%;
+                    background: #e9ecef;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-weight: bold;
+                    color: #6c757d;
+                    position: relative;
+                    z-index: 2;
+                    border: 2px solid #e9ecef;
+                }
+
+                .progress-steps .step.active {
+                    background: #405189;
+                    color: white;
+                    border-color: #405189;
+                }
+
+                /* Modern Modal Styles */
+                .modern-modal {
+                    border-radius: 12px;
+                    overflow: hidden;
+                }
+
+                .modern-header {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 20px 30px;
+                    border: none;
+                }
+
+                .modern-close {
+                    background: rgba(255,255,255,0.1);
+                    border-radius: 50%;
+                    width: 30px;
+                    height: 30px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    border: none;
+                    opacity: 1;
+                }
+
+                .modern-close:hover {
+                    background: rgba(255,255,255,0.2);
+                }
+
+                .modern-body {
+                    padding: 0;
+                }
+
+                /* Student header with photo */
+                .student-header {
+                    background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+                    padding: 30px;
+                    text-align: center;
+                    border-bottom: 1px solid #e9ecef;
+                }
+
+                .photo-container {
+                    display: inline-block;
+                    position: relative;
+                }
+
+                .photo-frame {
+                    width: 150px;
+                    height: 150px;
+                    border-radius: 50%;
+                    overflow: hidden;
+                    border: 5px solid white;
+                    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                    position: relative;
+                }
+
+                .student-photo {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                }
+
+                /* Form sections */
+                .form-section {
+                    padding: 20px 30px;
+                    border-bottom: 1px solid #e9ecef;
+                }
+
+                .section-header {
+                    margin-bottom: 20px;
+                    padding-bottom: 10px;
+                    border-bottom: 2px solid #f0f0f0;
+                }
+
+                .section-header h5 {
+                    color: #495057;
+                    font-weight: 600;
+                }
+
+                /* Form grid for better layout */
+                .form-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+                    gap: 20px;
+                }
+
+                .form-group {
+                    margin-bottom: 15px;
+                }
+
+                .form-label {
+                    font-size: 12px;
+                    color: #6c757d;
+                    text-transform: uppercase;
+                    font-weight: 600;
+                    letter-spacing: 0.5px;
+                    margin-bottom: 5px;
+                    display: block;
+                }
+
+                .form-value {
+                    padding: 8px 12px;
+                    background: #f8f9fa;
+                    border-radius: 6px;
+                    font-weight: 500;
+                    color: #495057;
+                    min-height: 38px;
+                    display: flex;
+                    align-items: center;
+                    border: 1px solid #e9ecef;
+                }
+
+                /* Special value styles */
+                .highlight {
+                    background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+                    border: 1px solid #667eea30;
+                    color: #405189;
+                    font-weight: 600;
+                }
+
+                .class-badge {
+                    display: inline-block;
+                    padding: 4px 12px;
+                    background: #e7f4ff;
+                    color: #0066cc;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    font-weight: 600;
+                }
+
+                /* Modern tabs */
+                .modern-tabs {
+                    background: #f8f9fa;
+                    padding: 10px;
+                    border-radius: 10px;
+                    margin: 0 30px;
+                    position: relative;
+                    top: -15px;
+                    border: 1px solid #e9ecef;
+                }
+
+                .modern-tabs .nav-link {
+                    color: #6c757d;
+                    padding: 12px 20px;
+                    border-radius: 8px;
+                    transition: all 0.3s ease;
+                    border: none;
+                    position: relative;
+                }
+
+                .modern-tabs .nav-link.active {
+                    background: white;
+                    color: #405189;
+                    box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+                }
+
+                .modern-tabs .nav-link i {
+                    margin-right: 8px;
+                    font-size: 16px;
+                }
+
+                /* Modern footer */
+                .modern-footer {
+                    background: #f8f9fa;
+                    border-top: 1px solid #e9ecef;
+                    padding: 15px 30px;
+                }
+
+                /* Full-width form groups */
+                .full-width {
+                    grid-column: 1 / -1;
+                }
+
+                .address-field {
+                    min-height: 60px;
+                    white-space: pre-wrap;
+                }
+
+                /* Status badges */
+                .gender-badge {
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .blood-group {
+                    background: #fff5f5;
+                    color: #e53e3e;
+                    border: 1px solid #fed7d7;
+                    padding: 4px 12px;
+                    border-radius: 20px;
+                    font-weight: 600;
+                    font-size: 12px;
+                }
+
+                .occupation-badge {
+                    background: #f0fff4;
+                    color: #38a169;
+                    border: 1px solid #c6f6d5;
+                    padding: 4px 12px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                }
+
+                /* Contact info styling */
+                .contact {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .school-name {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+
+                .category-badges {
+                    display: flex;
+                    gap: 10px;
+                    flex-wrap: wrap;
+                }
+
+                .category-badge {
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    font-size: 12px;
+                    font-weight: 600;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 5px;
+                    opacity: 0.5;
+                    transition: all 0.3s ease;
+                }
+
+                .category-badge.active {
+                    opacity: 1;
+                }
+
+                .category-badge.day {
+                    background: #fff3cd;
+                    color: #856404;
+                    border: 1px solid #ffeaa7;
+                }
+
+                .category-badge.boarding {
+                    background: #d4edda;
+                    color: #155724;
+                    border: 1px solid #c3e6cb;
+                }
+
+                .name-container {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                    gap: 15px;
+                }
+            </style>
             <div class="container">
                 <h2 class="mb-4 text-center">School Dashboard Statistics</h2>
 
@@ -376,7 +673,6 @@ use Spatie\Permission\Models\Role;
                     </div>
                 </div>
             </div>
-
             <!-- Charts -->
             <div class="row">
                 <div class="col-lg-6">
@@ -400,7 +696,6 @@ use Spatie\Permission\Models\Role;
                     </div>
                 </div>
             </div>
-
             <!-- Display Success Message -->
             @if (session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -408,7 +703,6 @@ use Spatie\Permission\Models\Role;
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
-
             <!-- Display Error Message -->
             @if (session('error'))
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -416,7 +710,6 @@ use Spatie\Permission\Models\Role;
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
-
             <!-- Display Validation Errors -->
             @if ($errors->any())
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -429,14 +722,12 @@ use Spatie\Permission\Models\Role;
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
-
             @if (session('status'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ session('status') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
-
             <!-- Unified Students View Container -->
             <div class="row">
                 <div class="col-lg-12">
@@ -571,8 +862,7 @@ use Spatie\Permission\Models\Role;
                 </div>
             </div>
         </div>
-
-        <!-- Add Student Modal (Keep your existing modal) -->
+        <!-- Add Student Modal -->
         <div id="addStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered modal-xl">
                 <div class="modal-content">
@@ -593,7 +883,6 @@ use Spatie\Permission\Models\Role;
                                 <div class="step">3</div>
                                 <div class="step">4</div>
                             </div>
-
                             <div class="row">
                                 <div class="col-md-6">
                                     <!-- Section A: Academic Details -->
@@ -619,7 +908,6 @@ use Spatie\Permission\Models\Role;
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="admissionNo" class="form-label">Admission Number <span class="text-danger">*</span></label>
                                                 <div class="input-group">
@@ -631,13 +919,10 @@ use Spatie\Permission\Models\Role;
                                                     <input type="text" id="admissionNo" name="admissionNo" class="form-control" placeholder="CSSK/STD/YYYY/001" required>
                                                 </div>
                                             </div>
-
-                                            <!-- Rest of the Academic Details section remains unchanged -->
                                             <div class="mb-3">
                                                 <label for="admissionDate" class="form-label">Admission Date <span class="text-danger">*</span></label>
                                                 <input type="date" id="admissionDate" name="admissionDate" class="form-control" required max="{{ date('Y-m-d') }}">
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="schoolclassid" class="form-label">Class <span class="text-danger">*</span></label>
                                                 <select id="schoolclassid" name="schoolclassid" class="form-control" required>
@@ -647,7 +932,6 @@ use Spatie\Permission\Models\Role;
                                                     @endforeach
                                                 </select>
                                             </div>
-
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
@@ -672,7 +956,6 @@ use Spatie\Permission\Models\Role;
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="mb-3">
                                                 <label class="form-label">Student Status <span class="text-danger">*</span></label>
                                                 <div class="d-flex gap-3">
@@ -690,7 +973,6 @@ use Spatie\Permission\Models\Role;
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="mb-3">
                                                 <label class="form-label">Student Activity Status <span class="text-danger">*</span></label>
                                                 <div class="d-flex gap-3">
@@ -708,7 +990,6 @@ use Spatie\Permission\Models\Role;
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="student_category" class="form-label">Student Category <span class="text-danger">*</span></label>
                                                 <select id="student_category" name="student_category" class="form-control" required>
@@ -720,8 +1001,7 @@ use Spatie\Permission\Models\Role;
                                         </div>
                                     </div>
                                 </div>
-
-                                <!-- Personal Details and other sections remain unchanged -->
+                                <!-- Personal Details -->
                                 <div class="col-md-6">
                                     <!-- Section B: Student's Personal Details -->
                                     <div class="card">
@@ -741,38 +1021,28 @@ use Spatie\Permission\Models\Role;
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="row">
-
-                                                    <div class="mb-3">
-                                                        <label for="title" class="form-label">Title</label>
-                                                        <select id="title" name="title" class="form-control">
-                                                            <option value="">Select</option>
-                                                            <option value="Master">Master</option>
-                                                            <option value="Miss">Miss</option>
-                                                        </select>
-                                                    </div>
-
-
-
-                                                    <div class="mb-3">
-                                                        <label for="lastname" class="form-label">Last Name <span class="text-danger">*</span></label>
-                                                        <input type="text" id="lastname" name="lastname" class="form-control" placeholder="Last name" required>
-                                                    </div>
-
-                                                    <div class="mb-3">
-                                                        <label for="firstname" class="form-label">First Name <span class="text-danger">*</span></label>
-                                                        <input type="text" id="firstname" name="firstname" class="form-control" placeholder="First name" required>
-                                                    </div>
+                                                <div class="mb-3">
+                                                    <label for="title" class="form-label">Title</label>
+                                                    <select id="title" name="title" class="form-control">
+                                                        <option value="">Select</option>
+                                                        <option value="Master">Master</option>
+                                                        <option value="Miss">Miss</option>
+                                                    </select>
                                                 </div>
-
-
-
+                                                <div class="mb-3">
+                                                    <label for="lastname" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                                    <input type="text" id="lastname" name="lastname" class="form-control" placeholder="Last name" required>
+                                                </div>
+                                                <div class="mb-3">
+                                                    <label for="firstname" class="form-label">First Name <span class="text-danger">*</span></label>
+                                                    <input type="text" id="firstname" name="firstname" class="form-control" placeholder="First name" required>
+                                                </div>
+                                            </div>
                                             <div class="mb-3">
                                                 <label for="othername" class="form-label">Other Names</label>
                                                 <input type="text" id="othername" name="othername" class="form-control" placeholder="Middle name(s)">
                                             </div>
-
                                             <div class="mb-3">
                                                 <label class="form-label">Gender <span class="text-danger">*</span></label>
                                                 <div class="d-flex gap-3">
@@ -790,7 +1060,6 @@ use Spatie\Permission\Models\Role;
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
@@ -805,7 +1074,6 @@ use Spatie\Permission\Models\Role;
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="phone_number" class="form-label">Phone Number</label>
                                                 <div class="input-group">
@@ -815,7 +1083,6 @@ use Spatie\Permission\Models\Role;
                                                     <input type="text" id="phone_number" name="phone_number" class="form-control" placeholder="+234 xxx xxx xxxx">
                                                 </div>
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="placeofbirth" class="form-label">Place of Birth</label>
                                                 <div class="input-group">
@@ -825,7 +1092,6 @@ use Spatie\Permission\Models\Role;
                                                     <input type="input" id="placeofbirth" name="placeofbirth" class="form-control" placeholder="Place of birth">
                                                 </div>
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="email" class="form-label">Email</label>
                                                 <div class="input-group">
@@ -835,12 +1101,10 @@ use Spatie\Permission\Models\Role;
                                                     <input type="email" id="email" name="email" class="form-control" placeholder="student@example.com">
                                                 </div>
                                             </div>
-
                                            <div class="mb-3">
                                                 <label for="future_ambition" class="form-label">Future Ambition <span class="text-danger">*</span></label>
                                                 <textarea id="future_ambition" name="future_ambition" class="form-control" rows="2" placeholder="Enter future ambition" required></textarea>
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="permanent_address" class="form-label">Permanent Address <span class="text-danger">*</span></label>
                                                 <textarea id="permanent_address" name="permanent_address" class="form-control" rows="2" placeholder="Enter permanent address" required></textarea>
@@ -849,8 +1113,7 @@ use Spatie\Permission\Models\Role;
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Additional Information, Parent/Guardian Details, and Previous School Details remain unchanged -->
+                            <!-- Additional Information, Parent/Guardian Details, and Previous School Details -->
                             <div class="row">
                                 <div class="col-md-6">
                                     <!-- Section C: Additional Details -->
@@ -885,7 +1148,6 @@ use Spatie\Permission\Models\Role;
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
@@ -905,7 +1167,6 @@ use Spatie\Permission\Models\Role;
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
@@ -930,7 +1191,6 @@ use Spatie\Permission\Models\Role;
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
@@ -954,7 +1214,6 @@ use Spatie\Permission\Models\Role;
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="col-md-6">
                                     <!-- Section D: Parent/Guardian Details -->
                                     <div class="card">
@@ -966,7 +1225,6 @@ use Spatie\Permission\Models\Role;
                                                 <label for="father_name" class="form-label">Father's Name</label>
                                                 <input type="text" id="father_name" name="father_name" class="form-control" placeholder="Father's full name">
                                             </div>
-
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
@@ -981,34 +1239,28 @@ use Spatie\Permission\Models\Role;
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="father_city" class="form-label">Father's City</label>
                                                 <input type="text" id="father_city" name="father_city" class="form-control" placeholder="City of residence">
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="mother_name" class="form-label">Mother's Name</label>
                                                 <input type="text" id="mother_name" name="mother_name" class="form-control" placeholder="Mother's full name">
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="mother_phone" class="form-label">Mother's Phone</label>
                                                 <input type="text" id="mother_phone" name="mother_phone" class="form-control" placeholder="+234 xxx xxx xxxx">
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="parent_email" class="form-label">Parent's Email</label>
                                                 <input type="email" id="parent_email" name="parent_email" class="form-control" placeholder="parent@example.com">
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="parent_address" class="form-label">Parent's Address</label>
                                                 <textarea id="parent_address" name="parent_address" class="form-control" rows="2" placeholder="Parent's address"></textarea>
                                             </div>
                                         </div>
                                     </div>
-
                                     <!-- Section E: Previous School Details -->
                                     <div class="card">
                                         <div class="card-header bg-secondary text-white">
@@ -1019,12 +1271,10 @@ use Spatie\Permission\Models\Role;
                                                 <label for="last_school" class="form-label">Last School Attended</label>
                                                 <input type="text" id="last_school" name="last_school" class="form-control" placeholder="Previous school name">
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="last_class" class="form-label">Last Class Attended</label>
                                                 <input type="text" id="last_class" name="last_class" class="form-control" placeholder="e.g., JSS 2">
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="reason_for_leaving" class="form-label">Reason for Leaving</label>
                                                 <textarea id="reason_for_leaving" name="reason_for_leaving" class="form-control" rows="2" placeholder="Reason for leaving previous school"></textarea>
@@ -1033,10 +1283,8 @@ use Spatie\Permission\Models\Role;
                                     </div>
                                 </div>
                             </div>
-
                             <div class="alert alert-danger d-none" id="alert-error-msg"></div>
                         </div>
-
                         <div class="modal-footer bg-light">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                                 <i class="fas fa-times me-1"></i>Cancel
@@ -1052,8 +1300,7 @@ use Spatie\Permission\Models\Role;
                 </div>
             </div>
         </div>
-
-        <!-- Edit Student Modal (Keep your existing modal) -->
+        <!-- Edit Student Modal -->
         <div id="editStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered modal-xl">
                 <div class="modal-content">
@@ -1069,17 +1316,16 @@ use Spatie\Permission\Models\Role;
                         <div class="modal-body p-4">
                             <input type="hidden" id="editStudentId" name="id">
 
-                            <!-- Progress Steps -->
+                            <!-- Progress Steps - Fixed: No active steps by default -->
                             <div class="progress-steps mb-4">
-                                <div class="step active">1</div>
+                                <div class="step">1</div>
                                 <div class="step">2</div>
                                 <div class="step">3</div>
                                 <div class="step">4</div>
                             </div>
-
                             <div class="row">
                                 <div class="col-md-6">
-                                   <!-- Updated Academic Details section in Edit Student Modal -->
+                                   <!-- Academic Details section -->
                                     <div class="card">
                                         <div class="card-header bg-primary text-white">
                                             <h6 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>Academic Details</h6>
@@ -1102,7 +1348,6 @@ use Spatie\Permission\Models\Role;
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="editAdmissionNo" class="form-label">Admission Number <span class="text-danger">*</span></label>
                                                 <div class="input-group">
@@ -1114,13 +1359,10 @@ use Spatie\Permission\Models\Role;
                                                     <input type="text" id="editAdmissionNo" name="admissionNo" class="form-control" placeholder="CSSK/STD/YYYY/001" required>
                                                 </div>
                                             </div>
-
-                                            <!-- MISSING FIELD: Admission Date -->
                                             <div class="mb-3">
                                                 <label for="editAdmissionDate" class="form-label">Admission Date <span class="text-danger">*</span></label>
                                                 <input type="date" id="editAdmissionDate" name="admissionDate" class="form-control" required max="{{ date('Y-m-d') }}">
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="editSchoolclassid" class="form-label">Class <span class="text-danger">*</span></label>
                                                 <select id="editSchoolclassid" name="schoolclassid" class="form-control" required>
@@ -1130,7 +1372,6 @@ use Spatie\Permission\Models\Role;
                                                     @endforeach
                                                 </select>
                                             </div>
-
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
@@ -1155,7 +1396,6 @@ use Spatie\Permission\Models\Role;
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="mb-3">
                                                 <label class="form-label">Student Status <span class="text-danger">*</span></label>
                                                 <div class="d-flex gap-3">
@@ -1173,7 +1413,6 @@ use Spatie\Permission\Models\Role;
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="mb-3">
                                                 <label class="form-label">Student Activity Status <span class="text-danger">*</span></label>
                                                 <div class="d-flex gap-3">
@@ -1191,7 +1430,6 @@ use Spatie\Permission\Models\Role;
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="editStudentCategory" class="form-label">Student Category <span class="text-danger">*</span></label>
                                                 <select id="editStudentCategory" name="student_category" class="form-control" required>
@@ -1202,12 +1440,10 @@ use Spatie\Permission\Models\Role;
                                             </div>
                                         </div>
                                     </div>
-
                                 </div>
-
-                                <!-- Personal Details and other sections remain unchanged -->
+                                <!-- Personal Details -->
                                 <div class="col-md-6">
-                                 <!-- Updated Personal Details section with Future Ambition -->
+                                 <!-- Personal Details section -->
                                 <div class="card">
                                     <div class="card-header bg-info text-white">
                                         <h6 class="mb-0"><i class="fas fa-user me-2"></i>Personal Details</h6>
@@ -1225,7 +1461,6 @@ use Spatie\Permission\Models\Role;
                                                 </div>
                                             </div>
                                         </div>
-
                                         <div class="row">
                                             <div class="col-md-4">
                                                 <div class="mb-3">
@@ -1251,12 +1486,10 @@ use Spatie\Permission\Models\Role;
                                             </div>
 
                                         </div>
-
                                         <div class="mb-3">
                                             <label for="editOthername" class="form-label">Other Names</label>
                                             <input type="text" id="editOthername" name="othername" class="form-control" placeholder="Middle name(s)">
                                         </div>
-
                                         <div class="mb-3">
                                             <label class="form-label">Gender <span class="text-danger">*</span></label>
                                             <div class="d-flex gap-3">
@@ -1274,7 +1507,6 @@ use Spatie\Permission\Models\Role;
                                                 </div>
                                             </div>
                                         </div>
-
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
@@ -1289,7 +1521,6 @@ use Spatie\Permission\Models\Role;
                                                 </div>
                                             </div>
                                         </div>
-
                                         <div class="mb-3">
                                             <label for="editPhoneNumber" class="form-label">Phone Number</label>
                                             <div class="input-group">
@@ -1299,7 +1530,6 @@ use Spatie\Permission\Models\Role;
                                                 <input type="text" id="editPhoneNumber" name="phone_number" class="form-control" placeholder="+234 xxx xxx xxxx">
                                             </div>
                                         </div>
-
                                         <div class="mb-3">
                                             <label for="editPlaceofbirth" class="form-label">Place of Birth</label>
                                             <div class="input-group">
@@ -1309,7 +1539,6 @@ use Spatie\Permission\Models\Role;
                                                 <input type="text" id="editPlaceofbirth" name="placeofbirth" class="form-control" placeholder="Place of birth">
                                             </div>
                                         </div>
-
                                         <div class="mb-3">
                                             <label for="editEmail" class="form-label">Email</label>
                                             <div class="input-group">
@@ -1319,13 +1548,10 @@ use Spatie\Permission\Models\Role;
                                                 <input type="email" id="editEmail" name="email" class="form-control" placeholder="student@example.com">
                                             </div>
                                         </div>
-
-                                        <!-- MISSING FIELD: Future Ambition -->
                                         <div class="mb-3">
                                             <label for="editFutureAmbition" class="form-label">Future Ambition <span class="text-danger">*</span></label>
                                             <textarea id="editFutureAmbition" name="future_ambition" class="form-control" rows="2" placeholder="Enter future ambition" required></textarea>
                                         </div>
-
                                         <div class="mb-3">
                                             <label for="editPermanentAddress" class="form-label">Permanent Address <span class="text-danger">*</span></label>
                                             <textarea id="editPermanentAddress" name="permanent_address" class="form-control" rows="2" placeholder="Enter permanent address" required></textarea>
@@ -1333,9 +1559,8 @@ use Spatie\Permission\Models\Role;
                                     </div>
                                 </div>
                                 </div>
-
                                 <div class="col-md-6">
-                            <!-- Updated Additional Information section with School House -->
+                            <!-- Additional Information section -->
                                 <div class="card">
                                     <div class="card-header bg-success text-white">
                                         <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Additional Information</h6>
@@ -1349,7 +1574,6 @@ use Spatie\Permission\Models\Role;
                                                 </div>
                                             </div>
                                         </div>
-
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
@@ -1368,7 +1592,6 @@ use Spatie\Permission\Models\Role;
                                                 </div>
                                             </div>
                                         </div>
-
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
@@ -1388,7 +1611,6 @@ use Spatie\Permission\Models\Role;
                                                 </div>
                                             </div>
                                         </div>
-
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
@@ -1413,7 +1635,6 @@ use Spatie\Permission\Models\Role;
                                                 </div>
                                             </div>
                                         </div>
-
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="mb-3">
@@ -1422,7 +1643,6 @@ use Spatie\Permission\Models\Role;
                                                 </div>
                                             </div>
                                             <div class="col-md-6">
-                                                <!-- MISSING FIELD: School House -->
                                                 <div class="mb-3">
                                                     <label for="editSchoolHouse" class="form-label">School House</label>
                                                     <select id="editSchoolHouse" name="school_house" class="form-control">
@@ -1436,7 +1656,6 @@ use Spatie\Permission\Models\Role;
                                         </div>
                                     </div>
                                 </div>
-
                                     <!-- Section D: Parent/Guardian Details -->
                                     <div class="card">
                                         <div class="card-header bg-warning text-dark">
@@ -1447,7 +1666,6 @@ use Spatie\Permission\Models\Role;
                                                 <label for="editFatherName" class="form-label">Father's Name</label>
                                                 <input type="text" id="editFatherName" name="father_name" class="form-control" placeholder="Father's full name">
                                             </div>
-
                                             <div class="row">
                                                 <div class="col-md-6">
                                                     <div class="mb-3">
@@ -1462,34 +1680,28 @@ use Spatie\Permission\Models\Role;
                                                     </div>
                                                 </div>
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="editFatherCity" class="form-label">Father's City</label>
                                                 <input type="text" id="editFatherCity" name="father_city" class="form-control" placeholder="City of residence">
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="editMotherName" class="form-label">Mother's Name</label>
                                                 <input type="text" id="editMotherName" name="mother_name" class="form-control" placeholder="Mother's full name">
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="editMotherPhone" class="form-label">Mother's Phone</label>
                                                 <input type="text" id="editMotherPhone" name="mother_phone" class="form-control" placeholder="+234 xxx xxx xxxx">
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="editParentEmail" class="form-label">Parent's Email</label>
                                                 <input type="email" id="editParentEmail" name="parent_email" class="form-control" placeholder="parent@example.com">
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="editParentAddress" class="form-label">Parent's Address</label>
                                                 <textarea id="editParentAddress" name="parent_address" class="form-control" rows="2" placeholder="Parent's address"></textarea>
                                             </div>
                                         </div>
                                     </div>
-
                                     <!-- Section E: Previous School Details -->
                                     <div class="card">
                                         <div class="card-header bg-secondary text-white">
@@ -1500,12 +1712,10 @@ use Spatie\Permission\Models\Role;
                                                 <label for="editLastSchool" class="form-label">Last School Attended</label>
                                                 <input type="text" id="editLastSchool" name="last_school" class="form-control" placeholder="Previous school name">
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="editLastClass" class="form-label">Last Class Attended</label>
                                                 <input type="text" id="editLastClass" name="last_class" class="form-control" placeholder="e.g., JSS 2">
                                             </div>
-
                                             <div class="mb-3">
                                                 <label for="editReasonForLeaving" class="form-label">Reason for Leaving</label>
                                                 <textarea id="editReasonForLeaving" name="reason_for_leaving" class="form-control" rows="2" placeholder="Reason for leaving previous school"></textarea>
@@ -1514,7 +1724,6 @@ use Spatie\Permission\Models\Role;
                                     </div>
                                 </div>
                             </div>
-
                             <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
                         </div>
 
@@ -1533,15 +1742,286 @@ use Spatie\Permission\Models\Role;
                 </div>
             </div>
         </div>
-
-        <!-- View Student Modal (Keep your existing modal) -->
+        <!-- View Student Modal -->
         <div id="viewStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-            <!-- Keep your existing view modal HTML here -->
+            <div class="modal-dialog modal-dialog-centered modal-fullscreen-lg-down modal-xl">
+                <div class="modal-content modern-modal">
+                    <!-- Header with Gradient -->
+                    <div class="modal-header modern-header">
+                        <div class="header-content">
+                            <div class="header-icon">
+                                <i class="fas fa-graduation-cap"></i>
+                            </div>
+                            <div class="header-text">
+                                <h4 class="modal-title mb-0">Student Details</h4>
+                                <p class="header-subtitle mb-0">Comprehensive Student Information</p>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close modern-close" data-bs-dismiss="modal" aria-label="Close">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div class="modal-body modern-body">
+                        <div class="registration-form">
+                            <!-- Student Photo Section -->
+                            <div class="student-header">
+                                <div class="photo-container">
+                                    <div class="photo-frame">
+                                        <img id="viewStudentPhoto" src="https://via.placeholder.com/150x150/6366f1/ffffff?text=PHOTO" alt="Student Photo" class="student-photo">
+                                        <div class="photo-overlay">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Progressive Tabs Navigation -->
+                            <div class="form-navigation">
+                                <nav class="nav nav-pills nav-justified modern-tabs" id="pills-tab" role="tablist">
+                                    <button class="nav-link active" id="academic-tab" data-bs-toggle="pill" data-bs-target="#academic" type="button" role="tab">
+                                        <i class="fas fa-school"></i>
+                                        <span>Academic</span>
+                                        <div class="tab-progress"></div>
+                                    </button>
+                                    <button class="nav-link" id="personal-tab" data-bs-toggle="pill" data-bs-target="#personal" type="button" role="tab">
+                                        <i class="fas fa-user"></i>
+                                        <span>Personal</span>
+                                        <div class="tab-progress"></div>
+                                    </button>
+                                    <button class="nav-link" id="guardian-tab" data-bs-toggle="pill" data-bs-target="#guardian" type="button" role="tab">
+                                        <i class="fas fa-users"></i>
+                                        <span>Guardian</span>
+                                        <div class="tab-progress"></div>
+                                    </button>
+                                    <button class="nav-link" id="previous-tab" data-bs-toggle="pill" data-bs-target="#previous" type="button" role="tab">
+                                        <i class="fas fa-history"></i>
+                                        <span>Previous</span>
+                                        <div class="tab-progress"></div>
+                                    </button>
+                                </nav>
+                            </div>
+
+                            <!-- Tab Content -->
+                            <div class="tab-content modern-tabs-content" id="pills-tabContent">
+
+                                <!-- Academic Details Tab -->
+                                <div class="tab-pane fade show active" id="academic" role="tabpanel">
+                                    <div class="form-section">
+                                        <div class="section-header">
+                                            <h5><i class="fas fa-school me-2"></i>Academic Information</h5>
+                                        </div>
+                                        <div class="form-grid">
+                                            <div class="form-group">
+                                                <label class="form-label">Academic Year</label>
+                                                <div class="form-value" id="viewAcademicYear">-</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Registration No.</label>
+                                                <div class="form-value highlight" id="viewRegistrationNo">-</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Admission Date</label>
+                                                <div class="form-value" id="viewAdmissionDate">-</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Class</label>
+                                                <div class="form-value class-badge" id="viewClass">-</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Term</label>
+                                                <div class="form-value" id="viewTerm">-</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Category</label>
+                                                <div class="category-badges">
+                                                    <span class="category-badge day" id="dayBadge">
+                                                        <i class="fas fa-sun"></i> Day Student
+                                                    </span>
+                                                    <span class="category-badge boarding" id="boardingBadge">
+                                                        <i class="fas fa-home"></i> Boarding
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Personal Details Tab -->
+                                <div class="tab-pane fade" id="personal" role="tabpanel">
+                                    <div class="form-section">
+                                        <div class="section-header">
+                                            <h5><i class="fas fa-user me-2"></i>Personal Information</h5>
+                                        </div>
+                                        <div class="form-grid">
+                                            <div class="form-group full-width">
+                                                <div class="name-container">
+                                                    <div class="name-part">
+                                                        <label class="form-label">Surname</label>
+                                                        <div class="form-value" id="viewSurname">-</div>
+                                                    </div>
+                                                    <div class="name-part">
+                                                        <label class="form-label">First Name</label>
+                                                        <div class="form-value" id="viewFirstName">-</div>
+                                                    </div>
+                                                    <div class="name-part">
+                                                        <label class="form-label">Middle Name</label>
+                                                        <div class="form-value" id="viewMiddleName">-</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Gender</label>
+                                                <div class="form-value gender-badge" id="viewGender">
+                                                    <i class="fas fa-user"></i> -
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Date of Birth</label>
+                                                <div class="form-value" id="viewDateOfBirth">-</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Blood Group</label>
+                                                <div class="form-value blood-group" id="viewBloodGroup">-</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Mother Tongue</label>
+                                                <div class="form-value" id="viewMotherTongue">-</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Religion</label>
+                                                <div class="form-value" id="viewReligion">-</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Sport House</label>
+                                                <div class="form-value" id="viewSportHouse">-</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Mobile Number</label>
+                                                <div class="form-value contact" id="viewMobileNumber">
+                                                    <i class="fas fa-phone"></i> -
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Email</label>
+                                                <div class="form-value contact" id="viewEmail">
+                                                    <i class="fas fa-envelope"></i> -
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">NIN</label>
+                                                <div class="form-value" id="viewNIN">-</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">City</label>
+                                                <div class="form-value" id="viewCity">-</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">State</label>
+                                                <div class="form-value" id="viewState">-</div>
+                                            </div>
+                                            <div class="form-group full-width">
+                                                <label class="form-label">Permanent Address</label>
+                                                <div class="form-value address-field" id="viewPermanentAddress">-</div>
+                                            </div>
+                                            <div class="form-group full-width">
+                                                <label class="form-label">Future Ambition</label>
+                                                <div class="form-value address-field" id="viewFutureAmbition">-</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Guardian Details Tab -->
+                                <div class="tab-pane fade" id="guardian" role="tabpanel">
+                                    <div class="form-section">
+                                        <div class="section-header">
+                                            <h5><i class="fas fa-users me-2"></i>Guardian Information</h5>
+                                        </div>
+                                        <div class="form-grid">
+                                            <div class="form-group">
+                                                <label class="form-label">Father's Name</label>
+                                                <div class="form-value" id="viewFatherName">-</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Mother's Name</label>
+                                                <div class="form-value" id="viewMotherName">-</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Occupation</label>
+                                                <div class="form-value occupation-badge" id="viewOccupation">-</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">City</label>
+                                                <div class="form-value" id="viewParentCity">-</div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Mobile Number</label>
+                                                <div class="form-value contact" id="viewParentMobile">
+                                                    <i class="fas fa-phone"></i> -
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Email</label>
+                                                <div class="form-value contact" id="viewParentEmail">
+                                                    <i class="fas fa-envelope"></i> -
+                                                </div>
+                                            </div>
+                                            <div class="form-group full-width">
+                                                <label class="form-label">Address</label>
+                                                <div class="form-value address-field" id="viewParentAddress">-</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Previous School Tab -->
+                                <div class="tab-pane fade" id="previous" role="tabpanel">
+                                    <div class="form-section">
+                                        <div class="section-header">
+                                            <h5><i class="fas fa-history me-2"></i>Previous School Information</h5>
+                                        </div>
+                                        <div class="form-grid">
+                                            <div class="form-group full-width">
+                                                <label class="form-label">School Name</label>
+                                                <div class="form-value school-name" id="viewSchoolName">
+                                                    <i class="fas fa-school"></i> -
+                                                </div>
+                                            </div>
+                                            <div class="form-group">
+                                                <label class="form-label">Previous Class</label>
+                                                <div class="form-value class-badge" id="viewPreviousClass">-</div>
+                                            </div>
+                                            <div class="form-group full-width">
+                                                <label class="form-label">Reason for Leaving</label>
+                                                <div class="form-value reason-field" id="viewReasonLeaving">-</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Modern Footer -->
+                    <div class="modal-footer modern-footer">
+                        <div class="footer-actions">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                                <i class="fas fa-times me-2"></i>Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
+// ============================================================================
+// FIXED VERSION - Student Management JavaScript
+// ============================================================================
+
 // Initialize admission number on page load
 updateAdmissionNumber();
 updateAdmissionNumber('edit');
@@ -1555,7 +2035,7 @@ function updateAdmissionNumber(prefix = '') {
     if (!yearSelect || !admissionNoInput) return;
 
     const year = yearSelect.value;
-    const baseFormat = `CSSK/STD/${year}/`;
+    const baseFormat = `TCC/${year}/`;
 
     if (admissionMode && admissionMode.value === 'auto') {
         admissionNoInput.readOnly = true;
@@ -1613,7 +2093,7 @@ window.toggleAdmissionInput = function(prefix = '') {
     if (!admissionMode || !admissionNoInput || !yearSelect) return;
 
     const year = yearSelect.value;
-    const baseFormat = `CSSK/STD/${year}/`;
+    const baseFormat = `TCC/${year}/`;
 
     if (admissionMode.value === 'auto') {
         admissionNoInput.readOnly = true;
@@ -1695,19 +2175,40 @@ function ensureAxios() {
     return true;
 }
 
-// Ensure Choices.js
-function ensureChoices() {
-    if (typeof Choices === 'undefined') {
-        console.warn('Choices.js is not defined, using basic select');
-        return false;
-    }
-    return true;
-}
-
-let studentList;
 let allStudents = [];
 const itemsPerPage = 100;
 const defaultAvatar = '{{ asset("storage/images/student_avatars/unnamed.jpg") }}';
+
+// FIXED: Generate placeholder image as data URL to avoid network issues
+function generatePlaceholderImage(text = 'PHOTO') {
+    const canvas = document.createElement('canvas');
+    canvas.width = 150;
+    canvas.height = 150;
+    const ctx = canvas.getContext('2d');
+
+    // Background gradient
+    const gradient = ctx.createLinearGradient(0, 0, 150, 150);
+    gradient.addColorStop(0, '#6366f1');
+    gradient.addColorStop(1, '#8b5cf6');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 150, 150);
+
+    // Text
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, 75, 75);
+
+    return canvas.toDataURL();
+}
+
+// FIXED: Get initials properly
+function getStudentInitials(firstName, lastName) {
+    const firstInitial = firstName && firstName.length > 0 ? firstName.charAt(0).toUpperCase() : '';
+    const lastInitial = lastName && lastName.length > 0 ? lastName.charAt(0).toUpperCase() : '';
+    return (firstInitial + lastInitial) || '??';
+}
 
 // View toggle function
 function toggleView(viewType) {
@@ -1722,7 +2223,6 @@ function toggleView(viewType) {
         tableViewBtn.classList.add('active');
         cardViewBtn.classList.remove('active');
 
-        // Update checkboxes
         document.getElementById('checkAll').checked = false;
         document.getElementById('remove-actions').classList.add('d-none');
     } else {
@@ -1731,30 +2231,21 @@ function toggleView(viewType) {
         tableViewBtn.classList.remove('active');
         cardViewBtn.classList.add('active');
 
-        // Render cards if not already rendered
         if (document.getElementById('studentsCardsContainer').children.length === 0 && allStudents.length > 0) {
             renderStudentsCards(allStudents);
         }
 
-        // Update checkboxes
         document.getElementById('checkAll').checked = false;
         document.getElementById('remove-actions').classList.add('d-none');
     }
 }
 
-// Render students as cards
+// FIXED: Render students as cards
 function renderStudentsCards(students) {
     console.log('Rendering students as cards:', students);
     const container = document.getElementById('studentsCardsContainer');
     if (!container) {
         console.error('studentsCardsContainer element not found');
-        Swal.fire({
-            title: "Error!",
-            text: "Students container element not found",
-            icon: "error",
-            customClass: { confirmButton: "btn btn-primary" },
-            buttonsStyling: false
-        });
         return;
     }
 
@@ -1775,28 +2266,20 @@ function renderStudentsCards(students) {
     }
 
     students.forEach(student => {
-        console.log('Rendering student card:', student);
+        // FIXED: Get proper initials
+        const displayInitials = getStudentInitials(student.firstname, student.lastname);
 
-        // Get initials for avatar
-        const firstName = student.firstname || '';
-        const lastName = student.lastname || '';
-        const initials = (firstName.charAt(0) + lastName.charAt(0)).toUpperCase() || '??';
-
-        // Get avatar URL
+        // FIXED: Get avatar URL with proper fallback
         let avatarUrl = defaultAvatar;
-        if (student.picture) {
+        if (student.picture && student.picture !== 'unnamed.jpg') {
             avatarUrl = `/storage/images/student_avatars/${student.picture}`;
         }
 
-        // Determine status
         const isActive = student.student_status === 'Active';
         const statusText = isActive ? 'Active' : 'Inactive';
         const statusClass = isActive ? 'status-active' : 'status-inactive';
-
-        // Get student type
         const studentType = student.statusId == 1 ? 'Old Student' : student.statusId == 2 ? 'New Student' : 'N/A';
 
-        // Format registration date
         const regDate = student.created_at ? new Date(student.created_at).toLocaleDateString('en-US', {
             year: 'numeric',
             month: 'short',
@@ -1806,24 +2289,21 @@ function renderStudentsCards(students) {
         const cardHtml = `
             <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
                 <div class="student-card" data-id="${student.id}"
-                     data-name="${student.lastname} ${student.firstname} ${student.othername}"
-                     data-admission="${student.admissionNo}"
-                     data-class="${student.schoolclassid}"
-                     data-status="${student.statusId}"
-                     data-gender="${student.gender}"
-                     data-student-status="${student.student_status}">
+                     data-name="${student.lastname || ''} ${student.firstname || ''} ${student.othername || ''}"
+                     data-admission="${student.admissionNo || ''}"
+                     data-class="${student.schoolclassid || ''}"
+                     data-status="${student.statusId || ''}"
+                     data-gender="${student.gender || ''}"
+                     data-student-status="${student.student_status || ''}">
 
-                    <!-- Checkbox for bulk selection -->
                     <div class="checkbox-container">
                         <div class="form-check">
                             <input class="form-check-input student-checkbox" type="checkbox" name="chk_child" value="${student.id}">
                         </div>
                     </div>
 
-                    <!-- Status Badge -->
                     <span class="status-badge ${statusClass}">${statusText}</span>
 
-                    <!-- Action Buttons -->
                     <div class="action-buttons">
                         <button class="action-btn view-btn" title="View Details" onclick="viewStudent(${student.id})">
                             <i class="fas fa-eye"></i>
@@ -1836,17 +2316,17 @@ function renderStudentsCards(students) {
                         </button>
                     </div>
 
-                    <!-- Avatar with initials fallback -->
                     <div class="avatar-container">
-                        ${student.picture ?
-                            `<img src="${avatarUrl}" alt="${student.firstname} ${student.lastname}" class="avatar"
-                                 onerror="this.style.display='none'; this.parentElement.innerHTML='<div class=\"avatar-initials\">${initials}</div>';">` :
-                            `<div class="avatar-initials">${initials}</div>`
-                        }
+                        <div class="avatar-initials" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                            ${displayInitials}
+                        </div>
+                        <img src="${avatarUrl}" alt="${student.firstname || ''} ${student.lastname || ''}"
+                             class="avatar" style="position: absolute; top: 0; left: 0; display: none;"
+                             onload="this.style.display='block'; this.previousElementSibling.style.display='none';"
+                             onerror="this.style.display='none'; this.previousElementSibling.style.display='flex';">
                     </div>
 
-                    <!-- Student Information -->
-                    <h6 class="student-name">${student.lastname} ${student.firstname}</h6>
+                    <h6 class="student-name">${student.lastname || ''} ${student.firstname || ''}</h6>
                     <p class="student-admission">${student.admissionNo || 'No Admission No'}</p>
 
                     <div class="student-details">
@@ -1868,9 +2348,13 @@ function renderStudentsCards(students) {
 
 // Update counts display
 function updateCounts(count) {
-    document.getElementById('totalStudents').textContent = count;
-    document.getElementById('totalCount').textContent = count;
-    document.getElementById('showingCount').textContent = count;
+    const totalStudents = document.getElementById('totalStudents');
+    const totalCount = document.getElementById('totalCount');
+    const showingCount = document.getElementById('showingCount');
+
+    if (totalStudents) totalStudents.textContent = count;
+    if (totalCount) totalCount.textContent = count;
+    if (showingCount) showingCount.textContent = count;
 }
 
 // Initialize student checkboxes for card view
@@ -1898,7 +2382,6 @@ function initializeStudentCheckboxes() {
                 card.classList.toggle('selected', this.checked);
             }
 
-            // Update checkAll state
             const allChecked = document.querySelectorAll('.student-checkbox').length ===
                              document.querySelectorAll('.student-checkbox:checked').length;
             const someChecked = document.querySelectorAll('.student-checkbox:checked').length > 0;
@@ -1913,60 +2396,389 @@ function initializeStudentCheckboxes() {
     });
 }
 
-// Card view specific functions
+// FIXED: View student details
 function viewStudent(id) {
-    console.log('View student from card view:', id);
+    console.log('View student:', id);
     if (!ensureAxios()) return;
 
-    axios.get(`/student/${id}/view`).then((response) => {
-        console.log('Student data received for view:', response.data);
-        const student = response.data.student || response.data;
-        if (!student) {
-            throw new Error('Student data is empty');
+    Swal.fire({
+        title: 'Loading...',
+        text: 'Fetching student details',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
         }
-        populateViewModal(student);
-        // Show the view modal
-        const viewModal = new bootstrap.Modal(document.getElementById('viewStudentModal'));
-        viewModal.show();
-    }).catch((error) => {
-        console.error('Error viewing student:', error);
-        Swal.fire({
-            title: 'Error!',
-            text: error.response?.data?.message || 'Failed to load student data',
-            icon: 'error',
-            customClass: { confirmButton: 'btn btn-primary' },
-            buttonsStyling: false
-        });
     });
+
+    axios.get(`/student/${id}/edit`)
+        .then((response) => {
+            Swal.close();
+            console.log('Student data received for view:', response.data);
+            let student = response.data.student || response.data;
+
+            if (!student) {
+                throw new Error('Student data is empty');
+            }
+
+            populateViewModal(student);
+
+            const viewModalElement = document.getElementById('viewStudentModal');
+            if (viewModalElement) {
+                const viewModal = new bootstrap.Modal(viewModalElement);
+                viewModal.show();
+            } else {
+                console.error('View modal element not found');
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'View modal not found',
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            }
+        })
+        .catch((error) => {
+            console.error('Error fetching student for view:', error);
+            Swal.close();
+            Swal.fire({
+                title: 'Error!',
+                text: 'Failed to load student data. Please try again.',
+                icon: 'error',
+                customClass: { confirmButton: 'btn btn-primary' },
+                buttonsStyling: false
+            });
+        });
 }
 
+// FIXED: Function to populate view modal
+function populateViewModal(student) {
+    console.log('=== DEBUG: Populating View Modal ===');
+    console.log('Student object:', student);
+
+    // FIXED: Student Photo with proper fallback
+    const photoElement = document.getElementById('viewStudentPhoto');
+    if (photoElement) {
+        const displayInitials = getStudentInitials(student.firstname, student.lastname);
+
+        if (student.picture && student.picture !== 'unnamed.jpg') {
+            photoElement.src = `/storage/images/student_avatars/${student.picture}`;
+            photoElement.style.display = 'block';
+            photoElement.onerror = function() {
+                // Fallback to initials
+                this.style.display = 'none';
+                const overlay = this.nextElementSibling;
+                if (overlay) {
+                    overlay.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; font-size: 48px; font-weight: bold; color: white;">${displayInitials}</div>`;
+                }
+            };
+        } else {
+            // Show initials placeholder
+            photoElement.style.display = 'none';
+            const overlay = photoElement.nextElementSibling;
+            if (overlay) {
+                overlay.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; font-size: 48px; font-weight: bold; color: white;">${displayInitials}</div>`;
+            }
+        }
+    }
+
+    // FIXED: Academic Details with null checks
+    setElementText('viewAcademicYear', student.admissionYear || student.admission_year || '-');
+    setElementText('viewRegistrationNo', student.admissionNo || student.admission_no || '-');
+
+    if (student.admissionDate || student.admission_date) {
+        const dateValue = student.admissionDate || student.admission_date;
+        const date = new Date(dateValue);
+        setElementText('viewAdmissionDate', date.toLocaleDateString());
+    } else {
+        setElementText('viewAdmissionDate', '-');
+    }
+
+    // FIXED: Class, Term, Session display
+    const classText = student.schoolclass || '';
+    const armText = student.arm || '';
+    setElementText('viewClass', classText && armText ? `${classText} - ${armText}` : classText || armText || '-');
+
+    setElementText('viewTerm', student.term_name || student.term || '-');
+    setElementText('viewSession', student.session_name || student.session || '-');
+
+    // Category badges
+    const dayBadge = document.getElementById('dayBadge');
+    const boardingBadge = document.getElementById('boardingBadge');
+    if (dayBadge && boardingBadge) {
+        dayBadge.classList.remove('active');
+        boardingBadge.classList.remove('active');
+
+        if (student.student_category === 'Day') {
+            dayBadge.classList.add('active');
+        } else if (student.student_category === 'Boarding') {
+            boardingBadge.classList.add('active');
+        }
+    }
+
+    // Personal Details
+    setElementText('viewSurname', student.lastname || student.last_name || '-');
+    setElementText('viewFirstName', student.firstname || student.first_name || '-');
+    setElementText('viewMiddleName', student.othername || student.other_name || student.middle_name || '-');
+
+    const genderElement = document.getElementById('viewGender');
+    if (genderElement) {
+        const gender = student.gender || '-';
+        if (gender === 'Male') {
+            genderElement.innerHTML = '<i class="fas fa-male"></i> Male';
+        } else if (gender === 'Female') {
+            genderElement.innerHTML = '<i class="fas fa-female"></i> Female';
+        } else {
+            genderElement.innerHTML = '<i class="fas fa-user"></i> -';
+        }
+    }
+
+    if (student.dateofbirth) {
+        const dob = new Date(student.dateofbirth);
+        setElementText('viewDateOfBirth', dob.toLocaleDateString());
+    } else {
+        setElementText('viewDateOfBirth', '-');
+    }
+
+    setElementText('viewBloodGroup', student.blood_group || '-');
+    setElementText('viewMotherTongue', student.mother_tongue || '-');
+    setElementText('viewReligion', student.religion || '-');
+    setElementText('viewSportHouse', student.school_house || student.sport_house || '-');
+
+    const mobileElement = document.getElementById('viewMobileNumber');
+    if (mobileElement) {
+        const phone = student.phone_number || '-';
+        mobileElement.innerHTML = phone !== '-' ?
+            `<i class="fas fa-phone"></i> ${phone}` :
+            '<i class="fas fa-phone"></i> -';
+    }
+
+    const emailElement = document.getElementById('viewEmail');
+    if (emailElement) {
+        const email = student.email || '-';
+        emailElement.innerHTML = email !== '-' ?
+            `<i class="fas fa-envelope"></i> ${email}` :
+            '<i class="fas fa-envelope"></i> -';
+    }
+
+    setElementText('viewNIN', student.nin_number || '-');
+    setElementText('viewCity', student.city || '-');
+    setElementText('viewState', student.state || '-');
+    setElementText('viewPermanentAddress', student.permanent_address || '-');
+    setElementText('viewFutureAmbition', student.future_ambition || '-');
+
+    // Guardian Details
+    setElementText('viewFatherName', student.father_name || '-');
+    setElementText('viewMotherName', student.mother_name || '-');
+    setElementText('viewOccupation', student.father_occupation || '-');
+    setElementText('viewParentCity', student.father_city || '-');
+
+    const parentMobileElement = document.getElementById('viewParentMobile');
+    if (parentMobileElement) {
+        const parentPhone = student.father_phone || student.mother_phone || '-';
+        parentMobileElement.innerHTML = parentPhone !== '-' ?
+            `<i class="fas fa-phone"></i> ${parentPhone}` :
+            '<i class="fas fa-phone"></i> -';
+    }
+
+    const parentEmailElement = document.getElementById('viewParentEmail');
+    if (parentEmailElement) {
+        const parentEmail = student.parent_email || '-';
+        parentEmailElement.innerHTML = parentEmail !== '-' ?
+            `<i class="fas fa-envelope"></i> ${parentEmail}` :
+            '<i class="fas fa-envelope"></i> -';
+    }
+
+    setElementText('viewParentAddress', student.parent_address || '-');
+
+    // Previous School Details
+    const schoolElement = document.getElementById('viewSchoolName');
+    if (schoolElement) {
+        const schoolName = student.last_school || '-';
+        schoolElement.innerHTML = schoolName !== '-' ?
+            `<i class="fas fa-school"></i> ${schoolName}` :
+            '<i class="fas fa-school"></i> -';
+    }
+
+    setElementText('viewPreviousClass', student.last_class || '-');
+    setElementText('viewReasonLeaving', student.reason_for_leaving || '-');
+}
+
+// Helper function to set element text
+function setElementText(id, text) {
+    const element = document.getElementById(id);
+    if (element) {
+        element.textContent = text || '-';
+    } else {
+        console.warn(`Element with ID '${id}' not found`);
+    }
+}
+
+// FIXED: Edit student function
 function editStudent(id) {
-    console.log('Edit student from card view:', id);
+    console.log('Edit student:', id);
     if (!ensureAxios()) return;
 
-    axios.get(`/student/${id}/edit`).then((response) => {
-        console.log('Student data received for edit:', response.data);
-        const student = response.data.student;
-        if (!student) {
-            throw new Error('Student data is empty');
-        }
+    axios.get(`/student/${id}/edit`)
+        .then((response) => {
+            console.log('Student data received for edit:', response.data);
+            let student = response.data.student || response.data;
 
-        // Populate the edit form
-        populateEditForm(student);
+            if (!student) {
+                throw new Error('Student data is empty');
+            }
 
-        // Show the edit modal
-        const editModal = new bootstrap.Modal(document.getElementById('editStudentModal'));
-        editModal.show();
-    }).catch((error) => {
-        console.error('Error editing student:', error);
-        Swal.fire({
-            title: 'Error!',
-            text: error.response?.data?.message || 'Failed to load student data',
-            icon: 'error',
-            customClass: { confirmButton: 'btn btn-primary' },
-            buttonsStyling: false
+            populateEditForm(student);
+
+            const editModalElement = document.getElementById('editStudentModal');
+            if (editModalElement) {
+                const editModal = new bootstrap.Modal(editModalElement);
+                editModal.show();
+            }
+        })
+        .catch((error) => {
+            console.error('Error editing student:', error);
+            Swal.fire({
+                title: 'Error!',
+                text: error.response?.data?.message || 'Failed to load student data',
+                icon: 'error',
+                customClass: { confirmButton: 'btn btn-primary' },
+                buttonsStyling: false
+            });
         });
+}
+
+// FIXED: Populate edit form
+function populateEditForm(student) {
+    console.log('Populating edit form with student:', student);
+
+    const fields = [
+        { id: 'editStudentId', value: student.id },
+        { id: 'editAdmissionNo', value: student.admissionNo || student.admission_no || '' },
+        { id: 'editAdmissionYear', value: student.admissionYear || '' },
+        { id: 'editAdmissionDate', value: student.admissionDate ? student.admissionDate.split('T')[0] : '' },
+        { id: 'editTitle', value: student.title || '' },
+        { id: 'editFirstname', value: student.firstname || student.first_name || '' },
+        { id: 'editLastname', value: student.lastname || student.last_name || '' },
+        { id: 'editOthername', value: student.othername || student.other_name || student.middle_name || '' },
+        { id: 'editPermanentAddress', value: student.permanent_address || '' },
+        { id: 'editDOB', value: student.dateofbirth ? student.dateofbirth.split('T')[0] : '' },
+        { id: 'editPlaceofbirth', value: student.placeofbirth || '' },
+        { id: 'editNationality', value: student.nationality || '' },
+        { id: 'editReligion', value: student.religion || '' },
+        { id: 'editLastSchool', value: student.last_school || '' },
+        { id: 'editLastClass', value: student.last_class || '' },
+        { id: 'editSchoolclassid', value: student.schoolclassid || student.class_id || '' },
+        { id: 'editTermid', value: student.termid || student.term_id || '' },
+        { id: 'editSessionid', value: student.sessionid || student.session_id || '' },
+        { id: 'editPhoneNumber', value: student.phone_number || student.phone || '' },
+        { id: 'editEmail', value: student.email || '' },
+        { id: 'editFutureAmbition', value: student.future_ambition || '' },
+        { id: 'editCity', value: student.city || '' },
+        { id: 'editState', value: student.state || '' },
+        { id: 'editLocal', value: student.local || '' },
+        { id: 'editNinNumber', value: student.nin_number || student.nin || '' },
+        { id: 'editBloodGroup', value: student.blood_group || '' },
+        { id: 'editMotherTongue', value: student.mother_tongue || '' },
+        { id: 'editFatherName', value: student.father_name || '' },
+        { id: 'editFatherPhone', value: student.father_phone || '' },
+        { id: 'editFatherOccupation', value: student.father_occupation || '' },
+        { id: 'editFatherCity', value: student.father_city || '' },
+        { id: 'editMotherName', value: student.mother_name || '' },
+        { id: 'editMotherPhone', value: student.mother_phone || '' },
+        { id: 'editParentEmail', value: student.parent_email || '' },
+        { id: 'editParentAddress', value: student.parent_address || '' },
+        { id: 'editStudentCategory', value: student.student_category || '' },
+        { id: 'editSchoolHouse', value: student.schoolhouse || student.school_house || student.sport_house || '' },
+        { id: 'editReasonForLeaving', value: student.reason_for_leaving || '' }
+    ];
+
+    fields.forEach(({ id, value }) => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.value = value || '';
+            console.log(`Set ${id} to:`, value);
+        } else {
+            console.warn(`Element with ID '${id}' not found`);
+        }
     });
+
+    // Set gender
+    const genderRadios = document.querySelectorAll('#editStudentModal input[name="gender"]');
+    if (genderRadios.length > 0) {
+        const studentGender = student.gender || '';
+        genderRadios.forEach(radio => {
+            radio.checked = (radio.value === studentGender);
+        });
+        console.log('Set gender to:', studentGender);
+    }
+    // Set status
+    const statusRadios = document.querySelectorAll('#editStudentModal input[name="statusId"]');
+    if (statusRadios.length > 0) {
+        const studentStatusId = student.statusId || student.status_id || '';
+        statusRadios.forEach(radio => {
+            radio.checked = (parseInt(radio.value) === parseInt(studentStatusId));
+        });
+        console.log('Set statusId to:', studentStatusId);
+    }
+
+    // Set student activity status
+    const studentStatusRadios = document.querySelectorAll('#editStudentModal input[name="student_status"]');
+    if (studentStatusRadios.length > 0) {
+        const studentActivityStatus = student.student_status || student.status || '';
+        studentStatusRadios.forEach(radio => {
+            radio.checked = (radio.value === studentActivityStatus);
+        });
+        console.log('Set student_status to:', studentActivityStatus);
+    }
+
+    // FIXED: Set avatar with initials fallback
+    const avatarElement = document.getElementById('editStudentAvatar');
+    if (avatarElement) {
+        const displayInitials = getStudentInitials(student.firstname, student.lastname);
+
+        if (student.picture && student.picture !== 'unnamed.jpg') {
+            const avatarUrl = `/storage/images/student_avatars/${student.picture}`;
+            avatarElement.src = avatarUrl;
+            avatarElement.style.display = 'block';
+            avatarElement.onerror = function() {
+                // Create initials overlay
+                this.style.display = 'none';
+                const container = this.parentElement;
+                if (container) {
+                    const initialsDiv = document.createElement('div');
+                    initialsDiv.className = 'avatar-initials';
+                    initialsDiv.style.cssText = 'width: 120px; height: 120px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; color: white; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: 4px solid #667eea; box-shadow: 0 4px 8px rgba(0,0,0,0.1);';
+                    initialsDiv.textContent = displayInitials;
+                    container.appendChild(initialsDiv);
+                }
+            };
+        } else {
+            // Show initials
+            avatarElement.style.display = 'none';
+            const container = avatarElement.parentElement;
+            if (container) {
+                let initialsDiv = container.querySelector('.avatar-initials');
+                if (!initialsDiv) {
+                    initialsDiv = document.createElement('div');
+                    initialsDiv.className = 'avatar-initials';
+                    initialsDiv.style.cssText = 'width: 120px; height: 120px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: bold; color: white; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: 4px solid #667eea; box-shadow: 0 4px 8px rgba(0,0,0,0.1);';
+                    container.appendChild(initialsDiv);
+                }
+                initialsDiv.textContent = displayInitials;
+            }
+        }
+    }
+
+    // Calculate age if date of birth exists
+    if (student.dateofbirth) {
+        calculateAge(student.dateofbirth, 'editAgeInput');
+    }
+
+    // Update form action
+    const form = document.getElementById('editStudentForm');
+    if (form && student.id) {
+        form.action = `/student/${student.id}`;
+        console.log('Updated form action to:', form.action);
+    }
 }
 
 function deleteStudent(id) {
@@ -1979,31 +2791,35 @@ function deleteStudent(id) {
         buttonsStyling: false
     }).then((result) => {
         if (result.isConfirmed && ensureAxios()) {
-            axios.delete(`/student/${id}/destroy`).then(() => {
-                // Remove the card
-                const card = document.querySelector(`.student-card[data-id="${id}"]`);
-                if (card) {
-                    card.closest('.col-xl-3').remove();
-                }
-                // Refresh the list
-                fetchStudents();
-                Swal.fire({
-                    title: 'Deleted!',
-                    text: 'Student has been deleted',
-                    icon: 'success',
-                    customClass: { confirmButton: 'btn btn-primary' },
-                    buttonsStyling: false
+            axios.delete(`/student/${id}/destroy`)
+                .then(() => {
+                    const card = document.querySelector(`.student-card[data-id="${id}"]`);
+                    if (card) {
+                        card.closest('.col-xl-3').remove();
+                    }
+                    const row = document.querySelector(`tr[data-id="${id}"]`);
+                    if (row) {
+                        row.remove();
+                    }
+                    fetchStudents();
+                    Swal.fire({
+                        title: 'Deleted!',
+                        text: 'Student has been deleted',
+                        icon: 'success',
+                        customClass: { confirmButton: 'btn btn-primary' },
+                        buttonsStyling: false
+                    });
+                })
+                .catch((error) => {
+                    console.error('Error deleting student:', error);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: error.response?.data?.message || 'Failed to delete student',
+                        icon: 'error',
+                        customClass: { confirmButton: 'btn btn-primary' },
+                        buttonsStyling: false
+                    });
                 });
-            }).catch((error) => {
-                console.error('Error deleting student:', error);
-                Swal.fire({
-                    title: 'Error!',
-                    text: error.response?.data?.message || 'Failed to delete student',
-                    icon: 'error',
-                    customClass: { confirmButton: 'btn btn-primary' },
-                    buttonsStyling: false
-                });
-            });
         }
     });
 }
@@ -2012,35 +2828,55 @@ function deleteStudent(id) {
 function fetchStudents() {
     if (!ensureAxios()) return;
     console.log('Fetching students from /students/data');
+
     axios.get('/students/data')
         .then((response) => {
-            console.log('Students data received:', response.data);
-            if (!response.data.success || !Array.isArray(response.data.students)) {
-                throw new Error(response.data.message || 'Invalid response format');
+            console.log('Full API response:', response.data);
+
+            let studentsArray = [];
+
+            if (Array.isArray(response.data)) {
+                studentsArray = response.data;
+            } else if (response.data.students && Array.isArray(response.data.students)) {
+                studentsArray = response.data.students;
+            } else if (response.data.data && Array.isArray(response.data.data)) {
+                studentsArray = response.data.data;
+            } else if (response.data.success && Array.isArray(response.data.data)) {
+                studentsArray = response.data.data;
+            } else {
+                console.log('Unexpected response format, trying to extract students:', response.data);
+                studentsArray = Object.values(response.data).filter(item =>
+                    item && (item.id || item.student_id)
+                );
             }
-            allStudents = response.data.students.map(student => ({
-                id: student.id || '',
-                admissionNo: student.admissionNo || '',
-                firstname: student.firstname || '',
-                lastname: student.lastname || '',
-                othername: student.othername || '',
+
+            console.log('Students array:', studentsArray);
+
+            if (studentsArray.length > 0) {
+                console.log('First student data:', studentsArray[0]);
+            }
+
+            allStudents = studentsArray.map(student => ({
+                id: student.id || student.student_id || '',
+                admissionNo: student.admissionNo || student.admission_no || student.admission_number || '',
+                firstname: student.firstname || student.first_name || '',
+                lastname: student.lastname || student.last_name || '',
+                othername: student.othername || student.other_name || student.middle_name || '',
                 gender: student.gender || '',
-                statusId: student.statusId || '',
-                student_status: student.student_status || '',
-                created_at: student.created_at || '',
-                picture: student.picture || '',
-                schoolclass: student.schoolclass || '',
-                arm: student.arm || '',
-                schoolclassid: student.schoolclassid || ''
+                statusId: student.statusId || student.status_id || student.student_status_id || '',
+                student_status: student.student_status || student.status || '',
+                created_at: student.created_at || student.created_date || student.registration_date || '',
+                picture: student.picture || student.avatar || student.profile_picture || '',
+                schoolclass: student.schoolclass || student.class || student.class_name || '',
+                arm: student.arm || student.section || '',
+                schoolclassid: student.schoolclassid || student.class_id || ''
             }));
-            console.log('Processed students:', allStudents.length);
 
-            // Update counts
-            document.querySelector('#totalStudents').textContent = allStudents.length;
-            document.querySelector('#totalCount').textContent = allStudents.length;
-            document.getElementById('showingCount').textContent = allStudents.length;
+            console.log('Processed students:', allStudents);
+            console.log('Processed students count:', allStudents.length);
 
-            // Check which view is active and render accordingly
+            updateCounts(allStudents.length);
+
             const tableView = document.getElementById('tableView');
             const isTableView = !tableView.classList.contains('d-none');
 
@@ -2054,7 +2890,7 @@ function fetchStudents() {
             console.error('Error fetching students:', error);
             Swal.fire({
                 title: "Error!",
-                text: error.response?.data?.message || error.message || "Failed to load students.",
+                text: "Failed to load students. Please try again.",
                 icon: "error",
                 customClass: { confirmButton: "btn btn-primary" },
                 buttonsStyling: false
@@ -2066,37 +2902,27 @@ function fetchStudents() {
 
 // Render students in the table
 function renderStudents(students) {
-    console.log('Rendering students:', students);
+    console.log('Rendering students in table:', students);
     const tbody = document.getElementById('studentTableBody');
     if (!tbody) {
         console.error('studentTableBody element not found');
-        Swal.fire({
-            title: "Error!",
-            text: "Table body element not found",
-            icon: "error",
-            customClass: { confirmButton: "btn btn-primary" },
-            buttonsStyling: false
-        });
         return;
     }
+
     tbody.innerHTML = '';
+
     if (students.length === 0) {
         const row = document.createElement('tr');
         row.innerHTML = `<td colspan="8" class="text-center">No students found</td>`;
         tbody.appendChild(row);
-        initializeList();
+        updatePagination();
         return;
     }
-    students.forEach(student => {
-        console.log('Rendering student:', student);
-        const studentImage = student.picture ? `/storage/images/student_avatars/${student.picture}` : defaultAvatar;
 
-        const actionButtons = [
-            `<li><a href="javascript:void(0);" class="btn btn-subtle-info btn-icon btn-sm view-item-btn" data-id="${student.id}" data-bs-toggle="modal" data-bs-target="#viewStudentModal" title="View Details"><i class="ph-eye"></i></a></li>`,
-            `<li><a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" data-id="${student.id}" data-bs-toggle="modal" data-bs-target="#editStudentModal" title="Edit"><i class="ph-pencil"></i></a></li>`,
-            `<li><a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-id="${student.id}" title="Delete"><i class="ph-trash"></i></a></li>`
-        ];
-        console.log('Action buttons for student:', actionButtons);
+    students.forEach(student => {
+        const studentImage = student.picture && student.picture !== 'unnamed.jpg' ?
+            `/storage/images/student_avatars/${student.picture}` : defaultAvatar;
+
         const row = document.createElement('tr');
         row.setAttribute('data-id', student.id);
         row.innerHTML = `
@@ -2105,115 +2931,110 @@ function renderStudents(students) {
                     <input class="form-check-input" type="checkbox" name="chk_child">
                 </div>
             </td>
-            <td class="name" data-name="${student.lastname} ${student.firstname} ${student.othername}">
+            <td class="name" data-name="${student.lastname || ''} ${student.firstname || ''} ${student.othername || ''}">
                 <div class="d-flex align-items-center">
                     <div class="symbol symbol-50px me-3">
-                        <img src="${studentImage}" alt="" class="rounded-circle avatar-sm student-image" style="object-fit:cover;" data-bs-toggle="modal" data-bs-target="#imageViewModal" data-image="${studentImage}"/>
+                        <img src="${studentImage}" alt="" class="rounded-circle avatar-sm student-image" style="object-fit:cover; width: 50px; height: 50px;"/>
                     </div>
                     <div>
                         <h6 class="mb-0">
-                            <a href="/student/${student.id}" class="text-reset products">
-                                <b>${student.lastname}</b> ${student.firstname} ${student.othername}
-                            </a>
+                            <b>${student.lastname || ''}</b> ${student.firstname || ''} ${student.othername || ''}
                         </h6>
                     </div>
                 </div>
             </td>
-            <td class="admissionNo" data-admissionNo="${student.admissionNo}">${student.admissionNo}</td>
-            <td class="class" data-class="${student.schoolclassid}">${student.schoolclass} - ${student.arm}</td>
-            <td class="status" data-status="${student.statusId}">${student.statusId == 1 ? 'Old Student' : student.statusId == 2 ? 'New Student' : ''}</td>
-            <td class="gender" data-gender="${student.gender}">${student.gender}</td>
+            <td class="admissionNo" data-admissionno="${student.admissionNo || ''}">${student.admissionNo || ''}</td>
+            <td class="class" data-class="${student.schoolclassid || ''}">${student.schoolclass || ''} ${student.arm ? ' - ' + student.arm : ''}</td>
+            <td class="status" data-status="${student.statusId || ''}">${student.statusId == 1 ? 'Old Student' : student.statusId == 2 ? 'New Student' : ''}</td>
+            <td class="gender" data-gender="${student.gender || ''}">${student.gender || ''}</td>
             <td class="datereg">${student.created_at ? new Date(student.created_at).toISOString().split('T')[0] : ''}</td>
             <td>
                 <ul class="d-flex gap-2 list-unstyled mb-0">
-                    ${actionButtons.join('')}
+                    <li><a href="javascript:void(0);" class="btn btn-subtle-info btn-icon btn-sm view-item-btn" data-id="${student.id}" onclick="viewStudent(${student.id})" title="View Details"><i class="ph-eye"></i></a></li>
+                    <li><a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" data-id="${student.id}" onclick="editStudent(${student.id})" title="Edit"><i class="ph-pencil"></i></a></li>
+                    <li><a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-id="${student.id}" onclick="deleteStudent(${student.id})" title="Delete"><i class="ph-trash"></i></a></li>
                 </ul>
             </td>
         `;
         tbody.appendChild(row);
     });
-    console.log('Table rows after rendering:', tbody.innerHTML);
-    initializeList();
+
+    updatePagination();
     initializeCheckboxes();
 }
 
-// Initialize List.js for pagination and sorting
-function initializeList() {
-    if (typeof List === 'undefined') {
-        console.error('List.js is not loaded');
-        Swal.fire({
-            title: "Error!",
-            text: "List.js library is missing",
-            icon: "error",
-            customClass: { confirmButton: "btn btn-primary" },
-            buttonsStyling: false
-        });
-        return;
+// FIXED: Calculate age function
+window.calculateAge = function(dateValue, targetId) {
+    if (!dateValue) return;
+
+    const dateString = dateValue.includes('T') ? dateValue.split('T')[0] : dateValue;
+    const dob = new Date(dateString);
+    const today = new Date();
+    let age = today.getFullYear() - dob.getFullYear();
+    const monthDiff = today.getMonth() - dob.getMonth();
+
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+        age--;
     }
-    const options = {
-        valueNames: ['name', 'admissionNo', 'class', 'status', 'gender', 'datereg'],
-        page: itemsPerPage,
-        pagination: true,
-        item: `
-            <tr>
-                <td class="id">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="chk_child">
-                    </div>
-                </td>
-                <td class="name"></td>
-                <td class="admissionNo"></td>
-                <td class="class"></td>
-                <td class="status"></td>
-                <td class="gender"></td>
-                <td class="datereg"></td>
-                <td><ul class="d-flex gap-2 list-unstyled mb-0"></ul></td>
-            </tr>
-        `
-    };
-    try {
-        studentList = new List('studentList', options);
-        studentList.on('updated', function () {
-            updatePagination();
-            document.getElementById('showingCount').textContent = studentList.visibleItems.length;
-            document.getElementById('totalCount').textContent = studentList.items.length;
-            document.getElementById('totalStudents').textContent = studentList.items.length;
-        });
-    } catch (error) {
-        console.error('List.js initialization error:', error.message);
-        Swal.fire({
-            title: "Error!",
-            text: "Failed to initialize table. Check console for details.",
-            icon: "error",
-            customClass: { confirmButton: "btn btn-primary" },
-            buttonsStyling: false
-        });
+
+    const ageInput = document.getElementById(targetId);
+    if (ageInput) {
+        ageInput.value = age;
     }
-}
+};
 
 // Update pagination controls
 function updatePagination() {
-    if (!studentList) return;
-    const totalItems = studentList.items.length;
+    const totalItems = allStudents.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
-    const currentPage = studentList.page ? Math.ceil(studentList.i / itemsPerPage) : 1;
+    const currentPage = 1;
     const paginationLinks = document.getElementById('paginationLinks');
+
+    if (!paginationLinks) return;
+
     paginationLinks.innerHTML = '';
 
-    for (let i = 1; i <= totalPages; i++) {
+    const maxPagesToShow = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+    let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
+
+    if (endPage - startPage + 1 < maxPagesToShow) {
+        startPage = Math.max(1, endPage - maxPagesToShow + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
         const li = document.createElement('li');
         li.className = `page-item ${i === currentPage ? 'active' : ''}`;
         li.innerHTML = `<a class="page-link" href="javascript:void(0);">${i}</a>`;
         li.addEventListener('click', () => {
-            studentList.show((i - 1) * itemsPerPage + 1, itemsPerPage);
+            const startIndex = (i - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageStudents = allStudents.slice(startIndex, endIndex);
+
+            const tableView = document.getElementById('tableView');
+            const isTableView = !tableView.classList.contains('d-none');
+
+            if (isTableView) {
+                renderStudents(pageStudents);
+            } else {
+                renderStudentsCards(pageStudents);
+            }
+
+            document.getElementById('showingCount').textContent = pageStudents.length;
         });
         paginationLinks.appendChild(li);
     }
 
-    document.getElementById('prevPage').classList.toggle('disabled', currentPage === 1);
-    document.getElementById('nextPage').classList.toggle('disabled', currentPage === totalPages);
-    document.getElementById('prevPage').onclick = currentPage > 1 ? () => studentList.show((currentPage - 2) * itemsPerPage + 1, itemsPerPage) : null;
-    document.getElementById('nextPage').onclick = currentPage < totalPages ? () => studentList.show(currentPage * itemsPerPage + 1, itemsPerPage) : null;
+    const prevPage = document.getElementById('prevPage');
+    const nextPage = document.getElementById('nextPage');
+
+    if (prevPage) {
+        prevPage.classList.toggle('disabled', currentPage === 1);
+    }
+
+    if (nextPage) {
+        nextPage.classList.toggle('disabled', currentPage === totalPages);
+    }
 }
 
 // Filter function for both views
@@ -2225,77 +3046,48 @@ function filterData() {
 
     console.log('Filtering with:', { search, classId, statusId, gender });
 
-    // Check which view is active
+    const filteredStudents = allStudents.filter(student => {
+        const name = `${student.lastname || ''} ${student.firstname || ''} ${student.othername || ''}`.toLowerCase();
+        const admissionNo = (student.admissionNo || '').toLowerCase();
+
+        const matchesSearch = name.includes(search) || admissionNo.includes(search);
+        const matchesClass = classId === 'all' || student.schoolclassid == classId;
+        const matchesStatus = statusId === 'all' || student.statusId == statusId;
+        const matchesGender = gender === 'all' || student.gender === gender;
+
+        return matchesSearch && matchesClass && matchesStatus && matchesGender;
+    });
+
     const tableView = document.getElementById('tableView');
     const isTableView = !tableView.classList.contains('d-none');
 
     if (isTableView) {
-        // Table view filtering (using List.js)
-        if (studentList) {
-            studentList.filter(item => {
-                const name = item.values().name?.toLowerCase() || '';
-                const admissionNo = item.values().admissionNo?.toLowerCase() || '';
-                const classValue = item.elm.querySelector('.class')?.dataset.class || '';
-                const statusValue = item.elm.querySelector('.status')?.dataset.status || '';
-                const genderValue = item.elm.querySelector('.gender')?.dataset.gender || '';
-
-                const matchesSearch = name.includes(search) || admissionNo.includes(search);
-                const matchesClass = classId === 'all' || classValue === classId;
-                const matchesStatus = statusId === 'all' || statusValue === statusId;
-                const matchesGender = gender === 'all' || genderValue === gender;
-
-                return matchesSearch && matchesClass && matchesStatus && matchesGender;
-            });
-        }
+        renderStudents(filteredStudents);
     } else {
-        // Card view filtering
-        const cards = document.querySelectorAll('.student-card');
-        let visibleCount = 0;
-
-        cards.forEach(card => {
-            const name = card.getAttribute('data-name')?.toLowerCase() || '';
-            const admission = card.getAttribute('data-admission')?.toLowerCase() || '';
-            const classValue = card.getAttribute('data-class') || '';
-            const statusValue = card.getAttribute('data-status') || '';
-            const genderValue = card.getAttribute('data-gender') || '';
-
-            const matchesSearch = name.includes(search) || admission.includes(search);
-            const matchesClass = classId === 'all' || classValue === classId;
-            const matchesStatus = statusId === 'all' || statusValue === statusId;
-            const matchesGender = gender === 'all' || genderValue === gender;
-
-            const isVisible = matchesSearch && matchesClass && matchesStatus && matchesGender;
-            const column = card.closest('.col-xl-3');
-
-            if (column) {
-                column.style.display = isVisible ? 'block' : 'none';
-            }
-
-            if (isVisible) {
-                visibleCount++;
-            }
-        });
-
-        document.getElementById('showingCount').textContent = visibleCount;
+        renderStudentsCards(filteredStudents);
     }
+
+    document.getElementById('showingCount').textContent = filteredStudents.length;
 }
 
-// Delete multiple students (works for both views)
+// Delete multiple students
 function deleteMultiple() {
-    // Check which view is active
     const tableView = document.getElementById('tableView');
     const isTableView = !tableView.classList.contains('d-none');
 
     let ids = [];
 
     if (isTableView) {
-        // Table view selection
         ids = Array.from(document.querySelectorAll('input[name="chk_child"]:checked'))
-            .map(checkbox => checkbox.closest('tr').querySelector('.id').dataset.id);
+            .map(checkbox => {
+                const row = checkbox.closest('tr');
+                return row ? row.getAttribute('data-id') : null;
+            })
+            .filter(id => id !== null);
     } else {
-        // Card view selection
         ids = Array.from(document.querySelectorAll('.student-checkbox:checked'))
-            .map(checkbox => checkbox.value);
+            .map(checkbox => checkbox.value)
+            .filter(id => id !== null);
     }
 
     if (ids.length === 0) {
@@ -2323,35 +3115,21 @@ function deleteMultiple() {
         buttonsStyling: false
     }).then((result) => {
         if (result.isConfirmed && ensureAxios()) {
-            axios.post('/students/destroy-multiple', { ids })
-                .then((response) => {
-                    if (response.data.success) {
-                        // Remove the items based on view type
-                        ids.forEach(id => {
-                            if (isTableView) {
-                                const row = document.querySelector(`tr[data-id="${id}"]`);
-                                if (row) row.remove();
-                            } else {
-                                const card = document.querySelector(`.student-card[data-id="${id}"]`);
-                                if (card) {
-                                    card.closest('.col-xl-3').remove();
-                                }
-                            }
-                        });
+            const deletePromises = ids.map(id =>
+                axios.delete(`/student/${id}/destroy`)
+            );
 
-                        // Refresh counts
-                        fetchStudents();
+            Promise.all(deletePromises)
+                .then(() => {
+                    fetchStudents();
 
-                        Swal.fire({
-                            title: "Deleted!",
-                            text: response.data.message || `Successfully deleted ${ids.length} student(s)`,
-                            icon: "success",
-                            customClass: { confirmButton: "btn btn-primary" },
-                            buttonsStyling: false
-                        });
-                    } else {
-                        throw new Error(response.data.message || 'Failed to delete students');
-                    }
+                    Swal.fire({
+                        title: "Deleted!",
+                        text: `Successfully deleted ${ids.length} student(s)`,
+                        icon: "success",
+                        customClass: { confirmButton: "btn btn-primary" },
+                        buttonsStyling: false
+                    });
                 })
                 .catch((error) => {
                     console.error('Error deleting students:', error);
@@ -2367,10 +3145,11 @@ function deleteMultiple() {
     });
 }
 
-// Initialize checkboxes for multiple selection (table view)
+// Initialize checkboxes for multiple selection
 function initializeCheckboxes() {
     const checkAll = document.getElementById('checkAll');
     if (!checkAll) return;
+
     checkAll.addEventListener('change', function () {
         document.querySelectorAll('input[name="chk_child"]').forEach(checkbox => {
             checkbox.checked = this.checked;
@@ -2389,724 +3168,50 @@ function initializeCheckboxes() {
     });
 }
 
-// Populate states and LGAs
-function populateStates(stateSelectId, lgaSelectId) {
-    const stateSelect = document.getElementById(stateSelectId);
-    const lgaSelect = document.getElementById(lgaSelectId);
-    if (!stateSelect || !lgaSelect) return;
-
-    fetch('/states_lgas.json')
-        .then(response => response.json())
-        .then(data => {
-            stateSelect.innerHTML = '<option value="">Select State</option>';
-            data.forEach(state => {
-                const option = document.createElement('option');
-                option.value = state.state;
-                option.textContent = state.state;
-                stateSelect.appendChild(option);
-            });
-
-            if (ensureChoices()) {
-                const choicesState = new Choices(stateSelect, { searchEnabled: true });
-                const choicesLga = new Choices(lgaSelect, { searchEnabled: true });
-            }
-
-            stateSelect.addEventListener('change', function () {
-                lgaSelect.innerHTML = '<option value="">Select Local Government</option>';
-                const selectedState = data.find(state => state.state === this.value);
-                if (selectedState) {
-                    selectedState.lgas.forEach(lga => {
-                        const option = document.createElement('option');
-                        option.value = lga;
-                        option.textContent = lga;
-                        lgaSelect.appendChild(option);
-                    });
-                    if (ensureChoices()) {
-                        new Choices(lgaSelect, { searchEnabled: true });
-                    }
-                }
-            });
-        })
-        .catch(error => {
-            console.error('Error loading states and LGAs:', error);
-        });
-}
-
-// Populate LGAs based on selected state
-function populateLGAs(state, lgaSelectId) {
-    const lgaSelect = document.getElementById(lgaSelectId);
-    if (!lgaSelect) return;
-
-    fetch('/states_lgas.json')
-        .then(response => response.json())
-        .then(data => {
-            lgaSelect.innerHTML = '<option value="">Select Local Government</option>';
-            const selectedState = data.find(s => s.state === state);
-            if (selectedState) {
-                selectedState.lgas.forEach(lga => {
-                    const option = document.createElement('option');
-                    option.value = lga;
-                    option.textContent = lga;
-                    lgaSelect.appendChild(option);
-                });
-                if (ensureChoices()) {
-                    new Choices(lgaSelect, { searchEnabled: true });
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Error loading LGAs:', error);
-        });
-}
-
-// Age calculation function
-window.showage = function (date, displayId = 'addAge') {
-    if (date) {
-        const dateString = date.includes('T') ? date.split('T')[0] : date;
-        const dob = new Date(dateString);
-        const today = new Date();
-        let age = today.getFullYear() - dob.getFullYear();
-        const monthDiff = today.getMonth() - dob.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-            age--;
-        }
-        const ageInputId = displayId === 'addAge' ? 'addAgeInput' : 'editAgeInput';
-        const ageInput = document.getElementById(ageInputId);
-        if (ageInput) {
-            ageInput.value = age;
-        } else {
-            console.warn(`Age input element with ID '${ageInputId}' not found`);
-        }
-    } else {
-        const ageInputId = displayId === 'addAge' ? 'addAgeInput' : 'editAgeInput';
-        const ageInput = document.getElementById(ageInputId);
-        if (ageInput) {
-            ageInput.value = '';
-        } else {
-            console.warn(`Age input element with ID '${ageInputId}' not found`);
-        }
-    }
-};
-
-// Populate edit form with student data
-function populateEditForm(student) {
-    // Updated fields array with the missing fields
-    const fields = [
-        { id: 'editStudentId', value: student.id },
-        { id: 'editAdmissionNo', value: student.admissionNo },
-        { id: 'editAdmissionYear', value: student.admissionYear },
-        { id: 'editAdmissionDate', value: student.admissionDate ? student.admissionDate.split('T')[0] : '' },
-        { id: 'editTitle', value: student.title || '' },
-        { id: 'editFirstname', value: student.firstname },
-        { id: 'editLastname', value: student.lastname },
-        { id: 'editOthername', value: student.othername || '' },
-        { id: 'editPresentAddress', value: student.present_address || '' },
-        { id: 'editPermanentAddress', value: student.permanent_address || '' },
-        { id: 'editDOB', value: student.dateofbirth ? student.dateofbirth.split('T')[0] : '' },
-        { id: 'editPlaceofbirth', value: student.placeofbirth || '' },
-        { id: 'editNationality', value: student.nationality || '' },
-        { id: 'editReligion', value: student.religion || '' },
-        { id: 'editLastSchool', value: student.last_school || '' },
-        { id: 'editLastClass', value: student.last_class || '' },
-        { id: 'editSchoolclassid', value: student.schoolclassid || '' },
-        { id: 'editTermid', value: student.termid || '' },
-        { id: 'editSessionid', value: student.sessionid || '' },
-        { id: 'editPhoneNumber', value: student.phone_number || '' },
-        { id: 'editEmail', value: student.email || '' },
-        { id: 'editFutureAmbition', value: student.future_ambition || '' },
-        { id: 'editCity', value: student.city || '' },
-        { id: 'editState', value: student.state || '' },
-        { id: 'editLocal', value: student.local || '' },
-        { id: 'editNinNumber', value: student.nin_number || '' },
-        { id: 'editBloodGroup', value: student.blood_group || '' },
-        { id: 'editMotherTongue', value: student.mother_tongue || '' },
-        { id: 'editFatherName', value: student.father_name || '' },
-        { id: 'editFatherPhone', value: student.father_phone || '' },
-        { id: 'editFatherOccupation', value: student.father_occupation || '' },
-        { id: 'editFatherCity', value: student.father_city || '' },
-        { id: 'editMotherName', value: student.mother_name || '' },
-        { id: 'editMotherPhone', value: student.mother_phone || '' },
-        { id: 'editParentEmail', value: student.parent_email || '' },
-        { id: 'editParentAddress', value: student.parent_address || '' },
-        { id: 'editStudentCategory', value: student.student_category || '' },
-        { id: 'editLastSchool', value: student.last_school || '' },
-        { id: 'editLastClass', value: student.last_class || '' },
-        { id: 'editReasonForLeaving', value: student.reason_for_leaving || '' },
-        { id: 'editSchoolHouse', value: student.school_house || student.sport_house || '' }
-    ];
-
-    fields.forEach(({ id, value }) => {
-        const element = document.getElementById(id);
-        if (element) {
-            element.value = value || '';
-        } else {
-            console.warn(`Element with ID '${id}' not found`);
-        }
-    });
-
-    const genderRadios = document.querySelectorAll('input[name="gender"]');
-    genderRadios.forEach(radio => {
-        radio.checked = (radio.value === student.gender);
-    });
-
-    const statusRadios = document.querySelectorAll('input[name="statusId"]');
-    statusRadios.forEach(radio => {
-        radio.checked = (parseInt(radio.value) === parseInt(student.statusId));
-    });
-
-    const studentStatusRadios = document.querySelectorAll('input[name="student_status"]');
-    studentStatusRadios.forEach(radio => {
-        radio.checked = (radio.value === student.student_status);
-    });
-
-    const avatarElement = document.getElementById('editStudentAvatar');
-    if (avatarElement) {
-        avatarElement.src = student.picture ? `/storage/images/student_avatars/${student.picture}` : defaultAvatar;
-        avatarElement.setAttribute('data-original-src', student.picture ? `/storage/images/student_avatars/${student.picture}` : defaultAvatar);
-    } else {
-        console.warn('Avatar element with ID "editStudentAvatar" not found');
-    }
-
-    // State and LGA handling
-    const stateSelect = document.getElementById('editState');
-    const lgaSelect = document.getElementById('editLocal');
-
-    if (stateSelect && lgaSelect) {
-        // First, load the states/LGA data
-        fetch('/states_lgas.json')
-            .then(response => response.json())
-            .then(data => {
-                // Clear and populate states
-                stateSelect.innerHTML = '<option value="">Select State</option>';
-                data.forEach(state => {
-                    const option = document.createElement('option');
-                    option.value = state.state;
-                    option.textContent = state.state;
-                    stateSelect.appendChild(option);
-                });
-
-                // Set the student's state if available
-                if (student.state) {
-                    stateSelect.value = student.state;
-
-                    // Find the selected state's LGAs
-                    const selectedStateData = data.find(state => state.state === student.state);
-                    if (selectedStateData) {
-                        // Clear and populate LGAs for the selected state
-                        lgaSelect.innerHTML = '<option value="">Select Local Government</option>';
-                        selectedStateData.lgas.forEach(lga => {
-                            const option = document.createElement('option');
-                            option.value = lga;
-                            option.textContent = lga;
-                            lgaSelect.appendChild(option);
-                        });
-
-                        // Set the student's LGA if available
-                        if (student.local) {
-                            lgaSelect.value = student.local;
-                        }
-                    }
-                } else {
-                    // If no state is selected, clear LGAs
-                    lgaSelect.innerHTML = '<option value="">Select Local Government</option>';
-                }
-
-                // Add event listener for state changes
-                stateSelect.addEventListener('change', function() {
-                    lgaSelect.innerHTML = '<option value="">Select Local Government</option>';
-                    const selectedState = data.find(state => state.state === this.value);
-                    if (selectedState) {
-                        selectedState.lgas.forEach(lga => {
-                            const option = document.createElement('option');
-                            option.value = lga;
-                            option.textContent = lga;
-                            lgaSelect.appendChild(option);
-                        });
-                    }
-                });
-            })
-            .catch(error => {
-                console.error('Error loading states and LGAs for edit modal:', error);
-                Swal.fire({
-                    title: 'Warning!',
-                    text: 'Could not load states and LGAs data',
-                    icon: 'warning',
-                    customClass: { confirmButton: 'btn btn-primary' },
-                    buttonsStyling: false
-                });
-            });
-    } else {
-        console.warn('State or LGA select elements not found in edit modal');
-    }
-
-    if (student.dateofbirth) {
-        showage(student.dateofbirth, 'editAge');
-    }
-
-    const form = document.getElementById('editStudentForm');
-    if (form) {
-        form.action = `/student/${student.id}`;
-    }
-}
-
-// Populate view modal with student data
-function populateViewModal(student) {
-    // Student Photo
-    const photoElement = document.getElementById('viewStudentPhoto');
-    if (photoElement) {
-        photoElement.src = student.picture ? `/storage/images/student_avatars/${student.picture}` : defaultAvatar;
-    }
-
-    // Section A: Academic Details
-    document.getElementById('viewAcademicYear').textContent = student.admissionYear || '';
-    document.getElementById('viewRegistrationNo').textContent = student.admissionNo || '';
-    document.getElementById('viewAdmissionDate').textContent = student.admissionDate ? new Date(student.admissionDate).toLocaleDateString() : '';
-    document.getElementById('viewClass').textContent = (student.schoolclass && student.arm) ? `${student.schoolclass} - ${student.arm}` : '';
-    document.getElementById('viewTerm').textContent = student.term_name || '';
-
-    // Category checkboxes
-    const categoryDay = document.getElementById('viewCategoryDay');
-    const categoryBorder = document.getElementById('viewCategoryBorder');
-    if (categoryDay && categoryBorder) {
-        categoryDay.checked = student.student_category === 'Day';
-        categoryBorder.checked = student.student_category === 'Boarding';
-    }
-
-    // Section B: Student Details
-    document.getElementById('viewSurname').textContent = student.lastname || '';
-    document.getElementById('viewFirstName').textContent = student.firstname || '';
-    document.getElementById('viewMiddleName').textContent = student.othername || '';
-    document.getElementById('viewGender').textContent = student.gender || '';
-    document.getElementById('viewBloodGroup').textContent = student.blood_group || '';
-    document.getElementById('viewDateOfBirth').textContent = student.dateofbirth ? new Date(student.dateofbirth).toLocaleDateString() : '';
-    document.getElementById('viewMotherTongue').textContent = student.mother_tongue || '';
-    document.getElementById('viewReligion').textContent = student.religion || '';
-    document.getElementById('viewSportHouse').textContent = student.schoolhouse || student.sport_house || '';
-    document.getElementById('viewMobileNumber').textContent = student.phone_number || '';
-    document.getElementById('viewEmail').textContent = student.email || '';
-    document.getElementById('viewNIN').textContent = student.nin_number || '';
-    document.getElementById('viewCity').textContent = student.city || '';
-    document.getElementById('viewState').textContent = student.state || '';
-    document.getElementById('viewPermanentAddress').textContent = student.permanent_address || '';
-    document.getElementById('viewFutureAmbition').textContent = student.future_ambition || '';
-
-    // Section C: Guardian Details
-    document.getElementById('viewFatherName').textContent = student.father_name || '';
-    document.getElementById('viewMotherName').textContent = student.mother_name || '';
-    document.getElementById('viewOccupation').textContent = student.father_occupation || '';
-    document.getElementById('viewParentCity').textContent = student.father_city || '';
-    document.getElementById('viewParentMobile').textContent = student.father_phone || student.mother_phone || '';
-    document.getElementById('viewParentEmail').textContent = student.parent_email || '';
-    document.getElementById('viewParentAddress').textContent = student.parent_address || '';
-
-    // Section D: Previous School Details
-    document.getElementById('viewSchoolName').textContent = student.last_school || '';
-    document.getElementById('viewPreviousClass').textContent = student.last_class || '';
-    document.getElementById('viewReasonLeaving').textContent = student.reason_for_leaving || '';
-}
-
 // Initialize the student list
 function initializeStudentList() {
-    // Populate states and LGAs
-    populateStates('addState', 'addLocal');
-    populateStates('editState', 'editLocal');
+    console.log('Initializing student list...');
+
     fetchStudents();
 
-    // Initialize view toggle
-    document.getElementById('tableViewBtn')?.addEventListener('click', () => toggleView('table'));
-    document.getElementById('cardViewBtn')?.addEventListener('click', () => toggleView('card'));
+    const tableViewBtn = document.getElementById('tableViewBtn');
+    const cardViewBtn = document.getElementById('cardViewBtn');
 
-    // Filter event listeners
-    document.querySelector('#search-input')?.addEventListener('input', filterData);
-    document.getElementById('schoolclass-filter')?.addEventListener('change', filterData);
-    document.getElementById('status-filter')?.addEventListener('change', filterData);
-    document.getElementById('gender-filter')?.addEventListener('change', filterData);
+    if (tableViewBtn) {
+        tableViewBtn.addEventListener('click', () => toggleView('table'));
+    }
 
-    // Avatar upload for Add Student modal
-    document.getElementById('avatar')?.addEventListener('change', function(event) {
-        const file = event.target.files[0];
-        const preview = document.getElementById('addStudentAvatar');
-        if (file) {
-            if (file.size > 2 * 1024 * 1024) {
-                Swal.fire({
-                    title: "Error!",
-                    text: "File size exceeds 2MB limit.",
-                    icon: "error",
-                    customClass: { confirmButton: "btn btn-info" },
-                    buttonsStyling: false
-                });
-                event.target.value = '';
-                preview.src = defaultAvatar;
-                return;
-            }
-            const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
-            if (!allowedTypes.includes(file.type)) {
-                Swal.fire({
-                    title: "Error!",
-                    text: "Only PNG, JPG, and JPEG files are allowed.",
-                    icon: "error",
-                    customClass: { confirmButton: "btn btn-info" },
-                    buttonsStyling: false
-                });
-                event.target.value = '';
-                preview.src = defaultAvatar;
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                preview.src = e.target.result;
-                preview.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        } else {
-            preview.src = defaultAvatar;
-            preview.style.display = 'block';
-        }
-    });
+    if (cardViewBtn) {
+        cardViewBtn.addEventListener('click', () => toggleView('card'));
+    }
 
-    // Avatar upload for Edit Student modal
-    document.getElementById('editAvatar')?.addEventListener('change', function(event) {
-        const file = event.target.files[0];
-        const preview = document.getElementById('editStudentAvatar');
-        if (file) {
-            if (file.size > 2 * 1024 * 1024) {
-                Swal.fire({
-                    title: "Error!",
-                    text: "File size exceeds 2MB limit.",
-                    icon: "error",
-                    customClass: { confirmButton: "btn btn-info" },
-                    buttonsStyling: false
-                });
-                event.target.value = '';
-                preview.src = preview.getAttribute('data-original-src') || defaultAvatar;
-                return;
-            }
-            const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
-            if (!allowedTypes.includes(file.type)) {
-                Swal.fire({
-                    title: "Error!",
-                    text: "Only PNG, JPG, and JPEG files are allowed.",
-                    icon: "error",
-                    customClass: { confirmButton: "btn btn-info" },
-                    buttonsStyling: false
-                });
-                event.target.value = '';
-                preview.src = preview.getAttribute('data-original-src') || defaultAvatar;
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                preview.src = e.target.result;
-            };
-            reader.readAsDataURL(file);
-        } else {
-            preview.src = preview.getAttribute('data-original-src') || defaultAvatar;
-        }
-    });
+    const searchInput = document.querySelector('#search-input');
+    const schoolClassFilter = document.getElementById('schoolclass-filter');
+    const statusFilter = document.getElementById('status-filter');
+    const genderFilter = document.getElementById('gender-filter');
 
-    // Table row click events (Edit/Delete)
-    document.getElementById('studentTableBody')?.addEventListener('click', function(e) {
-        if (e.target.closest('.view-item-btn')) {
-            const button = e.target.closest('.view-item-btn');
-            const id = button.getAttribute('data-id');
-            console.log('View button clicked for student ID:', id);
-            if (!ensureAxios()) return;
+    if (searchInput) {
+        searchInput.addEventListener('input', filterData);
+    }
 
-            // Try to get more detailed student data with relationships
-            axios.get(`/student/${id}/view`).then((response) => {
-                console.log('Student data received for view:', response.data);
-                const student = response.data.student || response.data;
-                if (!student) {
-                    throw new Error('Student data is empty');
-                }
+    if (schoolClassFilter) {
+        schoolClassFilter.addEventListener('change', filterData);
+    }
 
-                // Populate the view modal with student data
-                populateViewModal(student);
+    if (statusFilter) {
+        statusFilter.addEventListener('change', filterData);
+    }
 
-            }).catch((error) => {
-                console.error('View endpoint failed, trying edit endpoint:', error);
-                // Fallback to edit endpoint if view endpoint doesn't exist
-                axios.get(`/student/${id}/edit`).then((response) => {
-                    console.log('Student data received for view (fallback):', response.data);
-                    const student = response.data.student;
-                    if (!student) {
-                        throw new Error('Student data is empty');
-                    }
-
-                    // Enhanced data merging from multiple sources
-                    const currentStudent = allStudents.find(s => s.id == id);
-                    if (currentStudent) {
-                        student.schoolclass = student.schoolclass || currentStudent.schoolclass;
-                        student.arm = student.arm || currentStudent.arm;
-                    }
-
-                    // Try to get term name from the terms dropdown data
-                    const termSelect = document.getElementById('termid') || document.getElementById('editTermid');
-                    if (termSelect && student.termid) {
-                        const termOption = termSelect.querySelector(`option[value="${student.termid}"]`);
-                        if (termOption) {
-                            student.term_name = termOption.textContent;
-                            console.log('Found term name from dropdown:', student.term_name);
-                        }
-                    }
-
-                    // Try to get school house name from the houses dropdown data
-                    const houseSelects = [
-                        document.getElementById('school_house'),
-                        document.getElementById('sport_house'),
-                        document.querySelector('select[name="school_house"]'),
-                        document.querySelector('select[name="sport_house"]')
-                    ];
-
-                    for (const houseSelect of houseSelects) {
-                        if (houseSelect && (student.school_house_id || student.sport_house_id)) {
-                            const houseId = student.school_house_id || student.sport_house_id;
-                            const houseOption = houseSelect.querySelector(`option[value="${houseId}"]`);
-                            if (houseOption) {
-                                student.school_house = houseOption.textContent;
-                                console.log('Found house name from dropdown:', student.school_house);
-                                break;
-                            }
-                        }
-                    }
-
-                    // Log all available student data for debugging
-                    console.log('Complete student data for debugging:', student);
-                    console.log('Available term-related fields:', {
-                        termid: student.termid,
-                        term_name: student.term_name,
-                        term: student.term,
-                        schoolterm_name: student.schoolterm_name,
-                        schoolterm: student.schoolterm
-                    });
-                    console.log('Available house-related fields:', {
-                        school_house_id: student.school_house_id,
-                        sport_house_id: student.sport_house_id,
-                        school_house: student.school_house,
-                        sport_house: student.sport_house,
-                        house: student.house,
-                        schoolhouse: student.schoolhouse
-                    });
-
-                    // Populate the view modal with student data
-                    populateViewModal(student);
-
-                }).catch((fallbackError) => {
-                    console.error('Error fetching student for view:', {
-                        message: fallbackError.message,
-                        status: fallbackError.response?.status,
-                        data: fallbackError.response?.data
-                    });
-                    Swal.fire({
-                        title: 'Error!',
-                        text: fallbackError.response?.data?.message || 'Failed to load student data. Check console for details.',
-                        icon: 'error',
-                        customClass: { confirmButton: 'btn btn-primary' },
-                        buttonsStyling: false
-                    });
-                });
-            });
-        }
-
-        if (e.target.closest('.edit-item-btn')) {
-            const button = e.target.closest('.edit-item-btn');
-            const id = button.getAttribute('data-id');
-            console.log('Edit button clicked for student ID:', id);
-            if (!ensureAxios()) return;
-
-            axios.get(`/student/${id}/edit`).then((response) => {
-                console.log('Student data received:', response.data);
-                const student = response.data.student;
-                if (!student) {
-                    throw new Error('Student data is empty');
-                }
-
-                populateEditForm(student);
-            }).catch((error) => {
-                console.error('Error fetching student:', {
-                    message: error.message,
-                    status: error.response?.status,
-                    data: error.response?.data
-                });
-                Swal.fire({
-                    title: 'Error!',
-                    text: error.response?.data?.message || 'Failed to load student data. Check console for details.',
-                    icon: 'error',
-                    customClass: { confirmButton: 'btn btn-primary' },
-                    buttonsStyling: false
-                });
-            });
-        }
-
-        if (e.target.closest('.remove-item-btn')) {
-            const button = e.target.closest('.remove-item-btn');
-            const id = button.getAttribute('data-id');
-            const row = document.querySelector(`tr[data-id="${id}"]`);
-            if (!row) {
-                console.error(`Row with data-id="${id}" not found`);
-                Swal.fire({
-                    title: 'Error!',
-                    text: 'Table row not found for deletion',
-                    icon: 'error',
-                    customClass: { confirmButton: 'btn btn-primary' },
-                    buttonsStyling: false
-                });
-                return;
-            }
-            Swal.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
-                icon: 'warning',
-                showCancelButton: true,
-                customClass: { confirmButton: 'btn btn-primary', cancelButton: 'btn btn-light' },
-                buttonsStyling: false
-            }).then((result) => {
-                if (result.isConfirmed && ensureAxios()) {
-                    axios.delete(`/student/${id}/destroy`).then(() => {
-                        row.remove();
-                        studentList.reIndex();
-                        Swal.fire({
-                            title: 'Deleted!',
-                            text: 'Student has been deleted',
-                            icon: 'success',
-                            customClass: { confirmButton: 'btn btn-primary' },
-                            buttonsStyling: false
-                        });
-                    }).catch((error) => {
-                        console.error('Error deleting student:', error);
-                        Swal.fire({
-                            title: 'Error!',
-                            text: error.response?.data?.message || 'Failed to delete student',
-                            icon: 'error',
-                            customClass: { confirmButton: 'btn btn-primary' },
-                            buttonsStyling: false
-                        });
-                    });
-                }
-            });
-        }
-    });
-
-    // Add Student form submission
-    document.getElementById('addStudentForm')?.addEventListener('submit', function (e) {
-        e.preventDefault();
-        if (!ensureAxios()) return;
-
-        const formData = new FormData(this);
-        console.log('Submitting addStudentForm with data:');
-        for (let pair of formData.entries()) {
-            console.log(`${pair[0]}: ${pair[1]}`);
-        }
-
-        axios.post('/student', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        }).then((response) => {
-            console.log('Add student response:', response.data);
-            if (!response.data.success) {
-                throw new Error(response.data.message || 'Failed to add student');
-            }
-            Swal.fire({
-                title: 'Success!',
-                text: response.data.message || 'Student added successfully',
-                icon: 'success',
-                customClass: { confirmButton: 'btn btn-primary' },
-                buttonsStyling: false
-            }).then(() => {
-                fetchStudents();
-                document.getElementById('addStudentForm').reset();
-                document.getElementById('addStudentAvatar').src = defaultAvatar;
-                document.getElementById('addStudentModal').querySelector('.btn-close').click();
-            });
-        }).catch((error) => {
-            console.error('Error adding student:', {
-                message: error.message,
-                status: error.response?.status,
-                data: error.response?.data
-            });
-            let errorMessage = error.response?.data?.message || 'Failed to add student. Check console for details.';
-            if (error.response?.status === 422 && error.response?.data?.errors) {
-                errorMessage = Object.values(error.response.data.errors).flat().join('\n');
-            }
-            Swal.fire({
-                title: 'Error!',
-                text: errorMessage,
-                icon: 'error',
-                customClass: { confirmButton: 'btn btn-primary' },
-                buttonsStyling: false
-            });
-        });
-    });
-
-    // Edit Student form submission
-    document.getElementById('editStudentForm')?.addEventListener('submit', function (e) {
-        e.preventDefault();
-        if (!ensureAxios()) return;
-
-        const id = document.getElementById('editStudentId').value;
-        const formData = new FormData(this);
-        console.log('Submitting editStudentForm with data:');
-        for (let pair of formData.entries()) {
-            console.log(`${pair[0]}: ${pair[1]}`);
-        }
-
-        axios.post(`/student/${id}`, formData, {
-            headers: { 'X-HTTP-Method-Override': 'PATCH', 'Content-Type': 'multipart/form-data' }
-        }).then((response) => {
-            console.log('Edit student response:', response.data);
-            if (!response.data.success) {
-                throw new Error(response.data.message || 'Failed to update student');
-            }
-            Swal.fire({
-                title: 'Success!',
-                text: response.data.message || 'Student updated successfully',
-                icon: 'success',
-                customClass: { confirmButton: 'btn btn-primary' },
-                buttonsStyling: false
-            }).then(() => {
-                fetchStudents();
-                document.getElementById('editStudentModal').querySelector('.btn-close').click();
-            });
-        }).catch((error) => {
-            console.error('Error updating student:', {
-                message: error.message,
-                status: error.response?.status,
-                data: error.response?.data
-            });
-            let errorMessage = error.response?.data?.message || 'Failed to update student. Check console for details.';
-            if (error.response?.status === 422 && error.response?.data?.errors) {
-                errorMessage = Object.values(error.response.data.errors).flat().join('\n');
-            }
-            Swal.fire({
-                title: 'Error!',
-                text: errorMessage,
-                icon: 'error',
-                customClass: { confirmButton: 'btn btn-primary' },
-                buttonsStyling: false
-            });
-        });
-    });
-
-    // Image view modal
-    document.getElementById('imageViewModal')?.addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        const imageSrc = button.getAttribute('data-image');
-        const modalImage = this.querySelector('#enlargedImage');
-        modalImage.src = imageSrc;
-    });
-
-    // Debug permissions
-    console.log('Permissions:', window.appPermissions || 'Not defined');
+    if (genderFilter) {
+        genderFilter.addEventListener('change', filterData);
+    }
 }
 
 // Call initializeStudentList on page load
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing student list...');
     initializeStudentList();
 });
 
-// Add event listeners for view toggle buttons
-document.addEventListener('DOMContentLoaded', function() {
-    document.getElementById('tableViewBtn')?.addEventListener('click', () => toggleView('table'));
-    document.getElementById('cardViewBtn')?.addEventListener('click', () => toggleView('card'));
-});
 </script>
 @endsection
