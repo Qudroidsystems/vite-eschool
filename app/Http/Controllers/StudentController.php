@@ -1314,8 +1314,16 @@ class StudentController extends Controller
         }
     }
 
+
+
+
+
     public function generateReport(Request $request)
 {
+    // Add memory limit for large datasets
+    ini_set('memory_limit', '256M');
+    set_time_limit(300);
+
     \Log::info('=== GENERATE REPORT STARTED ===');
     \Log::info('Request parameters:', $request->all());
 
@@ -1374,7 +1382,7 @@ class StudentController extends Controller
             'studentpicture.picture',
 
             'schoolclass.schoolclass',
-            'schoolarm.arm',
+            'schoolarm.arm as arm_name',
 
             'parentRegistration.father as father_name',
             'parentRegistration.mother as mother_name',
@@ -1418,15 +1426,17 @@ class StudentController extends Controller
             ], 404);
         }
 
+        // Get class name
         $className = 'All Classes';
         if ($request->filled('class_id')) {
-            $class = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->select('schoolclass.schoolclass', 'schoolarm.arm')
+            $class = DB::table('schoolclass')
+                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
                 ->where('schoolclass.id', $request->class_id)
+                ->select('schoolclass.schoolclass', 'schoolarm.arm')
                 ->first();
 
             if ($class) {
-                $className = $class->schoolclass . ' - ' . ($class->arm ?? '');
+                $className = $class->schoolclass . ($class->arm ? ' - ' . $class->arm : '');
             }
         }
 
@@ -1461,6 +1471,8 @@ class StudentController extends Controller
         }
 
         \Log::info('Generating PDF export');
+
+        // First test with simple view
         $pdf = Pdf::loadView('student.reports.student_report_pdf', $data);
         $pdf->setPaper('A4', $orientation);
 

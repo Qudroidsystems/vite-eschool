@@ -3771,6 +3771,16 @@ function generateReport() {
     const format = formatElement.value;
     const orientation = form.querySelector('[name="orientation"]')?.value || 'portrait';
 
+    // Show loading indicator
+    Swal.fire({
+        title: 'Generating Report...',
+        text: 'This may take a moment. Please wait...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
     // Build query parameters
     const params = new URLSearchParams({
         class_id: classId,
@@ -3780,19 +3790,10 @@ function generateReport() {
         orientation: orientation
     });
 
-    // Show loading indicator
-    Swal.fire({
-        title: 'Generating Report...',
-        text: 'Please wait while we generate your report.',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
-
     // Make the request
     axios.get(`/students/report?${params.toString()}`, {
-        responseType: 'blob' // Important for file downloads
+        responseType: 'blob',
+        timeout: 120000 // 2 minutes timeout
     })
     .then(response => {
         Swal.close();
@@ -3823,8 +3824,10 @@ function generateReport() {
         a.click();
 
         // Cleanup
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
+        setTimeout(() => {
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }, 100);
 
         // Close modal
         const modal = bootstrap.Modal.getInstance(document.getElementById('printStudentReportModal'));
@@ -3838,7 +3841,9 @@ function generateReport() {
             text: `Report generated successfully and downloaded as ${format.toUpperCase()}`,
             icon: 'success',
             customClass: { confirmButton: 'btn btn-primary' },
-            buttonsStyling: false
+            buttonsStyling: false,
+            timer: 3000,
+            timerProgressBar: true
         });
     })
     .catch(error => {
@@ -3855,7 +3860,14 @@ function generateReport() {
             } else if (error.response.status === 422) {
                 errorMessage = error.response.data.message || 'Validation error. Please check your selections.';
             } else if (error.response.status === 500) {
-                errorMessage = 'Server error. Please try again later.';
+                if (error.response.data && error.response.data.message) {
+                    errorMessage = error.response.data.message;
+                    if (error.response.data.error && error.response.data.error.includes('armRelation')) {
+                        errorMessage = 'Report generation error. Please contact administrator.';
+                    }
+                } else {
+                    errorMessage = 'Server error. Please try again later.';
+                }
             }
 
             // Try to parse error message from response
@@ -3864,6 +3876,8 @@ function generateReport() {
                     errorMessage = error.response.data.message;
                 }
             }
+        } else if (error.code === 'ECONNABORTED') {
+            errorMessage = 'Request timeout. The report generation is taking too long. Try with fewer students or different filters.';
         }
 
         Swal.fire({
