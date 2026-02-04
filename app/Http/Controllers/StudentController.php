@@ -34,7 +34,6 @@ use App\Models\SubjectRegistrationStatus;
 use App\Traits\ImageManager as TraitsImageManager;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
-use Dompdf\Options;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -1478,30 +1477,33 @@ public function generateReport(Request $request)
                 $logoUrl = $schoolInfo->getLogoUrlAttribute();
                 if ($logoUrl) {
                     try {
-                        // If it's a local storage URL
-                        if (strpos($logoUrl, asset('storage/')) === 0) {
-                            $path = str_replace(asset('storage/'), '', $logoUrl);
-                            $fullPath = storage_path('app/public/' . $path);
+                        // For external URLs (like the one in your logs: https://topclasscollege.ng/storage/school_logos/...)
+                        if (filter_var($logoUrl, FILTER_VALIDATE_URL)) {
+                            // For security, only fetch from your own domain
+                            if (strpos($logoUrl, 'topclasscollege.ng') !== false) {
+                                // Try to fetch the image
+                                $context = stream_context_create([
+                                    'ssl' => [
+                                        'verify_peer' => false,
+                                        'verify_peer_name' => false,
+                                    ],
+                                ]);
 
-                            if (file_exists($fullPath)) {
-                                $imageData = file_get_contents($fullPath);
-                                $mimeType = mime_content_type($fullPath);
-                                $schoolLogoBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($imageData);
+                                $imageData = @file_get_contents($logoUrl, false, $context);
+                                if ($imageData !== false) {
+                                    // Try to determine mime type
+                                    $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                                    $mimeType = $finfo->buffer($imageData);
+
+                                    if (strpos($mimeType, 'image/') === 0) {
+                                        $schoolLogoBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($imageData);
+                                    } else {
+                                        // Default to jpeg if mime type detection fails
+                                        $schoolLogoBase64 = 'data:image/jpeg;base64,' . base64_encode($imageData);
+                                    }
+                                }
                             }
                         }
-                        // If it's an absolute URL to the same domain
-                        else if (strpos($logoUrl, url('/')) === 0) {
-                            // Convert relative URL to absolute path
-                            $relativePath = str_replace(url('/'), '', $logoUrl);
-                            $fullPath = public_path($relativePath);
-
-                            if (file_exists($fullPath)) {
-                                $imageData = file_get_contents($fullPath);
-                                $mimeType = mime_content_type($fullPath);
-                                $schoolLogoBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($imageData);
-                            }
-                        }
-                        // For external URLs, we'll let DomPDF handle it with remote enabled
                     } catch (\Exception $e) {
                         \Log::error('Error converting logo to base64: ' . $e->getMessage());
                     }
@@ -1541,15 +1543,15 @@ public function generateReport(Request $request)
 
             \Log::info('Generating PDF export');
 
-            // Configure DomPDF with options
-            $options = new Options();
-            $options->set('isRemoteEnabled', true);
-            $options->set('isHtml5ParserEnabled', true);
-            $options->set('defaultFont', 'DejaVu Sans');
-
+            // Configure DomPDF with options - USE ARRAY SYNTAX
             $pdf = Pdf::loadView('student.reports.student_report_pdf', $data)
                 ->setPaper('A4', $orientation)
-                ->setOptions($options);
+                ->setOptions([
+                    'isRemoteEnabled' => true,
+                    'isHtml5ParserEnabled' => true,
+                    'defaultFont' => 'DejaVu Sans',
+                    'chroot' => [public_path(), storage_path()], // Add chroot for security
+                ]);
 
             \Log::info('=== GENERATE REPORT COMPLETED SUCCESSFULLY ===');
             return $pdf->download($filename . '.pdf');
