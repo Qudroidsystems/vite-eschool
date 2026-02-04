@@ -6,65 +6,153 @@
     <style>
         body {
             font-family: DejaVu Sans, sans-serif;
-            font-size: 10px;
+            font-size: {{ $orientation == 'landscape' ? '9px' : '10px' }};
+            margin: 0;
+            padding: 0;
         }
-        .header {
-            text-align: center;
+
+        /* School Header Styles */
+        .school-header {
             margin-bottom: 15px;
             border-bottom: 2px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .header-with-logo {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-container {
+            width: 80px;
+            height: 80px;
+        }
+
+        .logo-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .school-info {
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .school-name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+        }
+
+        .school-motto {
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+            margin: 5px 0;
+        }
+
+        .school-contact {
+            font-size: 10px;
+            color: #666;
+            margin: 3px 0;
+        }
+
+        /* Report Header */
+        .report-header {
+            text-align: center;
+            margin: 10px 0 15px 0;
             padding-bottom: 8px;
         }
-        .header h1 {
+
+        .report-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #1E40AF;
             margin: 0;
-            font-size: 18px;
-            color: #333;
         }
-        .header .subtitle {
-            margin-top: 5px;
+
+        .report-subtitle {
+            font-size: 11px;
             color: #666;
-            font-size: 12px;
+            margin: 5px 0;
         }
+
+        /* Summary Section */
         .summary {
             margin-bottom: 15px;
             padding: 8px;
             background-color: #f8f9fa;
             border-radius: 4px;
-            font-size: 11px;
+            font-size: 10px;
         }
+
         .summary table {
             width: 100%;
             border-collapse: collapse;
         }
+
         .summary td {
             padding: 4px;
             border: 1px solid #dee2e6;
         }
+
         .summary .label {
             font-weight: bold;
             background-color: #e9ecef;
         }
-        table {
+
+        /* Main Table */
+        .data-table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 8px;
-            font-size: 9px;
+            font-size: {{ $orientation == 'landscape' ? '8px' : '9px' }};
         }
-        th {
+
+        .data-table th {
             background-color: #405189;
             color: white;
             padding: 6px;
             text-align: left;
             border: 1px solid #dee2e6;
             font-weight: bold;
+            white-space: nowrap;
         }
-        td {
+
+        .data-table td {
             padding: 5px;
             border: 1px solid #dee2e6;
             line-height: 1.3;
         }
-        tr:nth-child(even) {
+
+        .data-table tr:nth-child(even) {
             background-color: #f8f9fa;
         }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-left {
+            text-align: left;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .nowrap {
+            white-space: nowrap;
+        }
+
+        .wrap {
+            word-wrap: break-word;
+        }
+
+        /* Footer */
         .footer {
             margin-top: 20px;
             text-align: center;
@@ -73,37 +161,66 @@
             border-top: 1px solid #dee2e6;
             padding-top: 8px;
         }
-        .student-photo {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 1px solid #ddd;
-        }
-        .text-center {
-            text-align: center;
-        }
-        .text-left {
-            text-align: left;
-        }
-        .text-right {
-            text-align: right;
-        }
-        .nowrap {
-            white-space: nowrap;
-        }
-        .page-number:after {
-            content: counter(page);
-        }
-        .page-count:after {
-            content: counter(pages);
-        }
+
+        /* Column Width Classes */
+        .col-photo { width: 5%; }
+        .col-admission { width: 10%; }
+        .col-name { width: 20%; }
+        .col-gender { width: 5%; }
+        .col-dob { width: 8%; }
+        .col-age { width: 4%; }
+        .col-class { width: 12%; }
+        .col-status { width: 8%; }
+        .col-admission-date { width: 8%; }
+        .col-phone { width: 10%; }
+        .col-state { width: 10%; }
+        .col-local { width: 10%; }
+        .col-religion { width: 8%; }
+        .col-blood { width: 6%; }
+        .col-father { width: 15%; }
+        .col-mother { width: 15%; }
+        .col-guardian { width: 10%; }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>{{ $title }}</h1>
-        <div class="subtitle">
+    @if($include_header)
+    <div class="school-header">
+        @if($include_logo && $school_info && $school_info->getLogoUrlAttribute())
+        <div class="header-with-logo">
+            <div class="logo-container">
+                <img src="{{ $school_info->getLogoUrlAttribute() }}" alt="School Logo">
+            </div>
+            <div class="school-info">
+                <h1 class="school-name">{{ $school_info->school_name ?? 'School Name' }}</h1>
+                @if($school_info && $school_info->school_motto)
+                <p class="school-motto">{{ $school_info->school_motto }}</p>
+                @endif
+                @if($school_info && $school_info->school_address)
+                <p class="school-contact">{{ $school_info->school_address }}</p>
+                @endif
+                @if($school_info && $school_info->school_phone)
+                <p class="school-contact">Tel: {{ $school_info->school_phone }}</p>
+                @endif
+                @if($school_info && $school_info->school_email)
+                <p class="school-contact">Email: {{ $school_info->school_email }}</p>
+                @endif
+            </div>
+            <div class="logo-container"></div> <!-- Empty for balance -->
+        </div>
+        @else
+        <div class="school-info">
+            <h1 class="school-name">{{ $school_info->school_name ?? 'School Name' }}</h1>
+            @if($school_info && $school_info->school_address)
+            <p class="school-contact">{{ $school_info->school_address }}</p>
+            @endif
+        </div>
+        @endif
+    </div>
+    @endif
+
+    <div class="report-header">
+        <h2 class="report-title">{{ $title }}</h2>
+        <div class="report-subtitle">
             Class: {{ $className }} | Generated: {{ $generated }}
         </div>
     </div>
@@ -125,147 +242,140 @@
         </table>
     </div>
 
-    <table>
+    <table class="data-table">
         <thead>
             <tr>
-                @if(in_array('photo', $columns))
-                <th width="5%" class="text-center">Photo</th>
-                @endif
-                @if(in_array('admissionNo', $columns))
-                <th width="10%" class="text-left">Admission No</th>
-                @endif
-                @if(in_array('fullname', $columns))
-                <th width="20%" class="text-left">Full Name</th>
-                @endif
-                @if(in_array('gender', $columns))
-                <th width="5%" class="text-center">Gender</th>
-                @endif
-                @if(in_array('dateofbirth', $columns))
-                <th width="8%" class="text-center">Date of Birth</th>
-                @endif
-                @if(in_array('age', $columns))
-                <th width="4%" class="text-center">Age</th>
-                @endif
-                @if(in_array('class', $columns))
-                <th width="12%" class="text-left">Class</th>
-                @endif
-                @if(in_array('status', $columns))
-                <th width="8%" class="text-center">Status</th>
-                @endif
-                @if(in_array('admission_date', $columns))
-                <th width="8%" class="text-center">Admission Date</th>
-                @endif
-                @if(in_array('phone_number', $columns))
-                <th width="10%" class="text-left">Phone Number</th>
-                @endif
-                @if(in_array('state', $columns))
-                <th width="10%" class="text-left">State</th>
-                @endif
-                @if(in_array('local', $columns))
-                <th width="10%" class="text-left">LGA</th>
-                @endif
-                @if(in_array('religion', $columns))
-                <th width="8%" class="text-center">Religion</th>
-                @endif
-                @if(in_array('blood_group', $columns))
-                <th width="6%" class="text-center">Blood Group</th>
-                @endif
-                @if(in_array('father_name', $columns))
-                <th width="15%" class="text-left">Father's Name</th>
-                @endif
-                @if(in_array('mother_name', $columns))
-                <th width="15%" class="text-left">Mother's Name</th>
-                @endif
-                @if(in_array('guardian_phone', $columns))
-                <th width="10%" class="text-left">Guardian Phone</th>
-                @endif
+                @foreach($columns as $col)
+                    @php
+                        // Determine column width class based on column type
+                        $widthClass = 'col-' . str_replace('_', '-', $col);
+                        if (!in_array($col, ['photo', 'admissionNo', 'fullname', 'gender', 'dateofbirth', 'age', 'class', 'status', 'admission_date', 'phone_number', 'state', 'local', 'religion', 'blood_group', 'father_name', 'mother_name', 'guardian_phone'])) {
+                            $widthClass = 'col-' . substr($col, 0, 10);
+                        }
+                    @endphp
+
+                    @if($col == 'photo')
+                    <th class="text-center {{ $widthClass }}">Photo</th>
+                    @elseif($col == 'admissionNo')
+                    <th class="text-left {{ $widthClass }}">Admission No</th>
+                    @elseif($col == 'fullname')
+                    <th class="text-left {{ $widthClass }}">Full Name</th>
+                    @elseif($col == 'gender')
+                    <th class="text-center {{ $widthClass }}">Gender</th>
+                    @elseif($col == 'dateofbirth')
+                    <th class="text-center {{ $widthClass }}">Date of Birth</th>
+                    @elseif($col == 'age')
+                    <th class="text-center {{ $widthClass }}">Age</th>
+                    @elseif($col == 'class')
+                    <th class="text-left {{ $widthClass }}">Class</th>
+                    @elseif($col == 'status')
+                    <th class="text-center {{ $widthClass }}">Status</th>
+                    @elseif($col == 'admission_date')
+                    <th class="text-center {{ $widthClass }}">Admission Date</th>
+                    @elseif($col == 'phone_number')
+                    <th class="text-left {{ $widthClass }}">Phone Number</th>
+                    @elseif($col == 'state')
+                    <th class="text-left {{ $widthClass }}">State</th>
+                    @elseif($col == 'local')
+                    <th class="text-left {{ $widthClass }}">LGA</th>
+                    @elseif($col == 'religion')
+                    <th class="text-center {{ $widthClass }}">Religion</th>
+                    @elseif($col == 'blood_group')
+                    <th class="text-center {{ $widthClass }}">Blood Group</th>
+                    @elseif($col == 'father_name')
+                    <th class="text-left {{ $widthClass }}">Father's Name</th>
+                    @elseif($col == 'mother_name')
+                    <th class="text-left {{ $widthClass }}">Mother's Name</th>
+                    @elseif($col == 'guardian_phone')
+                    <th class="text-left {{ $widthClass }}">Guardian Phone</th>
+                    @else
+                    <th class="text-left {{ $widthClass }}">{{ ucwords(str_replace('_', ' ', $col)) }}</th>
+                    @endif
+                @endforeach
             </tr>
         </thead>
         <tbody>
             @foreach($students as $student)
             <tr>
-                @if(in_array('photo', $columns))
-                <td class="text-center">
-                    <div style="width: 30px; height: 30px; background-color: #ddd; border-radius: 50%; margin: 0 auto;"></div>
-                </td>
-                @endif
-                @if(in_array('admissionNo', $columns))
-                <td class="text-left">{{ $student->admissionNo ?? 'N/A' }}</td>
-                @endif
-                @if(in_array('fullname', $columns))
-                <td class="text-left">
-                    {{ ($student->lastname ?? '') . ' ' . ($student->firstname ?? '') . ' ' . ($student->othername ?? '') }}
-                </td>
-                @endif
-                @if(in_array('gender', $columns))
-                <td class="text-center">{{ $student->gender ?? 'N/A' }}</td>
-                @endif
-                @if(in_array('dateofbirth', $columns))
-                <td class="text-center nowrap">
-                    @if($student->dateofbirth)
-                    {{ \Carbon\Carbon::parse($student->dateofbirth)->format('d/m/Y') }}
+                @foreach($columns as $col)
+                    @php
+                        $widthClass = 'col-' . str_replace('_', '-', $col);
+                        if (!in_array($col, ['photo', 'admissionNo', 'fullname', 'gender', 'dateofbirth', 'age', 'class', 'status', 'admission_date', 'phone_number', 'state', 'local', 'religion', 'blood_group', 'father_name', 'mother_name', 'guardian_phone'])) {
+                            $widthClass = 'col-' . substr($col, 0, 10);
+                        }
+                    @endphp
+
+                    @if($col == 'photo')
+                    <td class="text-center {{ $widthClass }}">
+                        <div style="width: 30px; height: 30px; background-color: #ddd; border-radius: 50%; margin: 0 auto;"></div>
+                    </td>
+                    @elseif($col == 'admissionNo')
+                    <td class="text-left {{ $widthClass }}">{{ $student->admissionNo ?? 'N/A' }}</td>
+                    @elseif($col == 'fullname')
+                    <td class="text-left {{ $widthClass }}">
+                        {{ ($student->lastname ?? '') . ' ' . ($student->firstname ?? '') . ' ' . ($student->othername ?? '') }}
+                    </td>
+                    @elseif($col == 'gender')
+                    <td class="text-center {{ $widthClass }}">{{ $student->gender ?? 'N/A' }}</td>
+                    @elseif($col == 'dateofbirth')
+                    <td class="text-center {{ $widthClass }} nowrap">
+                        @if($student->dateofbirth)
+                            {{ \Carbon\Carbon::parse($student->dateofbirth)->format('d/m/Y') }}
+                        @else
+                            N/A
+                        @endif
+                    </td>
+                    @elseif($col == 'age')
+                    <td class="text-center {{ $widthClass }}">{{ $student->age ?? 'N/A' }}</td>
+                    @elseif($col == 'class')
+                    <td class="text-left {{ $widthClass }}">
+                        {{ $student->schoolclass ?? 'N/A' }}{{ $student->arm_name ? ' - ' . $student->arm_name : '' }}
+                    </td>
+                    @elseif($col == 'status')
+                    <td class="text-center {{ $widthClass }}">
+                        @if($student->statusId == 1)
+                            Old
+                        @elseif($student->statusId == 2)
+                            New
+                        @else
+                            N/A
+                        @endif
+                        @if($student->student_status)
+                            <br><small>({{ $student->student_status }})</small>
+                        @endif
+                    </td>
+                    @elseif($col == 'admission_date')
+                    <td class="text-center {{ $widthClass }} nowrap">
+                        @if($student->admission_date)
+                            {{ \Carbon\Carbon::parse($student->admission_date)->format('d/m/Y') }}
+                        @else
+                            N/A
+                        @endif
+                    </td>
+                    @elseif($col == 'phone_number')
+                    <td class="text-left {{ $widthClass }}">{{ $student->phone_number ?? 'N/A' }}</td>
+                    @elseif($col == 'state')
+                    <td class="text-left {{ $widthClass }}">{{ $student->state ?? 'N/A' }}</td>
+                    @elseif($col == 'local')
+                    <td class="text-left {{ $widthClass }}">{{ $student->local ?? 'N/A' }}</td>
+                    @elseif($col == 'religion')
+                    <td class="text-center {{ $widthClass }}">{{ $student->religion ?? 'N/A' }}</td>
+                    @elseif($col == 'blood_group')
+                    <td class="text-center {{ $widthClass }}">{{ $student->blood_group ?? 'N/A' }}</td>
+                    @elseif($col == 'father_name')
+                    <td class="text-left {{ $widthClass }}">{{ $student->father_name ?? 'N/A' }}</td>
+                    @elseif($col == 'mother_name')
+                    <td class="text-left {{ $widthClass }}">{{ $student->mother_name ?? 'N/A' }}</td>
+                    @elseif($col == 'guardian_phone')
+                    <td class="text-left {{ $widthClass }}">
+                        {{ $student->father_phone ?? $student->mother_phone ?? 'N/A' }}
+                    </td>
                     @else
-                    N/A
+                    <td class="text-left {{ $widthClass }}">
+                        {{ $student->$col ?? 'N/A' }}
+                    </td>
                     @endif
-                </td>
-                @endif
-                @if(in_array('age', $columns))
-                <td class="text-center">{{ $student->age ?? 'N/A' }}</td>
-                @endif
-                @if(in_array('class', $columns))
-                <td class="text-left">
-                    {{ $student->schoolclass ?? 'N/A' }}{{ $student->arm_name ? ' - ' . $student->arm_name : '' }}
-                </td>
-                @endif
-                @if(in_array('status', $columns))
-                <td class="text-center">
-                    @if($student->statusId == 1)
-                    Old
-                    @elseif($student->statusId == 2)
-                    New
-                    @else
-                    N/A
-                    @endif
-                    @if($student->student_status)
-                    <br><small>({{ $student->student_status }})</small>
-                    @endif
-                </td>
-                @endif
-                @if(in_array('admission_date', $columns))
-                <td class="text-center nowrap">
-                    @if($student->admission_date)
-                    {{ \Carbon\Carbon::parse($student->admission_date)->format('d/m/Y') }}
-                    @else
-                    N/A
-                    @endif
-                </td>
-                @endif
-                @if(in_array('phone_number', $columns))
-                <td class="text-left">{{ $student->phone_number ?? 'N/A' }}</td>
-                @endif
-                @if(in_array('state', $columns))
-                <td class="text-left">{{ $student->state ?? 'N/A' }}</td>
-                @endif
-                @if(in_array('local', $columns))
-                <td class="text-left">{{ $student->local ?? 'N/A' }}</td>
-                @endif
-                @if(in_array('religion', $columns))
-                <td class="text-center">{{ $student->religion ?? 'N/A' }}</td>
-                @endif
-                @if(in_array('blood_group', $columns))
-                <td class="text-center">{{ $student->blood_group ?? 'N/A' }}</td>
-                @endif
-                @if(in_array('father_name', $columns))
-                <td class="text-left">{{ $student->father_name ?? 'N/A' }}</td>
-                @endif
-                @if(in_array('mother_name', $columns))
-                <td class="text-left">{{ $student->mother_name ?? 'N/A' }}</td>
-                @endif
-                @if(in_array('guardian_phone', $columns))
-                <td class="text-left">
-                    {{ $student->father_phone ?? $student->mother_phone ?? 'N/A' }}
-                </td>
-                @endif
+                @endforeach
             </tr>
             @endforeach
         </tbody>

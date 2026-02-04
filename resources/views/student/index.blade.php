@@ -872,7 +872,7 @@ use Spatie\Permission\Models\Role;
     <!-- ================================================= -->
     <!--        PRINT / EXPORT REPORT MODAL               -->
     <!-- ================================================= -->
-    <div class="modal fade" id="printStudentReportModal" tabindex="-1" aria-labelledby="printStudentReportModalLabel" aria-hidden="true">
+    {{-- <div class="modal fade" id="printStudentReportModal" tabindex="-1" aria-labelledby="printStudentReportModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-soft-success">
@@ -975,7 +975,191 @@ use Spatie\Permission\Models\Role;
                 </div>
             </div>
         </div>
+    </div> --}}
+
+    <!-- Print/Export Report Modal -->
+<div class="modal fade" id="printStudentReportModal" tabindex="-1" aria-labelledby="printStudentReportModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-soft-success">
+                <h5 class="modal-title" id="printStudentReportModalLabel">
+                    <i class="ri-printer-line me-2"></i> Generate Student Report
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <form id="printReportForm">
+                    <!-- Filters Section -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Class</label>
+                            <select class="form-select" name="class_id">
+                                <option value="">— All Classes —</option>
+                                @foreach ($schoolclasses as $class)
+                                    <option value="{{ $class->id }}">{{ $class->class_display }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status">
+                                <option value="">— All —</option>
+                                <option value="1">Old Students</option>
+                                <option value="2">New Students</option>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Column Selection with Drag & Drop -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            <i class="ri-draggable me-1"></i> Select & Arrange Columns (Drag to reorder)
+                        </label>
+                        <div class="row g-3" id="columnsContainer">
+                            <input type="hidden" name="columns_order" id="columnsOrderInput" value="">
+                            @php
+                                $availableColumns = [
+                                    'photo'          => 'Photo',
+                                    'admissionNo'    => 'Admission No',
+                                    'fullname'       => 'Full Name',
+                                    'gender'         => 'Gender',
+                                    'dateofbirth'    => 'Date of Birth',
+                                    'age'            => 'Age',
+                                    'class'          => 'Class / Arm',
+                                    'status'         => 'Student Status',
+                                    'admission_date' => 'Admission Date',
+                                    'phone_number'   => 'Phone Number',
+                                    'state'          => 'State of Origin',
+                                    'local'          => 'LGA',
+                                    'religion'       => 'Religion',
+                                    'blood_group'    => 'Blood Group',
+                                    'father_name'    => "Father's Name",
+                                    'mother_name'    => "Mother's Name",
+                                    'guardian_phone' => 'Guardian Phone',
+                                ];
+                            @endphp
+                            @foreach ($availableColumns as $key => $label)
+                                <div class="col-md-4 col-sm-6">
+                                    <div class="form-check border rounded p-2 mb-2 bg-light cursor-move">
+                                        <input class="form-check-input" type="checkbox" name="columns[]" value="{{ $key }}" id="col_{{ $key }}"
+                                            {{ in_array($key, ['admissionNo','fullname','class','gender']) ? 'checked' : '' }}>
+                                        <label class="form-check-label w-100 cursor-move" for="col_{{ $key }}">
+                                            <i class="ri-draggable me-1"></i> {{ $label }}
+                                        </label>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <small class="text-muted">Drag columns to arrange their order in the report</small>
+                    </div>
+
+                    <!-- Report Header Options -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0"><i class="ri-file-info-line me-2"></i> Report Header Options</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" role="switch" name="include_header" id="includeHeader" checked>
+                                        <label class="form-check-label" for="includeHeader">
+                                            <i class="ri-building-line me-1"></i> Include School Header
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" role="switch" name="include_logo" id="includeLogo" checked>
+                                        <label class="form-check-label" for="includeLogo">
+                                            <i class="ri-image-line me-1"></i> Include School Logo
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="orientation" class="form-label">Page Orientation</label>
+                                        <select class="form-select" name="orientation" id="orientation">
+                                            <option value="portrait">Portrait</option>
+                                            <option value="landscape">Landscape</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Export Format -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Export Format</label>
+                        <div class="d-flex gap-3 flex-wrap">
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="format" id="format_pdf" value="pdf" checked>
+                                <label class="form-check-label" for="format_pdf">
+                                    <i class="ri-file-pdf-2-line text-danger me-1"></i> PDF
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="format" id="format_excel" value="excel">
+                                <label class="form-check-label" for="format_excel">
+                                    <i class="ri-file-excel-2-line text-success me-1"></i> Excel
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Preview -->
+                    <div class="alert alert-info small mb-0">
+                        <div class="d-flex align-items-center">
+                            <i class="ri-information-fill me-2"></i>
+                            <div>
+                                <strong>Preview:</strong>
+                                <span id="columnOrderPreview">admissionNo, fullname, class, gender</span>
+                                <br>
+                                <small>Only students matching the selected filters will be included.</small>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" id="generateReportBtn">
+                    <i class="ri-printer-line me-1"></i> Generate & Download
+                </button>
+            </div>
+        </div>
     </div>
+</div>
+
+<!-- Add SortableJS library -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+
+<style>
+    .cursor-move {
+        cursor: move;
+    }
+
+    .sortable-ghost {
+        opacity: 0.4;
+        background-color: #f8f9fa;
+    }
+
+    .sortable-chosen {
+        background-color: #405189 !important;
+        color: white !important;
+    }
+
+    .sortable-chosen .form-check-label {
+        color: white !important;
+    }
+</style>
 
         <!-- Add Student Modal -->
         <div id="addStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
@@ -3423,43 +3607,234 @@ function initializeCheckboxes() {
     });
 }
 
-// Initialize the student list
-function initializeStudentList() {
-    console.log('Initializing student list...');
+// ============================================================================
+// DRAG AND DROP COLUMN ORDERING
+// ============================================================================
 
-    fetchStudents();
+function initializeColumnOrdering() {
+    const columnContainer = document.getElementById('columnsContainer');
+    const hiddenOrderInput = document.getElementById('columnsOrderInput');
 
-    const tableViewBtn = document.getElementById('tableViewBtn');
-    const cardViewBtn = document.getElementById('cardViewBtn');
+    if (!columnContainer || !hiddenOrderInput) return;
 
-    if (tableViewBtn) {
-        tableViewBtn.addEventListener('click', () => toggleView('table'));
+    // Initialize SortableJS
+    new Sortable(columnContainer, {
+        animation: 150,
+        ghostClass: 'bg-light',
+        chosenClass: 'bg-primary text-white',
+        dragClass: 'bg-primary text-white',
+        filter: '.form-check-input', // Ignore the checkbox
+        onEnd: function() {
+            updateColumnOrder();
+        }
+    });
+
+    function updateColumnOrder() {
+        const checkboxes = columnContainer.querySelectorAll('.form-check');
+        const order = [];
+
+        checkboxes.forEach(checkbox => {
+            const input = checkbox.querySelector('input[type="checkbox"]');
+            if (input && input.checked) {
+                order.push(input.value);
+            }
+        });
+
+        hiddenOrderInput.value = order.join(',');
+        updatePreview();
+        console.log('Column order updated:', order);
     }
 
-    if (cardViewBtn) {
-        cardViewBtn.addEventListener('click', () => toggleView('card'));
+    // Update order when checkboxes change
+    columnContainer.querySelectorAll('.form-check-input').forEach(checkbox => {
+        checkbox.addEventListener('change', updateColumnOrder);
+    });
+
+    // Initial update
+    updateColumnOrder();
+}
+
+// ============================================================================
+// REPORT GENERATION
+// ============================================================================
+
+function updatePreview() {
+    const form = document.getElementById('printReportForm');
+    if (!form) return;
+
+    const selectedColumns = Array.from(form.querySelectorAll('input[name="columns[]"]:checked'))
+        .map(cb => {
+            const label = cb.parentElement.querySelector('.form-check-label');
+            return label ? label.textContent.trim().replace('⣿ ', '') : cb.value;
+        });
+
+    const preview = document.getElementById('columnOrderPreview');
+    if (preview) {
+        preview.textContent = selectedColumns.join(', ') || 'No columns selected';
+    }
+}
+
+function generateReport() {
+    const form = document.getElementById('printReportForm');
+    if (!form) {
+        console.error('Report form not found');
+        return;
     }
 
-    const searchInput = document.querySelector('#search-input');
-    const schoolClassFilter = document.getElementById('schoolclass-filter');
-    const statusFilter = document.getElementById('status-filter');
-    const genderFilter = document.getElementById('gender-filter');
+    // Get selected columns
+    const selectedColumns = Array.from(form.querySelectorAll('input[name="columns[]"]:checked'))
+        .map(cb => cb.value);
 
-    if (searchInput) {
-        searchInput.addEventListener('input', filterData);
+    if (selectedColumns.length === 0) {
+        Swal.fire({
+            title: 'Warning!',
+            text: 'Please select at least one column to include in the report.',
+            icon: 'warning',
+            customClass: { confirmButton: 'btn btn-primary' },
+            buttonsStyling: false
+        });
+        return;
     }
 
-    if (schoolClassFilter) {
-        schoolClassFilter.addEventListener('change', filterData);
+    // Get form values
+    const classId = form.querySelector('[name="class_id"]').value;
+    const status = form.querySelector('[name="status"]').value;
+    const formatElement = form.querySelector('[name="format"]:checked');
+    const columnsOrderInput = form.querySelector('[name="columns_order"]');
+    const includeHeader = form.querySelector('[name="include_header"]').checked;
+    const includeLogo = form.querySelector('[name="include_logo"]').checked;
+    const orientation = form.querySelector('[name="orientation"]').value;
+
+    if (!formatElement) {
+        Swal.fire({
+            title: 'Error!',
+            text: 'Please select an export format (PDF or Excel).',
+            icon: 'error',
+            customClass: { confirmButton: 'btn btn-primary' },
+            buttonsStyling: false
+        });
+        return;
     }
 
-    if (statusFilter) {
-        statusFilter.addEventListener('change', filterData);
-    }
+    const format = formatElement.value;
 
-    if (genderFilter) {
-        genderFilter.addEventListener('change', filterData);
-    }
+    // Show loading indicator
+    Swal.fire({
+        title: 'Generating Report...',
+        text: 'This may take a moment. Please wait...',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // Build query parameters
+    const params = new URLSearchParams({
+        class_id: classId,
+        status: status,
+        columns: selectedColumns.join(','),
+        columns_order: columnsOrderInput?.value || '',
+        format: format,
+        orientation: orientation,
+        include_header: includeHeader ? '1' : '0',
+        include_logo: includeLogo ? '1' : '0'
+    });
+
+    // Make the request
+    axios.get(`/students/report?${params.toString()}`, {
+        responseType: 'blob',
+        timeout: 120000 // 2 minutes timeout
+    })
+    .then(response => {
+        Swal.close();
+
+        // Create a blob from the response
+        const blob = new Blob([response.data], {
+            type: response.headers['content-type']
+        });
+
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+
+        // Get filename from content-disposition header or generate one
+        const contentDisposition = response.headers['content-disposition'];
+        let filename = 'student-report.' + (format === 'pdf' ? 'pdf' : 'xlsx');
+
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+            if (filenameMatch && filenameMatch[1]) {
+                filename = filenameMatch[1];
+            }
+        }
+
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+
+        // Cleanup
+        setTimeout(() => {
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }, 100);
+
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('printStudentReportModal'));
+        if (modal) {
+            modal.hide();
+        }
+
+        // Show success message
+        Swal.fire({
+            title: 'Success!',
+            text: `Report generated successfully and downloaded as ${format.toUpperCase()}`,
+            icon: 'success',
+            customClass: { confirmButton: 'btn btn-primary' },
+            buttonsStyling: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    })
+    .catch(error => {
+        Swal.close();
+
+        console.error('Error generating report:', error);
+
+        let errorMessage = 'Failed to generate report. Please try again.';
+
+        if (error.response) {
+            // Server responded with error status
+            if (error.response.status === 404) {
+                errorMessage = 'No students found matching the selected filters.';
+            } else if (error.response.status === 422) {
+                errorMessage = error.response.data.message || 'Validation error. Please check your selections.';
+            } else if (error.response.status === 500) {
+                if (error.response.data && error.response.data.message) {
+                    errorMessage = error.response.data.message;
+                } else {
+                    errorMessage = 'Server error. Please try again later.';
+                }
+            }
+
+            // Try to parse error message from response
+            if (error.response.data && typeof error.response.data === 'object') {
+                if (error.response.data.message) {
+                    errorMessage = error.response.data.message;
+                }
+            }
+        } else if (error.code === 'ECONNABORTED') {
+            errorMessage = 'Request timeout. The report generation is taking too long. Try with fewer students or different filters.';
+        }
+
+        Swal.fire({
+            title: 'Error!',
+            text: errorMessage,
+            icon: 'error',
+            customClass: { confirmButton: 'btn btn-primary' },
+            buttonsStyling: false
+        });
+    });
 }
 
 // ============================================================================
@@ -3696,6 +4071,55 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// Initialize the student list and other functionality
+function initializeStudentList() {
+    console.log('Initializing student list...');
+
+    fetchStudents();
+
+    const tableViewBtn = document.getElementById('tableViewBtn');
+    const cardViewBtn = document.getElementById('cardViewBtn');
+
+    if (tableViewBtn) {
+        tableViewBtn.addEventListener('click', () => toggleView('table'));
+    }
+
+    if (cardViewBtn) {
+        cardViewBtn.addEventListener('click', () => toggleView('card'));
+    }
+
+    const searchInput = document.querySelector('#search-input');
+    const schoolClassFilter = document.getElementById('schoolclass-filter');
+    const statusFilter = document.getElementById('status-filter');
+    const genderFilter = document.getElementById('gender-filter');
+
+    if (searchInput) {
+        searchInput.addEventListener('input', filterData);
+    }
+
+    if (schoolClassFilter) {
+        schoolClassFilter.addEventListener('change', filterData);
+    }
+
+    if (statusFilter) {
+        statusFilter.addEventListener('change', filterData);
+    }
+
+    if (genderFilter) {
+        genderFilter.addEventListener('change', filterData);
+    }
+
+    // Initialize report generation
+    const generateReportBtn = document.getElementById('generateReportBtn');
+    const printReportForm = document.getElementById('printReportForm');
+
+    if (generateReportBtn && printReportForm) {
+        generateReportBtn.addEventListener('click', generateReport);
+        printReportForm.addEventListener('change', updatePreview);
+        initializeColumnOrdering();
+    }
+}
+
 // Initialize states dropdowns when the page loads
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing student list and states dropdowns...');
@@ -3713,181 +4137,6 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, initializing student list...');
     initializeStudentList();
 });
-</script>
-<script>
-// ============================================================================
-// REPORT GENERATION
-// ============================================================================
 
-document.addEventListener('DOMContentLoaded', function() {
-    const generateReportBtn = document.getElementById('generateReportBtn');
-    const printReportForm = document.getElementById('printReportForm');
-
-    if (generateReportBtn && printReportForm) {
-        generateReportBtn.addEventListener('click', function() {
-            generateReport();
-        });
-    }
-});
-
-function generateReport() {
-    const form = document.getElementById('printReportForm');
-    if (!form) {
-        console.error('Report form not found');
-        return;
-    }
-
-    // Get selected columns
-    const selectedColumns = Array.from(form.querySelectorAll('input[name="columns[]"]:checked'))
-        .map(cb => cb.value);
-
-    if (selectedColumns.length === 0) {
-        Swal.fire({
-            title: 'Warning!',
-            text: 'Please select at least one column to include in the report.',
-            icon: 'warning',
-            customClass: { confirmButton: 'btn btn-primary' },
-            buttonsStyling: false
-        });
-        return;
-    }
-
-    // Get form values
-    const classId = form.querySelector('[name="class_id"]').value;
-    const status = form.querySelector('[name="status"]').value;
-    const formatElement = form.querySelector('[name="format"]:checked');
-
-    if (!formatElement) {
-        Swal.fire({
-            title: 'Error!',
-            text: 'Please select an export format (PDF or Excel).',
-            icon: 'error',
-            customClass: { confirmButton: 'btn btn-primary' },
-            buttonsStyling: false
-        });
-        return;
-    }
-
-    const format = formatElement.value;
-    const orientation = form.querySelector('[name="orientation"]')?.value || 'portrait';
-
-    // Show loading indicator
-    Swal.fire({
-        title: 'Generating Report...',
-        text: 'This may take a moment. Please wait...',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
-
-    // Build query parameters
-    const params = new URLSearchParams({
-        class_id: classId,
-        status: status,
-        columns: selectedColumns.join(','),
-        format: format,
-        orientation: orientation
-    });
-
-    // Make the request
-    axios.get(`/students/report?${params.toString()}`, {
-        responseType: 'blob',
-        timeout: 120000 // 2 minutes timeout
-    })
-    .then(response => {
-        Swal.close();
-
-        // Create a blob from the response
-        const blob = new Blob([response.data], {
-            type: response.headers['content-type']
-        });
-
-        // Create download link
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-
-        // Get filename from content-disposition header or generate one
-        const contentDisposition = response.headers['content-disposition'];
-        let filename = 'student-report.' + (format === 'pdf' ? 'pdf' : 'xlsx');
-
-        if (contentDisposition) {
-            const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-            if (filenameMatch && filenameMatch[1]) {
-                filename = filenameMatch[1];
-            }
-        }
-
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-
-        // Cleanup
-        setTimeout(() => {
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
-        }, 100);
-
-        // Close modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('printStudentReportModal'));
-        if (modal) {
-            modal.hide();
-        }
-
-        // Show success message
-        Swal.fire({
-            title: 'Success!',
-            text: `Report generated successfully and downloaded as ${format.toUpperCase()}`,
-            icon: 'success',
-            customClass: { confirmButton: 'btn btn-primary' },
-            buttonsStyling: false,
-            timer: 3000,
-            timerProgressBar: true
-        });
-    })
-    .catch(error => {
-        Swal.close();
-
-        console.error('Error generating report:', error);
-
-        let errorMessage = 'Failed to generate report. Please try again.';
-
-        if (error.response) {
-            // Server responded with error status
-            if (error.response.status === 404) {
-                errorMessage = 'No students found matching the selected filters.';
-            } else if (error.response.status === 422) {
-                errorMessage = error.response.data.message || 'Validation error. Please check your selections.';
-            } else if (error.response.status === 500) {
-                if (error.response.data && error.response.data.message) {
-                    errorMessage = error.response.data.message;
-                    if (error.response.data.error && error.response.data.error.includes('armRelation')) {
-                        errorMessage = 'Report generation error. Please contact administrator.';
-                    }
-                } else {
-                    errorMessage = 'Server error. Please try again later.';
-                }
-            }
-
-            // Try to parse error message from response
-            if (error.response.data && typeof error.response.data === 'object') {
-                if (error.response.data.message) {
-                    errorMessage = error.response.data.message;
-                }
-            }
-        } else if (error.code === 'ECONNABORTED') {
-            errorMessage = 'Request timeout. The report generation is taking too long. Try with fewer students or different filters.';
-        }
-
-        Swal.fire({
-            title: 'Error!',
-            text: errorMessage,
-            icon: 'error',
-            customClass: { confirmButton: 'btn btn-primary' },
-            buttonsStyling: false
-        });
-    });
-}
 </script>
 @endsection

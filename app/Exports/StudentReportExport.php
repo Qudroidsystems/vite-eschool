@@ -8,7 +8,6 @@ use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithEvents;
-use Maatwebsite\Excel\Concerns\WithMultipleSheets;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
@@ -57,11 +56,7 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
         ];
 
         foreach ($columns as $col) {
-            if (isset($map[$col])) {
-                $headings[] = $map[$col];
-            } else {
-                $headings[] = ucwords(str_replace('_', ' ', $col));
-            }
+            $headings[] = $map[$col] ?? ucwords(str_replace('_', ' ', $col));
         }
 
         return $headings;
@@ -75,7 +70,7 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
         foreach ($columns as $col) {
             switch ($col) {
                 case 'photo':
-                    $row[] = $student->picture && $student->picture !== 'unnamed.jpg' ? 'Yes' : 'No';
+                    $row[] = ($student->picture && $student->picture !== 'unnamed.jpg') ? 'Yes' : 'No';
                     break;
 
                 case 'fullname':
@@ -131,7 +126,6 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
                     break;
 
                 default:
-                    // Handle other columns
                     if (property_exists($student, $col)) {
                         $value = $student->$col;
                         $row[] = $value !== null && $value !== '' ? $value : 'N/A';
@@ -147,11 +141,9 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
 
     public function styles(Worksheet $sheet)
     {
-        // Get the total rows (students + header)
         $totalRows = $this->data['students']->count() + 4;
 
         return [
-            // Style the header row (row 5 after we insert title rows)
             5 => [
                 'font' => [
                     'bold' => true,
@@ -167,7 +159,6 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
                 ]
             ],
 
-            // Zebra striping for data rows
             'A6:A' . $totalRows => [
                 'fill' => [
                     'fillType' => Fill::FILL_SOLID,
@@ -175,7 +166,6 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
                 ]
             ],
 
-            // Borders for all cells
             'A5:' . $sheet->getHighestColumn() . $totalRows => [
                 'borders' => [
                     'allBorders' => [
@@ -196,51 +186,99 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
                 // Insert title rows at the top
                 $sheet->insertNewRowBefore(1, 4);
 
-                // School/Report Title
-                $sheet->setCellValue('A1', 'STUDENT MASTER LIST REPORT');
-                $sheet->mergeCells('A1:' . $sheet->getHighestColumn() . '1');
-                $sheet->getStyle('A1')->applyFromArray([
-                    'font' => [
-                        'bold' => true,
-                        'size' => 16,
-                        'color' => ['rgb' => '1E40AF']
-                    ],
-                    'alignment' => [
-                        'horizontal' => Alignment::HORIZONTAL_CENTER,
-                        'vertical' => Alignment::VERTICAL_CENTER
-                    ]
-                ]);
+                // School header if included
+                if ($this->data['include_header'] ?? true) {
+                    $schoolInfo = $this->data['school_info'] ?? null;
 
-                // Class information
-                $sheet->setCellValue('A2', 'Class: ' . $this->data['className']);
-                $sheet->mergeCells('A2:' . $sheet->getHighestColumn() . '2');
-                $sheet->getStyle('A2')->applyFromArray([
-                    'font' => [
-                        'bold' => true,
-                        'size' => 12
-                    ],
-                    'alignment' => [
-                        'horizontal' => Alignment::HORIZONTAL_CENTER
-                    ]
-                ]);
+                    if ($schoolInfo) {
+                        $sheet->setCellValue('A1', $schoolInfo->school_name ?? 'STUDENT MASTER LIST REPORT');
+                        $sheet->mergeCells('A1:' . $sheet->getHighestColumn() . '1');
+                        $sheet->getStyle('A1')->applyFromArray([
+                            'font' => [
+                                'bold' => true,
+                                'size' => 16,
+                                'color' => ['rgb' => '1E40AF']
+                            ],
+                            'alignment' => [
+                                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                                'vertical' => Alignment::VERTICAL_CENTER
+                            ]
+                        ]);
 
-                // Report details
-                $details = 'Generated: ' . $this->data['generated'] .
-                          ' | Total Students: ' . $this->data['total'] .
-                          ' | Males: ' . $this->data['males'] .
-                          ' | Females: ' . $this->data['females'];
+                        if ($schoolInfo->school_motto) {
+                            $sheet->setCellValue('A2', $schoolInfo->school_motto);
+                            $sheet->mergeCells('A2:' . $sheet->getHighestColumn() . '2');
+                            $sheet->getStyle('A2')->applyFromArray([
+                                'font' => [
+                                    'italic' => true,
+                                    'size' => 12
+                                ],
+                                'alignment' => [
+                                    'horizontal' => Alignment::HORIZONTAL_CENTER
+                                ]
+                            ]);
+                        }
 
-                $sheet->setCellValue('A3', $details);
-                $sheet->mergeCells('A3:' . $sheet->getHighestColumn() . '3');
-                $sheet->getStyle('A3')->applyFromArray([
-                    'font' => [
-                        'italic' => true,
-                        'size' => 10
-                    ],
-                    'alignment' => [
-                        'horizontal' => Alignment::HORIZONTAL_CENTER
-                    ]
-                ]);
+                        $details = 'Class: ' . $this->data['className'] .
+                                  ' | Generated: ' . $this->data['generated'] .
+                                  ' | Total Students: ' . $this->data['total'];
+                        $sheet->setCellValue('A3', $details);
+                        $sheet->mergeCells('A3:' . $sheet->getHighestColumn() . '3');
+                        $sheet->getStyle('A3')->applyFromArray([
+                            'font' => ['size' => 10],
+                            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+                        ]);
+                    } else {
+                        $sheet->setCellValue('A1', 'STUDENT MASTER LIST REPORT');
+                        $sheet->mergeCells('A1:' . $sheet->getHighestColumn() . '1');
+                        $sheet->getStyle('A1')->applyFromArray([
+                            'font' => [
+                                'bold' => true,
+                                'size' => 16,
+                                'color' => ['rgb' => '1E40AF']
+                            ],
+                            'alignment' => [
+                                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                                'vertical' => Alignment::VERTICAL_CENTER
+                            ]
+                        ]);
+
+                        $details = 'Class: ' . $this->data['className'] .
+                                  ' | Generated: ' . $this->data['generated'] .
+                                  ' | Total Students: ' . $this->data['total'];
+                        $sheet->setCellValue('A2', $details);
+                        $sheet->mergeCells('A2:' . $sheet->getHighestColumn() . '2');
+                        $sheet->getStyle('A2')->applyFromArray([
+                            'font' => ['size' => 11],
+                            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+                        ]);
+                    }
+                } else {
+                    $sheet->setCellValue('A1', 'STUDENT MASTER LIST REPORT - ' . $this->data['className']);
+                    $sheet->mergeCells('A1:' . $sheet->getHighestColumn() . '1');
+                    $sheet->getStyle('A1')->applyFromArray([
+                        'font' => [
+                            'bold' => true,
+                            'size' => 16,
+                            'color' => ['rgb' => '1E40AF']
+                        ],
+                        'alignment' => [
+                            'horizontal' => Alignment::HORIZONTAL_CENTER,
+                            'vertical' => Alignment::VERTICAL_CENTER
+                        ]
+                    ]);
+
+                    $details = 'Generated: ' . $this->data['generated'] .
+                              ' | Total Students: ' . $this->data['total'] .
+                              ' | Males: ' . $this->data['males'] .
+                              ' | Females: ' . $this->data['females'];
+                    $sheet->setCellValue('A2', $details);
+                    $sheet->mergeCells('A2:' . $sheet->getHighestColumn() . '2');
+                    $sheet->getStyle('A2')->applyFromArray([
+                        'font' => ['size' => 11],
+                        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+                    ]);
+                }
 
                 // Empty row before header
                 $sheet->setCellValue('A4', '');

@@ -1332,12 +1332,25 @@ class StudentController extends Controller
             'class_id'    => 'nullable|exists:schoolclass,id',
             'status'      => 'nullable|in:1,2,Active,Inactive',
             'columns'     => 'required|string',
+            'columns_order' => 'nullable|string', // New: Column order
             'format'      => 'required|in:pdf,excel',
             'orientation' => 'nullable|in:portrait,landscape',
+            'include_header' => 'nullable|boolean', // New: Include school header
+            'include_logo' => 'nullable|boolean',   // New: Include school logo
         ]);
 
         $columns = array_filter(explode(',', $request->columns));
         \Log::info('Columns selected:', $columns);
+
+        // Get column order if provided
+        $columnOrder = [];
+        if ($request->filled('columns_order')) {
+            $columnOrder = array_filter(explode(',', $request->columns_order));
+            \Log::info('Column order:', $columnOrder);
+
+            // Reorder columns based on user preference
+            $columns = array_values(array_intersect($columnOrder, $columns));
+        }
 
         if (empty($columns)) {
             \Log::warning('No columns selected');
@@ -1442,24 +1455,34 @@ class StudentController extends Controller
 
         $format = $request->input('format');
         $orientation = $request->query('orientation', 'portrait');
+        $includeHeader = $request->boolean('include_header', true); // Default: true
+        $includeLogo = $request->boolean('include_logo', true);     // Default: true
 
         \Log::info('Report parameters:', [
             'format' => $format,
             'orientation' => $orientation,
             'className' => $className,
-            'total_students' => $students->count()
+            'total_students' => $students->count(),
+            'include_header' => $includeHeader,
+            'include_logo' => $includeLogo
         ]);
 
+        // Get active school information
+        $schoolInfo = SchoolInformation::where('is_active', true)->first();
+
         $data = [
-            'students'     => $students,
-            'columns'      => $columns,
-            'title'        => 'Student Master List Report',
-            'className'    => $className,
-            'generated'    => now()->format('d M Y h:i A'),
-            'total'        => $students->count(),
-            'males'        => $students->where('gender', 'Male')->count(),
-            'females'      => $students->where('gender', 'Female')->count(),
-            'orientation'  => $orientation,
+            'students'      => $students,
+            'columns'       => $columns,
+            'title'         => 'Student Master List Report',
+            'className'     => $className,
+            'generated'     => now()->format('d M Y h:i A'),
+            'total'         => $students->count(),
+            'males'         => $students->where('gender', 'Male')->count(),
+            'females'       => $students->where('gender', 'Female')->count(),
+            'orientation'   => $orientation,
+            'include_header'=> $includeHeader,
+            'include_logo'  => $includeLogo,
+            'school_info'   => $schoolInfo,
         ];
 
         $filename = 'student-report-' . now()->format('Y-m-d-His');
@@ -1472,7 +1495,6 @@ class StudentController extends Controller
 
         \Log::info('Generating PDF export');
 
-        // First test with simple view
         $pdf = Pdf::loadView('student.reports.student_report_pdf', $data);
         $pdf->setPaper('A4', $orientation);
 
