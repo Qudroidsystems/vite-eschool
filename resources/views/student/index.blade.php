@@ -3715,30 +3715,165 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 <script>
-        document.getElementById('generateReportBtn')?.addEventListener('click', function () {
-            const form = document.getElementById('printReportForm');
-            const selectedColumns = Array.from(form.querySelectorAll('input[name="columns[]"]:checked'))
-                .map(cb => cb.value);
+// ============================================================================
+// REPORT GENERATION
+// ============================================================================
 
-            if (selectedColumns.length === 0) {
-                Swal.fire('Warning', 'Please select at least one column', 'warning');
-                return;
+document.addEventListener('DOMContentLoaded', function() {
+    const generateReportBtn = document.getElementById('generateReportBtn');
+    const printReportForm = document.getElementById('printReportForm');
+
+    if (generateReportBtn && printReportForm) {
+        generateReportBtn.addEventListener('click', function() {
+            generateReport();
+        });
+    }
+});
+
+function generateReport() {
+    const form = document.getElementById('printReportForm');
+    if (!form) {
+        console.error('Report form not found');
+        return;
+    }
+
+    // Get selected columns
+    const selectedColumns = Array.from(form.querySelectorAll('input[name="columns[]"]:checked'))
+        .map(cb => cb.value);
+
+    if (selectedColumns.length === 0) {
+        Swal.fire({
+            title: 'Warning!',
+            text: 'Please select at least one column to include in the report.',
+            icon: 'warning',
+            customClass: { confirmButton: 'btn btn-primary' },
+            buttonsStyling: false
+        });
+        return;
+    }
+
+    // Get form values
+    const classId = form.querySelector('[name="class_id"]').value;
+    const status = form.querySelector('[name="status"]').value;
+    const formatElement = form.querySelector('[name="format"]:checked');
+
+    if (!formatElement) {
+        Swal.fire({
+            title: 'Error!',
+            text: 'Please select an export format (PDF or Excel).',
+            icon: 'error',
+            customClass: { confirmButton: 'btn btn-primary' },
+            buttonsStyling: false
+        });
+        return;
+    }
+
+    const format = formatElement.value;
+    const orientation = form.querySelector('[name="orientation"]')?.value || 'portrait';
+
+    // Build query parameters
+    const params = new URLSearchParams({
+        class_id: classId,
+        status: status,
+        columns: selectedColumns.join(','),
+        format: format,
+        orientation: orientation
+    });
+
+    // Show loading indicator
+    Swal.fire({
+        title: 'Generating Report...',
+        text: 'Please wait while we generate your report.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+
+    // Make the request
+    axios.get(`/students/report?${params.toString()}`, {
+        responseType: 'blob' // Important for file downloads
+    })
+    .then(response => {
+        Swal.close();
+
+        // Create a blob from the response
+        const blob = new Blob([response.data], {
+            type: response.headers['content-type']
+        });
+
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+
+        // Get filename from content-disposition header or generate one
+        const contentDisposition = response.headers['content-disposition'];
+        let filename = 'student-report.' + (format === 'pdf' ? 'pdf' : 'xlsx');
+
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+            if (filenameMatch && filenameMatch[1]) {
+                filename = filenameMatch[1];
+            }
+        }
+
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+
+        // Cleanup
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('printStudentReportModal'));
+        if (modal) {
+            modal.hide();
+        }
+
+        // Show success message
+        Swal.fire({
+            title: 'Success!',
+            text: `Report generated successfully and downloaded as ${format.toUpperCase()}`,
+            icon: 'success',
+            customClass: { confirmButton: 'btn btn-primary' },
+            buttonsStyling: false
+        });
+    })
+    .catch(error => {
+        Swal.close();
+
+        console.error('Error generating report:', error);
+
+        let errorMessage = 'Failed to generate report. Please try again.';
+
+        if (error.response) {
+            // Server responded with error status
+            if (error.response.status === 404) {
+                errorMessage = 'No students found matching the selected filters.';
+            } else if (error.response.status === 422) {
+                errorMessage = error.response.data.message || 'Validation error. Please check your selections.';
+            } else if (error.response.status === 500) {
+                errorMessage = 'Server error. Please try again later.';
             }
 
-            const classId = form.querySelector('[name="class_id"]').value;
-            const status  = form.querySelector('[name="status"]').value;
-            const format  = form.querySelector('[name="format"]:checked').value;
+            // Try to parse error message from response
+            if (error.response.data && typeof error.response.data === 'object') {
+                if (error.response.data.message) {
+                    errorMessage = error.response.data.message;
+                }
+            }
+        }
 
-            const params = new URLSearchParams({
-                class_id: classId,
-                status:   status,
-                columns:  selectedColumns.join(','),
-                format:   format
-            });
-
-            window.open(`/student/report?${params.toString()}`, '_blank');
-
-            bootstrap.Modal.getInstance(document.getElementById('printStudentReportModal'))?.hide();
+        Swal.fire({
+            title: 'Error!',
+            text: errorMessage,
+            icon: 'error',
+            customClass: { confirmButton: 'btn btn-primary' },
+            buttonsStyling: false
         });
-    </script>
+    });
+}
+</script>
 @endsection
