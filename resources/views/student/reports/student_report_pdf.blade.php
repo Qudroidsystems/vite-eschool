@@ -27,17 +27,19 @@
         .logo-container {
             width: 80px;
             height: 80px;
+            flex-shrink: 0;
         }
 
         .logo-container img {
-            max-width: 100%;
-            max-height: 100%;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
         }
 
         .school-info {
             flex-grow: 1;
             text-align: center;
+            padding: 0 15px;
         }
 
         .school-name {
@@ -45,6 +47,7 @@
             font-weight: bold;
             color: #333;
             margin: 0;
+            line-height: 1.2;
         }
 
         .school-motto {
@@ -52,12 +55,14 @@
             color: #666;
             font-style: italic;
             margin: 5px 0;
+            line-height: 1.2;
         }
 
         .school-contact {
             font-size: 10px;
             color: #666;
             margin: 3px 0;
+            line-height: 1.2;
         }
 
         /* Report Header */
@@ -72,12 +77,14 @@
             font-weight: bold;
             color: #1E40AF;
             margin: 0;
+            line-height: 1.2;
         }
 
         .report-subtitle {
             font-size: 11px;
             color: #666;
             margin: 5px 0;
+            line-height: 1.2;
         }
 
         /* Summary Section */
@@ -185,10 +192,21 @@
 <body>
     @if($include_header)
     <div class="school-header">
-        @if($include_logo && $school_info && $school_info->getLogoUrlAttribute())
+        @if($include_logo && $school_info)
         <div class="header-with-logo">
             <div class="logo-container">
-                <img src="{{ $school_info->getLogoUrlAttribute() }}" alt="School Logo">
+                @if($school_logo_base64)
+                    <!-- Use base64 for PDF -->
+                    <img src="{{ $school_logo_base64 }}" alt="School Logo">
+                @elseif($school_info->getLogoUrlAttribute())
+                    <!-- Use regular URL if base64 conversion failed -->
+                    <img src="{{ $school_info->getLogoUrlAttribute() }}" alt="School Logo">
+                @else
+                    <!-- Fallback placeholder -->
+                    <div style="width: 100%; height: 100%; background-color: #f0f0f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #666; font-size: 10px;">
+                        No Logo
+                    </div>
+                @endif
             </div>
             <div class="school-info">
                 <h1 class="school-name">{{ $school_info->school_name ?? 'School Name' }}</h1>
