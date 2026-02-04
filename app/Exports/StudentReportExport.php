@@ -15,10 +15,9 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Font;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
-use App\Models\SchoolInformation;
+use Carbon\Carbon;
 
-class StudentReportExport implements WithMultipleSheets
+class StudentReportExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithEvents
 {
     protected $data;
 
@@ -27,47 +26,16 @@ class StudentReportExport implements WithMultipleSheets
         $this->data = $data;
     }
 
-    public function sheets(): array
-    {
-        $sheets = [];
-
-        // Group students by class name (fallback to 'Unassigned')
-        $grouped = $this->data['students']->groupBy(function ($student) {
-            return $student->currentClass?->schoolclass?->schoolclass ?? 'Unassigned';
-        });
-
-        // One sheet per class
-        foreach ($grouped as $className => $students) {
-            $sheets[$className] = new PerClassSheet($students, $this->data['columns'], $className);
-        }
-
-        // Final summary sheet
-        $sheets['Summary'] = new SummarySheet($this->data);
-
-        return $sheets;
-    }
-}
-
-class PerClassSheet implements FromCollection, WithHeadings, WithMapping, WithStyles, WithEvents
-{
-    protected $students;
-    protected $columns;
-    protected $className;
-
-    public function __construct(Collection $students, array $columns, string $className)
-    {
-        $this->students = $students;
-        $this->columns = $columns;
-        $this->className = $className;
-    }
-
     public function collection()
     {
-        return $this->students;
+        return $this->data['students'];
     }
 
     public function headings(): array
     {
+        $headings = [];
+        $columns = $this->data['columns'];
+
         $map = [
             'photo'          => 'Photo',
             'admissionNo'    => 'Admission Number',
@@ -88,44 +56,89 @@ class PerClassSheet implements FromCollection, WithHeadings, WithMapping, WithSt
             'guardian_phone' => 'Guardian Contact Phone',
         ];
 
-        return array_map(fn($col) => $map[$col] ?? ucwords(str_replace('_', ' ', $col)), $this->columns);
+        foreach ($columns as $col) {
+            if (isset($map[$col])) {
+                $headings[] = $map[$col];
+            } else {
+                $headings[] = ucwords(str_replace('_', ' ', $col));
+            }
+        }
+
+        return $headings;
     }
 
     public function map($student): array
     {
         $row = [];
+        $columns = $this->data['columns'];
 
-        foreach ($this->columns as $col) {
+        foreach ($columns as $col) {
             switch ($col) {
                 case 'photo':
                     $row[] = $student->picture && $student->picture !== 'unnamed.jpg' ? 'Yes' : 'No';
                     break;
 
                 case 'fullname':
-                    $row[] = trim("{$student->lastname} {$student->firstname} {$student->othername}");
+                    $fullname = trim(($student->lastname ?? '') . ' ' . ($student->firstname ?? '') . ' ' . ($student->othername ?? ''));
+                    $row[] = $fullname ?: 'N/A';
                     break;
 
                 case 'class':
-                    $cls = $student->currentClass?->schoolclass?->schoolclass ?? '-';
-                    $arm = $student->currentClass?->schoolclass?->armRelation?->arm ?? '';
-                    $row[] = $arm ? "$cls - $arm" : $cls;
+                    $class = $student->schoolclass ?? 'N/A';
+                    $arm = $student->arm_name ?? '';
+                    $row[] = $arm ? "$class - $arm" : $class;
                     break;
 
                 case 'guardian_phone':
-                    $row[] = $student->parent ? ($student->parent->father_phone ?: $student->parent->mother_phone ?: '-') : '-';
+                    $phone = $student->father_phone ?? $student->mother_phone ?? '';
+                    $row[] = $phone ?: 'N/A';
                     break;
 
                 case 'admission_date':
-                    $row[] = $student->admission_date ? $student->admission_date->format('d/m/Y') : '-';
+                    if ($student->admission_date) {
+                        try {
+                            $row[] = Carbon::parse($student->admission_date)->format('d/m/Y');
+                        } catch (\Exception $e) {
+                            $row[] = $student->admission_date;
+                        }
+                    } else {
+                        $row[] = 'N/A';
+                    }
                     break;
 
                 case 'dateofbirth':
-                    $row[] = $student->dateofbirth ? $student->dateofbirth->format('d/m/Y') : '-';
+                    if ($student->dateofbirth) {
+                        try {
+                            $row[] = Carbon::parse($student->dateofbirth)->format('d/m/Y');
+                        } catch (\Exception $e) {
+                            $row[] = $student->dateofbirth;
+                        }
+                    } else {
+                        $row[] = 'N/A';
+                    }
+                    break;
+
+                case 'status':
+                    $status = '';
+                    if (isset($student->statusId)) {
+                        if ($student->statusId == 1) $status = 'Old Student';
+                        if ($student->statusId == 2) $status = 'New Student';
+                    }
+                    if ($student->student_status) {
+                        $status .= ($status ? ' (' . $student->student_status . ')' : $student->student_status);
+                    }
+                    $row[] = $status ?: 'N/A';
                     break;
 
                 default:
-                    $value = $student->$col ?? '-';
-                    $row[] = is_object($value) && method_exists($value, 'format') ? $value->format('d/m/Y') : $value;
+                    // Handle other columns
+                    if (property_exists($student, $col)) {
+                        $value = $student->$col;
+                        $row[] = $value !== null && $value !== '' ? $value : 'N/A';
+                    } else {
+                        $row[] = 'N/A';
+                    }
+                    break;
             }
         }
 
@@ -134,15 +147,43 @@ class PerClassSheet implements FromCollection, WithHeadings, WithMapping, WithSt
 
     public function styles(Worksheet $sheet)
     {
+        // Get the total rows (students + header)
+        $totalRows = $this->data['students']->count() + 4;
+
         return [
-            1 => [
-                'font' => ['bold' => true, 'size' => 12, 'color' => ['argb' => 'FFFFFFFF']],
+            // Style the header row (row 5 after we insert title rows)
+            5 => [
+                'font' => [
+                    'bold' => true,
+                    'color' => ['rgb' => 'FFFFFF']
+                ],
                 'fill' => [
                     'fillType' => Fill::FILL_SOLID,
-                    'startColor' => ['argb' => 'FF1E40AF'],
+                    'startColor' => ['rgb' => '1E40AF']
                 ],
-                'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER
+                ]
             ],
+
+            // Zebra striping for data rows
+            'A6:A' . $totalRows => [
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => 'F8FAFC']
+                ]
+            ],
+
+            // Borders for all cells
+            'A5:' . $sheet->getHighestColumn() . $totalRows => [
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => 'E5E7EB']
+                    ]
+                ]
+            ]
         ];
     }
 
@@ -151,163 +192,73 @@ class PerClassSheet implements FromCollection, WithHeadings, WithMapping, WithSt
         return [
             AfterSheet::class => function (AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
-                $highestColumn = $sheet->getHighestColumn();
-                $highestRow = $sheet->getHighestRow();
 
-                // Insert title rows
+                // Insert title rows at the top
                 $sheet->insertNewRowBefore(1, 4);
 
-                $sheet->setCellValue('A1', 'Student List - ' . $this->className);
-                $sheet->mergeCells("A1:{$highestColumn}1");
-                $sheet->getStyle('A1')->getFont()->setSize(16)->setBold(true);
-
-                $sheet->setCellValue('A2', 'Generated: ' . now()->format('d M Y h:i A'));
-                $sheet->mergeCells("A2:{$highestColumn}2");
-
-                $sheet->setCellValue('A3', 'Total Students in Class: ' . $this->students->count());
-                $sheet->mergeCells("A3:{$highestColumn}3");
-
-                // Auto-size all columns
-                foreach (range('A', $highestColumn) as $col) {
-                    $sheet->getColumnDimension($col)->setAutoSize(true);
-                }
-
-                // Freeze header + title rows
-                $sheet->freezePane('A5');
-
-                // Light zebra striping on data rows
-                $sheet->getStyle("A5:{$highestColumn}{$highestRow}")
-                    ->applyFromArray([
-                        'fill' => [
-                            'fillType' => Fill::FILL_SOLID,
-                            'startColor' => ['argb' => 'FFFAFAFA'],
-                        ],
-                    ]);
-            },
-        ];
-    }
-}
-
-class SummarySheet implements WithEvents, WithStyles
-{
-    protected $data;
-
-    public function __construct(array $data)
-    {
-        $this->data = $data;
-    }
-
-    public function registerEvents(): array
-    {
-        return [
-            AfterSheet::class => function (AfterSheet $event) {
-                $sheet = $event->sheet->getDelegate();
-
-                $school = SchoolInformation::where('is_active', true)->first();
-
-                $sheet->setCellValue('A1', $school ? $school->school_name : 'School Management System');
-                $sheet->mergeCells('A1:F1');
-                $sheet->getStyle('A1')->getFont()->setSize(18)->setBold(true);
-
-                $sheet->setCellValue('A2', $school ? $school->school_motto : 'Student Summary Report');
-                $sheet->mergeCells('A2:F2');
-                $sheet->getStyle('A2')->getFont()->setItalic(true)->setSize(12);
-
-                $sheet->setCellValue('A3', 'Generated: ' . $this->data['generated']);
-                $sheet->mergeCells('A3:F3');
-
-                $row = 5;
-                $sheet->setCellValue("A{$row}", 'Total Students');
-                $sheet->setCellValue("B{$row}", $this->data['total']);
-                $row++;
-
-                $sheet->setCellValue("A{$row}", 'Male Students');
-                $sheet->setCellValue("B{$row}", $this->data['males']);
-                $row++;
-
-                $sheet->setCellValue("A{$row}", 'Female Students');
-                $sheet->setCellValue("B{$row}", $this->data['females']);
-                $row += 2;
-
-                $sheet->setCellValue("A{$row}", 'Students per Class');
-                $sheet->getStyle("A{$row}")->getFont()->setBold(true);
-                $row++;
-
-                $classes = $this->data['students']->groupBy(function ($s) {
-                    return $s->currentClass?->schoolclass?->schoolclass ?? 'Unassigned';
-                });
-
-                foreach ($classes as $class => $group) {
-                    $sheet->setCellValue("A{$row}", $class);
-                    $sheet->setCellValue("B{$row}", $group->count());
-                    $row++;
-                }
-
-                $row += 2;
-
-                $sheet->setCellValue("A{$row}", 'Students per Religion');
-                $sheet->getStyle("A{$row}")->getFont()->setBold(true);
-                $row++;
-
-                $religions = $this->data['students']->groupBy('religion');
-                foreach ($religions as $rel => $group) {
-                    $sheet->setCellValue("A{$row}", $rel ?: 'Not Specified');
-                    $sheet->setCellValue("B{$row}", $group->count());
-                    $row++;
-                }
-
-                $row += 2;
-
-                $sheet->setCellValue("A{$row}", 'Students per Blood Group');
-                $sheet->getStyle("A{$row}")->getFont()->setBold(true);
-                $row++;
-
-                $bloods = $this->data['students']->groupBy('blood_group');
-                foreach ($bloods as $bg => $group) {
-                    $sheet->setCellValue("A{$row}", $bg ?: 'Not Specified');
-                    $sheet->setCellValue("B{$row}", $group->count());
-                    $row++;
-                }
-
-                $sheet->getStyle("A5:B" . ($row - 1))->applyFromArray([
-                    'borders' => [
-                        'allBorders' => [
-                            'borderStyle' => Border::BORDER_THIN,
-                            'color' => ['argb' => 'FFCBD5E1'],
-                        ],
+                // School/Report Title
+                $sheet->setCellValue('A1', 'STUDENT MASTER LIST REPORT');
+                $sheet->mergeCells('A1:' . $sheet->getHighestColumn() . '1');
+                $sheet->getStyle('A1')->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'size' => 16,
+                        'color' => ['rgb' => '1E40AF']
                     ],
-                    'fill' => [
-                        'fillType' => Fill::FILL_SOLID,
-                        'startColor' => ['argb' => 'FFF1F5F9'],
-                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                        'vertical' => Alignment::VERTICAL_CENTER
+                    ]
                 ]);
 
-                $sheet->getStyle("A5:A" . ($row - 1))->getFont()->setBold(true);
+                // Class information
+                $sheet->setCellValue('A2', 'Class: ' . $this->data['className']);
+                $sheet->mergeCells('A2:' . $sheet->getHighestColumn() . '2');
+                $sheet->getStyle('A2')->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'size' => 12
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER
+                    ]
+                ]);
 
-                $sheet->getColumnDimension('A')->setWidth(30);
-                $sheet->getColumnDimension('B')->setWidth(15);
+                // Report details
+                $details = 'Generated: ' . $this->data['generated'] .
+                          ' | Total Students: ' . $this->data['total'] .
+                          ' | Males: ' . $this->data['males'] .
+                          ' | Females: ' . $this->data['females'];
 
-                // School logo fallback
-                if (file_exists(public_path('images/school-logo.png'))) {
-                    $drawing = new Drawing();
-                    $drawing->setName('School Logo');
-                    $drawing->setPath(public_path('images/school-logo.png'));
-                    $drawing->setCoordinates('D1');
-                    $drawing->setHeight(80);
-                    $drawing->setWorksheet($sheet);
-                } else {
-                    $sheet->setCellValue('D1', 'School Logo');
-                    $sheet->getStyle('D1')->getFont()->setSize(12)->setBold(true);
+                $sheet->setCellValue('A3', $details);
+                $sheet->mergeCells('A3:' . $sheet->getHighestColumn() . '3');
+                $sheet->getStyle('A3')->applyFromArray([
+                    'font' => [
+                        'italic' => true,
+                        'size' => 10
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER
+                    ]
+                ]);
+
+                // Empty row before header
+                $sheet->setCellValue('A4', '');
+
+                // Auto-size columns
+                foreach (range('A', $sheet->getHighestColumn()) as $column) {
+                    $sheet->getColumnDimension($column)->setAutoSize(true);
                 }
-            },
-        ];
-    }
 
-    public function styles(Worksheet $sheet)
-    {
-        return [
-            1 => ['font' => ['size' => 18, 'bold' => true]],
-            2 => ['font' => ['italic' => true, 'size' => 12]],
+                // Set row height for header
+                $sheet->getRowDimension(5)->setRowHeight(30);
+
+                // Freeze header row (row 5)
+                $sheet->freezePane('A6');
+
+                // Add filter to header row
+                $sheet->setAutoFilter('A5:' . $sheet->getHighestColumn() . '5');
+            }
         ];
     }
 }
