@@ -762,6 +762,11 @@ use Spatie\Permission\Models\Role;
                                             <i class="bi bi-plus-circle align-baseline me-1"></i> Add Student
                                         </button>
                                     @endcan
+
+                                      <!-- Print/Export Report Button -->
+                                    <button type="button" class="btn btn-soft-success" data-bs-toggle="modal" data-bs-target="#printStudentReportModal">
+                                        <i class="ri-printer-line align-bottom me-1"></i> Print / Export Report
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -862,6 +867,116 @@ use Spatie\Permission\Models\Role;
                 </div>
             </div>
         </div>
+
+
+    <!-- ================================================= -->
+    <!--        PRINT / EXPORT REPORT MODAL               -->
+    <!-- ================================================= -->
+    <div class="modal fade" id="printStudentReportModal" tabindex="-1" aria-labelledby="printStudentReportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-soft-success">
+                    <h5 class="modal-title" id="printStudentReportModalLabel">
+                        <i class="ri-printer-line me-2"></i> Generate Student Report
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="printReportForm">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Class</label>
+                                <select class="form-select" name="class_id">
+                                    <option value="">— All Classes —</option>
+                                    @foreach ($schoolclasses as $class)
+                                        <option value="{{ $class->id }}">{{ $class->class_display }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" name="status">
+                                    <option value="">— All —</option>
+                                    <option value="1">Old Students</option>
+                                    <option value="2">New Students</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Select Columns to Include</label>
+                            <div class="row g-3">
+                                @php
+                                    $availableColumns = [
+                                        'photo'          => 'Photo',
+                                        'admissionNo'    => 'Admission No',
+                                        'fullname'       => 'Full Name',
+                                        'gender'         => 'Gender',
+                                        'dateofbirth'    => 'Date of Birth',
+                                        'age'            => 'Age',
+                                        'class'          => 'Class / Arm',
+                                        'status'         => 'Student Status',
+                                        'admission_date' => 'Admission Date',
+                                        'phone_number'   => 'Phone Number',
+                                        'state'          => 'State of Origin',
+                                        'local'          => 'LGA',
+                                        'religion'       => 'Religion',
+                                        'blood_group'    => 'Blood Group',
+                                        'father_name'    => "Father's Name",
+                                        'mother_name'    => "Mother's Name",
+                                        'guardian_phone' => 'Guardian Phone',
+                                    ];
+                                @endphp
+                                @foreach ($availableColumns as $key => $label)
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="columns[]" value="{{ $key }}" id="col_{{ $key }}"
+                                                {{ in_array($key, ['fullname','admissionNo','class','gender']) ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="col_{{ $key }}">{{ $label }}</label>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Export Format</label>
+                            <div class="d-flex gap-3 flex-wrap">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="format" id="format_pdf" value="pdf" checked>
+                                    <label class="form-check-label" for="format_pdf">
+                                        <i class="ri-file-pdf-2-line text-danger me-1"></i> PDF
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="format" id="format_excel" value="excel">
+                                    <label class="form-check-label" for="format_excel">
+                                        <i class="ri-file-excel-2-line text-success me-1"></i> Excel
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info small mb-0">
+                            <i class="ri-information-fill me-2"></i>
+                            Only students matching the selected filters will be included.
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" id="generateReportBtn">
+                        <i class="ri-printer-line me-1"></i> Generate & Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
         <!-- Add Student Modal -->
         <div id="addStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered modal-xl">
@@ -3599,4 +3714,31 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeStudentList();
 });
 </script>
+<script>
+        document.getElementById('generateReportBtn')?.addEventListener('click', function () {
+            const form = document.getElementById('printReportForm');
+            const selectedColumns = Array.from(form.querySelectorAll('input[name="columns[]"]:checked'))
+                .map(cb => cb.value);
+
+            if (selectedColumns.length === 0) {
+                Swal.fire('Warning', 'Please select at least one column', 'warning');
+                return;
+            }
+
+            const classId = form.querySelector('[name="class_id"]').value;
+            const status  = form.querySelector('[name="status"]').value;
+            const format  = form.querySelector('[name="format"]:checked').value;
+
+            const params = new URLSearchParams({
+                class_id: classId,
+                status:   status,
+                columns:  selectedColumns.join(','),
+                format:   format
+            });
+
+            window.open(`/student/report?${params.toString()}`, '_blank');
+
+            bootstrap.Modal.getInstance(document.getElementById('printStudentReportModal'))?.hide();
+        });
+    </script>
 @endsection

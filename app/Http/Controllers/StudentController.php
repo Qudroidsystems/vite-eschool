@@ -2,44 +2,46 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
-use App\Models\Student;
+use App\Exports\StudentReportExport;
+use App\Http\Controllers\Controller;
+use App\Imports\StudentsImport;
 use App\Models\Broadsheet;
-use App\Models\Schoolterm;
+use App\Models\BroadsheetRecord;
+use App\Models\BroadsheetRecordMock;
 use App\Models\Broadsheets;
+use App\Models\BroadsheetsMock;
+use App\Models\ParentRegistration;
+use App\Models\PromotionStatus;
 use App\Models\Schoolclass;
 use App\Models\Schoolhouse;
-use App\Models\Studentclass;
-use App\Models\Studenthouse;
-use App\Models\Subjectclass;
-use Illuminate\Http\Request;
 use App\Models\Schoolsession;
-use App\Models\Studenthouses;
-use App\Models\Studentpicture;
-use App\Imports\StudentsImport;
-use App\Models\BroadsheetsMock;
-use App\Models\PromotionStatus;
-use Illuminate\Validation\Rule;
-use App\Models\BroadsheetRecord;
+use App\Models\Schoolterm;
+use App\Models\Student;
 use App\Models\StudentBatchModel;
-use Illuminate\Http\JsonResponse;
-use App\Models\ParentRegistration;
 use App\Models\StudentBillInvoice;
 use App\Models\StudentBillPayment;
+use App\Models\StudentBillPaymentBook;
+use App\Models\StudentBillPaymentRecord;
+use App\Models\Studentclass;
+use App\Models\Studenthouse;
+use App\Models\Studenthouses;
+use App\Models\Studentpersonalityprofile;
+use App\Models\Studentpersonalityprofiles;
+use App\Models\Studentpicture;
+use App\Models\Subjectclass;
+use App\Models\SubjectRegistrationStatus;
+use App\Traits\ImageManager as TraitsImageManager;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
-use App\Models\BroadsheetRecordMock;
-use Maatwebsite\Excel\Facades\Excel;
-use App\Models\StudentBillPaymentBook;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
-use App\Models\StudentBillPaymentRecord;
-use App\Models\Studentpersonalityprofile;
-use App\Models\SubjectRegistrationStatus;
 use Illuminate\Support\Facades\Validator;
-use App\Models\Studentpersonalityprofiles;
-use App\Traits\ImageManager as TraitsImageManager;
+use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
 
 class StudentController extends Controller
 {
@@ -1310,5 +1312,88 @@ class StudentController extends Controller
                 'message' => 'Failed to generate admission number'
             ], 500);
         }
+    }
+
+
+
+
+
+ public function generateReport(Request $request)
+     {
+            $request->validate([
+                'class_id'    => 'nullable|exists:schoolclass,id',
+                'status'      => 'nullable|in:1,2,Active,Inactive',
+                'columns'     => 'required|string',
+                'format'      => 'required|in:pdf,excel',
+                'orientation' => 'nullable|in:portrait,landscape',
+            ]);
+
+            $columns = array_filter(explode(',', $request->columns));
+
+            if (empty($columns)) {
+                return response()->json(['success' => false, 'message' => 'No columns selected'], 422);
+            }
+
+            $query = Student::with(['picture', 'currentClass.schoolclass.armRelation', 'parent']);
+
+            if ($request->filled('class_id')) {
+                $query->whereHas('currentClass', fn($q) => $q->where('schoolclassid', $request->class_id));
+            }
+
+            if ($request->filled('status')) {
+                if (in_array($request->status, ['1', '2'])) {
+                    $query->where('statusId', $request->status);
+                } else {
+                    $query->where('student_status', $request->status);
+                }
+            }
+
+            $students = $query->get();
+
+            if ($students->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No students found matching the selected filters.'
+                ], 404);
+            }
+
+            $className = $request->filled('class_id')
+                ? Schoolclass::find($request->class_id)?->schoolclass . ' - ' .
+                (Schoolclass::find($request->class_id)?->armRelation?->arm ?? '')
+                : 'All Classes';
+
+            // ────────────────────────────────────────────────
+            //  FIX: Do NOT use $request->format
+            //  Use one of these instead:
+            // ────────────────────────────────────────────────
+            $format = $request->input('format');           // ← recommended
+            // $format = $request->get('format');
+            // $format = $request['format'];
+            // $format = $request->query('format');
+
+            $orientation = $request->query('orientation', 'portrait');
+
+            $data = [
+                'students'     => $students,
+                'columns'      => $columns,
+                'title'        => 'Student Master List Report',
+                'className'    => $className,
+                'generated'    => now()->format('d M Y h:i A'),
+                'total'        => $students->count(),
+                'males'        => $students->where('gender', 'Male')->count(),
+                'females'      => $students->where('gender', 'Female')->count(),
+                'orientation'  => $orientation,
+            ];
+
+            $filename = 'student-report-' . now()->format('Y-m-d-His');
+
+            if ($format === 'excel') {
+                return Excel::download(new StudentReportExport($data), $filename . '.xlsx');
+            }
+
+            $pdf = Pdf::loadView('student.reports.student_report_pdf', $data);
+            $pdf->setPaper('A4', $orientation);
+
+            return $pdf->download($filename . '.pdf');
     }
 }
