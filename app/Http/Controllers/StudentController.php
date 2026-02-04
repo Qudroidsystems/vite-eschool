@@ -34,6 +34,7 @@ use App\Models\SubjectRegistrationStatus;
 use App\Traits\ImageManager as TraitsImageManager;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Dompdf\Options;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
