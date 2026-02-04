@@ -1712,15 +1712,15 @@ use Spatie\Permission\Models\Role;
                                         <div class="card-body">
                                             <div class="mb-3">
                                                 <label for="editLastSchool" class="form-label">Last School Attended</label>
-                                                <input type="text" id="editLastSchool" name="last_school" class="form-control" placeholder="Previous school name">
+                                                <input type="text" id="editLastSchool" name="last_school" class="form-control" placeholder="Previous school name" required>
                                             </div>
                                             <div class="mb-3">
                                                 <label for="editLastClass" class="form-label">Last Class Attended</label>
-                                                <input type="text" id="editLastClass" name="last_class" class="form-control" placeholder="e.g., JSS 2">
+                                                <input type="text" id="editLastClass" name="last_class" class="form-control" placeholder="e.g., JSS 2" required>
                                             </div>
                                             <div class="mb-3">
                                                 <label for="editReasonForLeaving" class="form-label">Reason for Leaving</label>
-                                                <textarea id="editReasonForLeaving" name="reason_for_leaving" class="form-control" rows="2" placeholder="Reason for leaving previous school"></textarea>
+                                                <textarea id="editReasonForLeaving" name="reason_for_leaving" class="form-control" rows="2" placeholder="Reason for leaving previous school" required></textarea>
                                             </div>
                                         </div>
                                     </div>
