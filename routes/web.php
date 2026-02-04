@@ -174,6 +174,8 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/generate-student-pdf', [StudentController::class, 'generateStudentPdf'])->name('student.pdf');
     Route::get('/students/last-admission-number', [StudentController::class, 'getLastAdmissionNumber'])->name('student.getLastAdmissionNumber');
     Route::get('/student/{id}/class-history', [StudentController::class, 'getStudentClassHistory'])->name('student.classHistory');
+    Route::get('/students/report', [StudentController::class, 'generateReport'])->name('students.report');
+
 
     Route::resource('classoperation', ClassOperationController::class);
 
