@@ -14,6 +14,7 @@ use App\Models\ParentRegistration;
 use App\Models\PromotionStatus;
 use App\Models\Schoolclass;
 use App\Models\Schoolhouse;
+use App\Models\SchoolInformation;
 use App\Models\Schoolsession;
 use App\Models\Schoolterm;
 use App\Models\Student;
