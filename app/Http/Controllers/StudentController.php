@@ -1316,133 +1316,170 @@ class StudentController extends Controller
 
     public function generateReport(Request $request)
 {
-    $request->validate([
-        'class_id'    => 'nullable|exists:schoolclass,id',
-        'status'      => 'nullable|in:1,2,Active,Inactive',
-        'columns'     => 'required|string',
-        'format'      => 'required|in:pdf,excel',
-        'orientation' => 'nullable|in:portrait,landscape',
-    ]);
+    \Log::info('=== GENERATE REPORT STARTED ===');
+    \Log::info('Request parameters:', $request->all());
 
-    $columns = array_filter(explode(',', $request->columns));
+    try {
+        $request->validate([
+            'class_id'    => 'nullable|exists:schoolclass,id',
+            'status'      => 'nullable|in:1,2,Active,Inactive',
+            'columns'     => 'required|string',
+            'format'      => 'required|in:pdf,excel',
+            'orientation' => 'nullable|in:portrait,landscape',
+        ]);
 
-    if (empty($columns)) {
-        return response()->json(['success' => false, 'message' => 'No columns selected'], 422);
-    }
+        $columns = array_filter(explode(',', $request->columns));
+        \Log::info('Columns selected:', $columns);
 
-    // Build query with explicit joins
-    $query = Student::select([
-        'studentRegistration.id',
-        'studentRegistration.admissionNo',
-        'studentRegistration.admissionYear',
-        'studentRegistration.admission_date',
-        'studentRegistration.title',
-        'studentRegistration.firstname',
-        'studentRegistration.lastname',
-        'studentRegistration.othername',
-        'studentRegistration.gender',
-        'studentRegistration.dateofbirth',
-        'studentRegistration.age',
-        'studentRegistration.blood_group',
-        'studentRegistration.mother_tongue',
-        'studentRegistration.religion',
-        'studentRegistration.sport_house',
-        'studentRegistration.phone_number',
-        'studentRegistration.email',
-        'studentRegistration.nin_number',
-        'studentRegistration.city',
-        'studentRegistration.state',
-        'studentRegistration.local',
-        'studentRegistration.nationality',
-        'studentRegistration.placeofbirth',
-        'studentRegistration.future_ambition',
-        'studentRegistration.home_address2 as permanent_address',
-        'studentRegistration.student_category',
-        'studentRegistration.statusId',
-        'studentRegistration.student_status',
-        'studentRegistration.last_school',
-        'studentRegistration.last_class',
-        'studentRegistration.reason_for_leaving',
-        'studentRegistration.created_at',
-
-        'studentpicture.picture',
-
-        'schoolclass.schoolclass',
-        'schoolarm.arm',
-
-        'parentRegistration.father as father_name',
-        'parentRegistration.mother as mother_name',
-        'parentRegistration.father_phone',
-        'parentRegistration.mother_phone',
-        'parentRegistration.parent_email',
-        'parentRegistration.parent_address',
-        'parentRegistration.father_occupation',
-        'parentRegistration.father_city'
-    ])
-    ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-    ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
-    ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-    ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-    ->leftJoin('parentRegistration', 'parentRegistration.studentId', '=', 'studentRegistration.id');
-
-    // Apply filters
-    if ($request->filled('class_id')) {
-        $query->where('studentclass.schoolclassid', $request->class_id);
-    }
-
-    if ($request->filled('status')) {
-        if (in_array($request->status, ['1', '2'])) {
-            $query->where('studentRegistration.statusId', $request->status);
-        } else {
-            $query->where('studentRegistration.student_status', $request->status);
+        if (empty($columns)) {
+            \Log::warning('No columns selected');
+            return response()->json(['success' => false, 'message' => 'No columns selected'], 422);
         }
-    }
 
-    $students = $query->get();
+        // Build query with explicit joins
+        $query = Student::select([
+            'studentRegistration.id',
+            'studentRegistration.admissionNo',
+            'studentRegistration.admissionYear',
+            'studentRegistration.admission_date',
+            'studentRegistration.title',
+            'studentRegistration.firstname',
+            'studentRegistration.lastname',
+            'studentRegistration.othername',
+            'studentRegistration.gender',
+            'studentRegistration.dateofbirth',
+            'studentRegistration.age',
+            'studentRegistration.blood_group',
+            'studentRegistration.mother_tongue',
+            'studentRegistration.religion',
+            'studentRegistration.sport_house',
+            'studentRegistration.phone_number',
+            'studentRegistration.email',
+            'studentRegistration.nin_number',
+            'studentRegistration.city',
+            'studentRegistration.state',
+            'studentRegistration.local',
+            'studentRegistration.nationality',
+            'studentRegistration.placeofbirth',
+            'studentRegistration.future_ambition',
+            'studentRegistration.home_address2 as permanent_address',
+            'studentRegistration.student_category',
+            'studentRegistration.statusId',
+            'studentRegistration.student_status',
+            'studentRegistration.last_school',
+            'studentRegistration.last_class',
+            'studentRegistration.reason_for_leaving',
+            'studentRegistration.created_at',
 
-    if ($students->isEmpty()) {
+            'studentpicture.picture',
+
+            'schoolclass.schoolclass',
+            'schoolarm.arm',
+
+            'parentRegistration.father as father_name',
+            'parentRegistration.mother as mother_name',
+            'parentRegistration.father_phone',
+            'parentRegistration.mother_phone',
+            'parentRegistration.parent_email',
+            'parentRegistration.parent_address',
+            'parentRegistration.father_occupation',
+            'parentRegistration.father_city'
+        ])
+        ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+        ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+        ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
+        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        ->leftJoin('parentRegistration', 'parentRegistration.studentId', '=', 'studentRegistration.id');
+
+        // Apply filters
+        if ($request->filled('class_id')) {
+            \Log::info('Filtering by class_id:', ['class_id' => $request->class_id]);
+            $query->where('studentclass.schoolclassid', $request->class_id);
+        }
+
+        if ($request->filled('status')) {
+            if (in_array($request->status, ['1', '2'])) {
+                \Log::info('Filtering by statusId:', ['status' => $request->status]);
+                $query->where('studentRegistration.statusId', $request->status);
+            } else {
+                \Log::info('Filtering by student_status:', ['status' => $request->status]);
+                $query->where('studentRegistration.student_status', $request->status);
+            }
+        }
+
+        $students = $query->get();
+        \Log::info('Students found:', ['count' => $students->count()]);
+
+        if ($students->isEmpty()) {
+            \Log::warning('No students found with selected filters');
+            return response()->json([
+                'success' => false,
+                'message' => 'No students found matching the selected filters.'
+            ], 404);
+        }
+
+        $className = 'All Classes';
+        if ($request->filled('class_id')) {
+            $class = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->select('schoolclass.schoolclass', 'schoolarm.arm')
+                ->where('schoolclass.id', $request->class_id)
+                ->first();
+
+            if ($class) {
+                $className = $class->schoolclass . ' - ' . ($class->arm ?? '');
+            }
+        }
+
+        $format = $request->input('format');
+        $orientation = $request->query('orientation', 'portrait');
+
+        \Log::info('Report parameters:', [
+            'format' => $format,
+            'orientation' => $orientation,
+            'className' => $className,
+            'total_students' => $students->count()
+        ]);
+
+        $data = [
+            'students'     => $students,
+            'columns'      => $columns,
+            'title'        => 'Student Master List Report',
+            'className'    => $className,
+            'generated'    => now()->format('d M Y h:i A'),
+            'total'        => $students->count(),
+            'males'        => $students->where('gender', 'Male')->count(),
+            'females'      => $students->where('gender', 'Female')->count(),
+            'orientation'  => $orientation,
+        ];
+
+        $filename = 'student-report-' . now()->format('Y-m-d-His');
+        \Log::info('Generating report with filename:', ['filename' => $filename]);
+
+        if ($format === 'excel') {
+            \Log::info('Generating Excel export');
+            return Excel::download(new StudentReportExport($data), $filename . '.xlsx');
+        }
+
+        \Log::info('Generating PDF export');
+        $pdf = Pdf::loadView('student.reports.student_report_pdf', $data);
+        $pdf->setPaper('A4', $orientation);
+
+        \Log::info('=== GENERATE REPORT COMPLETED SUCCESSFULLY ===');
+        return $pdf->download($filename . '.pdf');
+
+    } catch (\Exception $e) {
+        \Log::error('Error generating report:', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+
         return response()->json([
             'success' => false,
-            'message' => 'No students found matching the selected filters.'
-        ], 404);
+            'message' => 'Server error: ' . $e->getMessage(),
+            'error' => env('APP_DEBUG') ? $e->getTraceAsString() : 'Internal server error'
+        ], 500);
     }
-
-    $className = 'All Classes';
-    if ($request->filled('class_id')) {
-        $class = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->select('schoolclass.schoolclass', 'schoolarm.arm')
-            ->where('schoolclass.id', $request->class_id)
-            ->first();
-
-        if ($class) {
-            $className = $class->schoolclass . ' - ' . ($class->arm ?? '');
-        }
-    }
-
-    $format = $request->input('format');
-    $orientation = $request->query('orientation', 'portrait');
-
-    $data = [
-        'students'     => $students,
-        'columns'      => $columns,
-        'title'        => 'Student Master List Report',
-        'className'    => $className,
-        'generated'    => now()->format('d M Y h:i A'),
-        'total'        => $students->count(),
-        'males'        => $students->where('gender', 'Male')->count(),
-        'females'      => $students->where('gender', 'Female')->count(),
-        'orientation'  => $orientation,
-    ];
-
-    $filename = 'student-report-' . now()->format('Y-m-d-His');
-
-    if ($format === 'excel') {
-        return Excel::download(new StudentReportExport($data), $filename . '.xlsx');
-    }
-
-    $pdf = Pdf::loadView('student.reports.student_report_pdf', $data);
-    $pdf->setPaper('A4', $orientation);
-
-    return $pdf->download($filename . '.pdf');
 }
 }
