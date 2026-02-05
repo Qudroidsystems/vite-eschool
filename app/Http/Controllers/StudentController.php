@@ -1340,6 +1340,32 @@ public function generateReport(Request $request)
             'include_logo' => 'nullable|boolean',
         ]);
 
+        // Check if user is authenticated and is staff
+        $user = auth()->user();
+        if (!$user) {
+            \Log::warning('Unauthorized access attempt to generate report');
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Please login to generate reports.'
+            ], 401);
+        }
+
+        // Check if user has staff role
+        if (!$user->hasRole('Staff')) {
+            \Log::warning('Non-staff user attempted to generate report', ['user_id' => $user->id, 'user_name' => $user->name]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Access denied. Only staff members can generate reports.'
+            ], 403);
+        }
+
+        \Log::info('User generating report:', [
+            'user_id' => $user->id,
+            'user_name' => $user->name,
+            'user_email' => $user->email,
+            'user_roles' => $user->getRoleNames()
+        ]);
+
         $columns = array_filter(explode(',', $request->columns));
         \Log::info('Columns selected:', $columns);
 
@@ -1549,7 +1575,8 @@ public function generateReport(Request $request)
             'session' => $sessionName,
             'total_students' => $students->count(),
             'include_header' => $includeHeader,
-            'include_logo' => $includeLogo
+            'include_logo' => $includeLogo,
+            'generated_by' => $user->name
         ]);
 
         // Get active school information
@@ -1609,6 +1636,7 @@ public function generateReport(Request $request)
             'termName'          => $termName,
             'sessionName'       => $sessionName,
             'generated'         => now()->format('d M Y h:i A'),
+            'generated_by'      => $user->name, // Add staff name
             'total'             => $students->count(),
             'males'             => $students->where('gender', 'Male')->count(),
             'females'           => $students->where('gender', 'Female')->count(),
@@ -1637,6 +1665,7 @@ public function generateReport(Request $request)
                 'isHtml5ParserEnabled' => true,
                 'defaultFont' => 'DejaVu Sans',
                 'chroot' => [public_path(), storage_path()],
+                'enable_php' => true, // Enable PHP for page numbering
             ]);
 
         \Log::info('=== GENERATE REPORT COMPLETED SUCCESSFULLY ===');
