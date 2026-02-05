@@ -978,7 +978,7 @@ use Spatie\Permission\Models\Role;
     </div> --}}
 
     <!-- Print/Export Report Modal -->
-<!-- Print/Export Report Modal -->
+    <!-- Print/Export Report Modal -->
 <div class="modal fade" id="printStudentReportModal" tabindex="-1" aria-labelledby="printStudentReportModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -1047,7 +1047,9 @@ use Spatie\Permission\Models\Role;
                                 $availableColumns = [
                                     'photo'          => 'Photo',
                                     'admissionNo'    => 'Admission No',
-                                    'fullname'       => 'Full Name',
+                                    'lastname'       => 'Last Name',
+                                    'firstname'      => 'First Name',
+                                    'othername'      => 'Other Name',
                                     'gender'         => 'Gender',
                                     'dateofbirth'    => 'Date of Birth',
                                     'age'            => 'Age',
@@ -1070,7 +1072,7 @@ use Spatie\Permission\Models\Role;
                                 <div class="col-md-4 col-sm-6">
                                     <div class="form-check border rounded p-2 mb-2 bg-light cursor-move">
                                         <input class="form-check-input" type="checkbox" name="columns[]" value="{{ $key }}" id="col_{{ $key }}"
-                                            {{ in_array($key, ['admissionNo','fullname','class','gender']) ? 'checked' : '' }}>
+                                            {{ in_array($key, ['admissionNo','lastname','firstname','class','gender']) ? 'checked' : '' }}>
                                         <label class="form-check-label w-100 cursor-move" for="col_{{ $key }}">
                                             <i class="ri-draggable me-1"></i> {{ $label }}
                                         </label>
@@ -1144,7 +1146,7 @@ use Spatie\Permission\Models\Role;
                             <i class="ri-information-fill me-2"></i>
                             <div>
                                 <strong>Preview:</strong>
-                                <span id="columnOrderPreview">admissionNo, fullname, class, gender</span>
+                                <span id="columnOrderPreview">admissionNo, lastname, firstname, class, gender</span>
                                 <br>
                                 <small>Only students matching the selected filters will be included.</small>
                             </div>
@@ -3654,6 +3656,8 @@ function initializeCheckboxes() {
     });
 }
 
+
+
 // ============================================================================
 // DRAG AND DROP COLUMN ORDERING
 // ============================================================================
@@ -3720,7 +3724,7 @@ function updatePreview() {
         preview.textContent = selectedColumns.join(', ') || 'No columns selected';
     }
 }
-// In the generateReport() function, update the params to include term_id and session_id:
+
 function generateReport() {
     const form = document.getElementById('printReportForm');
     if (!form) {
@@ -3888,6 +3892,27 @@ function generateReport() {
         });
     });
 }
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize column ordering
+    initializeColumnOrdering();
+
+    // Initialize generate report button
+    const generateReportBtn = document.getElementById('generateReportBtn');
+    if (generateReportBtn) {
+        generateReportBtn.addEventListener('click', generateReport);
+    }
+
+    // Update preview when checkboxes change
+    const printReportForm = document.getElementById('printReportForm');
+    if (printReportForm) {
+        printReportForm.addEventListener('change', updatePreview);
+    }
+});
+
+
+
 // ============================================================================
 // FORM SUBMISSION HANDLERS
 // ============================================================================

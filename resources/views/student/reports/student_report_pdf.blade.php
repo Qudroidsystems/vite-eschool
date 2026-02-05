@@ -172,7 +172,9 @@
         /* Column Width Classes */
         .col-photo { width: 5%; }
         .col-admission { width: 10%; }
-        .col-name { width: 20%; }
+        .col-lastname { width: 15%; }
+        .col-firstname { width: 15%; }
+        .col-othername { width: 15%; }
         .col-gender { width: 5%; }
         .col-dob { width: 8%; }
         .col-age { width: 4%; }
@@ -269,7 +271,7 @@
                     @php
                         // Determine column width class based on column type
                         $widthClass = 'col-' . str_replace('_', '-', $col);
-                        if (!in_array($col, ['photo', 'admissionNo', 'fullname', 'gender', 'dateofbirth', 'age', 'class', 'status', 'admission_date', 'phone_number', 'state', 'local', 'religion', 'blood_group', 'father_name', 'mother_name', 'guardian_phone', 'term', 'session'])) {
+                        if (!in_array($col, ['photo', 'admissionNo', 'lastname', 'firstname', 'othername', 'gender', 'dateofbirth', 'age', 'class', 'status', 'admission_date', 'phone_number', 'state', 'local', 'religion', 'blood_group', 'father_name', 'mother_name', 'guardian_phone', 'term', 'session'])) {
                             $widthClass = 'col-' . substr($col, 0, 10);
                         }
                     @endphp
@@ -278,8 +280,12 @@
                     <th class="text-center {{ $widthClass }}">Photo</th>
                     @elseif($col == 'admissionNo')
                     <th class="text-left {{ $widthClass }}">Admission No</th>
-                    @elseif($col == 'fullname')
-                    <th class="text-left {{ $widthClass }}">Full Name</th>
+                    @elseif($col == 'lastname')
+                    <th class="text-left {{ $widthClass }}">Last Name</th>
+                    @elseif($col == 'firstname')
+                    <th class="text-left {{ $widthClass }}">First Name</th>
+                    @elseif($col == 'othername')
+                    <th class="text-left {{ $widthClass }}">Other Name</th>
                     @elseif($col == 'gender')
                     <th class="text-center {{ $widthClass }}">Gender</th>
                     @elseif($col == 'dateofbirth')
@@ -324,7 +330,7 @@
                 @foreach($columns as $col)
                     @php
                         $widthClass = 'col-' . str_replace('_', '-', $col);
-                        if (!in_array($col, ['photo', 'admissionNo', 'fullname', 'gender', 'dateofbirth', 'age', 'class', 'status', 'admission_date', 'phone_number', 'state', 'local', 'religion', 'blood_group', 'father_name', 'mother_name', 'guardian_phone', 'term', 'session'])) {
+                        if (!in_array($col, ['photo', 'admissionNo', 'lastname', 'firstname', 'othername', 'gender', 'dateofbirth', 'age', 'class', 'status', 'admission_date', 'phone_number', 'state', 'local', 'religion', 'blood_group', 'father_name', 'mother_name', 'guardian_phone', 'term', 'session'])) {
                             $widthClass = 'col-' . substr($col, 0, 10);
                         }
                     @endphp
@@ -335,10 +341,12 @@
                     </td>
                     @elseif($col == 'admissionNo')
                     <td class="text-left {{ $widthClass }}">{{ $student->admissionNo ?? 'N/A' }}</td>
-                    @elseif($col == 'fullname')
-                    <td class="text-left {{ $widthClass }}">
-                        {{ ($student->lastname ?? '') . ' ' . ($student->firstname ?? '') . ' ' . ($student->othername ?? '') }}
-                    </td>
+                    @elseif($col == 'lastname')
+                    <td class="text-left {{ $widthClass }}">{{ $student->lastname ?? 'N/A' }}</td>
+                    @elseif($col == 'firstname')
+                    <td class="text-left {{ $widthClass }}">{{ $student->firstname ?? 'N/A' }}</td>
+                    @elseif($col == 'othername')
+                    <td class="text-left {{ $widthClass }}">{{ $student->othername ?? 'N/A' }}</td>
                     @elseif($col == 'gender')
                     <td class="text-center {{ $widthClass }}">{{ $student->gender ?? 'N/A' }}</td>
                     @elseif($col == 'dateofbirth')

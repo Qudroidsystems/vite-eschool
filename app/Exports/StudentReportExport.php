@@ -38,7 +38,9 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
         $map = [
             'photo'          => 'Photo',
             'admissionNo'    => 'Admission Number',
-            'fullname'       => 'Full Name',
+            'lastname'       => 'Last Name',
+            'firstname'      => 'First Name',
+            'othername'      => 'Other Name',
             'gender'         => 'Gender',
             'dateofbirth'    => 'Date of Birth',
             'age'            => 'Age',
@@ -73,11 +75,6 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
             switch ($col) {
                 case 'photo':
                     $row[] = ($student->picture && $student->picture !== 'unnamed.jpg') ? 'Yes' : 'No';
-                    break;
-
-                case 'fullname':
-                    $fullname = trim(($student->lastname ?? '') . ' ' . ($student->firstname ?? '') . ' ' . ($student->othername ?? ''));
-                    $row[] = $fullname ?: 'N/A';
                     break;
 
                 case 'class':
@@ -151,6 +148,19 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
                     } else {
                         $row[] = 'N/A';
                     }
+                    break;
+
+                // Handle separate name fields
+                case 'lastname':
+                    $row[] = $student->lastname ?? 'N/A';
+                    break;
+
+                case 'firstname':
+                    $row[] = $student->firstname ?? 'N/A';
+                    break;
+
+                case 'othername':
+                    $row[] = $student->othername ?? 'N/A';
                     break;
 
                 default:
