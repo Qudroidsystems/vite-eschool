@@ -53,6 +53,8 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
             'father_name'    => "Father's Name",
             'mother_name'    => "Mother's Name",
             'guardian_phone' => 'Guardian Contact Phone',
+            'term'           => 'Term',
+            'session'        => 'Session',
         ];
 
         foreach ($columns as $col) {
@@ -123,6 +125,32 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
                         $status .= ($status ? ' (' . $student->student_status . ')' : $student->student_status);
                     }
                     $row[] = $status ?: 'N/A';
+                    break;
+
+                case 'term':
+                    if ($student->termid) {
+                        try {
+                            $term = \App\Models\Schoolterm::find($student->termid);
+                            $row[] = $term ? $term->term : 'N/A';
+                        } catch (\Exception $e) {
+                            $row[] = 'N/A';
+                        }
+                    } else {
+                        $row[] = 'N/A';
+                    }
+                    break;
+
+                case 'session':
+                    if ($student->sessionid) {
+                        try {
+                            $session = \App\Models\Schoolsession::find($student->sessionid);
+                            $row[] = $session ? $session->session : 'N/A';
+                        } catch (\Exception $e) {
+                            $row[] = 'N/A';
+                        }
+                    } else {
+                        $row[] = 'N/A';
+                    }
                     break;
 
                 default:
@@ -220,6 +248,8 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
                         }
 
                         $details = 'Class: ' . $this->data['className'] .
+                                  ' | Term: ' . $this->data['termName'] .
+                                  ' | Session: ' . $this->data['sessionName'] .
                                   ' | Generated: ' . $this->data['generated'] .
                                   ' | Total Students: ' . $this->data['total'];
                         $sheet->setCellValue('A3', $details);
@@ -244,6 +274,8 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
                         ]);
 
                         $details = 'Class: ' . $this->data['className'] .
+                                  ' | Term: ' . $this->data['termName'] .
+                                  ' | Session: ' . $this->data['sessionName'] .
                                   ' | Generated: ' . $this->data['generated'] .
                                   ' | Total Students: ' . $this->data['total'];
                         $sheet->setCellValue('A2', $details);
@@ -271,7 +303,9 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
                     $details = 'Generated: ' . $this->data['generated'] .
                               ' | Total Students: ' . $this->data['total'] .
                               ' | Males: ' . $this->data['males'] .
-                              ' | Females: ' . $this->data['females'];
+                              ' | Females: ' . $this->data['females'] .
+                              ' | Term: ' . $this->data['termName'] .
+                              ' | Session: ' . $this->data['sessionName'];
                     $sheet->setCellValue('A2', $details);
                     $sheet->mergeCells('A2:' . $sheet->getHighestColumn() . '2');
                     $sheet->getStyle('A2')->applyFromArray([

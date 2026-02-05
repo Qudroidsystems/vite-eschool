@@ -978,6 +978,7 @@ use Spatie\Permission\Models\Role;
     </div> --}}
 
     <!-- Print/Export Report Modal -->
+<!-- Print/Export Report Modal -->
 <div class="modal fade" id="printStudentReportModal" tabindex="-1" aria-labelledby="printStudentReportModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -1013,6 +1014,28 @@ use Spatie\Permission\Models\Role;
                         </div>
                     </div>
 
+                    <!-- Term and Session Filters -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label">Term</label>
+                            <select class="form-select" name="term_id">
+                                <option value="">— All Terms —</option>
+                                @foreach ($schoolterms as $term)
+                                    <option value="{{ $term->id }}">{{ $term->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Session</label>
+                            <select class="form-select" name="session_id">
+                                <option value="">— All Sessions —</option>
+                                @foreach ($schoolsessions as $session)
+                                    <option value="{{ $session->id }}">{{ $session->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
+
                     <!-- Column Selection with Drag & Drop -->
                     <div class="mb-4">
                         <label class="form-label fw-semibold">
@@ -1039,6 +1062,8 @@ use Spatie\Permission\Models\Role;
                                     'father_name'    => "Father's Name",
                                     'mother_name'    => "Mother's Name",
                                     'guardian_phone' => 'Guardian Phone',
+                                    'term'           => 'Term',
+                                    'session'        => 'Session',
                                 ];
                             @endphp
                             @foreach ($availableColumns as $key => $label)
@@ -1137,6 +1162,29 @@ use Spatie\Permission\Models\Role;
         </div>
     </div>
 </div>
+
+<!-- Add SortableJS library -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+
+<style>
+    .cursor-move {
+        cursor: move;
+    }
+
+    .sortable-ghost {
+        opacity: 0.4;
+        background-color: #f8f9fa;
+    }
+
+    .sortable-chosen {
+        background-color: #405189 !important;
+        color: white !important;
+    }
+
+    .sortable-chosen .form-check-label {
+        color: white !important;
+    }
+</style>
 
 <!-- Add SortableJS library -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
@@ -3672,7 +3720,7 @@ function updatePreview() {
         preview.textContent = selectedColumns.join(', ') || 'No columns selected';
     }
 }
-
+// In the generateReport() function, update the params to include term_id and session_id:
 function generateReport() {
     const form = document.getElementById('printReportForm');
     if (!form) {
@@ -3703,6 +3751,9 @@ function generateReport() {
     const includeHeader = form.querySelector('[name="include_header"]').checked;
     const includeLogo = form.querySelector('[name="include_logo"]').checked;
     const orientation = form.querySelector('[name="orientation"]').value;
+    // Get term and session values
+    const termId = form.querySelector('[name="term_id"]')?.value || '';
+    const sessionId = form.querySelector('[name="session_id"]')?.value || '';
 
     if (!formatElement) {
         Swal.fire({
@@ -3727,9 +3778,11 @@ function generateReport() {
         }
     });
 
-    // Build query parameters
+    // Build query parameters - ADD term_id and session_id
     const params = new URLSearchParams({
         class_id: classId,
+        term_id: termId,
+        session_id: sessionId,
         status: status,
         columns: selectedColumns.join(','),
         columns_order: columnsOrderInput?.value || '',
@@ -3835,7 +3888,6 @@ function generateReport() {
         });
     });
 }
-
 // ============================================================================
 // FORM SUBMISSION HANDLERS
 // ============================================================================

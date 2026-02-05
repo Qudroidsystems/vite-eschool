@@ -1317,258 +1317,299 @@ class StudentController extends Controller
 
 
 
-
-
 public function generateReport(Request $request)
-    {
-        // Add memory limit for large datasets
-        ini_set('memory_limit', '256M');
-        set_time_limit(300);
+{
+    // Add memory limit for large datasets
+    ini_set('memory_limit', '256M');
+    set_time_limit(300);
 
-        \Log::info('=== GENERATE REPORT STARTED ===');
-        \Log::info('Request parameters:', $request->all());
+    \Log::info('=== GENERATE REPORT STARTED ===');
+    \Log::info('Request parameters:', $request->all());
 
-        try {
-            $request->validate([
-                'class_id'    => 'nullable|exists:schoolclass,id',
-                'status'      => 'nullable|in:1,2,Active,Inactive',
-                'columns'     => 'required|string',
-                'columns_order' => 'nullable|string',
-                'format'      => 'required|in:pdf,excel',
-                'orientation' => 'nullable|in:portrait,landscape',
-                'include_header' => 'nullable|boolean',
-                'include_logo' => 'nullable|boolean',
-            ]);
+    try {
+        $request->validate([
+            'class_id'    => 'nullable|exists:schoolclass,id',
+            'term_id'     => 'nullable|exists:schoolterm,id',
+            'session_id'  => 'nullable|exists:schoolsession,id',
+            'status'      => 'nullable|in:1,2,Active,Inactive',
+            'columns'     => 'required|string',
+            'columns_order' => 'nullable|string',
+            'format'      => 'required|in:pdf,excel',
+            'orientation' => 'nullable|in:portrait,landscape',
+            'include_header' => 'nullable|boolean',
+            'include_logo' => 'nullable|boolean',
+        ]);
 
-            $columns = array_filter(explode(',', $request->columns));
-            \Log::info('Columns selected:', $columns);
+        $columns = array_filter(explode(',', $request->columns));
+        \Log::info('Columns selected:', $columns);
 
-            // Get column order if provided
-            $columnOrder = [];
-            if ($request->filled('columns_order')) {
-                $columnOrder = array_filter(explode(',', $request->columns_order));
-                \Log::info('Column order:', $columnOrder);
+        // Get column order if provided
+        $columnOrder = [];
+        if ($request->filled('columns_order')) {
+            $columnOrder = array_filter(explode(',', $request->columns_order));
+            \Log::info('Column order:', $columnOrder);
 
-                // Reorder columns based on user preference
-                $columns = array_values(array_intersect($columnOrder, $columns));
+            // Reorder columns based on user preference
+            $columns = array_values(array_intersect($columnOrder, $columns));
+        }
+
+        if (empty($columns)) {
+            \Log::warning('No columns selected');
+            return response()->json(['success' => false, 'message' => 'No columns selected'], 422);
+        }
+
+        // Get term and session names for report
+        $termName = 'All Terms';
+        $sessionName = 'All Sessions';
+
+        if ($request->filled('term_id')) {
+            $term = Schoolterm::find($request->term_id);
+            $termName = $term ? $term->term : 'Unknown Term';
+        }
+
+        if ($request->filled('session_id')) {
+            $session = Schoolsession::find($request->session_id);
+            $sessionName = $session ? $session->session : 'Unknown Session';
+        }
+
+        // Build query with explicit joins
+        $query = Student::select([
+            'studentRegistration.id',
+            'studentRegistration.admissionNo',
+            'studentRegistration.admissionYear',
+            'studentRegistration.admission_date',
+            'studentRegistration.title',
+            'studentRegistration.firstname',
+            'studentRegistration.lastname',
+            'studentRegistration.othername',
+            'studentRegistration.gender',
+            'studentRegistration.dateofbirth',
+            'studentRegistration.age',
+            'studentRegistration.blood_group',
+            'studentRegistration.mother_tongue',
+            'studentRegistration.religion',
+            'studentRegistration.sport_house',
+            'studentRegistration.phone_number',
+            'studentRegistration.email',
+            'studentRegistration.nin_number',
+            'studentRegistration.city',
+            'studentRegistration.state',
+            'studentRegistration.local',
+            'studentRegistration.nationality',
+            'studentRegistration.placeofbirth',
+            'studentRegistration.future_ambition',
+            'studentRegistration.home_address2 as permanent_address',
+            'studentRegistration.student_category',
+            'studentRegistration.statusId',
+            'studentRegistration.student_status',
+            'studentRegistration.last_school',
+            'studentRegistration.last_class',
+            'studentRegistration.reason_for_leaving',
+            'studentRegistration.created_at',
+
+            'studentpicture.picture',
+
+            'schoolclass.schoolclass',
+            'schoolarm.arm as arm_name',
+
+            'studentclass.termid',
+            'studentclass.sessionid',
+
+            'parentRegistration.father as father_name',
+            'parentRegistration.mother as mother_name',
+            'parentRegistration.father_phone',
+            'parentRegistration.mother_phone',
+            'parentRegistration.parent_email',
+            'parentRegistration.parent_address',
+            'parentRegistration.father_occupation',
+            'parentRegistration.father_city'
+        ])
+        ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+        ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+        ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
+        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        ->leftJoin('parentRegistration', 'parentRegistration.studentId', '=', 'studentRegistration.id');
+
+        // Apply filters
+        if ($request->filled('class_id')) {
+            \Log::info('Filtering by class_id:', ['class_id' => $request->class_id]);
+            $query->where('studentclass.schoolclassid', $request->class_id);
+        }
+
+        if ($request->filled('term_id')) {
+            \Log::info('Filtering by term_id:', ['term_id' => $request->term_id]);
+            $query->where('studentclass.termid', $request->term_id);
+        }
+
+        if ($request->filled('session_id')) {
+            \Log::info('Filtering by session_id:', ['session_id' => $request->session_id]);
+            $query->where('studentclass.sessionid', $request->session_id);
+        }
+
+        if ($request->filled('status')) {
+            if (in_array($request->status, ['1', '2'])) {
+                \Log::info('Filtering by statusId:', ['status' => $request->status]);
+                $query->where('studentRegistration.statusId', $request->status);
+            } else {
+                \Log::info('Filtering by student_status:', ['status' => $request->status]);
+                $query->where('studentRegistration.student_status', $request->status);
             }
+        }
 
-            if (empty($columns)) {
-                \Log::warning('No columns selected');
-                return response()->json(['success' => false, 'message' => 'No columns selected'], 422);
+        // If no term/session specified, get only the most recent class assignment
+        if (!$request->filled('term_id') && !$request->filled('session_id')) {
+            \Log::info('No term/session specified, getting latest class assignments');
+            $query->whereIn('studentclass.id', function($subquery) {
+                $subquery->select(DB::raw('MAX(id)'))
+                        ->from('studentclass')
+                        ->groupBy('studentId');
+            });
+        }
+
+        $students = $query->distinct()->get();
+        \Log::info('Students found:', ['count' => $students->count()]);
+
+        if ($students->isEmpty()) {
+            \Log::warning('No students found with selected filters');
+            return response()->json([
+                'success' => false,
+                'message' => 'No students found matching the selected filters.'
+            ], 404);
+        }
+
+        // Get class name
+        $className = 'All Classes';
+        if ($request->filled('class_id')) {
+            $class = Schoolclass::with('armRelation')
+                ->where('schoolclass.id', $request->class_id)
+                ->first();
+
+            if ($class) {
+                $className = $class->schoolclass . ($class->armRelation ? ' - ' . $class->armRelation->arm : '');
             }
+        }
 
-            // Build query with explicit joins
-            $query = Student::select([
-                'studentRegistration.id',
-                'studentRegistration.admissionNo',
-                'studentRegistration.admissionYear',
-                'studentRegistration.admission_date',
-                'studentRegistration.title',
-                'studentRegistration.firstname',
-                'studentRegistration.lastname',
-                'studentRegistration.othername',
-                'studentRegistration.gender',
-                'studentRegistration.dateofbirth',
-                'studentRegistration.age',
-                'studentRegistration.blood_group',
-                'studentRegistration.mother_tongue',
-                'studentRegistration.religion',
-                'studentRegistration.sport_house',
-                'studentRegistration.phone_number',
-                'studentRegistration.email',
-                'studentRegistration.nin_number',
-                'studentRegistration.city',
-                'studentRegistration.state',
-                'studentRegistration.local',
-                'studentRegistration.nationality',
-                'studentRegistration.placeofbirth',
-                'studentRegistration.future_ambition',
-                'studentRegistration.home_address2 as permanent_address',
-                'studentRegistration.student_category',
-                'studentRegistration.statusId',
-                'studentRegistration.student_status',
-                'studentRegistration.last_school',
-                'studentRegistration.last_class',
-                'studentRegistration.reason_for_leaving',
-                'studentRegistration.created_at',
+        $format = $request->input('format');
+        $orientation = $request->query('orientation', 'portrait');
+        $includeHeader = $request->boolean('include_header', true);
+        $includeLogo = $request->boolean('include_logo', true);
 
-                'studentpicture.picture',
+        \Log::info('Report parameters:', [
+            'format' => $format,
+            'orientation' => $orientation,
+            'className' => $className,
+            'term' => $termName,
+            'session' => $sessionName,
+            'total_students' => $students->count(),
+            'include_header' => $includeHeader,
+            'include_logo' => $includeLogo
+        ]);
 
-                'schoolclass.schoolclass',
-                'schoolarm.arm as arm_name',
+        // Get active school information
+        $schoolInfo = SchoolInformation::where('is_active', true)->first();
 
-                'parentRegistration.father as father_name',
-                'parentRegistration.mother as mother_name',
-                'parentRegistration.father_phone',
-                'parentRegistration.mother_phone',
-                'parentRegistration.parent_email',
-                'parentRegistration.parent_address',
-                'parentRegistration.father_occupation',
-                'parentRegistration.father_city'
-            ])
-            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
-            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->leftJoin('parentRegistration', 'parentRegistration.studentId', '=', 'studentRegistration.id');
+        // Convert logo to base64 for PDF if needed
+        $schoolLogoBase64 = null;
+        if ($includeLogo && $schoolInfo && $format === 'pdf') {
+            $logoUrl = $schoolInfo->getLogoUrlAttribute();
+            if ($logoUrl) {
+                try {
+                    // For external URLs
+                    if (filter_var($logoUrl, FILTER_VALIDATE_URL)) {
+                        // For security, only fetch from your own domain
+                        if (strpos($logoUrl, 'topclasscollege.ng') !== false) {
+                            // Try to fetch the image
+                            $context = stream_context_create([
+                                'ssl' => [
+                                    'verify_peer' => false,
+                                    'verify_peer_name' => false,
+                                ],
+                            ]);
 
-            // Apply filters
-            if ($request->filled('class_id')) {
-                \Log::info('Filtering by class_id:', ['class_id' => $request->class_id]);
-                $query->where('studentclass.schoolclassid', $request->class_id);
-            }
+                            $imageData = @file_get_contents($logoUrl, false, $context);
+                            if ($imageData !== false) {
+                                // Try to determine mime type
+                                $finfo = new \finfo(FILEINFO_MIME_TYPE);
+                                $mimeType = $finfo->buffer($imageData);
 
-            if ($request->filled('status')) {
-                if (in_array($request->status, ['1', '2'])) {
-                    \Log::info('Filtering by statusId:', ['status' => $request->status]);
-                    $query->where('studentRegistration.statusId', $request->status);
-                } else {
-                    \Log::info('Filtering by student_status:', ['status' => $request->status]);
-                    $query->where('studentRegistration.student_status', $request->status);
-                }
-            }
-
-            $students = $query->get();
-            \Log::info('Students found:', ['count' => $students->count()]);
-
-            if ($students->isEmpty()) {
-                \Log::warning('No students found with selected filters');
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No students found matching the selected filters.'
-                ], 404);
-            }
-
-            // Get class name
-            $className = 'All Classes';
-            if ($request->filled('class_id')) {
-                $class = DB::table('schoolclass')
-                    ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                    ->where('schoolclass.id', $request->class_id)
-                    ->select('schoolclass.schoolclass', 'schoolarm.arm')
-                    ->first();
-
-                if ($class) {
-                    $className = $class->schoolclass . ($class->arm ? ' - ' . $class->arm : '');
-                }
-            }
-
-            $format = $request->input('format');
-            $orientation = $request->query('orientation', 'portrait');
-            $includeHeader = $request->boolean('include_header', true);
-            $includeLogo = $request->boolean('include_logo', true);
-
-            \Log::info('Report parameters:', [
-                'format' => $format,
-                'orientation' => $orientation,
-                'className' => $className,
-                'total_students' => $students->count(),
-                'include_header' => $includeHeader,
-                'include_logo' => $includeLogo
-            ]);
-
-            // Get active school information
-            $schoolInfo = SchoolInformation::where('is_active', true)->first();
-
-            // Convert logo to base64 for PDF if needed
-            $schoolLogoBase64 = null;
-            if ($includeLogo && $schoolInfo && $format === 'pdf') {
-                $logoUrl = $schoolInfo->getLogoUrlAttribute();
-                if ($logoUrl) {
-                    try {
-                        // For external URLs (like the one in your logs: https://topclasscollege.ng/storage/school_logos/...)
-                        if (filter_var($logoUrl, FILTER_VALIDATE_URL)) {
-                            // For security, only fetch from your own domain
-                            if (strpos($logoUrl, 'topclasscollege.ng') !== false) {
-                                // Try to fetch the image
-                                $context = stream_context_create([
-                                    'ssl' => [
-                                        'verify_peer' => false,
-                                        'verify_peer_name' => false,
-                                    ],
-                                ]);
-
-                                $imageData = @file_get_contents($logoUrl, false, $context);
-                                if ($imageData !== false) {
-                                    // Try to determine mime type
-                                    $finfo = new \finfo(FILEINFO_MIME_TYPE);
-                                    $mimeType = $finfo->buffer($imageData);
-
-                                    if (strpos($mimeType, 'image/') === 0) {
-                                        $schoolLogoBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($imageData);
-                                    } else {
-                                        // Default to jpeg if mime type detection fails
-                                        $schoolLogoBase64 = 'data:image/jpeg;base64,' . base64_encode($imageData);
-                                    }
+                                if (strpos($mimeType, 'image/') === 0) {
+                                    $schoolLogoBase64 = 'data:' . $mimeType . ';base64,' . base64_encode($imageData);
+                                } else {
+                                    // Default to jpeg if mime type detection fails
+                                    $schoolLogoBase64 = 'data:image/jpeg;base64,' . base64_encode($imageData);
                                 }
                             }
                         }
-                    } catch (\Exception $e) {
-                        \Log::error('Error converting logo to base64: ' . $e->getMessage());
                     }
+                } catch (\Exception $e) {
+                    \Log::error('Error converting logo to base64: ' . $e->getMessage());
                 }
-
-                // Log the result
-                \Log::info('Logo conversion:', [
-                    'has_logo_url' => !empty($logoUrl),
-                    'converted_to_base64' => !empty($schoolLogoBase64),
-                    'logo_url' => $logoUrl
-                ]);
             }
 
-            $data = [
-                'students'          => $students,
-                'columns'           => $columns,
-                'title'             => 'Student Master List Report',
-                'className'         => $className,
-                'generated'         => now()->format('d M Y h:i A'),
-                'total'             => $students->count(),
-                'males'             => $students->where('gender', 'Male')->count(),
-                'females'           => $students->where('gender', 'Female')->count(),
-                'orientation'       => $orientation,
-                'include_header'    => $includeHeader,
-                'include_logo'      => $includeLogo,
-                'school_info'       => $schoolInfo,
-                'school_logo_base64' => $schoolLogoBase64,
-            ];
+            // Log the result
+            \Log::info('Logo conversion:', [
+                'has_logo_url' => !empty($logoUrl),
+                'converted_to_base64' => !empty($schoolLogoBase64),
+                'logo_url' => $logoUrl
+            ]);
+        }
 
-            $filename = 'student-report-' . now()->format('Y-m-d-His');
-            \Log::info('Generating report with filename:', ['filename' => $filename]);
+        $data = [
+            'students'          => $students,
+            'columns'           => $columns,
+            'title'             => 'Student Master List Report',
+            'className'         => $className,
+            'termName'          => $termName,
+            'sessionName'       => $sessionName,
+            'generated'         => now()->format('d M Y h:i A'),
+            'total'             => $students->count(),
+            'males'             => $students->where('gender', 'Male')->count(),
+            'females'           => $students->where('gender', 'Female')->count(),
+            'orientation'       => $orientation,
+            'include_header'    => $includeHeader,
+            'include_logo'      => $includeLogo,
+            'school_info'       => $schoolInfo,
+            'school_logo_base64' => $schoolLogoBase64,
+        ];
 
-            if ($format === 'excel') {
-                \Log::info('Generating Excel export');
-                return Excel::download(new \App\Exports\StudentReportExport($data), $filename . '.xlsx');
-            }
+        $filename = 'student-report-' . now()->format('Y-m-d-His');
+        \Log::info('Generating report with filename:', ['filename' => $filename]);
 
-            \Log::info('Generating PDF export');
+        if ($format === 'excel') {
+            \Log::info('Generating Excel export');
+            return Excel::download(new \App\Exports\StudentReportExport($data), $filename . '.xlsx');
+        }
 
-            // Configure DomPDF with options - USE ARRAY SYNTAX
-            $pdf = Pdf::loadView('student.reports.student_report_pdf', $data)
-                ->setPaper('A4', $orientation)
-                ->setOptions([
-                    'isRemoteEnabled' => true,
-                    'isHtml5ParserEnabled' => true,
-                    'defaultFont' => 'DejaVu Sans',
-                    'chroot' => [public_path(), storage_path()], // Add chroot for security
-                ]);
+        \Log::info('Generating PDF export');
 
-            \Log::info('=== GENERATE REPORT COMPLETED SUCCESSFULLY ===');
-            return $pdf->download($filename . '.pdf');
-
-        } catch (\Exception $e) {
-            \Log::error('Error generating report:', [
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
+        // Configure DomPDF with options
+        $pdf = Pdf::loadView('student.reports.student_report_pdf', $data)
+            ->setPaper('A4', $orientation)
+            ->setOptions([
+                'isRemoteEnabled' => true,
+                'isHtml5ParserEnabled' => true,
+                'defaultFont' => 'DejaVu Sans',
+                'chroot' => [public_path(), storage_path()],
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Server error: ' . $e->getMessage(),
-                'error' => env('APP_DEBUG') ? $e->getTraceAsString() : 'Internal server error'
-            ], 500);
-        }
+        \Log::info('=== GENERATE REPORT COMPLETED SUCCESSFULLY ===');
+        return $pdf->download($filename . '.pdf');
+
+    } catch (\Exception $e) {
+        \Log::error('Error generating report:', [
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Server error: ' . $e->getMessage(),
+            'error' => env('APP_DEBUG') ? $e->getTraceAsString() : 'Internal server error'
+        ], 500);
     }
+}
+
+
 }

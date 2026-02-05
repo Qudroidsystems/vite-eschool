@@ -187,6 +187,8 @@
         .col-father { width: 15%; }
         .col-mother { width: 15%; }
         .col-guardian { width: 10%; }
+        .col-term { width: 10%; }
+        .col-session { width: 10%; }
     </style>
 </head>
 <body>
@@ -239,7 +241,7 @@
     <div class="report-header">
         <h2 class="report-title">{{ $title }}</h2>
         <div class="report-subtitle">
-            Class: {{ $className }} | Generated: {{ $generated }}
+            Class: {{ $className }} | Term: {{ $termName }} | Session: {{ $sessionName }} | Generated: {{ $generated }}
         </div>
     </div>
 
@@ -267,7 +269,7 @@
                     @php
                         // Determine column width class based on column type
                         $widthClass = 'col-' . str_replace('_', '-', $col);
-                        if (!in_array($col, ['photo', 'admissionNo', 'fullname', 'gender', 'dateofbirth', 'age', 'class', 'status', 'admission_date', 'phone_number', 'state', 'local', 'religion', 'blood_group', 'father_name', 'mother_name', 'guardian_phone'])) {
+                        if (!in_array($col, ['photo', 'admissionNo', 'fullname', 'gender', 'dateofbirth', 'age', 'class', 'status', 'admission_date', 'phone_number', 'state', 'local', 'religion', 'blood_group', 'father_name', 'mother_name', 'guardian_phone', 'term', 'session'])) {
                             $widthClass = 'col-' . substr($col, 0, 10);
                         }
                     @endphp
@@ -306,6 +308,10 @@
                     <th class="text-left {{ $widthClass }}">Mother's Name</th>
                     @elseif($col == 'guardian_phone')
                     <th class="text-left {{ $widthClass }}">Guardian Phone</th>
+                    @elseif($col == 'term')
+                    <th class="text-center {{ $widthClass }}">Term</th>
+                    @elseif($col == 'session')
+                    <th class="text-center {{ $widthClass }}">Session</th>
                     @else
                     <th class="text-left {{ $widthClass }}">{{ ucwords(str_replace('_', ' ', $col)) }}</th>
                     @endif
@@ -318,7 +324,7 @@
                 @foreach($columns as $col)
                     @php
                         $widthClass = 'col-' . str_replace('_', '-', $col);
-                        if (!in_array($col, ['photo', 'admissionNo', 'fullname', 'gender', 'dateofbirth', 'age', 'class', 'status', 'admission_date', 'phone_number', 'state', 'local', 'religion', 'blood_group', 'father_name', 'mother_name', 'guardian_phone'])) {
+                        if (!in_array($col, ['photo', 'admissionNo', 'fullname', 'gender', 'dateofbirth', 'age', 'class', 'status', 'admission_date', 'phone_number', 'state', 'local', 'religion', 'blood_group', 'father_name', 'mother_name', 'guardian_phone', 'term', 'session'])) {
                             $widthClass = 'col-' . substr($col, 0, 10);
                         }
                     @endphp
@@ -387,6 +393,20 @@
                     @elseif($col == 'guardian_phone')
                     <td class="text-left {{ $widthClass }}">
                         {{ $student->father_phone ?? $student->mother_phone ?? 'N/A' }}
+                    </td>
+                    @elseif($col == 'term')
+                    <td class="text-center {{ $widthClass }}">
+                        @php
+                            $term = $student->termid ? \App\Models\Schoolterm::find($student->termid) : null;
+                        @endphp
+                        {{ $term ? $term->term : 'N/A' }}
+                    </td>
+                    @elseif($col == 'session')
+                    <td class="text-center {{ $widthClass }}">
+                        @php
+                            $session = $student->sessionid ? \App\Models\Schoolsession::find($student->sessionid) : null;
+                        @endphp
+                        {{ $session ? $session->session : 'N/A' }}
                     </td>
                     @else
                     <td class="text-left {{ $widthClass }}">
