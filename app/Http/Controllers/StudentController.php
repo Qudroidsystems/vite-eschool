@@ -1372,7 +1372,41 @@ public function generateReport(Request $request)
             $sessionName = $session ? $session->session : 'Unknown Session';
         }
 
-        // Build query with explicit joins
+        // FIRST: Get student IDs from studentclass with the selected filters
+        $studentClassQuery = Studentclass::query();
+
+        // Apply class filter
+        if ($request->filled('class_id')) {
+            \Log::info('Filtering studentclass by class_id:', ['class_id' => $request->class_id]);
+            $studentClassQuery->where('schoolclassid', $request->class_id);
+        }
+
+        // Apply term filter
+        if ($request->filled('term_id')) {
+            \Log::info('Filtering studentclass by term_id:', ['term_id' => $request->term_id]);
+            $studentClassQuery->where('termid', $request->term_id);
+        }
+
+        // Apply session filter
+        if ($request->filled('session_id')) {
+            \Log::info('Filtering studentclass by session_id:', ['session_id' => $request->session_id]);
+            $studentClassQuery->where('sessionid', $request->session_id);
+        }
+
+        // Get the student IDs that match the class/term/session criteria
+        $studentIds = $studentClassQuery->pluck('studentId')->unique()->toArray();
+
+        \Log::info('Student IDs from studentclass:', ['count' => count($studentIds), 'ids' => $studentIds]);
+
+        if (empty($studentIds)) {
+            \Log::warning('No students found in studentclass with selected filters');
+            return response()->json([
+                'success' => false,
+                'message' => 'No students found matching the selected class, term, and session combination.'
+            ], 404);
+        }
+
+        // SECOND: Query students based on the IDs from studentclass
         $query = Student::select([
             'studentRegistration.id',
             'studentRegistration.admissionNo',
@@ -1424,28 +1458,27 @@ public function generateReport(Request $request)
             'parentRegistration.father_occupation',
             'parentRegistration.father_city'
         ])
+        ->whereIn('studentRegistration.id', $studentIds)
         ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-        ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+        ->leftJoin('studentclass', function($join) use ($request) {
+            $join->on('studentclass.studentId', '=', 'studentRegistration.id');
+
+            // Join the specific class assignment based on filters
+            if ($request->filled('class_id')) {
+                $join->where('studentclass.schoolclassid', $request->class_id);
+            }
+            if ($request->filled('term_id')) {
+                $join->where('studentclass.termid', $request->term_id);
+            }
+            if ($request->filled('session_id')) {
+                $join->where('studentclass.sessionid', $request->session_id);
+            }
+        })
         ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
         ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
         ->leftJoin('parentRegistration', 'parentRegistration.studentId', '=', 'studentRegistration.id');
 
-        // Apply filters
-        if ($request->filled('class_id')) {
-            \Log::info('Filtering by class_id:', ['class_id' => $request->class_id]);
-            $query->where('studentclass.schoolclassid', $request->class_id);
-        }
-
-        if ($request->filled('term_id')) {
-            \Log::info('Filtering by term_id:', ['term_id' => $request->term_id]);
-            $query->where('studentclass.termid', $request->term_id);
-        }
-
-        if ($request->filled('session_id')) {
-            \Log::info('Filtering by session_id:', ['session_id' => $request->session_id]);
-            $query->where('studentclass.sessionid', $request->session_id);
-        }
-
+        // Apply student status filters
         if ($request->filled('status')) {
             if (in_array($request->status, ['1', '2'])) {
                 \Log::info('Filtering by statusId:', ['status' => $request->status]);
@@ -1456,17 +1489,31 @@ public function generateReport(Request $request)
             }
         }
 
-        // If no term/session specified, get only the most recent class assignment
+        // If no term/session specified, we need to get the latest class assignment
         if (!$request->filled('term_id') && !$request->filled('session_id')) {
             \Log::info('No term/session specified, getting latest class assignments');
-            $query->whereIn('studentclass.id', function($subquery) {
-                $subquery->select(DB::raw('MAX(id)'))
-                        ->from('studentclass')
-                        ->groupBy('studentId');
+
+            // Remove the studentclass join and rejoin to get latest
+            $query->leftJoin('studentclass as sc_latest', function($join) {
+                $join->on('sc_latest.studentId', '=', 'studentRegistration.id')
+                     ->whereIn('sc_latest.id', function($subquery) {
+                         $subquery->select(DB::raw('MAX(id)'))
+                                 ->from('studentclass')
+                                 ->groupBy('studentId');
+                     });
             });
+
+            // Update the joins to use the latest class
+            $query->leftJoin('schoolclass as sc_class', 'sc_class.id', '=', 'sc_latest.schoolclassid')
+                  ->addSelect([
+                      'sc_class.schoolclass as schoolclass',
+                      DB::raw('(SELECT arm FROM schoolarm WHERE id = sc_class.arm) as arm_name'),
+                      'sc_latest.termid',
+                      'sc_latest.sessionid'
+                  ]);
         }
 
-        $students = $query->distinct()->get();
+        $students = $query->get();
         \Log::info('Students found:', ['count' => $students->count()]);
 
         if ($students->isEmpty()) {
@@ -1610,6 +1657,5 @@ public function generateReport(Request $request)
         ], 500);
     }
 }
-
 
 }
