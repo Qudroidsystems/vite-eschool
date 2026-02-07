@@ -77,6 +77,17 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
                     $row[] = ($student->picture && $student->picture !== 'unnamed.jpg') ? 'Yes' : 'No';
                     break;
 
+                case 'admissionNo':
+                    // Debug: Check what's in the student object
+                    $admissionNo = $student->admissionNo ?? $student->admission_no ?? 'N/A';
+                    \Log::info('Excel - Admission No:', [
+                        'admissionNo' => $student->admissionNo ?? 'null',
+                        'admission_no' => $student->admission_no ?? 'null',
+                        'result' => $admissionNo
+                    ]);
+                    $row[] = $admissionNo;
+                    break;
+
                 case 'class':
                     $class = $student->schoolclass ?? 'N/A';
                     $arm = $student->arm_name ?? '';
@@ -124,6 +135,16 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
                     $row[] = $status ?: 'N/A';
                     break;
 
+                case 'gender':
+                    // Debug: Check gender value
+                    $gender = $student->gender ?? 'N/A';
+                    \Log::info('Excel - Gender:', [
+                        'gender' => $student->gender ?? 'null',
+                        'result' => $gender
+                    ]);
+                    $row[] = $gender;
+                    break;
+
                 case 'term':
                     if ($student->termid) {
                         try {
@@ -164,17 +185,65 @@ class StudentReportExport implements FromCollection, WithHeadings, WithMapping, 
                     break;
 
                 default:
-                    if (property_exists($student, $col)) {
-                        $value = $student->$col;
-                        $row[] = $value !== null && $value !== '' ? $value : 'N/A';
-                    } else {
-                        $row[] = 'N/A';
-                    }
+                    // Try different property names
+                    $value = $this->getStudentProperty($student, $col);
+                    $row[] = $value !== null && $value !== '' ? $value : 'N/A';
                     break;
             }
         }
 
         return $row;
+    }
+
+    /**
+     * Get student property with multiple fallbacks
+     */
+    private function getStudentProperty($student, $property)
+    {
+        // Try direct property access
+        if (property_exists($student, $property)) {
+            return $student->$property;
+        }
+
+        // Try snake_case version
+        $snakeCase = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $property));
+        if (property_exists($student, $snakeCase)) {
+            return $student->$snakeCase;
+        }
+
+        // Try camelCase version
+        $camelCase = lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $property))));
+        if (property_exists($student, $camelCase)) {
+            return $student->$camelCase;
+        }
+
+        // Common property mappings
+        $mappings = [
+            'phone_number' => ['phone_number', 'phone'],
+            'blood_group' => ['blood_group', 'bloodgroup'],
+            'mother_tongue' => ['mother_tongue', 'mothertongue'],
+            'father_name' => ['father_name', 'father'],
+            'mother_name' => ['mother_name', 'mother'],
+            'father_phone' => ['father_phone', 'fatherphone'],
+            'mother_phone' => ['mother_phone', 'motherphone'],
+            'parent_email' => ['parent_email', 'parentemail'],
+            'parent_address' => ['parent_address', 'parentaddress'],
+            'father_occupation' => ['father_occupation', 'fatheroccupation'],
+            'father_city' => ['father_city', 'fathercity'],
+            'last_school' => ['last_school', 'lastschool'],
+            'last_class' => ['last_class', 'lastclass'],
+            'reason_for_leaving' => ['reason_for_leaving', 'reasonforleaving'],
+        ];
+
+        if (isset($mappings[$property])) {
+            foreach ($mappings[$property] as $mappedProperty) {
+                if (property_exists($student, $mappedProperty)) {
+                    return $student->$mappedProperty;
+                }
+            }
+        }
+
+        return null;
     }
 
     public function styles(Worksheet $sheet)
