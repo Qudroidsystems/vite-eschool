@@ -1165,8 +1165,7 @@ use Spatie\Permission\Models\Role;
     </div>
 </div>
 
-<!-- Add SortableJS library -->
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
+
 
 <style>
     .cursor-move {

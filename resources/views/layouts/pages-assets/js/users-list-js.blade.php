@@ -18,6 +18,8 @@
 <script src="{{ asset('theme/layouts/assets/js/pages/user-list.init.js') }}"></script>
 <!-- App js -->
 <script src="{{ asset('theme/layouts/assets/js/app.js') }}"></script>
+<!-- Add SortableJS library -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
 
 {{-- <!-- Dashboard script (load last to minimize conflicts) -->
 <script src="{{ asset('theme/layouts/assets/js/pages/dashboard-real-estate.init.js') }}"></script> --}}
