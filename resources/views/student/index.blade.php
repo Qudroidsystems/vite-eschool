@@ -1165,87 +1165,50 @@ use Spatie\Permission\Models\Role;
     </div>
 </div>
 
+<!-- Add SortableJS library -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
 
+<style>
+    .cursor-move {
+        cursor: move;
+    }
+
+    .sortable-ghost {
+        opacity: 0.4;
+        background-color: #f8f9fa;
+    }
+
+    .sortable-chosen {
+        background-color: #405189 !important;
+        color: white !important;
+    }
+
+    .sortable-chosen .form-check-label {
+        color: white !important;
+    }
+</style>
 
 <!-- Add SortableJS library -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.14.0/Sortable.min.js"></script>
 
 <style>
-  /* Drag and Drop Styles */
-.cursor-move {
-    cursor: move !important;
-}
+    .cursor-move {
+        cursor: move;
+    }
 
-.drag-handle {
-    cursor: move;
-    opacity: 0.5;
-    transition: opacity 0.2s;
-    display: inline-flex;
-    align-items: center;
-}
+    .sortable-ghost {
+        opacity: 0.4;
+        background-color: #f8f9fa;
+    }
 
-.drag-handle:hover {
-    opacity: 1;
-}
+    .sortable-chosen {
+        background-color: #405189 !important;
+        color: white !important;
+    }
 
-.draggable-item {
-    user-select: none;
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-.draggable-item.dragging {
-    opacity: 0.5;
-    transform: rotate(2deg);
-    background-color: #f8f9fa !important;
-}
-
-.draggable-item.drag-over {
-    background-color: #e9ecef !important;
-    border-color: #405189 !important;
-}
-
-/* Sortable.js specific classes */
-.sortable-ghost {
-    opacity: 0.4;
-    background-color: #f8f9fa !important;
-    transform: rotate(2deg);
-}
-
-.sortable-chosen {
-    background-color: #405189 !important;
-    color: white !important;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    transform: scale(1.02);
-    z-index: 1000;
-}
-
-.sortable-chosen .form-check-label {
-    color: white !important;
-}
-
-.sortable-chosen .drag-handle {
-    color: white !important;
-}
-
-.sortable-drag {
-    opacity: 0.8;
-}
-
-#columnsContainer {
-    min-height: 200px;
-}
-
-/* Preview styling */
-#columnOrderPreview {
-    font-weight: 500;
-    color: #405189;
-    background-color: #f8f9fa;
-    padding: 2px 6px;
-    border-radius: 4px;
-    display: inline-block;
-    margin-top: 2px;
-}
+    .sortable-chosen .form-check-label {
+        color: white !important;
+    }
 </style>
 
         <!-- Add Student Modal -->

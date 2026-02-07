@@ -64,34 +64,7 @@ class Student extends Model
         'updated_at' => 'datetime',
     ];
 
-    // Add these to ensure proper attribute mapping
-    protected $appends = [
-        'admission_no',
-        'phone_number',
-        'blood_group',
-        'mother_tongue',
-        'father_name',
-        'mother_name',
-        'father_phone',
-        'mother_phone',
-        'parent_email',
-        'parent_address',
-        'father_occupation',
-        'father_city',
-    ];
-
-    // Accessor for admission_no
-    public function getAdmissionNoAttribute($value)
-    {
-        return $value ?? $this->attributes['admissionNo'] ?? null;
-    }
-
-    // Accessor for gender
-    public function getGenderAttribute($value)
-    {
-        return $value ?? $this->attributes['gender'] ?? null;
-    }
-
+    
 
     // Add relationship to User
     public function user(): HasOne
