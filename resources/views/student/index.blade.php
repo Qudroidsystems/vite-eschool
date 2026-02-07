@@ -872,7 +872,113 @@ use Spatie\Permission\Models\Role;
     <!-- ================================================= -->
     <!--        PRINT / EXPORT REPORT MODAL               -->
     <!-- ================================================= -->
-<!-- Print/Export Report Modal -->
+    {{-- <div class="modal fade" id="printStudentReportModal" tabindex="-1" aria-labelledby="printStudentReportModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-soft-success">
+                    <h5 class="modal-title" id="printStudentReportModalLabel">
+                        <i class="ri-printer-line me-2"></i> Generate Student Report
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <form id="printReportForm">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Class</label>
+                                <select class="form-select" name="class_id">
+                                    <option value="">— All Classes —</option>
+                                    @foreach ($schoolclasses as $class)
+                                        <option value="{{ $class->id }}">{{ $class->class_display }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" name="status">
+                                    <option value="">— All —</option>
+                                    <option value="1">Old Students</option>
+                                    <option value="2">New Students</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Select Columns to Include</label>
+                            <div class="row g-3">
+                                @php
+                                    $availableColumns = [
+                                        'photo'          => 'Photo',
+                                        'admissionNo'    => 'Admission No',
+                                        'fullname'       => 'Full Name',
+                                        'gender'         => 'Gender',
+                                        'dateofbirth'    => 'Date of Birth',
+                                        'age'            => 'Age',
+                                        'class'          => 'Class / Arm',
+                                        'status'         => 'Student Status',
+                                        'admission_date' => 'Admission Date',
+                                        'phone_number'   => 'Phone Number',
+                                        'state'          => 'State of Origin',
+                                        'local'          => 'LGA',
+                                        'religion'       => 'Religion',
+                                        'blood_group'    => 'Blood Group',
+                                        'father_name'    => "Father's Name",
+                                        'mother_name'    => "Mother's Name",
+                                        'guardian_phone' => 'Guardian Phone',
+                                    ];
+                                @endphp
+                                @foreach ($availableColumns as $key => $label)
+                                    <div class="col-md-4 col-sm-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="columns[]" value="{{ $key }}" id="col_{{ $key }}"
+                                                {{ in_array($key, ['fullname','admissionNo','class','gender']) ? 'checked' : '' }}>
+                                            <label class="form-check-label" for="col_{{ $key }}">{{ $label }}</label>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Export Format</label>
+                            <div class="d-flex gap-3 flex-wrap">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="format" id="format_pdf" value="pdf" checked>
+                                    <label class="form-check-label" for="format_pdf">
+                                        <i class="ri-file-pdf-2-line text-danger me-1"></i> PDF
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="format" id="format_excel" value="excel">
+                                    <label class="form-check-label" for="format_excel">
+                                        <i class="ri-file-excel-2-line text-success me-1"></i> Excel
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info small mb-0">
+                            <i class="ri-information-fill me-2"></i>
+                            Only students matching the selected filters will be included.
+                        </div>
+                    </form>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" id="generateReportBtn">
+                        <i class="ri-printer-line me-1"></i> Generate & Download
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div> --}}
+
+    <!-- Print/Export Report Modal -->
+    <!-- Print/Export Report Modal -->
 <div class="modal fade" id="printStudentReportModal" tabindex="-1" aria-labelledby="printStudentReportModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -964,17 +1070,12 @@ use Spatie\Permission\Models\Role;
                             @endphp
                             @foreach ($availableColumns as $key => $label)
                                 <div class="col-md-4 col-sm-6">
-                                    <div class="form-check border rounded p-2 mb-2 bg-light draggable-item" data-column="{{ $key }}">
-                                        <div class="d-flex align-items-center">
-                                            <span class="drag-handle me-2 cursor-move">
-                                                <i class="ri-draggable"></i>
-                                            </span>
-                                            <input class="form-check-input column-checkbox" type="checkbox" name="columns[]" value="{{ $key }}" id="col_{{ $key }}"
-                                                {{ in_array($key, ['admissionNo','lastname','firstname','class','gender']) ? 'checked' : '' }}>
-                                            <label class="form-check-label w-100 cursor-move" for="col_{{ $key }}">
-                                                {{ $label }}
-                                            </label>
-                                        </div>
+                                    <div class="form-check border rounded p-2 mb-2 bg-light cursor-move">
+                                        <input class="form-check-input" type="checkbox" name="columns[]" value="{{ $key }}" id="col_{{ $key }}"
+                                            {{ in_array($key, ['admissionNo','lastname','firstname','class','gender']) ? 'checked' : '' }}>
+                                        <label class="form-check-label w-100 cursor-move" for="col_{{ $key }}">
+                                            <i class="ri-draggable me-1"></i> {{ $label }}
+                                        </label>
                                     </div>
                                 </div>
                             @endforeach
@@ -1059,14 +1160,11 @@ use Spatie\Permission\Models\Role;
                 <button type="button" class="btn btn-success" id="generateReportBtn">
                     <i class="ri-printer-line me-1"></i> Generate & Download
                 </button>
-                <!-- Debug button - remove in production -->
-                <button type="button" class="btn btn-warning btn-sm d-none" onclick="debugColumnOrdering()" id="debugBtn">
-                    <i class="ri-bug-line me-1"></i> Debug
-                </button>
             </div>
         </div>
     </div>
 </div>
+
 
 
 <!-- Add SortableJS library -->
@@ -2310,8 +2408,6 @@ use Spatie\Permission\Models\Role;
         </div>
     </div>
 </div>
-
-
 
 <script>
 
