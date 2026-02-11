@@ -1,485 +1,841 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>{{ $title }}</title>
-    <style>
-        body {
-            font-family: DejaVu Sans, sans-serif;
-            font-size: {{ $orientation == 'landscape' ? '9px' : '10px' }};
-            margin: 0;
-            padding: 0;
+<?php
+
+namespace App\Exports;
+
+use Illuminate\Support\Collection;
+use Maatwebsite\Excel\Concerns\FromCollection;
+use Maatwebsite\Excel\Concerns\WithHeadings;
+use Maatwebsite\Excel\Concerns\WithMapping;
+use Maatwebsite\Excel\Concerns\WithStyles;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterSheet;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Font;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Color;
+use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use Carbon\Carbon;
+
+class StudentReportExport implements FromCollection, WithHeadings, WithMapping, WithStyles, WithEvents
+{
+    protected $data;
+    protected $groupedColumns = [];
+
+    public function __construct(array $data)
+    {
+        $this->data = $data;
+        $this->groupedColumns = $this->determineColumnGroups();
+    }
+
+    public function collection()
+    {
+        return $this->data['students'];
+    }
+
+    public function headings(): array
+    {
+        $headings = [];
+        $columns = $this->data['columns'];
+
+        $map = [
+            'photo'          => 'Photo',
+            'admissionNo'    => 'Admission Number',
+            'lastname'       => 'Last Name',
+            'firstname'      => 'First Name',
+            'othername'      => 'Other Name',
+            'gender'         => 'Gender',
+            'dateofbirth'    => 'Date of Birth',
+            'age'            => 'Age',
+            'class'          => 'Class / Arm',
+            'status'         => 'Student Status',
+            'admission_date' => 'Admission Date',
+            'phone_number'   => 'Phone Number',
+            'state'          => 'State of Origin',
+            'local'          => 'Local Government Area (LGA)',
+            'religion'       => 'Religion',
+            'blood_group'    => 'Blood Group',
+            'father_name'    => "Father's Name",
+            'mother_name'    => "Mother's Name",
+            'guardian_phone' => 'Guardian Contact Phone',
+            'term'           => 'Term',
+            'session'        => 'Session',
+            'email'          => 'Email Address',
+            'city'           => 'City',
+            'nationality'    => 'Nationality',
+            'placeofbirth'   => 'Place of Birth',
+            'mother_tongue'  => 'Mother Tongue',
+            'student_category' => 'Student Category',
+            'future_ambition' => 'Future Ambition',
+            'last_school'    => 'Last School',
+            'last_class'     => 'Last Class',
+            'father_occupation' => 'Father\'s Occupation',
+            'mother_occupation' => 'Mother\'s Occupation',
+            'father_city'    => 'Father\'s City',
+            'parent_email'   => 'Parent Email',
+            'parent_address' => 'Parent Address',
+            'nin_number'     => 'NIN Number',
+            'school_house'   => 'School House',
+        ];
+
+        foreach ($columns as $col) {
+            $headings[] = $map[$col] ?? ucwords(str_replace('_', ' ', $col));
         }
 
-        /* School Header Styles */
-        .school-header {
-            margin-bottom: 15px;
-            border-bottom: 2px solid #333;
-            padding-bottom: 10px;
-        }
+        return $headings;
+    }
 
-        .header-with-logo {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
+    public function map($student): array
+    {
+        $row = [];
+        $columns = $this->data['columns'];
 
-        .logo-container {
-            width: 80px;
-            height: 80px;
-            flex-shrink: 0;
-        }
+        foreach ($columns as $col) {
+            switch ($col) {
+                case 'photo':
+                    // Show student initials or photo status
+                    if (isset($student->picture) && $student->picture !== 'unnamed.jpg') {
+                        $row[] = '✓ Photo';
+                    } else {
+                        $row[] = $this->getStudentInitials($student) ?: 'No Photo';
+                    }
+                    break;
 
-        .logo-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
+                case 'admissionNo':
+                    $admissionNo = $student->admissionNo ?? $student->admission_no ?? 'N/A';
+                    $row[] = $admissionNo;
+                    break;
 
-        .school-info {
-            flex-grow: 1;
-            text-align: center;
-            padding: 0 15px;
-        }
+                case 'class':
+                    $class = $student->schoolclass ?? 'N/A';
+                    $arm = $student->arm_name ?? $student->arm ?? '';
+                    $row[] = $arm ? "$class - $arm" : $class;
+                    break;
 
-        .school-name {
-            font-size: 16px;
-            font-weight: bold;
-            color: #333;
-            margin: 0;
-            line-height: 1.2;
-        }
+                case 'guardian_phone':
+                    $phone = $student->father_phone ?? $student->mother_phone ?? $student->guardian_phone ?? '';
+                    $row[] = $phone ?: 'N/A';
+                    break;
 
-        .school-motto {
-            font-size: 12px;
-            color: #666;
-            font-style: italic;
-            margin: 5px 0;
-            line-height: 1.2;
-        }
-
-        .school-contact {
-            font-size: 10px;
-            color: #666;
-            margin: 3px 0;
-            line-height: 1.2;
-        }
-
-        /* Report Header */
-        .report-header {
-            text-align: center;
-            margin: 10px 0 15px 0;
-            padding-bottom: 8px;
-        }
-
-        .report-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #1E40AF;
-            margin: 0;
-            line-height: 1.2;
-        }
-
-        .report-subtitle {
-            font-size: 11px;
-            color: #666;
-            margin: 5px 0;
-            line-height: 1.2;
-        }
-
-        /* Summary Section */
-        .summary {
-            margin-bottom: 15px;
-            padding: 8px;
-            background-color: #f8f9fa;
-            border-radius: 4px;
-            font-size: 10px;
-        }
-
-        .summary table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .summary td {
-            padding: 4px;
-            border: 1px solid #dee2e6;
-        }
-
-        .summary .label {
-            font-weight: bold;
-            background-color: #e9ecef;
-        }
-
-        /* Main Table */
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 8px;
-            font-size: {{ $orientation == 'landscape' ? '8px' : '9px' }};
-        }
-
-        .data-table th {
-            background-color: #405189;
-            color: white;
-            padding: 6px;
-            text-align: left;
-            border: 1px solid #dee2e6;
-            font-weight: bold;
-            white-space: nowrap;
-        }
-
-        .data-table td {
-            padding: 5px;
-            border: 1px solid #dee2e6;
-            line-height: 1.3;
-        }
-
-        .data-table tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .text-left {
-            text-align: left;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-        .nowrap {
-            white-space: nowrap;
-        }
-
-        .wrap {
-            word-wrap: break-word;
-        }
-
-        /* Footer */
-        .footer {
-            margin-top: 20px;
-            text-align: center;
-            font-size: 9px;
-            color: #666;
-            border-top: 1px solid #dee2e6;
-            padding-top: 8px;
-            position: fixed;
-            bottom: 0;
-            width: 100%;
-            background-color: white;
-        }
-
-        .footer-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-        }
-
-        .footer-generated {
-            text-align: left;
-        }
-
-        .footer-user {
-            text-align: center;
-        }
-
-        .footer-pages {
-            text-align: right;
-        }
-
-        /* Column Width Classes */
-        .col-photo { width: 5%; }
-        .col-admission { width: 10%; }
-        .col-lastname { width: 15%; }
-        .col-firstname { width: 15%; }
-        .col-othername { width: 15%; }
-        .col-gender { width: 5%; }
-        .col-dob { width: 8%; }
-        .col-age { width: 4%; }
-        .col-class { width: 12%; }
-        .col-status { width: 8%; }
-        .col-admission-date { width: 8%; }
-        .col-phone { width: 10%; }
-        .col-state { width: 10%; }
-        .col-local { width: 10%; }
-        .col-religion { width: 8%; }
-        .col-blood { width: 6%; }
-        .col-father { width: 15%; }
-        .col-mother { width: 15%; }
-        .col-guardian { width: 10%; }
-        .col-term { width: 10%; }
-        .col-session { width: 10%; }
-    </style>
-</head>
-<body>
-    @if($include_header)
-    <div class="school-header">
-        @if($include_logo && $school_info)
-        <div class="header-with-logo">
-            <div class="logo-container">
-                @if($school_logo_base64)
-                    <!-- Use base64 for PDF -->
-                    <img src="{{ $school_logo_base64 }}" alt="School Logo">
-                @elseif($school_info->getLogoUrlAttribute())
-                    <!-- Use regular URL if base64 conversion failed -->
-                    <img src="{{ $school_info->getLogoUrlAttribute() }}" alt="School Logo">
-                @else
-                    <!-- Fallback placeholder -->
-                    <div style="width: 100%; height: 100%; background-color: #f0f0f0; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #666; font-size: 10px;">
-                        No Logo
-                    </div>
-                @endif
-            </div>
-            <div class="school-info">
-                <h1 class="school-name">{{ $school_info->school_name ?? 'School Name' }}</h1>
-                @if($school_info && $school_info->school_motto)
-                <p class="school-motto">{{ $school_info->school_motto }}</p>
-                @endif
-                @if($school_info && $school_info->school_address)
-                <p class="school-contact">{{ $school_info->school_address }}</p>
-                @endif
-                @if($school_info && $school_info->school_phone)
-                <p class="school-contact">Tel: {{ $school_info->school_phone }}</p>
-                @endif
-                @if($school_info && $school_info->school_email)
-                <p class="school-contact">Email: {{ $school_info->school_email }}</p>
-                @endif
-            </div>
-            <div class="logo-container"></div> <!-- Empty for balance -->
-        </div>
-        @else
-        <div class="school-info">
-            <h1 class="school-name">{{ $school_info->school_name ?? 'School Name' }}</h1>
-            @if($school_info && $school_info->school_address)
-            <p class="school-contact">{{ $school_info->school_address }}</p>
-            @endif
-        </div>
-        @endif
-    </div>
-    @endif
-
-    <div class="report-header">
-        <h2 class="report-title">{{ $title }}</h2>
-        <div class="report-subtitle">
-            Class: {{ $className }} | Term: {{ $termName }} | Session: {{ $sessionName }} | Generated: {{ $generated }}
-        </div>
-    </div>
-
-    <div class="summary">
-        <table>
-            <tr>
-                <td class="label" width="20%">Total Students:</td>
-                <td width="30%">{{ $total }}</td>
-                <td class="label" width="20%">Males:</td>
-                <td width="30%">{{ $males }}</td>
-            </tr>
-            <tr>
-                <td class="label">Females:</td>
-                <td>{{ $females }}</td>
-                <td class="label">Generated By:</td>
-                <td>{{ $generated_by ?? 'System' }}</td>
-            </tr>
-        </table>
-    </div>
-
-    <table class="data-table">
-        <thead>
-            <tr>
-                @foreach($columns as $col)
-                    @php
-                        // Determine column width class based on column type
-                        $widthClass = 'col-' . str_replace('_', '-', $col);
-                        if (!in_array($col, ['photo', 'admissionNo', 'lastname', 'firstname', 'othername', 'gender', 'dateofbirth', 'age', 'class', 'status', 'admission_date', 'phone_number', 'state', 'local', 'religion', 'blood_group', 'father_name', 'mother_name', 'guardian_phone', 'term', 'session'])) {
-                            $widthClass = 'col-' . substr($col, 0, 10);
+                case 'admission_date':
+                    if (isset($student->admission_date) && $student->admission_date) {
+                        try {
+                            $row[] = Carbon::parse($student->admission_date)->format('d/m/Y');
+                        } catch (\Exception $e) {
+                            $row[] = $student->admission_date;
                         }
-                    @endphp
-
-                    @if($col == 'photo')
-                    <th class="text-center {{ $widthClass }}">Photo</th>
-                    @elseif($col == 'admissionNo')
-                    <th class="text-left {{ $widthClass }}">Admission No</th>
-                    @elseif($col == 'lastname')
-                    <th class="text-left {{ $widthClass }}">Last Name</th>
-                    @elseif($col == 'firstname')
-                    <th class="text-left {{ $widthClass }}">First Name</th>
-                    @elseif($col == 'othername')
-                    <th class="text-left {{ $widthClass }}">Other Name</th>
-                    @elseif($col == 'gender')
-                    <th class="text-center {{ $widthClass }}">Gender</th>
-                    @elseif($col == 'dateofbirth')
-                    <th class="text-center {{ $widthClass }}">Date of Birth</th>
-                    @elseif($col == 'age')
-                    <th class="text-center {{ $widthClass }}">Age</th>
-                    @elseif($col == 'class')
-                    <th class="text-left {{ $widthClass }}">Class</th>
-                    @elseif($col == 'status')
-                    <th class="text-center {{ $widthClass }}">Status</th>
-                    @elseif($col == 'admission_date')
-                    <th class="text-center {{ $widthClass }}">Admission Date</th>
-                    @elseif($col == 'phone_number')
-                    <th class="text-left {{ $widthClass }}">Phone Number</th>
-                    @elseif($col == 'state')
-                    <th class="text-left {{ $widthClass }}">State</th>
-                    @elseif($col == 'local')
-                    <th class="text-left {{ $widthClass }}">LGA</th>
-                    @elseif($col == 'religion')
-                    <th class="text-center {{ $widthClass }}">Religion</th>
-                    @elseif($col == 'blood_group')
-                    <th class="text-center {{ $widthClass }}">Blood Group</th>
-                    @elseif($col == 'father_name')
-                    <th class="text-left {{ $widthClass }}">Father's Name</th>
-                    @elseif($col == 'mother_name')
-                    <th class="text-left {{ $widthClass }}">Mother's Name</th>
-                    @elseif($col == 'guardian_phone')
-                    <th class="text-left {{ $widthClass }}">Guardian Phone</th>
-                    @elseif($col == 'term')
-                    <th class="text-center {{ $widthClass }}">Term</th>
-                    @elseif($col == 'session')
-                    <th class="text-center {{ $widthClass }}">Session</th>
-                    @else
-                    <th class="text-left {{ $widthClass }}">{{ ucwords(str_replace('_', ' ', $col)) }}</th>
-                    @endif
-                @endforeach
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($students as $student)
-            <tr>
-                @foreach($columns as $col)
-                    @php
-                        $widthClass = 'col-' . str_replace('_', '-', $col);
-                        if (!in_array($col, ['photo', 'admissionNo', 'lastname', 'firstname', 'othername', 'gender', 'dateofbirth', 'age', 'class', 'status', 'admission_date', 'phone_number', 'state', 'local', 'religion', 'blood_group', 'father_name', 'mother_name', 'guardian_phone', 'term', 'session'])) {
-                            $widthClass = 'col-' . substr($col, 0, 10);
+                    } elseif (isset($student->admissionDate) && $student->admissionDate) {
+                        try {
+                            $row[] = Carbon::parse($student->admissionDate)->format('d/m/Y');
+                        } catch (\Exception $e) {
+                            $row[] = $student->admissionDate;
                         }
-                    @endphp
+                    } else {
+                        $row[] = 'N/A';
+                    }
+                    break;
 
-                    @if($col == 'photo')
-                    <td class="text-center {{ $widthClass }}">
-                        <div style="width: 30px; height: 30px; background-color: #ddd; border-radius: 50%; margin: 0 auto;"></div>
-                    </td>
-                    @elseif($col == 'admissionNo')
-                    <td class="text-left {{ $widthClass }}">{{ $student->admissionNo ?? 'N/A' }}</td>
-                    @elseif($col == 'lastname')
-                    <td class="text-left {{ $widthClass }}">{{ $student->lastname ?? 'N/A' }}</td>
-                    @elseif($col == 'firstname')
-                    <td class="text-left {{ $widthClass }}">{{ $student->firstname ?? 'N/A' }}</td>
-                    @elseif($col == 'othername')
-                    <td class="text-left {{ $widthClass }}">{{ $student->othername ?? 'N/A' }}</td>
-                    @elseif($col == 'gender')
-                    <td class="text-center {{ $widthClass }}">{{ $student->gender ?? 'N/A' }}</td>
-                    @elseif($col == 'dateofbirth')
-                    <td class="text-center {{ $widthClass }} nowrap">
-                        @if($student->dateofbirth)
-                            {{ \Carbon\Carbon::parse($student->dateofbirth)->format('d/m/Y') }}
-                        @else
-                            N/A
-                        @endif
-                    </td>
-                    @elseif($col == 'age')
-                    <td class="text-center {{ $widthClass }}">{{ $student->age ?? 'N/A' }}</td>
-                    @elseif($col == 'class')
-                    <td class="text-left {{ $widthClass }}">
-                        {{ $student->schoolclass ?? 'N/A' }}{{ $student->arm_name ? ' - ' . $student->arm_name : '' }}
-                    </td>
-                    @elseif($col == 'status')
-                    <td class="text-center {{ $widthClass }}">
-                        @if($student->statusId == 1)
-                            Old
-                        @elseif($student->statusId == 2)
-                            New
-                        @else
-                            N/A
-                        @endif
-                        @if($student->student_status)
-                            <br><small>({{ $student->student_status }})</small>
-                        @endif
-                    </td>
-                    @elseif($col == 'admission_date')
-                    <td class="text-center {{ $widthClass }} nowrap">
-                        @if($student->admission_date)
-                            {{ \Carbon\Carbon::parse($student->admission_date)->format('d/m/Y') }}
-                        @else
-                            N/A
-                        @endif
-                    </td>
-                    @elseif($col == 'phone_number')
-                    <td class="text-left {{ $widthClass }}">{{ $student->phone_number ?? 'N/A' }}</td>
-                    @elseif($col == 'state')
-                    <td class="text-left {{ $widthClass }}">{{ $student->state ?? 'N/A' }}</td>
-                    @elseif($col == 'local')
-                    <td class="text-left {{ $widthClass }}">{{ $student->local ?? 'N/A' }}</td>
-                    @elseif($col == 'religion')
-                    <td class="text-center {{ $widthClass }}">{{ $student->religion ?? 'N/A' }}</td>
-                    @elseif($col == 'blood_group')
-                    <td class="text-center {{ $widthClass }}">{{ $student->blood_group ?? 'N/A' }}</td>
-                    @elseif($col == 'father_name')
-                    <td class="text-left {{ $widthClass }}">{{ $student->father_name ?? 'N/A' }}</td>
-                    @elseif($col == 'mother_name')
-                    <td class="text-left {{ $widthClass }}">{{ $student->mother_name ?? 'N/A' }}</td>
-                    @elseif($col == 'guardian_phone')
-                    <td class="text-left {{ $widthClass }}">
-                        {{ $student->father_phone ?? $student->mother_phone ?? 'N/A' }}
-                    </td>
-                    @elseif($col == 'term')
-                    <td class="text-center {{ $widthClass }}">
-                        @php
-                            $term = $student->termid ? \App\Models\Schoolterm::find($student->termid) : null;
-                        @endphp
-                        {{ $term ? $term->term : 'N/A' }}
-                    </td>
-                    @elseif($col == 'session')
-                    <td class="text-center {{ $widthClass }}">
-                        @php
-                            $session = $student->sessionid ? \App\Models\Schoolsession::find($student->sessionid) : null;
-                        @endphp
-                        {{ $session ? $session->session : 'N/A' }}
-                    </td>
-                    @else
-                    <td class="text-left {{ $widthClass }}">
-                        {{ $student->$col ?? 'N/A' }}
-                    </td>
-                    @endif
-                @endforeach
-            </tr>
-            @endforeach
-        </tbody>
-    </table>
+                case 'dateofbirth':
+                    if (isset($student->dateofbirth) && $student->dateofbirth) {
+                        try {
+                            $row[] = Carbon::parse($student->dateofbirth)->format('d/m/Y');
+                        } catch (\Exception $e) {
+                            $row[] = $student->dateofbirth;
+                        }
+                    } else {
+                        $row[] = 'N/A';
+                    }
+                    break;
 
-    <div class="footer">
-        <div class="footer-info">
-            <div class="footer-generated">
-                Generated on: {{ date('d/m/Y H:i:s') }}
-            </div>
-            <div class="footer-user">
-                Generated by: {{ $generated_by ?? 'System' }}
-            </div>
-            <div class="footer-pages">
-                Page <span class="page-number">1</span> of <span class="page-count">1</span>
-            </div>
-        </div>
-        <div class="footer-note">
-            {{ $school_info->school_name ?? 'School Name' }} - Student Report
-        </div>
-    </div>
+                case 'age':
+                    if (isset($student->age) && $student->age) {
+                        $row[] = $student->age;
+                    } elseif (isset($student->dateofbirth) && $student->dateofbirth) {
+                        try {
+                            $dob = Carbon::parse($student->dateofbirth);
+                            $row[] = $dob->age;
+                        } catch (\Exception $e) {
+                            $row[] = 'N/A';
+                        }
+                    } else {
+                        $row[] = 'N/A';
+                    }
+                    break;
 
-    <script type="text/php">
-        if (isset($pdf)) {
-            $text = "Generated by: {{ $generated_by ?? 'System' }} | Page {PAGE_NUM} of {PAGE_COUNT}";
-            $size = 8;
-            $font = $fontMetrics->getFont("DejaVu Sans");
-            $width = $fontMetrics->get_text_width($text, $font, $size) / 2;
-            $x = ($pdf->get_width() - $width) / 2;
-            $y = $pdf->get_height() - 25;
-            $pdf->page_text($x, $y, $text, $font, $size);
+                case 'status':
+                    $status = '';
+                    if (isset($student->statusId)) {
+                        if ($student->statusId == 1) $status = 'Old Student';
+                        if ($student->statusId == 2) $status = 'New Student';
+                    }
+                    if (isset($student->student_status) && $student->student_status) {
+                        $status .= ($status ? ' - ' . $student->student_status : $student->student_status);
+                    }
+                    $row[] = $status ?: 'N/A';
+                    break;
 
-            // Add generated date at bottom left
-            $date_text = "Generated on: {{ date('d/m/Y H:i:s') }}";
-            $pdf->page_text(25, $pdf->get_height() - 25, $date_text, $font, $size);
+                case 'gender':
+                    $gender = $student->gender ?? 'N/A';
+                    $row[] = $gender;
+                    break;
+
+                case 'term':
+                    if (isset($student->current_term_name) && $student->current_term_name) {
+                        $row[] = $student->current_term_name;
+                    } elseif (isset($student->term_name) && $student->term_name) {
+                        $row[] = $student->term_name;
+                    } elseif (isset($student->termid) && $student->termid) {
+                        try {
+                            $term = \App\Models\Schoolterm::find($student->termid);
+                            $row[] = $term ? $term->name : 'N/A';
+                        } catch (\Exception $e) {
+                            $row[] = 'N/A';
+                        }
+                    } else {
+                        $row[] = $this->data['termName'] ?? 'N/A';
+                    }
+                    break;
+
+                case 'session':
+                    if (isset($student->current_session_name) && $student->current_session_name) {
+                        $row[] = $student->current_session_name;
+                    } elseif (isset($student->session_name) && $student->session_name) {
+                        $row[] = $student->session_name;
+                    } elseif (isset($student->sessionid) && $student->sessionid) {
+                        try {
+                            $session = \App\Models\Schoolsession::find($student->sessionid);
+                            $row[] = $session ? $session->name : 'N/A';
+                        } catch (\Exception $e) {
+                            $row[] = 'N/A';
+                        }
+                    } else {
+                        $row[] = $this->data['sessionName'] ?? 'N/A';
+                    }
+                    break;
+
+                case 'email':
+                    $row[] = $student->email ?? 'N/A';
+                    break;
+
+                case 'city':
+                    $row[] = $student->city ?? 'N/A';
+                    break;
+
+                case 'nationality':
+                    $row[] = $student->nationality ?? 'N/A';
+                    break;
+
+                case 'placeofbirth':
+                    $row[] = $student->placeofbirth ?? 'N/A';
+                    break;
+
+                case 'mother_tongue':
+                    $row[] = $student->mother_tongue ?? 'N/A';
+                    break;
+
+                case 'student_category':
+                    $row[] = $student->student_category ?? 'N/A';
+                    break;
+
+                case 'future_ambition':
+                    $row[] = $student->future_ambition ?? 'N/A';
+                    break;
+
+                case 'last_school':
+                    $row[] = $student->last_school ?? 'N/A';
+                    break;
+
+                case 'last_class':
+                    $row[] = $student->last_class ?? 'N/A';
+                    break;
+
+                case 'father_occupation':
+                    $row[] = $student->father_occupation ?? 'N/A';
+                    break;
+
+                case 'mother_occupation':
+                    $row[] = $student->mother_occupation ?? 'N/A';
+                    break;
+
+                case 'father_city':
+                    $row[] = $student->father_city ?? 'N/A';
+                    break;
+
+                case 'parent_email':
+                    $row[] = $student->parent_email ?? 'N/A';
+                    break;
+
+                case 'parent_address':
+                    $row[] = $student->parent_address ?? 'N/A';
+                    break;
+
+                case 'nin_number':
+                    $row[] = $student->nin_number ?? 'N/A';
+                    break;
+
+                case 'school_house':
+                    $row[] = $student->school_house ?? $student->sport_house ?? 'N/A';
+                    break;
+
+                case 'blood_group':
+                    $row[] = $student->blood_group ?? 'N/A';
+                    break;
+
+                case 'religion':
+                    $row[] = $student->religion ?? 'N/A';
+                    break;
+
+                case 'state':
+                    $row[] = $student->state ?? 'N/A';
+                    break;
+
+                case 'local':
+                    $row[] = $student->local ?? 'N/A';
+                    break;
+
+                case 'phone_number':
+                    $row[] = $student->phone_number ?? 'N/A';
+                    break;
+
+                // Handle separate name fields
+                case 'lastname':
+                    $row[] = $student->lastname ?? $student->last_name ?? 'N/A';
+                    break;
+
+                case 'firstname':
+                    $row[] = $student->firstname ?? $student->first_name ?? 'N/A';
+                    break;
+
+                case 'othername':
+                    $row[] = $student->othername ?? $student->other_name ?? $student->middle_name ?? 'N/A';
+                    break;
+
+                case 'father_name':
+                    $row[] = $student->father_name ?? 'N/A';
+                    break;
+
+                case 'mother_name':
+                    $row[] = $student->mother_name ?? 'N/A';
+                    break;
+
+                default:
+                    // Try different property names
+                    $value = $this->getStudentProperty($student, $col);
+                    $row[] = $value !== null && $value !== '' ? $value : 'N/A';
+                    break;
+            }
         }
-    </script>
-</body>
-</html>
+
+        return $row;
+    }
+
+    /**
+     * Get student initials for photo placeholder
+     */
+    private function getStudentInitials($student)
+    {
+        $first = $student->firstname ?? $student->first_name ?? '';
+        $last = $student->lastname ?? $student->last_name ?? '';
+
+        $firstInitial = !empty($first) ? strtoupper(substr($first, 0, 1)) : '';
+        $lastInitial = !empty($last) ? strtoupper(substr($last, 0, 1)) : '';
+
+        return $firstInitial . $lastInitial ?: 'ST';
+    }
+
+    /**
+     * Get student property with multiple fallbacks
+     */
+    private function getStudentProperty($student, $property)
+    {
+        // Try direct property access
+        if (property_exists($student, $property)) {
+            return $student->$property;
+        }
+
+        // Try snake_case version
+        $snakeCase = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $property));
+        if (property_exists($student, $snakeCase)) {
+            return $student->$snakeCase;
+        }
+
+        // Try camelCase version
+        $camelCase = lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $property))));
+        if (property_exists($student, $camelCase)) {
+            return $student->$camelCase;
+        }
+
+        // Try as method
+        if (method_exists($student, $property)) {
+            try {
+                return $student->$property();
+            } catch (\Exception $e) {
+                return null;
+            }
+        }
+
+        // Common property mappings
+        $mappings = [
+            'admissionNo' => ['admissionNo', 'admission_no', 'admission_number'],
+            'phone_number' => ['phone_number', 'phone', 'mobile'],
+            'blood_group' => ['blood_group', 'bloodgroup'],
+            'mother_tongue' => ['mother_tongue', 'mothertongue'],
+            'father_name' => ['father_name', 'father'],
+            'mother_name' => ['mother_name', 'mother'],
+            'father_phone' => ['father_phone', 'fatherphone'],
+            'mother_phone' => ['mother_phone', 'motherphone'],
+            'parent_email' => ['parent_email', 'parentemail'],
+            'parent_address' => ['parent_address', 'parentaddress'],
+            'father_occupation' => ['father_occupation', 'fatheroccupation'],
+            'father_city' => ['father_city', 'fathercity'],
+            'last_school' => ['last_school', 'lastschool'],
+            'last_class' => ['last_class', 'lastclass'],
+            'reason_for_leaving' => ['reason_for_leaving', 'reasonforleaving'],
+            'school_house' => ['school_house', 'schoolhouse', 'sport_house', 'house'],
+            'student_category' => ['student_category', 'category'],
+            'future_ambition' => ['future_ambition', 'ambition'],
+            'nin_number' => ['nin_number', 'nin', 'national_id'],
+            'admission_date' => ['admission_date', 'admissionDate'],
+            'dateofbirth' => ['dateofbirth', 'dob', 'birth_date'],
+            'placeofbirth' => ['placeofbirth', 'birth_place'],
+            'student_status' => ['student_status', 'status'],
+            'statusId' => ['statusId', 'status_id', 'student_status_id'],
+        ];
+
+        if (isset($mappings[$property])) {
+            foreach ($mappings[$property] as $mappedProperty) {
+                if (property_exists($student, $mappedProperty)) {
+                    return $student->$mappedProperty;
+                }
+                if (method_exists($student, $mappedProperty)) {
+                    try {
+                        return $student->$mappedProperty();
+                    } catch (\Exception $e) {
+                        continue;
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Determine column groups for better organization
+     */
+    private function determineColumnGroups()
+    {
+        $columns = $this->data['columns'];
+        $groups = [];
+
+        $groupDefinitions = [
+            'Student Information' => ['photo', 'admissionNo', 'firstname', 'lastname', 'othername', 'gender', 'dateofbirth', 'age'],
+            'Academic Information' => ['class', 'status', 'term', 'session', 'admission_date', 'student_category'],
+            'Contact Information' => ['phone_number', 'email', 'parent_email', 'parent_address', 'guardian_phone'],
+            'Geographical Information' => ['state', 'local', 'city', 'nationality', 'placeofbirth'],
+            'Parent Information' => ['father_name', 'mother_name', 'father_phone', 'mother_phone', 'father_occupation', 'mother_occupation', 'father_city'],
+            'Personal Information' => ['blood_group', 'religion', 'mother_tongue', 'nin_number', 'school_house'],
+            'Additional Information' => ['future_ambition', 'last_school', 'last_class', 'reason_for_leaving'],
+        ];
+
+        foreach ($groupDefinitions as $groupName => $groupColumns) {
+            $foundColumns = array_intersect($columns, $groupColumns);
+            if (!empty($foundColumns)) {
+                $groups[$groupName] = $foundColumns;
+            }
+        }
+
+        return $groups;
+    }
+
+    public function styles(Worksheet $sheet)
+    {
+        $totalRows = $this->data['students']->count() + 6; // Added extra rows for metadata
+        $startRow = 7; // Header row starts here
+
+        $styles = [
+            $startRow => [ // Header row
+                'font' => [
+                    'bold' => true,
+                    'color' => ['rgb' => 'FFFFFF']
+                ],
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => [
+                        'rgb' => isset($this->data['confidential']) && $this->data['confidential'] ? 'DC3545' : '1E40AF'
+                    ]
+                ],
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'vertical' => Alignment::VERTICAL_CENTER,
+                    'wrapText' => true
+                ]
+            ],
+
+            'A' . ($startRow + 1) . ':A' . $totalRows => [
+                'fill' => [
+                    'fillType' => Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => 'F8FAFC']
+                ]
+            ],
+
+            'A' . $startRow . ':' . $sheet->getHighestColumn() . $totalRows => [
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => Border::BORDER_THIN,
+                        'color' => ['rgb' => 'E5E7EB']
+                    ]
+                ]
+            ]
+        ];
+
+        // Alternate row coloring
+        for ($i = $startRow + 1; $i <= $totalRows; $i++) {
+            if ($i % 2 == 0) {
+                $styles['A' . $i . ':' . $sheet->getHighestColumn() . $i] = [
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'F8FAFC']
+                    ]
+                ];
+            }
+        }
+
+        return $styles;
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            AfterSheet::class => function (AfterSheet $event) {
+                $sheet = $event->sheet->getDelegate();
+
+                // Insert title rows at the top
+                $sheet->insertNewRowBefore(1, 6);
+
+                // Get highest column letter
+                $highestColumn = $sheet->getHighestColumn();
+                $highestColumnIndex = Coordinate::columnIndexFromString($highestColumn);
+
+                // School header if included
+                if ($this->data['include_header'] ?? true) {
+                    $schoolInfo = $this->data['school_info'] ?? null;
+
+                    if ($schoolInfo) {
+                        $sheet->setCellValue('A1', $schoolInfo->school_name ?? 'STUDENT MASTER LIST REPORT');
+                        $sheet->mergeCells('A1:' . $highestColumn . '1');
+                        $sheet->getStyle('A1')->applyFromArray([
+                            'font' => [
+                                'bold' => true,
+                                'size' => 16,
+                                'color' => [
+                                    'rgb' => isset($this->data['confidential']) && $this->data['confidential'] ? 'DC3545' : '1E40AF'
+                                ]
+                            ],
+                            'alignment' => [
+                                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                                'vertical' => Alignment::VERTICAL_CENTER
+                            ]
+                        ]);
+
+                        if (isset($schoolInfo->school_motto) && $schoolInfo->school_motto) {
+                            $sheet->setCellValue('A2', $schoolInfo->school_motto);
+                            $sheet->mergeCells('A2:' . $highestColumn . '2');
+                            $sheet->getStyle('A2')->applyFromArray([
+                                'font' => [
+                                    'italic' => true,
+                                    'size' => 12
+                                ],
+                                'alignment' => [
+                                    'horizontal' => Alignment::HORIZONTAL_CENTER
+                                ]
+                            ]);
+                        }
+
+                        $details = 'Class: ' . ($this->data['className'] ?? 'All Classes') .
+                                  ' | Term: ' . ($this->data['termName'] ?? 'All Terms') .
+                                  ' | Session: ' . ($this->data['sessionName'] ?? 'All Sessions') .
+                                  ' | Generated: ' . ($this->data['generated'] ?? now()->format('d/m/Y H:i:s')) .
+                                  ' | Total Students: ' . ($this->data['total'] ?? 0);
+
+                        if (isset($this->data['confidential']) && $this->data['confidential']) {
+                            $details .= ' | CONFIDENTIAL';
+                        }
+
+                        $sheet->setCellValue('A3', $details);
+                        $sheet->mergeCells('A3:' . $highestColumn . '3');
+                        $sheet->getStyle('A3')->applyFromArray([
+                            'font' => ['size' => 10],
+                            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+                        ]);
+                    } else {
+                        $title = 'STUDENT MASTER LIST REPORT';
+                        if (isset($this->data['confidential']) && $this->data['confidential']) {
+                            $title = 'CONFIDENTIAL - ' . $title;
+                        }
+
+                        $sheet->setCellValue('A1', $title);
+                        $sheet->mergeCells('A1:' . $highestColumn . '1');
+                        $sheet->getStyle('A1')->applyFromArray([
+                            'font' => [
+                                'bold' => true,
+                                'size' => 16,
+                                'color' => [
+                                    'rgb' => isset($this->data['confidential']) && $this->data['confidential'] ? 'DC3545' : '1E40AF'
+                                ]
+                            ],
+                            'alignment' => [
+                                'horizontal' => Alignment::HORIZONTAL_CENTER,
+                                'vertical' => Alignment::VERTICAL_CENTER
+                            ]
+                        ]);
+
+                        $details = 'Class: ' . ($this->data['className'] ?? 'All Classes') .
+                                  ' | Term: ' . ($this->data['termName'] ?? 'All Terms') .
+                                  ' | Session: ' . ($this->data['sessionName'] ?? 'All Sessions') .
+                                  ' | Generated: ' . ($this->data['generated'] ?? now()->format('d/m/Y H:i:s')) .
+                                  ' | Total Students: ' . ($this->data['total'] ?? 0);
+                        $sheet->setCellValue('A2', $details);
+                        $sheet->mergeCells('A2:' . $highestColumn . '2');
+                        $sheet->getStyle('A2')->applyFromArray([
+                            'font' => ['size' => 11],
+                            'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+                        ]);
+                    }
+                } else {
+                    $title = 'STUDENT MASTER LIST REPORT - ' . ($this->data['className'] ?? 'All Classes');
+                    if (isset($this->data['confidential']) && $this->data['confidential']) {
+                        $title = 'CONFIDENTIAL - ' . $title;
+                    }
+
+                    $sheet->setCellValue('A1', $title);
+                    $sheet->mergeCells('A1:' . $highestColumn . '1');
+                    $sheet->getStyle('A1')->applyFromArray([
+                        'font' => [
+                            'bold' => true,
+                            'size' => 16,
+                            'color' => [
+                                'rgb' => isset($this->data['confidential']) && $this->data['confidential'] ? 'DC3545' : '1E40AF'
+                            ]
+                        ],
+                        'alignment' => [
+                            'horizontal' => Alignment::HORIZONTAL_CENTER,
+                            'vertical' => Alignment::VERTICAL_CENTER
+                        ]
+                    ]);
+
+                    $details = 'Generated: ' . ($this->data['generated'] ?? now()->format('d/m/Y H:i:s')) .
+                              ' | Total Students: ' . ($this->data['total'] ?? 0) .
+                              ' | Males: ' . ($this->data['males'] ?? 0) .
+                              ' | Females: ' . ($this->data['females'] ?? 0) .
+                              ' | Term: ' . ($this->data['termName'] ?? 'All Terms') .
+                              ' | Session: ' . ($this->data['sessionName'] ?? 'All Sessions');
+                    $sheet->setCellValue('A2', $details);
+                    $sheet->mergeCells('A2:' . $highestColumn . '2');
+                    $sheet->getStyle('A2')->applyFromArray([
+                        'font' => ['size' => 11],
+                        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+                    ]);
+                }
+
+                // Add warning message if large report
+                if ($this->data['is_large_report'] ?? false) {
+                    $sheet->setCellValue('A3', '⚠️ Large report detected. Photos excluded for performance.');
+                    $sheet->mergeCells('A3:' . $highestColumn . '3');
+                    $sheet->getStyle('A3')->applyFromArray([
+                        'font' => [
+                            'italic' => true,
+                            'color' => ['rgb' => '721C24']
+                        ],
+                        'fill' => [
+                            'fillType' => Fill::FILL_SOLID,
+                            'startColor' => ['rgb' => 'F8D7DA']
+                        ],
+                        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER]
+                    ]);
+                }
+
+                // Add generated by information
+                $generatedBy = 'Generated by: ' . ($this->data['generated_by'] ?? 'System') .
+                              ' | Template: ' . ucfirst($this->data['template'] ?? 'default');
+                $sheet->setCellValue('A4', $generatedBy);
+                $sheet->mergeCells('A4:' . $highestColumn . '4');
+                $sheet->getStyle('A4')->applyFromArray([
+                    'font' => [
+                        'italic' => true,
+                        'size' => 10
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER
+                    ]
+                ]);
+
+                // Add timestamp
+                $timestamp = 'Generated on: ' . date('d/m/Y H:i:s');
+                $sheet->setCellValue('A5', $timestamp);
+                $sheet->mergeCells('A5:' . $highestColumn . '5');
+                $sheet->getStyle('A5')->applyFromArray([
+                    'font' => [
+                        'italic' => true,
+                        'size' => 10
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER
+                    ]
+                ]);
+
+                // Empty row before header
+                $sheet->setCellValue('A6', '');
+
+                // Add column group headers (custom implementation)
+                $this->addColumnGroups($sheet, 6, $highestColumnIndex);
+
+                // Auto-size columns
+                foreach (range('A', $highestColumn) as $column) {
+                    $sheet->getColumnDimension($column)->setAutoSize(true);
+                }
+
+                // Set row height for header
+                $sheet->getRowDimension(7)->setRowHeight(30);
+
+                // Freeze header row (row 7)
+                $sheet->freezePane('A8');
+
+                // Add filter to header row
+                $sheet->setAutoFilter('A7:' . $highestColumn . '7');
+
+                // Add page setup for printing
+                $sheet->getPageSetup()->setFitToWidth(1);
+                $sheet->getPageSetup()->setFitToHeight(0);
+                $sheet->getPageSetup()->setOrientation(
+                    ($this->data['orientation'] ?? 'portrait') === 'landscape'
+                        ? \PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_LANDSCAPE
+                        : \PhpOffice\PhpSpreadsheet\Worksheet\PageSetup::ORIENTATION_PORTRAIT
+                );
+
+                // Add header and footer
+                $headerText = '&C&"Arial,Bold"STUDENT MASTER LIST REPORT';
+                if (isset($this->data['confidential']) && $this->data['confidential']) {
+                    $headerText .= ' - CONFIDENTIAL';
+                }
+                $headerText .= '&RPage &P of &N';
+
+                $sheet->getHeaderFooter()
+                    ->setOddHeader($headerText);
+
+                $footerText = '&LGenerated by: ' . ($this->data['generated_by'] ?? 'System') .
+                             '&CGenerated on: ' . date('d/m/Y H:i:s') .
+                             '&RPage &P of &N';
+
+                if (isset($this->data['confidential']) && $this->data['confidential']) {
+                    $footerText .= '&X&"Arial,Bold"CONFIDENTIAL';
+                }
+
+                $sheet->getHeaderFooter()
+                    ->setOddFooter($footerText);
+
+                // Add confidential watermark
+                if (isset($this->data['confidential']) && $this->data['confidential']) {
+                    $this->addConfidentialWatermark($sheet);
+                }
+            }
+        ];
+    }
+
+    /**
+     * Add column group headers for better organization
+     */
+    private function addColumnGroups($sheet, $rowIndex, $highestColumnIndex)
+    {
+        $currentColumn = 1;
+        $groupRow = $rowIndex; // Row 6 for group headers
+
+        foreach ($this->groupedColumns as $groupName => $columns) {
+            $groupColumns = $this->getColumnIndicesForGroup($columns);
+            if (empty($groupColumns)) continue;
+
+            $startColumn = $groupColumns[0];
+            $endColumn = end($groupColumns);
+
+            // Merge cells for the group header
+            if ($startColumn <= $endColumn) {
+                $startCell = Coordinate::stringFromColumnIndex($startColumn);
+                $endCell = Coordinate::stringFromColumnIndex($endColumn);
+
+                $sheet->mergeCells($startCell . $groupRow . ':' . $endCell . $groupRow);
+                $sheet->setCellValue($startCell . $groupRow, $groupName);
+                $sheet->getStyle($startCell . $groupRow)->applyFromArray([
+                    'font' => [
+                        'bold' => true,
+                        'size' => 11,
+                        'color' => ['rgb' => '333333']
+                    ],
+                    'fill' => [
+                        'fillType' => Fill::FILL_SOLID,
+                        'startColor' => ['rgb' => 'E5E7EB']
+                    ],
+                    'alignment' => [
+                        'horizontal' => Alignment::HORIZONTAL_CENTER,
+                        'vertical' => Alignment::VERTICAL_CENTER
+                    ],
+                    'borders' => [
+                        'top' => [
+                            'borderStyle' => Border::BORDER_MEDIUM,
+                            'color' => ['rgb' => '9CA3AF']
+                        ],
+                        'bottom' => [
+                            'borderStyle' => Border::BORDER_THIN,
+                            'color' => ['rgb' => 'D1D5DB']
+                        ]
+                    ]
+                ]);
+            }
+        }
+
+        // Set group header row height
+        $sheet->getRowDimension($groupRow)->setRowHeight(20);
+    }
+
+    /**
+     * Get column indices for a group of columns
+     */
+    private function getColumnIndicesForGroup($columns)
+    {
+        $indices = [];
+        $headerColumns = $this->data['columns'];
+
+        foreach ($columns as $column) {
+            $index = array_search($column, $headerColumns);
+            if ($index !== false) {
+                // Add 1 because Excel columns are 1-indexed
+                $indices[] = $index + 1;
+            }
+        }
+
+        sort($indices);
+        return $indices;
+    }
+
+    /**
+     * Add confidential watermark to the sheet
+     */
+    private function addConfidentialWatermark($sheet)
+    {
+        // Add a background text effect using header/footer
+        $sheet->getHeaderFooter()
+            ->setOddHeader('&C&"Arial,Bold"&44&KFF0000CONFIDENTIAL');
+
+        // Alternative: Add text box watermark
+        $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+        $drawing->setName('Watermark');
+        $drawing->setDescription('Watermark');
+        $drawing->setPath(null); // No image
+        $drawing->setCoordinates('A1');
+        $drawing->setOffsetX(100);
+        $drawing->setOffsetY(100);
+        $drawing->setWidth(400);
+        $drawing->setHeight(200);
+        $drawing->setWorksheet($sheet);
+    }
+}
