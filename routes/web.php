@@ -181,7 +181,6 @@ Route::group(['middleware' => ['auth']], function () {
 
 
 
-
     // ================================================
     // STUDENT MANAGEMENT ROUTES
     // ================================================
@@ -254,6 +253,9 @@ Route::group(['middleware' => ['auth']], function () {
         Route::get('/{id}/current-info', [StudentController::class, 'getCurrentInfo'])->name('student.current-info');
         Route::get('/{id}/all-terms', [StudentController::class, 'getAllRegisteredTerms'])->name('student.all-terms');
     });
+
+
+
       // Route for checking report generation progress
     Route::get('/reports/progress', [StudentResultsController::class, 'getReportProgress'])->name('reports.progress');
 
