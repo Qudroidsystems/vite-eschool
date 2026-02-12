@@ -142,7 +142,7 @@ class StudentController extends Controller
     }
 
     /**
- * Get paginated students data with filters
+ * Get paginated students data with filters - OPTIMIZED FOR 1500+ RECORDS
  */
 public function dataPaginated(Request $request): JsonResponse
 {
@@ -208,12 +208,6 @@ public function dataPaginated(Request $request): JsonResponse
         // Pagination
         $perPage = $request->input('per_page', 20);
         $students = $query->paginate($perPage);
-
-        Log::debug('Paginated students fetched', [
-            'total' => $students->total(),
-            'per_page' => $students->perPage(),
-            'current_page' => $students->currentPage()
-        ]);
 
         return response()->json([
             'success' => true,
