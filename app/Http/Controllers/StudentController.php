@@ -143,171 +143,211 @@ class StudentController extends Controller
         ));
     }
 
+
+
     /**
-     * Get students optimized with server-side pagination and filtering
-     * INCLUDES SESSION FILTER
-     */
-    public function getStudentsOptimized(Request $request)
-    {
-        try {
-            $perPage = $request->get('per_page', 12);
-            $search = $request->get('search', '');
-            $classId = $request->get('class_id', 'all');
-            $status = $request->get('status', 'all');
-            $gender = $request->get('gender', 'all');
-            $sessionId = $request->get('session_id', 'all'); // ADDED: Session filter
+ * Get students optimized with server-side pagination and filtering
+ * FIXED: Using subquery approach to avoid ONLY_FULL_GROUP_BY issues
+ */
+public function getStudentsOptimized(Request $request)
+{
+    try {
+        $perPage = $request->get('per_page', 12);
+        $search = $request->get('search', '');
+        $classId = $request->get('class_id', 'all');
+        $status = $request->get('status', 'all');
+        $gender = $request->get('gender', 'all');
+        $sessionId = $request->get('session_id', 'all');
 
-            $query = Student::query()
-                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-                ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
-                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->leftJoin('parentRegistration', 'parentRegistration.studentId', '=', 'studentRegistration.id')
-                ->leftJoin('studenthouses', 'studenthouses.studentid', '=', 'studentRegistration.id')
-                ->leftJoin('schoolhouses', 'schoolhouses.id', '=', 'studenthouses.schoolhouse')
-                ->select([
-                    'studentRegistration.*',
-                    'studentpicture.picture',
-                    'schoolclass.schoolclass',
-                    'schoolarm.arm',
-                    'studentclass.schoolclassid',
-                    'studentclass.termid',
-                    'studentclass.sessionid',
-                    // Parent fields
-                    'parentRegistration.father',
-                    'parentRegistration.mother',
-                    'parentRegistration.father_phone',
-                    'parentRegistration.mother_phone',
-                    'parentRegistration.father_occupation',
-                    'parentRegistration.father_city',
-                    'parentRegistration.office_address',
-                    'parentRegistration.parent_email',
-                    'parentRegistration.parent_address',
-                    'parentRegistration.father_title',
-                    'parentRegistration.mother_title',
-                    'schoolhouses.house as school_house',
-                ]);
+        // Build the base query for student IDs with filters
+        $idQuery = Student::query()
+            ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+            ->select('studentRegistration.id');
 
-            // Apply search filter
-            if (!empty($search)) {
-                $query->where(function($q) use ($search) {
-                    $q->where('studentRegistration.firstname', 'LIKE', "%{$search}%")
-                      ->orWhere('studentRegistration.lastname', 'LIKE', "%{$search}%")
-                      ->orWhere('studentRegistration.admissionNo', 'LIKE', "%{$search}%")
-                      ->orWhere('studentRegistration.othername', 'LIKE', "%{$search}%");
-                });
-            }
-
-            // Apply class filter
-            if ($classId !== 'all' && !empty($classId)) {
-                $query->where('studentclass.schoolclassid', $classId);
-            }
-
-            // Apply status filter
-            if ($status !== 'all' && !empty($status)) {
-                if ($status === '1' || $status === '2') {
-                    $query->where('studentRegistration.statusId', $status);
-                } else {
-                    $query->where('studentRegistration.student_status', $status);
-                }
-            }
-
-            // Apply gender filter
-            if ($gender !== 'all' && !empty($gender)) {
-                $query->where('studentRegistration.gender', $gender);
-            }
-
-            // APPLY SESSION FILTER - NEW
-            if ($sessionId !== 'all' && !empty($sessionId)) {
-                $query->where('studentclass.sessionid', $sessionId);
-            }
-
-            // Get paginated results
-            $students = $query->orderBy('studentRegistration.created_at', 'desc')
-                             ->paginate($perPage);
-
-            // Process each student to add calculated fields
-            $students->getCollection()->transform(function($student) {
-                // Calculate age if dateofbirth exists
-                $age = null;
-                if ($student->dateofbirth) {
-                    $dob = new \Carbon\Carbon($student->dateofbirth);
-                    $age = $dob->age;
-                }
-
-                return [
-                    'id' => $student->id,
-                    'admissionNo' => $student->admissionNo,
-                    'admission_date' => $student->admission_date,
-                    'admissionYear' => $student->admissionYear,
-                    'firstname' => $student->firstname,
-                    'lastname' => $student->lastname,
-                    'othername' => $student->othername,
-                    'fullname' => trim($student->lastname . ' ' . $student->firstname . ' ' . $student->othername),
-                    'gender' => $student->gender,
-                    'statusId' => $student->statusId,
-                    'student_status' => $student->student_status,
-                    'created_at' => $student->created_at,
-                    'updated_at' => $student->updated_at,
-                    'picture' => $student->picture,
-                    'schoolclass' => $student->schoolclass,
-                    'arm' => $student->arm,
-                    'schoolclassid' => $student->schoolclassid,
-                    'age' => $age,
-                    'dateofbirth' => $student->dateofbirth,
-                    'title' => $student->title,
-                    'placeofbirth' => $student->placeofbirth,
-                    'phone_number' => $student->phone_number,
-                    'email' => $student->email,
-                    'permanent_address' => $student->home_address2,
-                    'future_ambition' => $student->future_ambition,
-                    'nationality' => $student->nationality,
-                    'state' => $student->state,
-                    'local' => $student->local,
-                    'city' => $student->city,
-                    'religion' => $student->religion,
-                    'blood_group' => $student->blood_group,
-                    'mother_tongue' => $student->mother_tongue,
-                    'nin_number' => $student->nin_number,
-                    'student_category' => $student->student_category,
-                    'termid' => $student->termid,
-                    'sessionid' => $student->sessionid,
-                    'last_school' => $student->last_school,
-                    'last_class' => $student->last_class,
-                    'reason_for_leaving' => $student->reason_for_leaving,
-
-                    // Parent fields
-                    'father_name' => $student->father,
-                    'father_title' => $student->father_title,
-                    'father_phone' => $student->father_phone,
-                    'father_occupation' => $student->father_occupation,
-                    'father_city' => $student->father_city,
-                    'mother_name' => $student->mother,
-                    'mother_title' => $student->mother_title,
-                    'mother_phone' => $student->mother_phone,
-                    'parent_email' => $student->parent_email,
-                    'parent_address' => $student->parent_address,
-                    'office_address' => $student->office_address,
-                    'school_house' => $student->school_house,
-                ];
+        // Apply search filter
+        if (!empty($search)) {
+            $idQuery->where(function($q) use ($search) {
+                $q->where('studentRegistration.firstname', 'LIKE', "%{$search}%")
+                  ->orWhere('studentRegistration.lastname', 'LIKE', "%{$search}%")
+                  ->orWhere('studentRegistration.admissionNo', 'LIKE', "%{$search}%")
+                  ->orWhere('studentRegistration.othername', 'LIKE', "%{$search}%");
             });
+        }
 
+        // Apply class filter
+        if ($classId !== 'all' && !empty($classId)) {
+            $idQuery->where('studentclass.schoolclassid', $classId);
+        }
+
+        // Apply status filter
+        if ($status !== 'all' && !empty($status)) {
+            if ($status === '1' || $status === '2') {
+                $idQuery->where('studentRegistration.statusId', $status);
+            } elseif ($status === 'Active' || $status === 'Inactive') {
+                $idQuery->where('studentRegistration.student_status', $status);
+            }
+        }
+
+        // Apply gender filter
+        if ($gender !== 'all' && !empty($gender)) {
+            $idQuery->where('studentRegistration.gender', $gender);
+        }
+
+        // Apply session filter
+        if ($sessionId !== 'all' && !empty($sessionId)) {
+            $idQuery->where('studentclass.sessionid', $sessionId);
+        }
+
+        // Group by to avoid duplicates
+        $idQuery->groupBy('studentRegistration.id');
+
+        // Get paginated IDs first
+        $paginatedIds = $idQuery->paginate($perPage, ['studentRegistration.id'], 'page', $request->get('page', 1));
+
+        $studentIds = $paginatedIds->pluck('id')->toArray();
+
+        // If no students found, return empty pagination
+        if (empty($studentIds)) {
             return response()->json([
                 'success' => true,
-                'data' => $students
+                'data' => new \Illuminate\Pagination\LengthAwarePaginator(
+                    [],
+                    0,
+                    $perPage,
+                    $request->get('page', 1),
+                    ['path' => $request->url(), 'query' => $request->query()]
+                )
             ]);
-
-        } catch (\Exception $e) {
-            \Log::error('Error fetching optimized students: ' . $e->getMessage());
-            \Log::error($e->getTraceAsString());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch students: ' . $e->getMessage()
-            ], 500);
         }
-    }
 
+        // Now fetch full student data for these IDs
+        $students = Student::query()
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->leftJoin('parentRegistration', 'parentRegistration.studentId', '=', 'studentRegistration.id')
+            ->leftJoin('studenthouses', 'studenthouses.studentid', '=', 'studentRegistration.id')
+            ->leftJoin('schoolhouses', 'schoolhouses.id', '=', 'studenthouses.schoolhouse')
+            ->whereIn('studentRegistration.id', $studentIds)
+            ->select([
+                'studentRegistration.*',
+                'studentpicture.picture',
+                'schoolclass.schoolclass',
+                'schoolarm.arm',
+                'studentclass.schoolclassid',
+                'studentclass.termid',
+                'studentclass.sessionid',
+                'parentRegistration.father',
+                'parentRegistration.mother',
+                'parentRegistration.father_phone',
+                'parentRegistration.mother_phone',
+                'parentRegistration.father_occupation',
+                'parentRegistration.father_city',
+                'parentRegistration.office_address',
+                'parentRegistration.parent_email',
+                'parentRegistration.parent_address',
+                'parentRegistration.father_title',
+                'parentRegistration.mother_title',
+                'schoolhouses.house as school_house',
+            ])
+            ->orderBy('studentRegistration.created_at', 'desc')
+            ->get();
+
+        // Group by student ID to handle any remaining duplicates
+        $groupedStudents = $students->groupBy('id')->map(function($group) {
+            return $group->first();
+        })->values();
+
+        // Create pagination manually
+        $paginatedData = new \Illuminate\Pagination\LengthAwarePaginator(
+            $groupedStudents,
+            $paginatedIds->total(),
+            $paginatedIds->perPage(),
+            $paginatedIds->currentPage(),
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        // Process each student to add calculated fields
+        $paginatedData->getCollection()->transform(function($student) {
+            // Calculate age if dateofbirth exists
+            $age = null;
+            if ($student->dateofbirth) {
+                $dob = new \Carbon\Carbon($student->dateofbirth);
+                $age = $dob->age;
+            }
+
+            return [
+                'id' => $student->id,
+                'admissionNo' => $student->admissionNo,
+                'admission_date' => $student->admission_date,
+                'admissionYear' => $student->admissionYear,
+                'firstname' => $student->firstname,
+                'lastname' => $student->lastname,
+                'othername' => $student->othername,
+                'fullname' => trim($student->lastname . ' ' . $student->firstname . ' ' . $student->othername),
+                'gender' => $student->gender,
+                'statusId' => $student->statusId,
+                'student_status' => $student->student_status,
+                'created_at' => $student->created_at,
+                'updated_at' => $student->updated_at,
+                'picture' => $student->picture,
+                'schoolclass' => $student->schoolclass,
+                'arm' => $student->arm,
+                'schoolclassid' => $student->schoolclassid,
+                'age' => $age,
+                'dateofbirth' => $student->dateofbirth,
+                'title' => $student->title,
+                'placeofbirth' => $student->placeofbirth,
+                'phone_number' => $student->phone_number,
+                'email' => $student->email,
+                'permanent_address' => $student->home_address2,
+                'future_ambition' => $student->future_ambition,
+                'nationality' => $student->nationality,
+                'state' => $student->state,
+                'local' => $student->local,
+                'city' => $student->city,
+                'religion' => $student->religion,
+                'blood_group' => $student->blood_group,
+                'mother_tongue' => $student->mother_tongue,
+                'nin_number' => $student->nin_number,
+                'student_category' => $student->student_category,
+                'termid' => $student->termid,
+                'sessionid' => $student->sessionid,
+                'last_school' => $student->last_school,
+                'last_class' => $student->last_class,
+                'reason_for_leaving' => $student->reason_for_leaving,
+                // Parent fields
+                'father_name' => $student->father,
+                'father_title' => $student->father_title,
+                'father_phone' => $student->father_phone,
+                'father_occupation' => $student->father_occupation,
+                'father_city' => $student->father_city,
+                'mother_name' => $student->mother,
+                'mother_title' => $student->mother_title,
+                'mother_phone' => $student->mother_phone,
+                'parent_email' => $student->parent_email,
+                'parent_address' => $student->parent_address,
+                'office_address' => $student->office_address,
+                'school_house' => $student->school_house,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $paginatedData
+        ]);
+
+    } catch (\Exception $e) {
+        \Log::error('Error fetching optimized students: ' . $e->getMessage());
+        \Log::error($e->getTraceAsString());
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to fetch students: ' . $e->getMessage()
+        ], 500);
+    }
+}
 
     public function store(Request $request)
     {
