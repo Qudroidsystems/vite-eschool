@@ -264,7 +264,8 @@ Route::group(['middleware' => ['auth']], function () {
 
 
     Route::get('/students/data-paginated', [StudentController::class, 'dataPaginated'])->name('student.data-paginated');
-    
+        // Add this with your other student routes
+Route::get('/students/optimized', [StudentController::class, 'getStudentsOptimized'])->name('students.optimized');
 
     Route::resource('classoperation', ClassOperationController::class);
 
