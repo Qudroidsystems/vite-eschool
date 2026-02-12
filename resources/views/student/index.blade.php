@@ -820,12 +820,6 @@ use Spatie\Permission\Models\Role;
                     color: white;
                 }
 
-                .pagination .page-item.disabled .page-link {
-                    color: #d1d5db;
-                    pointer-events: none;
-                    background-color: transparent;
-                }
-
                 /* ====== EMPTY STATE ====== */
                 .empty-state {
                     padding: 60px 20px;
@@ -1045,6 +1039,11 @@ use Spatie\Permission\Models\Role;
                 }
 
                 /* ====== ENHANCED VIEW MODAL STYLES ====== */
+                .modal-header-gradient {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                }
+
                 .info-card {
                     background: white;
                     border-radius: 12px;
@@ -1150,39 +1149,6 @@ use Spatie\Permission\Models\Role;
                 .table tr:hover {
                     background-color: rgba(64, 81, 137, 0.02);
                 }
-
-                /* Quick filter buttons */
-                .quick-filter-badge {
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                }
-
-                .quick-filter-badge:hover {
-                    transform: translateY(-2px);
-                    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-                }
-
-                /* Per page selector */
-                .per-page-selector {
-                    width: 80px;
-                    display: inline-block;
-                    margin-left: 10px;
-                }
-
-                /* Loading overlay */
-                .loading-overlay {
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: rgba(255,255,255,0.8);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 1000;
-                    border-radius: 16px;
-                }
             </style>
 
             <!-- Dashboard Statistics -->
@@ -1195,7 +1161,7 @@ use Spatie\Permission\Models\Role;
                             </div>
                             <div class="stats-content">
                                 <span class="stats-label">Total Students</span>
-                                <span class="stats-value" id="totalStudentsStat">{{ $total_population }}</span>
+                                <span class="stats-value">{{ $total_population }}</span>
                                 <span class="stats-change positive">
                                     <i class="fas fa-arrow-up"></i>
                                     12% from last term
@@ -1212,7 +1178,7 @@ use Spatie\Permission\Models\Role;
                             </div>
                             <div class="stats-content">
                                 <span class="stats-label">Active Students</span>
-                                <span class="stats-value" id="activeStudentsStat">{{ $student_status_counts['Active'] }}</span>
+                                <span class="stats-value">{{ $student_status_counts['Active'] }}</span>
                                 <span class="stats-change positive">
                                     <i class="fas fa-arrow-up"></i>
                                     8% from last term
@@ -1229,7 +1195,7 @@ use Spatie\Permission\Models\Role;
                             </div>
                             <div class="stats-content">
                                 <span class="stats-label">New Admissions</span>
-                                <span class="stats-value" id="newStudentsStat">{{ $status_counts['New Student'] }}</span>
+                                <span class="stats-value">{{ $status_counts['New Student'] }}</span>
                                 <span class="stats-change positive">
                                     <i class="fas fa-arrow-up"></i>
                                     15% from last term
@@ -1267,7 +1233,7 @@ use Spatie\Permission\Models\Role;
                             </div>
                             <div class="stats-content">
                                 <span class="stats-label">Male Students</span>
-                                <span class="stats-value" id="maleStudentsStat">{{ $gender_counts['Male'] }}</span>
+                                <span class="stats-value">{{ $gender_counts['Male'] }}</span>
                                 <span class="stats-change">
                                     {{ number_format(($gender_counts['Male'] / $total_population) * 100, 1) }}%
                                 </span>
@@ -1283,7 +1249,7 @@ use Spatie\Permission\Models\Role;
                             </div>
                             <div class="stats-content">
                                 <span class="stats-label">Female Students</span>
-                                <span class="stats-value" id="femaleStudentsStat">{{ $gender_counts['Female'] }}</span>
+                                <span class="stats-value">{{ $gender_counts['Female'] }}</span>
                                 <span class="stats-change">
                                     {{ number_format(($gender_counts['Female'] / $total_population) * 100, 1) }}%
                                 </span>
@@ -1364,17 +1330,7 @@ use Spatie\Permission\Models\Role;
             @endif
 
             <!-- Main Content Card -->
-            <div class="data-table-container position-relative">
-                <!-- Loading Overlay -->
-                <div id="loadingOverlay" class="loading-overlay" style="display: none;">
-                    <div class="text-center">
-                        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="mt-2 text-muted">Loading students...</p>
-                    </div>
-                </div>
-
+            <div class="data-table-container">
                 <!-- Card Header -->
                 <div class="card-header d-flex align-items-center justify-content-between py-3 px-4 border-bottom">
                     <div class="d-flex align-items-center gap-3">
@@ -1383,7 +1339,7 @@ use Spatie\Permission\Models\Role;
                             <label class="form-check-label" for="checkAll"></label>
                         </div>
                         <h5 class="mb-0 fw-bold">Student Records</h5>
-                        <span class="badge bg-primary bg-gradient rounded-pill" id="totalStudentsBadge">0</span>
+                        <span class="badge bg-primary bg-gradient rounded-pill" id="totalStudents">0</span>
                     </div>
 
                     <div class="d-flex align-items-center gap-2">
@@ -1397,24 +1353,11 @@ use Spatie\Permission\Models\Role;
                             </button>
                         </div>
 
-                        <!-- Per Page Selector -->
-                        <div class="dropdown">
-                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="perPageDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-list-ol me-2"></i><span id="perPageText">20</span> per page
-                            </button>
-                            <ul class="dropdown-menu" aria-labelledby="perPageDropdown">
-                                <li><a class="dropdown-item per-page-option" href="javascript:void(0);" data-value="10">10 per page</a></li>
-                                <li><a class="dropdown-item per-page-option" href="javascript:void(0);" data-value="20">20 per page</a></li>
-                                <li><a class="dropdown-item per-page-option" href="javascript:void(0);" data-value="50">50 per page</a></li>
-                                <li><a class="dropdown-item per-page-option" href="javascript:void(0);" data-value="100">100 per page</a></li>
-                            </ul>
-                        </div>
-
                         <!-- Bulk Actions -->
                         @can('Delete student')
                         <div class="dropdown">
                             <button class="btn btn-light dropdown-toggle" type="button" id="bulkActionsDropdown"
-                                    data-bs-toggle="dropdown" aria-expanded="false" disabled>
+                                    data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-cog me-2"></i>Actions
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="bulkActionsDropdown">
@@ -1426,11 +1369,6 @@ use Spatie\Permission\Models\Role;
                                 <li>
                                     <a class="dropdown-item text-primary" href="javascript:void(0);" onclick="showUpdateCurrentTermModal()">
                                         <i class="fas fa-calendar-alt me-2"></i>Update Current Term
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item text-success" href="javascript:void(0);" onclick="exportSelectedStudents()">
-                                        <i class="fas fa-file-export me-2"></i>Export Selected
                                     </a>
                                 </li>
                             </ul>
@@ -1465,7 +1403,7 @@ use Spatie\Permission\Models\Role;
                             <select class="form-control" id="schoolclass-filter">
                                 <option value="all">All Classes</option>
                                 @foreach ($schoolclasses as $class)
-                                    <option value="{{ $class->id }}">{{ $class->class_display }}</option>
+                                    <option value="{{ $class->id }}">{{ $class->schoolclass }} - {{ $class->arm }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -1494,26 +1432,6 @@ use Spatie\Permission\Models\Role;
                             <button type="button" class="btn btn-outline-secondary w-100" onclick="resetFilters()">
                                 <i class="fas fa-redo"></i>
                             </button>
-                        </div>
-                    </div>
-
-                    <!-- Quick Filter Badges -->
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <div class="d-flex flex-wrap gap-2">
-                                <span class="badge bg-light text-dark p-2 quick-filter-badge" onclick="quickFilter('status', 'Active')">
-                                    <i class="fas fa-check-circle text-success me-1"></i> Active Students
-                                </span>
-                                <span class="badge bg-light text-dark p-2 quick-filter-badge" onclick="quickFilter('status', '2')">
-                                    <i class="fas fa-star text-warning me-1"></i> New Students
-                                </span>
-                                <span class="badge bg-light text-dark p-2 quick-filter-badge" onclick="quickFilter('gender', 'Male')">
-                                    <i class="fas fa-mars text-primary me-1"></i> Male Students
-                                </span>
-                                <span class="badge bg-light text-dark p-2 quick-filter-badge" onclick="quickFilter('gender', 'Female')">
-                                    <i class="fas fa-venus text-pink me-1"></i> Female Students
-                                </span>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -1551,7 +1469,7 @@ use Spatie\Permission\Models\Role;
                     </div>
                 </div>
 
-                <!-- Empty State -->
+                <!-- Empty/Loading States -->
                 <div id="emptyState" class="empty-state d-none">
                     <div class="empty-state-icon">
                         <i class="fas fa-users-slash"></i>
@@ -1565,7 +1483,6 @@ use Spatie\Permission\Models\Role;
                     </button>
                 </div>
 
-                <!-- Loading State (Legacy) -->
                 <div id="loadingState" class="loading-state d-none">
                     <div class="spinner-container">
                         <div class="spinner-ring"></div>
@@ -1577,14 +1494,25 @@ use Spatie\Permission\Models\Role;
                 <div class="pagination-container">
                     <div>
                         <span class="text-muted">
-                            Showing <span class="fw-bold" id="showingStart">0</span> -
-                            <span class="fw-bold" id="showingEnd">0</span> of
+                            Showing <span class="fw-bold" id="showingCount">0</span> of
                             <span class="fw-bold" id="totalCount">0</span> students
                         </span>
                     </div>
                     <nav>
-                        <ul class="pagination mb-0" id="paginationList">
-                            <!-- Pagination will be populated by JavaScript -->
+                        <ul class="pagination mb-0">
+                            <li class="page-item">
+                                <a class="page-link" href="javascript:void(0);" id="prevPage">
+                                    <i class="fas fa-chevron-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <span class="page-link" id="currentPage">1</span>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="javascript:void(0);" id="nextPage">
+                                    <i class="fas fa-chevron-right"></i>
+                                </a>
+                            </li>
                         </ul>
                     </nav>
                 </div>
@@ -1809,34 +1737,6 @@ use Spatie\Permission\Models\Role;
                                                     <option value="portrait">Portrait</option>
                                                     <option value="landscape">Landscape</option>
                                                 </select>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="mb-3">
-                                                <label for="template" class="form-label">Report Template</label>
-                                                <select class="form-select" name="template" id="template">
-                                                    <option value="default">Default</option>
-                                                    <option value="detailed">Detailed</option>
-                                                    <option value="simple">Simple</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-check form-switch mb-3">
-                                                <input class="form-check-input" type="checkbox" role="switch" name="exclude_photos" id="excludePhotos">
-                                                <label class="form-check-label" for="excludePhotos">
-                                                    <i class="ri-image-off-line me-1"></i> Exclude Photos (Faster for large reports)
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-check form-switch mb-3">
-                                                <input class="form-check-input" type="checkbox" role="switch" name="confidential" id="confidential">
-                                                <label class="form-check-label" for="confidential">
-                                                    <i class="ri-lock-line me-1"></i> Mark as Confidential
-                                                </label>
                                             </div>
                                         </div>
                                     </div>
@@ -5729,4 +5629,13 @@ window.sendMessage = sendMessage;
 window.getSelectedStudentIds = getSelectedStudentIds;
 window.updateBulkActionsVisibility = updateBulkActionsVisibility;
 </script>
+{{-- <!-- Include Sortable.js for drag and drop functionality -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+
+<!-- Include SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<!-- Include Axios -->
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script> --}}
+
 @endsection
