@@ -263,6 +263,8 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('/reports/generate', [StudentResultsController::class, 'generateReport'])->name('reports.generate');
 
 
+    Route::get('/students/data-paginated', [StudentController::class, 'dataPaginated'])->name('student.data-paginated');
+    
 
     Route::resource('classoperation', ClassOperationController::class);
 
