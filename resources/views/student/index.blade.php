@@ -765,6 +765,7 @@ use Spatie\Permission\Models\Role;
 
                 .search-box input {
                     padding-left: 44px;
+                    padding-right: 40px;
                     border-radius: 12px;
                     border: 1px solid #e5e7eb;
                     height: 48px;
@@ -784,6 +785,25 @@ use Spatie\Permission\Models\Role;
                     transform: translateY(-50%);
                     color: #9ca3af;
                     font-size: 18px;
+                }
+
+                .search-box .clear-search {
+                    position: absolute;
+                    right: 8px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    background: transparent;
+                    border: none;
+                    color: #6b7280;
+                    font-size: 16px;
+                    padding: 4px 8px;
+                    cursor: pointer;
+                    display: none;
+                    z-index: 10;
+                }
+
+                .search-box .clear-search:hover {
+                    color: #dc2626;
                 }
 
                 /* ====== PAGINATION ====== */
@@ -1357,17 +1377,17 @@ use Spatie\Permission\Models\Role;
                         @can('Delete student')
                         <div class="dropdown">
                             <button class="btn btn-light dropdown-toggle" type="button" id="bulkActionsDropdown"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                    data-bs-toggle="dropdown" aria-expanded="false" disabled>
                                 <i class="fas fa-cog me-2"></i>Actions
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="bulkActionsDropdown">
                                 <li>
-                                    <a class="dropdown-item text-danger" href="javascript:void(0);" onclick="deleteMultiple()">
+                                    <a class="dropdown-item text-danger" href="javascript:void(0);" id="deleteMultipleBtn">
                                         <i class="fas fa-trash me-2"></i>Delete Selected
                                     </a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item text-primary" href="javascript:void(0);" onclick="showUpdateCurrentTermModal()">
+                                    <a class="dropdown-item text-primary" href="javascript:void(0);" id="updateCurrentTermBtn">
                                         <i class="fas fa-calendar-alt me-2"></i>Update Current Term
                                     </a>
                                 </li>
@@ -1389,68 +1409,68 @@ use Spatie\Permission\Models\Role;
                     </div>
                 </div>
 
-                <!-- Filter Bar -->
-
-
-              <!-- Filter Bar - COMPLETE WORKING VERSION -->
-<div class="filter-bar">
-    <div class="row g-3">
-        <div class="col-md-2">
-            <div class="search-box">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" class="form-control" id="search-input"
-                       placeholder="Search name or admission...">
-            </div>
-        </div>
-        <div class="col-md-2">
-            <select class="form-control" id="schoolclass-filter">
-                <option value="all">All Classes</option>
-                @foreach ($schoolclasses as $class)
-                    <option value="{{ $class->id }}">{{ $class->schoolclass }} - {{ $class->arm }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="col-md-2">
-            <select class="form-control" id="status-filter">
-                <option value="all">All Status</option>
-                <option value="1">Old Student</option>
-                <option value="2">New Student</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <select class="form-control" id="gender-filter">
-                <option value="all">All Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-            </select>
-        </div>
-        <!-- SESSION FILTER - FIXED -->
-        <div class="col-md-2">
-            <select class="form-control" id="session-filter">
-                <option value="all">All Sessions</option>
-                @if(isset($schoolsessions) && count($schoolsessions) > 0)
-                    @foreach ($schoolsessions as $session)
-                        <option value="{{ $session->id }}">{{ $session->session ?? $session->name ?? 'Session ' . $session->id }}</option>
-                    @endforeach
-                @else
-                    <option value="" disabled>No sessions found</option>
-                @endif
-            </select>
-        </div>
-        <div class="col-md-1">
-            <button type="button" class="btn btn-primary w-100" onclick="window.filterData()">
-                <i class="fas fa-filter me-2"></i>Filter
-            </button>
-        </div>
-        <div class="col-md-1">
-            <button type="button" class="btn btn-outline-secondary w-100" onclick="window.resetFilters()">
-                <i class="fas fa-redo"></i>
-            </button>
-        </div>
-    </div>
-</div>
+                <!-- Filter Bar - COMPLETE WORKING VERSION WITH AJAX SEARCH -->
+                <div class="filter-bar">
+                    <div class="row g-3">
+                        <div class="col-md-2">
+                            <div class="search-box">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" class="form-control" id="search-input"
+                                       placeholder="Search name or admission...">
+                                <button type="button" class="clear-search" id="clear-search" title="Clear search">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-control" id="schoolclass-filter">
+                                <option value="all">All Classes</option>
+                                @foreach ($schoolclasses as $class)
+                                    <option value="{{ $class->id }}">{{ $class->schoolclass }} - {{ $class->arm }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-control" id="status-filter">
+                                <option value="all">All Status</option>
+                                <option value="1">Old Student</option>
+                                <option value="2">New Student</option>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select class="form-control" id="gender-filter">
+                                <option value="all">All Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                        <!-- SESSION FILTER -->
+                        <div class="col-md-2">
+                            <select class="form-control" id="session-filter">
+                                <option value="all">All Sessions</option>
+                                @if(isset($schoolsessions) && count($schoolsessions) > 0)
+                                    @foreach ($schoolsessions as $session)
+                                        <option value="{{ $session->id }}">{{ $session->session ?? $session->name ?? 'Session ' . $session->id }}</option>
+                                    @endforeach
+                                @else
+                                    <option value="" disabled>No sessions found</option>
+                                @endif
+                            </select>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-primary w-100" id="filterBtn">
+                                <i class="fas fa-filter me-2"></i>Filter
+                            </button>
+                        </div>
+                        <div class="col-md-1">
+                            <button type="button" class="btn btn-outline-secondary w-100" id="resetFiltersBtn">
+                                <i class="fas fa-redo-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Table View -->
                 <div id="tableView" class="view-container">
@@ -1494,12 +1514,12 @@ use Spatie\Permission\Models\Role;
                     <p class="empty-state-description">
                         Try adjusting your search or filter to find what you're looking for.
                     </p>
-                    <button class="btn btn-primary-gradient" onclick="resetFilters()">
+                    <button class="btn btn-primary-gradient" id="resetFromEmptyBtn">
                         <i class="fas fa-redo me-2"></i>Reset Filters
                     </button>
                 </div>
 
-                <div id="loadingState" class="loading-state d-none">
+                <div id="loadingState" class="loading-state">
                     <div class="spinner-container">
                         <div class="spinner-ring"></div>
                     </div>
@@ -1510,21 +1530,20 @@ use Spatie\Permission\Models\Role;
                 <div class="pagination-container">
                     <div>
                         <span class="text-muted">
-                            Showing <span class="fw-bold" id="showingCount">0</span> of
+                            Showing <span class="fw-bold" id="showingCount">0</span> to
+                            <span class="fw-bold" id="toCount">0</span> of
                             <span class="fw-bold" id="totalCount">0</span> students
                         </span>
                     </div>
                     <nav>
-                        <ul class="pagination mb-0">
-                            <li class="page-item">
+                        <ul class="pagination mb-0" id="pagination">
+                            <li class="page-item" id="prevPageLi">
                                 <a class="page-link" href="javascript:void(0);" id="prevPage">
                                     <i class="fas fa-chevron-left"></i>
                                 </a>
                             </li>
-                            <li class="page-item">
-                                <span class="page-link" id="currentPage">1</span>
-                            </li>
-                            <li class="page-item">
+                            <!-- Page numbers will be added here dynamically -->
+                            <li class="page-item" id="nextPageLi">
                                 <a class="page-link" href="javascript:void(0);" id="nextPage">
                                     <i class="fas fa-chevron-right"></i>
                                 </a>
@@ -1603,7 +1622,7 @@ use Spatie\Permission\Models\Role;
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary-gradient" id="confirmUpdateCurrentTerm" onclick="updateCurrentTerm()">
+                        <button type="button" class="btn btn-primary-gradient" id="confirmUpdateCurrentTerm">
                             <i class="fas fa-save me-2"></i>Register/Update Term
                         </button>
                     </div>
@@ -1795,7 +1814,7 @@ use Spatie\Permission\Models\Role;
 
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-success" id="generateReportBtn" onclick="generateReport()">
+                        <button type="button" class="btn btn-success" id="generateReportBtn">
                             <i class="ri-printer-line me-1"></i> Generate & Download
                         </button>
                     </div>
@@ -3269,9 +3288,15 @@ use Spatie\Permission\Models\Role;
         </div>
     </div>
 </div>
+
+<!-- Include required libraries -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
 <script>
 // ============================================================================
-// STUDENT MANAGEMENT SYSTEM - COMPLETE FIXED VERSION
+// STUDENT MANAGEMENT SYSTEM - COMPLETE FIXED VERSION WITH AJAX SEARCH
 // ============================================================================
 
 (function() {
@@ -3281,9 +3306,9 @@ use Spatie\Permission\Models\Role;
     // GLOBAL CONFIGURATION
     // ============================================================================
     const CONFIG = {
-        DEFAULT_PER_PAGE: 12,
+        DEFAULT_PER_PAGE: 12, // Changed from null to 12
         PER_PAGE_OPTIONS: [12, 25, 50, 100, 250, 500],
-        DEBOUNCE_DELAY: 500,
+        SEARCH_DEBOUNCE_DELAY: 500,
         MAX_API_RETRIES: 3,
         CACHE_DURATION: 300000,
         LAZY_LOAD_IMAGES: true,
@@ -3291,12 +3316,12 @@ use Spatie\Permission\Models\Role;
     };
 
     // ============================================================================
-    // STATE MANAGEMENT
+    // STATE MANAGEMENT - FIXED INITIALIZATION
     // ============================================================================
     const AppState = {
         pagination: {
             currentPage: 1,
-            perPage: CONFIG.DEFAULT_PER_PAGE,
+            perPage: CONFIG.DEFAULT_PER_PAGE, // This ensures perPage is never undefined
             total: 0,
             lastPage: 1,
             from: 0,
@@ -3320,57 +3345,8 @@ use Spatie\Permission\Models\Role;
             students: new Map(),
             stats: null,
             classes: null
-        },
-        report: {
-            columns: [],
-            columnOrder: [],
-            sortField: null,
-            sortDirection: 'asc'
         }
     };
-
-    // ============================================================================
-    // NIGERIAN STATES AND LGAS - Complete dataset
-    // ============================================================================
-    const NIGERIAN_STATES = [
-        { name: "Abia", lgas: ["Aba North", "Aba South", "Arochukwu", "Bende", "Ikwuano", "Isiala Ngwa North", "Isiala Ngwa South", "Isuikwuato", "Obi Ngwa", "Ohafia", "Osisioma", "Ugwunagbo", "Ukwa East", "Ukwa West", "Umuahia North", "Umuahia South", "Umu Nneochi"] },
-        { name: "Adamawa", lgas: ["Demsa", "Fufure", "Ganye", "Gayuk", "Gombi", "Grie", "Hong", "Jada", "Lamurde", "Madagali", "Maiha", "Mayo Belwa", "Michika", "Mubi North", "Mubi South", "Numan", "Shelleng", "Song", "Toungo", "Yola North", "Yola South"] },
-        { name: "Akwa Ibom", lgas: ["Abak", "Eastern Obolo", "Eket", "Esit Eket", "Essien Udim", "Etim Ekpo", "Etinan", "Ibeno", "Ibesikpo Asutan", "Ibiono-Ibom", "Ika", "Ikono", "Ikot Abasi", "Ikot Ekpene", "Ini", "Itu", "Mbo", "Mkpat-Enin", "Nsit-Atai", "Nsit-Ibom", "Nsit-Ubium", "Obot Akara", "Okobo", "Onna", "Oron", "Oruk Anam", "Udung-Uko", "Ukanafun", "Uruan", "Urue-Offong/Oruko", "Uyo"] },
-        { name: "Anambra", lgas: ["Aguata", "Anambra East", "Anambra West", "Anaocha", "Awka North", "Awka South", "Ayamelum", "Dunukofia", "Ekwusigo", "Idemili North", "Idemili South", "Ihiala", "Njikoka", "Nnewi North", "Nnewi South", "Ogbaru", "Onitsha North", "Onitsha South", "Orumba North", "Orumba South", "Oyi"] },
-        { name: "Bauchi", lgas: ["Alkaleri", "Bauchi", "Bogoro", "Damban", "Darazo", "Dass", "Gamawa", "Ganjuwa", "Giade", "Itas/Gadau", "Jama'are", "Katagum", "Kirfi", "Misau", "Ningi", "Shira", "Tafawa Balewa", "Toro", "Warji", "Zaki"] },
-        { name: "Bayelsa", lgas: ["Brass", "Ekeremor", "Kolokuma/Opokuma", "Nembe", "Ogbia", "Sagbama", "Southern Ijaw", "Yenagoa"] },
-        { name: "Benue", lgas: ["Ado", "Agatu", "Apa", "Buruku", "Gboko", "Guma", "Gwer East", "Gwer West", "Katsina-Ala", "Konshisha", "Kwande", "Logo", "Makurdi", "Obi", "Ogbadibo", "Ohimini", "Oju", "Okpokwu", "Oturkpo", "Tarka", "Ukum", "Ushongo", "Vandeikya"] },
-        { name: "Borno", lgas: ["Abadam", "Askira/Uba", "Bama", "Bayo", "Biu", "Chibok", "Damboa", "Dikwa", "Gubio", "Guzamala", "Gwoza", "Hawul", "Jere", "Kaga", "Kala/Balge", "Konduga", "Kukawa", "Kwaya Kusar", "Mafa", "Magumeri", "Maiduguri", "Marte", "Mobbar", "Monguno", "Ngala", "Nganzai", "Shani"] },
-        { name: "Cross River", lgas: ["Abi", "Akamkpa", "Akpabuyo", "Bakassi", "Bekwarra", "Biase", "Boki", "Calabar Municipal", "Calabar South", "Etung", "Ikom", "Obanliku", "Obubra", "Obudu", "Odukpani", "Ogoja", "Yakuur", "Yala"] },
-        { name: "Delta", lgas: ["Aniocha North", "Aniocha South", "Bomadi", "Burutu", "Ethiope East", "Ethiope West", "Ika North East", "Ika South", "Isoko North", "Isoko South", "Ndokwa East", "Ndokwa West", "Okpe", "Oshimili North", "Oshimili South", "Patani", "Sapele", "Udu", "Ughelli North", "Ughelli South", "Ukwuani", "Uvwie", "Warri North", "Warri South", "Warri South West"] },
-        { name: "Ebonyi", lgas: ["Abakaliki", "Afikpo North", "Afikpo South", "Ebonyi", "Ezza North", "Ezza South", "Ikwo", "Ishielu", "Ivo", "Izzi", "Ohaozara", "Ohaukwu", "Onicha"] },
-        { name: "Edo", lgas: ["Akoko-Edo", "Egor", "Esan Central", "Esan North-East", "Esan South-East", "Esan West", "Etsako Central", "Etsako East", "Etsako West", "Igueben", "Ikpoba Okha", "Orhionmwon", "Oredo", "Ovia North-East", "Ovia South-West", "Owan East", "Owan West", "Uhunmwonde"] },
-        { name: "Ekiti", lgas: ["Ado Ekiti", "Efon", "Ekiti East", "Ekiti South-West", "Ekiti West", "Emure", "Gbonyin", "Ido Osi", "Ijero", "Ikere", "Ilejemeje", "Irepodun/Ifelodun", "Ise/Orun", "Moba", "Oye"] },
-        { name: "Enugu", lgas: ["Aninri", "Awgu", "Enugu East", "Enugu North", "Enugu South", "Ezeagu", "Igbo Etiti", "Igbo Eze North", "Igbo Eze South", "Isi Uzo", "Nkanu East", "Nkanu West", "Nsukka", "Oji River", "Udenu", "Udi", "Uzo Uwani"] },
-        { name: "FCT", lgas: ["Abaji", "Bwari", "Gwagwalada", "Kuje", "Kwali", "Municipal Area Council"] },
-        { name: "Gombe", lgas: ["Akko", "Balanga", "Billiri", "Dukku", "Funakaye", "Gombe", "Kaltungo", "Kwami", "Nafada", "Shongom", "Yamaltu/Deba"] },
-        { name: "Imo", lgas: ["Aboh Mbaise", "Ahiazu Mbaise", "Ehime Mbano", "Ezinihitte", "Ideato North", "Ideato South", "Ihitte/Uboma", "Ikeduru", "Isiala Mbano", "Isu", "Mbaitoli", "Ngor Okpala", "Njaba", "Nkwerre", "Nwangele", "Obowo", "Oguta", "Ohaji/Egbema", "Okigwe", "Orlu", "Orsu", "Oru East", "Oru West", "Owerri Municipal", "Owerri North", "Owerri West", "Unuimo"] },
-        { name: "Jigawa", lgas: ["Auyo", "Babura", "Biriniwa", "Birnin Kudu", "Buji", "Dutse", "Gagarawa", "Garki", "Gumel", "Guri", "Gwaram", "Gwiwa", "Hadejia", "Jahun", "Kafin Hausa", "Kazaure", "Kiri Kasama", "Kiyawa", "Kaugama", "Maigatari", "Malam Madori", "Miga", "Ringim", "Roni", "Sule Tankarkar", "Taura", "Yankwashi"] },
-        { name: "Kaduna", lgas: ["Birnin Gwari", "Chikun", "Giwa", "Igabi", "Ikara", "Jaba", "Jema'a", "Kachia", "Kaduna North", "Kaduna South", "Kagarko", "Kajuru", "Kaura", "Kauru", "Kubau", "Kudan", "Lere", "Makarfi", "Sabon Gari", "Sanga", "Soba", "Zangon Kataf", "Zaria"] },
-        { name: "Kano", lgas: ["Ajingi", "Albasu", "Bagwai", "Bebeji", "Bichi", "Bunkure", "Dala", "Dambatta", "Dawakin Kudu", "Dawakin Tofa", "Doguwa", "Fagge", "Gabasawa", "Garko", "Garun Mallam", "Gaya", "Gezawa", "Gwale", "Gwarzo", "Kabo", "Kano Municipal", "Karaye", "Kibiya", "Kiru", "Kumbotso", "Kunchi", "Kura", "Madobi", "Makoda", "Minjibir", "Nasarawa", "Rano", "Rimin Gado", "Rogo", "Shanono", "Sumaila", "Takai", "Tarauni", "Tofa", "Tsanyawa", "Tudun Wada", "Ungogo", "Warawa", "Wudil"] },
-        { name: "Katsina", lgas: ["Bakori", "Batagarawa", "Batsari", "Baure", "Bindawa", "Charanchi", "Dan Musa", "Dandume", "Danja", "Daura", "Dutsi", "Dutsin Ma", "Faskari", "Funtua", "Ingawa", "Jibia", "Kafur", "Kaita", "Kankara", "Kankia", "Katsina", "Kurfi", "Kusada", "Mai'Adua", "Malumfashi", "Mani", "Mashi", "Matazu", "Musawa", "Rimi", "Sabuwa", "Safana", "Sandamu", "Zango"] },
-        { name: "Kebbi", lgas: ["Aleiro", "Arewa Dandi", "Argungu", "Augie", "Bagudo", "Birnin Kebbi", "Bunza", "Dandi", "Fakai", "Gwandu", "Jega", "Kalgo", "Koko/Besse", "Maiyama", "Ngaski", "Sakaba", "Shanga", "Suru", "Danko/Wasagu", "Yauri", "Zuru"] },
-        { name: "Kogi", lgas: ["Adavi", "Ajaokuta", "Ankpa", "Bassa", "Dekina", "Ibaji", "Idah", "Igalamela Odolu", "Ijumu", "Kabba/Bunu", "Kogi", "Lokoja", "Mopa Muro", "Ofu", "Ogori/Magongo", "Okehi", "Okene", "Olamaboro", "Omala", "Yagba East", "Yagba West"] },
-        { name: "Kwara", lgas: ["Asa", "Baruten", "Edu", "Ekiti", "Ifelodun", "Ilorin East", "Ilorin South", "Ilorin West", "Irepodun", "Isin", "Kaiama", "Moro", "Offa", "Oke Ero", "Oyun", "Pategi"] },
-        { name: "Lagos", lgas: ["Agege", "Ajeromi-Ifelodun", "Alimosho", "Amuwo-Odofin", "Apapa", "Badagry", "Epe", "Eti Osa", "Ibeju-Lekki", "Ifako-Ijaiye", "Ikeja", "Ikorodu", "Kosofe", "Lagos Island", "Lagos Mainland", "Mushin", "Ojo", "Oshodi-Isolo", "Shomolu", "Surulere"] },
-        { name: "Nasarawa", lgas: ["Akwanga", "Awe", "Doma", "Karu", "Keana", "Keffi", "Kokona", "Lafia", "Nasarawa", "Nasarawa Egon", "Obi", "Toto", "Wamba"] },
-        { name: "Niger", lgas: ["Agaie", "Agwara", "Bida", "Borgu", "Bosso", "Chanchaga", "Edati", "Gbako", "Gurara", "Katcha", "Kontagora", "Lapai", "Lavun", "Magama", "Mariga", "Mashegu", "Mokwa", "Moya", "Paikoro", "Rafi", "Rijau", "Shiroro", "Suleja", "Tafa", "Wushishi"] },
-        { name: "Ogun", lgas: ["Abeokuta North", "Abeokuta South", "Ado-Odo/Ota", "Egbado North", "Egbado South", "Ewekoro", "Ifo", "Ijebu East", "Ijebu North", "Ijebu North East", "Ijebu Ode", "Ikenne", "Imeko Afon", "Ipokia", "Obafemi Owode", "Odeda", "Odogbolu", "Ogun Waterside", "Remo North", "Shagamu"] },
-        { name: "Ondo", lgas: ["Akoko North-East", "Akoko North-West", "Akoko South-East", "Akoko South-West", "Akure North", "Akure South", "Ese Odo", "Idanre", "Ifedore", "Ilaje", "Ile Oluji/Okeigbo", "Irele", "Odigbo", "Okitipupa", "Ondo East", "Ondo West", "Ose", "Owo"] },
-        { name: "Osun", lgas: ["Aiyedade", "Aiyedire", "Atakunmosa East", "Atakunmosa West", "Boluwaduro", "Boripe", "Ede North", "Ede South", "Egbedore", "Ejigbo", "Ife Central", "Ife East", "Ife North", "Ife South", "Ifedayo", "Ifelodun", "Ila", "Ilesa East", "Ilesa West", "Irepodun", "Irewole", "Isokan", "Iwo", "Obokun", "Odo Otin", "Ola Oluwa", "Olorunda", "Oriade", "Orolu", "Osogbo"] },
-        { name: "Oyo", lgas: ["Afijio", "Akinyele", "Atiba", "Atisbo", "Egbeda", "Ibadan North", "Ibadan North-East", "Ibadan North-West", "Ibadan South-East", "Ibadan South-West", "Ibarapa Central", "Ibarapa East", "Ibarapa North", "Ido", "Irepo", "Iseyin", "Itesiwaju", "Iwajowa", "Kajola", "Lagelu", "Ogbomosho North", "Ogbomosho South", "Ogo Oluwa", "Olorunsogo", "Oluyole", "Ona Ara", "Orelope", "Ori Ire", "Oyo East", "Oyo West", "Saki East", "Saki West", "Surulere"] },
-        { name: "Plateau", lgas: ["Bokkos", "Barkin Ladi", "Bassa", "Jos East", "Jos North", "Jos South", "Kanam", "Kanke", "Langtang North", "Langtang South", "Mangu", "Mikang", "Pankshin", "Qua'an Pan", "Riyom", "Shendam", "Wase"] },
-        { name: "Rivers", lgas: ["Abua/Odual", "Ahoada East", "Ahoada West", "Akuku-Toru", "Andoni", "Asari-Toru", "Bonny", "Degema", "Eleme", "Emohua", "Etche", "Gokana", "Ikwerre", "Khana", "Obio/Akpor", "Ogba/Egbema/Ndoni", "Ogu/Bolo", "Okrika", "Omuma", "Opobo/Nkoro", "Oyigbo", "Port Harcourt", "Tai"] },
-        { name: "Sokoto", lgas: ["Binji", "Bodinga", "Dange Shuni", "Gada", "Goronyo", "Gudu", "Gwadabawa", "Illela", "Isa", "Kebbe", "Kware", "Rabah", "Sabon Birni", "Shagari", "Silame", "Sokoto North", "Sokoto South", "Tambuwal", "Tangaza", "Tureta", "Wamako", "Wurno", "Yabo"] },
-        { name: "Taraba", lgas: ["Ardo Kola", "Bali", "Donga", "Gashaka", "Gassol", "Ibi", "Jalingo", "Karim Lamido", "Kumi", "Lau", "Sardauna", "Takum", "Ussa", "Wukari", "Yorro", "Zing"] },
-        { name: "Yobe", lgas: ["Bade", "Bursari", "Damaturu", "Fika", "Fune", "Geidam", "Gujba", "Gulani", "Jakusko", "Karasuwa", "Machina", "Nangere", "Nguru", "Potiskum", "Tarmuwa", "Yunusari", "Yusufari"] },
-        { name: "Zamfara", lgas: ["Anka", "Bakura", "Birnin Magaji/Kiyaw", "Bukkuyum", "Bungudu", "Gummi", "Gusau", "Kaura Namoda", "Maradun", "Maru", "Shinkafi", "Talata Mafara", "Chafe", "Zurmi"] }
-    ];
 
     // ============================================================================
     // UTILITY FUNCTIONS
@@ -3474,12 +3450,20 @@ use Spatie\Permission\Models\Role;
 
             const tableView = document.getElementById('tableView');
             const cardView = document.getElementById('cardView');
+            const emptyState = document.getElementById('emptyState');
 
-            if (tableView && AppState.ui.currentView === 'table') {
-                tableView.classList.remove('d-none');
-            }
-            if (cardView && AppState.ui.currentView === 'card') {
-                cardView.classList.remove('d-none');
+            if (AppState.pagination.data && AppState.pagination.data.length > 0) {
+                if (tableView && AppState.ui.currentView === 'table') {
+                    tableView.classList.remove('d-none');
+                }
+                if (cardView && AppState.ui.currentView === 'card') {
+                    cardView.classList.remove('d-none');
+                }
+                if (emptyState) emptyState.classList.add('d-none');
+            } else {
+                if (tableView) tableView.classList.add('d-none');
+                if (cardView) cardView.classList.add('d-none');
+                if (emptyState) emptyState.classList.remove('d-none');
             }
 
             AppState.ui.isLoading = false;
@@ -3559,7 +3543,7 @@ use Spatie\Permission\Models\Role;
     };
 
     // ============================================================================
-    // API SERVICE
+    // API SERVICE - FIXED PER_PAGE HANDLING
     // ============================================================================
     const ApiService = {
         async getStudents(page = 1, perPage = null, filters = null) {
@@ -3569,18 +3553,42 @@ use Spatie\Permission\Models\Role;
 
             const params = new URLSearchParams();
             params.append('page', page);
-            params.append('per_page', perPage || AppState.pagination.perPage);
+
+            // FIX: Ensure perPage is never undefined or null
+            const itemsPerPage = perPage || AppState.pagination.perPage || CONFIG.DEFAULT_PER_PAGE;
+            params.append('per_page', itemsPerPage);
 
             const currentFilters = filters || AppState.filters;
 
-            if (currentFilters.search) params.append('search', currentFilters.search);
-            if (currentFilters.class && currentFilters.class !== 'all') params.append('class_id', currentFilters.class);
-            if (currentFilters.status && currentFilters.status !== 'all') params.append('status', currentFilters.status);
-            if (currentFilters.gender && currentFilters.gender !== 'all') params.append('gender', currentFilters.gender);
-            if (currentFilters.session && currentFilters.session !== 'all') params.append('session_id', currentFilters.session);
+            // Add search parameter
+            if (currentFilters.search && currentFilters.search.trim() !== '') {
+                params.append('search', currentFilters.search.trim());
+            }
+
+            if (currentFilters.class && currentFilters.class !== 'all') {
+                params.append('class_id', currentFilters.class);
+            }
+
+            if (currentFilters.status && currentFilters.status !== 'all') {
+                params.append('status', currentFilters.status);
+            }
+
+            if (currentFilters.gender && currentFilters.gender !== 'all') {
+                params.append('gender', currentFilters.gender);
+            }
+
+            if (currentFilters.session && currentFilters.session !== 'all') {
+                params.append('session_id', currentFilters.session);
+            }
 
             try {
-                Utils.log('Fetching students', { page, perPage, params: params.toString() });
+                Utils.log('Fetching students with params:', {
+                    page,
+                    perPage: itemsPerPage,
+                    search: currentFilters.search,
+                    params: params.toString()
+                });
+
                 const response = await axios.get(`/students/optimized?${params.toString()}`);
 
                 if (response.data.success) {
@@ -3602,15 +3610,7 @@ use Spatie\Permission\Models\Role;
                 Utils.log('Fetching student by ID:', id);
                 const response = await axios.get(`/student/${id}/edit`);
 
-                Utils.log('Student API response - full data:', response.data);
-
                 if (response.data.success && response.data.student) {
-                    // Log specific fields to verify they're coming through
-                    Utils.log('Student dateofbirth:', response.data.student.dateofbirth);
-                    Utils.log('Student schoolhouseid:', response.data.student.schoolhouseid);
-                    Utils.log('Student schoolhouse:', response.data.student.schoolhouse);
-                    Utils.log('Student school_house:', response.data.student.school_house);
-
                     return response.data.student;
                 } else {
                     throw new Error(response.data.message || 'Failed to fetch student');
@@ -3644,19 +3644,6 @@ use Spatie\Permission\Models\Role;
             } catch (error) {
                 Utils.log('API Error - deleteMultipleStudents', error, 'error');
                 throw error;
-            }
-        },
-
-        async getActiveTermSystem() {
-            if (!Utils.ensureAxios()) {
-                throw new Error('Axios not available');
-            }
-            try {
-                const response = await axios.get('/system/active-term-session');
-                return response.data;
-            } catch (error) {
-                Utils.log('API Error - getActiveTermSystem', error, 'error');
-                return { success: false, term: null, session: null };
             }
         },
 
@@ -3720,6 +3707,194 @@ use Spatie\Permission\Models\Role;
     };
 
     // ============================================================================
+    // FILTER MANAGER - WITH PROPER SEARCH DEBOUNCE
+    // ============================================================================
+    const FilterManager = {
+        searchTimeout: null,
+
+        initializeFilters: function() {
+            const searchInput = document.getElementById('search-input');
+            const classFilter = document.getElementById('schoolclass-filter');
+            const statusFilter = document.getElementById('status-filter');
+            const genderFilter = document.getElementById('gender-filter');
+            const sessionFilter = document.getElementById('session-filter');
+            const filterBtn = document.getElementById('filterBtn');
+            const resetBtn = document.getElementById('resetFiltersBtn');
+            const clearSearchBtn = document.getElementById('clear-search');
+            const resetFromEmptyBtn = document.getElementById('resetFromEmptyBtn');
+
+            // Search input with debounce
+            if (searchInput) {
+                searchInput.removeEventListener('input', this.handleSearchInput);
+                searchInput.addEventListener('input', (e) => this.handleSearchInput(e));
+
+                // Also handle Enter key for immediate search
+                searchInput.removeEventListener('keypress', this.handleSearchEnter);
+                searchInput.addEventListener('keypress', (e) => this.handleSearchEnter(e));
+            }
+
+            // Clear search button
+            if (clearSearchBtn) {
+                clearSearchBtn.removeEventListener('click', this.clearSearch);
+                clearSearchBtn.addEventListener('click', () => this.clearSearch());
+            }
+
+            // Other filters - immediate update on change
+            if (classFilter) {
+                classFilter.removeEventListener('change', this.handleFilterChange);
+                classFilter.addEventListener('change', (e) => this.handleFilterChange(e));
+            }
+
+            if (statusFilter) {
+                statusFilter.removeEventListener('change', this.handleFilterChange);
+                statusFilter.addEventListener('change', (e) => this.handleFilterChange(e));
+            }
+
+            if (genderFilter) {
+                genderFilter.removeEventListener('change', this.handleFilterChange);
+                genderFilter.addEventListener('change', (e) => this.handleFilterChange(e));
+            }
+
+            if (sessionFilter) {
+                sessionFilter.removeEventListener('change', this.handleFilterChange);
+                sessionFilter.addEventListener('change', (e) => this.handleFilterChange(e));
+            }
+
+            // Filter button
+            if (filterBtn) {
+                filterBtn.removeEventListener('click', this.applyFilters);
+                filterBtn.addEventListener('click', () => this.applyFilters());
+            }
+
+            // Reset buttons
+            if (resetBtn) {
+                resetBtn.removeEventListener('click', this.resetFilters);
+                resetBtn.addEventListener('click', () => this.resetFilters());
+            }
+
+            if (resetFromEmptyBtn) {
+                resetFromEmptyBtn.removeEventListener('click', this.resetFilters);
+                resetFromEmptyBtn.addEventListener('click', () => this.resetFilters());
+            }
+
+            // Show/hide clear button based on input
+            if (searchInput && clearSearchBtn) {
+                clearSearchBtn.style.display = searchInput.value.length > 0 ? 'block' : 'none';
+            }
+        },
+
+        handleSearchInput: function(e) {
+            const searchInput = e.target;
+            const clearSearchBtn = document.getElementById('clear-search');
+
+            // Show/hide clear button
+            if (clearSearchBtn) {
+                clearSearchBtn.style.display = searchInput.value.length > 0 ? 'block' : 'none';
+            }
+
+            // Clear previous timeout
+            if (this.searchTimeout) {
+                clearTimeout(this.searchTimeout);
+            }
+
+            // Set new timeout for debounced search
+            this.searchTimeout = setTimeout(() => {
+                this.applyFilters();
+            }, CONFIG.SEARCH_DEBOUNCE_DELAY);
+        },
+
+        handleSearchEnter: function(e) {
+            if (e.key === 'Enter') {
+                // Clear timeout and search immediately
+                if (this.searchTimeout) {
+                    clearTimeout(this.searchTimeout);
+                }
+                this.applyFilters();
+            }
+        },
+
+        handleFilterChange: function(e) {
+            this.applyFilters();
+        },
+
+        clearSearch: function() {
+            const searchInput = document.getElementById('search-input');
+            const clearSearchBtn = document.getElementById('clear-search');
+
+            if (searchInput) {
+                searchInput.value = '';
+                if (clearSearchBtn) {
+                    clearSearchBtn.style.display = 'none';
+                }
+
+                // Clear timeout and apply filters
+                if (this.searchTimeout) {
+                    clearTimeout(this.searchTimeout);
+                }
+                this.applyFilters();
+            }
+        },
+
+        applyFilters: function() {
+            const searchInput = document.getElementById('search-input');
+            const classFilter = document.getElementById('schoolclass-filter');
+            const statusFilter = document.getElementById('status-filter');
+            const genderFilter = document.getElementById('gender-filter');
+            const sessionFilter = document.getElementById('session-filter');
+
+            // Update AppState filters
+            AppState.filters = {
+                search: searchInput ? searchInput.value.trim() : '',
+                class: classFilter ? classFilter.value : 'all',
+                status: statusFilter ? statusFilter.value : 'all',
+                gender: genderFilter ? genderFilter.value : 'all',
+                session: sessionFilter ? sessionFilter.value : 'all'
+            };
+
+            // Reset to first page when applying filters
+            AppState.pagination.currentPage = 1;
+
+            // Fetch students with new filters
+            StudentManager.fetchStudents();
+
+            Utils.log('Filters applied:', AppState.filters);
+        },
+
+        resetFilters: function() {
+            const searchInput = document.getElementById('search-input');
+            const classFilter = document.getElementById('schoolclass-filter');
+            const statusFilter = document.getElementById('status-filter');
+            const genderFilter = document.getElementById('gender-filter');
+            const sessionFilter = document.getElementById('session-filter');
+            const clearSearchBtn = document.getElementById('clear-search');
+
+            if (searchInput) {
+                searchInput.value = '';
+                if (clearSearchBtn) {
+                    clearSearchBtn.style.display = 'none';
+                }
+            }
+            if (classFilter) classFilter.value = 'all';
+            if (statusFilter) statusFilter.value = 'all';
+            if (genderFilter) genderFilter.value = 'all';
+            if (sessionFilter) sessionFilter.value = 'all';
+
+            AppState.filters = {
+                search: '',
+                class: 'all',
+                status: 'all',
+                gender: 'all',
+                session: 'all'
+            };
+
+            AppState.pagination.currentPage = 1;
+            StudentManager.fetchStudents();
+
+            Utils.log('Filters reset');
+        }
+    };
+
+    // ============================================================================
     // PAGINATION MANAGER
     // ============================================================================
     const PaginationManager = {
@@ -3760,1606 +3935,118 @@ use Spatie\Permission\Models\Role;
         },
 
         updatePaginationUI: function(pagination) {
-            const paginationContainer = document.querySelector('.pagination');
+            const paginationContainer = document.getElementById('pagination');
             if (!paginationContainer) return;
 
-            const currentPageSpan = document.getElementById('currentPage');
-            const prevBtn = document.getElementById('prevPage');
-            const nextBtn = document.getElementById('nextPage');
+            const showingCount = document.getElementById('showingCount');
+            const toCount = document.getElementById('toCount');
+            const totalCount = document.getElementById('totalCount');
 
-            if (currentPageSpan) {
-                currentPageSpan.textContent = pagination.current_page;
+            if (showingCount) showingCount.textContent = pagination.from || 0;
+            if (toCount) toCount.textContent = pagination.to || 0;
+            if (totalCount) totalCount.textContent = pagination.total || 0;
+
+            const totalStudentsEl = document.getElementById('totalStudents');
+            if (totalStudentsEl) totalStudentsEl.textContent = pagination.total || 0;
+
+            // Clear existing page numbers except prev and next
+            const pageItems = paginationContainer.querySelectorAll('.page-item:not(#prevPageLi):not(#nextPageLi)');
+            pageItems.forEach(item => item.remove());
+
+            if (!pagination.last_page || pagination.last_page <= 1) {
+                return;
             }
 
-            if (prevBtn) {
+            // Generate page numbers
+            let startPage = Math.max(1, pagination.current_page - 2);
+            let endPage = Math.min(pagination.last_page, pagination.current_page + 2);
+
+            // Add first page and ellipsis if needed
+            if (startPage > 1) {
+                this.addPageItem(paginationContainer, 1, pagination.current_page);
+                if (startPage > 2) {
+                    this.addEllipsis(paginationContainer);
+                }
+            }
+
+            // Add page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                this.addPageItem(paginationContainer, i, pagination.current_page);
+            }
+
+            // Add last page and ellipsis if needed
+            if (endPage < pagination.last_page) {
+                if (endPage < pagination.last_page - 1) {
+                    this.addEllipsis(paginationContainer);
+                }
+                this.addPageItem(paginationContainer, pagination.last_page, pagination.current_page);
+            }
+
+            // Update prev/next buttons
+            const prevPageBtn = document.getElementById('prevPage');
+            if (prevPageBtn) {
                 if (pagination.current_page > 1) {
-                    prevBtn.classList.remove('disabled');
-                    prevBtn.onclick = (e) => {
+                    prevPageBtn.classList.remove('disabled');
+                    prevPageBtn.onclick = (e) => {
                         e.preventDefault();
                         AppState.pagination.currentPage = pagination.current_page - 1;
                         StudentManager.fetchStudents();
                     };
                 } else {
-                    prevBtn.classList.add('disabled');
-                    prevBtn.onclick = null;
+                    prevPageBtn.classList.add('disabled');
+                    prevPageBtn.onclick = null;
                 }
             }
 
-            if (nextBtn) {
+            const nextPageBtn = document.getElementById('nextPage');
+            if (nextPageBtn) {
                 if (pagination.current_page < pagination.last_page) {
-                    nextBtn.classList.remove('disabled');
-                    nextBtn.onclick = (e) => {
+                    nextPageBtn.classList.remove('disabled');
+                    nextPageBtn.onclick = (e) => {
                         e.preventDefault();
                         AppState.pagination.currentPage = pagination.current_page + 1;
                         StudentManager.fetchStudents();
                     };
                 } else {
-                    nextBtn.classList.add('disabled');
-                    nextBtn.onclick = null;
+                    nextPageBtn.classList.add('disabled');
+                    nextPageBtn.onclick = null;
                 }
             }
-
-            this.updatePageNumbers(pagination);
-            this.updateCounts(pagination.total, pagination.from || 0, pagination.to || 0);
         },
 
-        updatePageNumbers: function(pagination) {
-            const paginationNav = document.querySelector('.pagination');
-            if (!paginationNav) return;
+        addPageItem: function(container, pageNum, currentPage) {
+            const li = document.createElement('li');
+            li.className = `page-item ${pageNum === currentPage ? 'active' : ''}`;
 
-            const pageItems = paginationNav.querySelectorAll('.page-item:not(:first-child):not(:last-child)');
-            pageItems.forEach(item => item.remove());
-
-            let startPage = Math.max(1, pagination.current_page - 2);
-            let endPage = Math.min(pagination.last_page, pagination.current_page + 2);
-
-            const nextButton = paginationNav.querySelector('.page-item:last-child');
-
-            for (let i = startPage; i <= endPage; i++) {
-                const li = document.createElement('li');
-                li.className = `page-item ${i === pagination.current_page ? 'active' : ''}`;
-                const a = document.createElement('a');
-                a.className = 'page-link';
-                a.href = 'javascript:void(0);';
-                a.textContent = i;
-                a.onclick = (e) => {
-                    e.preventDefault();
-                    AppState.pagination.currentPage = i;
-                    StudentManager.fetchStudents();
-                };
-                li.appendChild(a);
-                paginationNav.insertBefore(li, nextButton);
-            }
-
-            if (pagination.last_page > 5 && endPage < pagination.last_page) {
-                const ellipsisLi = document.createElement('li');
-                ellipsisLi.className = 'page-item disabled';
-                ellipsisLi.innerHTML = '<span class="page-link">...</span>';
-                paginationNav.insertBefore(ellipsisLi, nextButton);
-            }
-
-            if (pagination.last_page > 5 && startPage > 1) {
-                const ellipsisLi = document.createElement('li');
-                ellipsisLi.className = 'page-item disabled';
-                ellipsisLi.innerHTML = '<span class="page-link">...</span>';
-                paginationNav.insertBefore(ellipsisLi, paginationNav.children[1]);
-            }
-        },
-
-        updateCounts: function(total, from, to) {
-            const totalStudentsEl = document.getElementById('totalStudents');
-            const totalCountEl = document.getElementById('totalCount');
-            const showingCountEl = document.getElementById('showingCount');
-
-            if (totalStudentsEl) totalStudentsEl.textContent = total;
-            if (totalCountEl) totalCountEl.textContent = total;
-            if (showingCountEl) {
-                if (from && to) {
-                    showingCountEl.textContent = `${from} - ${to}`;
-                } else {
-                    showingCountEl.textContent = AppState.pagination.data.length;
-                }
-            }
-        }
-    };
-
-    // ============================================================================
-    // FILTER MANAGER - FIXED VERSION
-    // ============================================================================
-    const FilterManager = {
-        debouncedSearch: Utils.debounce(function() {
-            AppState.pagination.currentPage = 1;
-            StudentManager.fetchStudents();
-        }, CONFIG.DEBOUNCE_DELAY),
-
-        initializeFilters: function() {
-            const searchInput = document.getElementById('search-input');
-            const classFilter = document.getElementById('schoolclass-filter');
-            const statusFilter = document.getElementById('status-filter');
-            const genderFilter = document.getElementById('gender-filter');
-            const sessionFilter = document.getElementById('session-filter');
-
-            if (searchInput) {
-                searchInput.removeEventListener('input', this.debouncedSearchHandler);
-                this.debouncedSearchHandler = () => this.debouncedSearch();
-                searchInput.addEventListener('input', this.debouncedSearchHandler);
-            }
-
-            if (classFilter) {
-                classFilter.removeEventListener('change', this.classFilterHandler);
-                this.classFilterHandler = () => {
-                    AppState.pagination.currentPage = 1;
-                    StudentManager.fetchStudents();
-                };
-                classFilter.addEventListener('change', this.classFilterHandler);
-            }
-
-            if (statusFilter) {
-                statusFilter.removeEventListener('change', this.statusFilterHandler);
-                this.statusFilterHandler = () => {
-                    AppState.pagination.currentPage = 1;
-                    StudentManager.fetchStudents();
-                };
-                statusFilter.addEventListener('change', this.statusFilterHandler);
-            }
-
-            if (genderFilter) {
-                genderFilter.removeEventListener('change', this.genderFilterHandler);
-                this.genderFilterHandler = () => {
-                    AppState.pagination.currentPage = 1;
-                    StudentManager.fetchStudents();
-                };
-                genderFilter.addEventListener('change', this.genderFilterHandler);
-            }
-
-            if (sessionFilter) {
-                sessionFilter.removeEventListener('change', this.sessionFilterHandler);
-                this.sessionFilterHandler = () => {
-                    AppState.pagination.currentPage = 1;
-                    StudentManager.fetchStudents();
-                };
-                sessionFilter.addEventListener('change', this.sessionFilterHandler);
-            }
-        },
-
-        applyFilters: function() {
-            const searchInput = document.getElementById('search-input');
-            const classFilter = document.getElementById('schoolclass-filter');
-            const statusFilter = document.getElementById('status-filter');
-            const genderFilter = document.getElementById('gender-filter');
-            const sessionFilter = document.getElementById('session-filter');
-
-            AppState.filters = {
-                search: searchInput ? searchInput.value : '',
-                class: classFilter ? classFilter.value : 'all',
-                status: statusFilter ? statusFilter.value : 'all',
-                gender: genderFilter ? genderFilter.value : 'all',
-                session: sessionFilter ? sessionFilter.value : 'all'
+            const a = document.createElement('a');
+            a.className = 'page-link';
+            a.href = 'javascript:void(0);';
+            a.textContent = pageNum;
+            a.onclick = (e) => {
+                e.preventDefault();
+                AppState.pagination.currentPage = pageNum;
+                StudentManager.fetchStudents();
             };
 
-            AppState.pagination.currentPage = 1;
-            StudentManager.fetchStudents();
+            li.appendChild(a);
 
-            Utils.log('Filters applied:', AppState.filters);
+            // Insert before next button
+            const nextPageLi = document.getElementById('nextPageLi');
+            container.insertBefore(li, nextPageLi);
         },
 
-        resetFilters: function() {
-            const searchInput = document.getElementById('search-input');
-            const classFilter = document.getElementById('schoolclass-filter');
-            const statusFilter = document.getElementById('status-filter');
-            const genderFilter = document.getElementById('gender-filter');
-            const sessionFilter = document.getElementById('session-filter');
+        addEllipsis: function(container) {
+            const li = document.createElement('li');
+            li.className = 'page-item disabled';
+            li.innerHTML = '<span class="page-link">...</span>';
 
-            if (searchInput) searchInput.value = '';
-            if (classFilter) classFilter.value = 'all';
-            if (statusFilter) statusFilter.value = 'all';
-            if (genderFilter) genderFilter.value = 'all';
-            if (sessionFilter) sessionFilter.value = 'all';
-
-            AppState.filters = {
-                search: '',
-                class: 'all',
-                status: 'all',
-                gender: 'all',
-                session: 'all'
-            };
-
-            AppState.pagination.currentPage = 1;
-            StudentManager.fetchStudents();
-
-            Utils.log('Filters reset');
+            const nextPageLi = document.getElementById('nextPageLi');
+            container.insertBefore(li, nextPageLi);
         }
     };
 
     // ============================================================================
-    // STATE AND LGA MANAGER - COMPLETE FIX FOR DROPDOWNS
-    // ============================================================================
-    const StateLGAManager = {
-        // Initialize add modal state dropdown
-        initializeAddStateDropdown: function() {
-            const stateSelect = document.getElementById('addState');
-            const lgaSelect = document.getElementById('addLocal');
-
-            if (!stateSelect || !lgaSelect) {
-                Utils.log('State or LGA dropdown not found for add modal', null, 'error');
-                return;
-            }
-
-            stateSelect.innerHTML = '<option value="">Select State</option>';
-            lgaSelect.innerHTML = '<option value="">Select LGA</option>';
-            lgaSelect.disabled = true;
-
-            NIGERIAN_STATES.forEach(state => {
-                const option = document.createElement('option');
-                option.value = state.name;
-                option.textContent = state.name;
-                stateSelect.appendChild(option);
-            });
-
-            stateSelect.removeEventListener('change', this.handleAddStateChange);
-            stateSelect.addEventListener('change', (e) => this.handleAddStateChange(e));
-        },
-
-        handleAddStateChange: function(event) {
-            const selectedState = event.target.value;
-            const lgaSelect = document.getElementById('addLocal');
-
-            if (!lgaSelect) return;
-
-            lgaSelect.innerHTML = '<option value="">Select LGA</option>';
-
-            if (selectedState) {
-                const state = NIGERIAN_STATES.find(s => s.name === selectedState);
-                lgaSelect.disabled = false;
-
-                if (state) {
-                    state.lgas.forEach(lga => {
-                        const option = document.createElement('option');
-                        option.value = lga;
-                        option.textContent = lga;
-                        lgaSelect.appendChild(option);
-                    });
-                }
-            } else {
-                lgaSelect.disabled = true;
-            }
-        },
-
-        // Initialize edit modal state dropdown
-        initializeEditStateDropdown: function() {
-            const stateSelect = document.getElementById('editState');
-            const lgaSelect = document.getElementById('editLocal');
-
-            if (!stateSelect || !lgaSelect) {
-                Utils.log('State or LGA dropdown not found for edit modal', null, 'error');
-                return;
-            }
-
-            stateSelect.innerHTML = '<option value="">Select State</option>';
-
-            NIGERIAN_STATES.forEach(state => {
-                const option = document.createElement('option');
-                option.value = state.name;
-                option.textContent = state.name;
-                stateSelect.appendChild(option);
-            });
-
-            lgaSelect.innerHTML = '<option value="">Select LGA</option>';
-            lgaSelect.disabled = true;
-
-            stateSelect.removeEventListener('change', this.handleEditStateChange);
-            stateSelect.addEventListener('change', (e) => this.handleEditStateChange(e));
-        },
-
-        handleEditStateChange: function(event) {
-            const selectedState = event.target.value;
-            const lgaSelect = document.getElementById('editLocal');
-
-            if (!lgaSelect) return;
-
-            lgaSelect.innerHTML = '<option value="">Select LGA</option>';
-
-            if (selectedState) {
-                const state = NIGERIAN_STATES.find(s => s.name === selectedState);
-                lgaSelect.disabled = false;
-
-                if (state) {
-                    state.lgas.forEach(lga => {
-                        const option = document.createElement('option');
-                        option.value = lga;
-                        option.textContent = lga;
-                        lgaSelect.appendChild(option);
-                    });
-                }
-            } else {
-                lgaSelect.disabled = true;
-            }
-        },
-
-        // Set state and LGA values with proper initialization for edit modal
-        setEditStateAndLGA: function(stateName, lgaName) {
-            const stateSelect = document.getElementById('editState');
-            const lgaSelect = document.getElementById('editLocal');
-
-            if (!stateSelect || !lgaSelect) {
-                Utils.log('State or LGA dropdown not found', null, 'error');
-                return false;
-            }
-
-            // First ensure dropdown is populated
-            if (stateSelect.options.length <= 1) {
-                NIGERIAN_STATES.forEach(state => {
-                    const option = document.createElement('option');
-                    option.value = state.name;
-                    option.textContent = state.name;
-                    stateSelect.appendChild(option);
-                });
-            }
-
-            // Set state value
-            if (stateName && stateName !== '') {
-                // Try to find the exact match
-                let stateFound = false;
-                for (let i = 0; i < stateSelect.options.length; i++) {
-                    if (stateSelect.options[i].value.toLowerCase() === stateName.toLowerCase()) {
-                        stateSelect.selectedIndex = i;
-                        stateFound = true;
-                        Utils.log('State found and selected:', stateName);
-                        break;
-                    }
-                }
-
-                if (!stateFound) {
-                    // Try direct assignment
-                    try {
-                        stateSelect.value = stateName;
-                        Utils.log('State set by direct value:', stateName);
-                    } catch (e) {
-                        Utils.log('Could not set state by direct value', e);
-                    }
-                }
-
-                // Force LGA population by dispatching change event
-                const changeEvent = new Event('change', { bubbles: true });
-                stateSelect.dispatchEvent(changeEvent);
-
-                // Set LGA value after a short delay
-                setTimeout(() => {
-                    if (lgaName && lgaName !== '') {
-                        Utils.log('Attempting to set LGA:', lgaName);
-
-                        // Try to find the exact match
-                        let lgaFound = false;
-                        for (let i = 0; i < lgaSelect.options.length; i++) {
-                            if (lgaSelect.options[i].value.toLowerCase() === lgaName.toLowerCase()) {
-                                lgaSelect.selectedIndex = i;
-                                lgaFound = true;
-                                Utils.log('LGA found and selected:', lgaName);
-                                break;
-                            }
-                        }
-
-                        if (!lgaFound) {
-                            // Try direct assignment
-                            try {
-                                lgaSelect.value = lgaName;
-                                Utils.log('LGA set by direct value:', lgaName);
-                            } catch (e) {
-                                Utils.log('Could not set LGA by direct value', e);
-                            }
-                        }
-                    }
-                }, 300);
-            }
-
-            return true;
-        },
-
-        resetAddStateDropdown: function() {
-            const stateSelect = document.getElementById('addState');
-            const lgaSelect = document.getElementById('addLocal');
-
-            if (stateSelect) {
-                stateSelect.value = '';
-            }
-            if (lgaSelect) {
-                lgaSelect.innerHTML = '<option value="">Select LGA</option>';
-                lgaSelect.disabled = true;
-            }
-        },
-
-        resetEditStateDropdown: function() {
-            const stateSelect = document.getElementById('editState');
-            const lgaSelect = document.getElementById('editLocal');
-
-            if (stateSelect) {
-                stateSelect.value = '';
-            }
-            if (lgaSelect) {
-                lgaSelect.innerHTML = '<option value="">Select LGA</option>';
-                lgaSelect.disabled = true;
-            }
-        }
-    };
-
-    // ============================================================================
-    // ADMISSION NUMBER MANAGER
-    // ============================================================================
-    const AdmissionNumberManager = {
-        async updateAdmissionNumber(prefix = '') {
-            const yearSelect = document.getElementById(`${prefix}admissionYear`);
-            const admissionNoInput = document.getElementById(`${prefix}admissionNo`);
-            const admissionMode = document.querySelector(`input[name="admissionMode"]:checked${prefix ? `[id^="${prefix}"]` : ''}`);
-
-            if (!yearSelect || !admissionNoInput) return;
-
-            const year = yearSelect.value;
-            const baseFormat = `TCC/${year}/`;
-
-            if (admissionMode && admissionMode.value === 'auto') {
-                admissionNoInput.readOnly = true;
-                try {
-                    const response = await axios.get(`/students/last-admission-number?year=${year}`);
-                    if (response.data.success) {
-                        admissionNoInput.value = response.data.admissionNo;
-                    } else {
-                        Utils.showError(response.data.message || 'Failed to generate admission number');
-                        admissionNoInput.value = `${baseFormat}0871`;
-                    }
-                } catch (error) {
-                    Utils.log('Error generating admission number', error, 'error');
-                    Utils.showError('Failed to generate admission number');
-                    admissionNoInput.value = `${baseFormat}0871`;
-                }
-            } else {
-                admissionNoInput.readOnly = false;
-                if (!admissionNoInput.value || admissionNoInput.value === `${baseFormat}AUTO`) {
-                    admissionNoInput.value = `${baseFormat}0871`;
-                } else if (!admissionNoInput.value.startsWith(baseFormat)) {
-                    const numericPart = admissionNoInput.value.split('/').pop() || '0871';
-                    const numericValue = Math.max(871, parseInt(numericPart) || 871);
-                    admissionNoInput.value = `${baseFormat}${numericValue.toString().padStart(4, '0')}`;
-                }
-            }
-        },
-
-        toggleAdmissionInput: function(prefix = '') {
-            const admissionMode = document.querySelector(`input[name="admissionMode"]:checked${prefix ? `[id^="${prefix}"]` : ''}`);
-            const admissionNoInput = document.getElementById(`${prefix}admissionNo`);
-            const yearSelect = document.getElementById(`${prefix}admissionYear`);
-
-            if (!admissionMode || !admissionNoInput || !yearSelect) return;
-
-            const year = yearSelect.value;
-            const baseFormat = `TCC/${year}/`;
-
-            if (admissionMode.value === 'auto') {
-                admissionNoInput.readOnly = true;
-                this.updateAdmissionNumber(prefix);
-            } else {
-                admissionNoInput.readOnly = false;
-                if (!admissionNoInput.value || admissionNoInput.value === `${baseFormat}AUTO`) {
-                    admissionNoInput.value = `${baseFormat}0871`;
-                } else if (!admissionNoInput.value.startsWith(baseFormat)) {
-                    const numericPart = admissionNoInput.value.split('/').pop() || '0871';
-                    const numericValue = Math.max(871, parseInt(numericPart) || 871);
-                    admissionNoInput.value = `${baseFormat}${numericValue.toString().padStart(4, '0')}`;
-                }
-            }
-        }
-    };
-
-    // ============================================================================
-    // EDIT FORM MANAGER - COMPLETE FIX FOR ALL DROPDOWNS
-    // ============================================================================
-    const EditFormManager = {
-        populateEditForm: function(student) {
-            Utils.log('Populating edit form', student);
-
-            // Log all student fields to see what's available
-            Utils.log('All student fields:', Object.keys(student));
-
-            // Log specific fields we care about
-            Utils.log('Student dateofbirth field:', student.dateofbirth);
-            Utils.log('Student schoolhouseid field:', student.schoolhouseid);
-            Utils.log('Student schoolhouse field:', student.schoolhouse);
-            Utils.log('Student school_house field:', student.school_house);
-            Utils.log('Student sport_house field:', student.sport_house);
-
-            // Set student ID
-            const studentIdField = document.getElementById('editStudentId');
-            if (studentIdField) studentIdField.value = student.id || '';
-
-            // ===== ACADEMIC DETAILS =====
-            const admissionNoInput = document.getElementById('editAdmissionNo');
-            const admissionYearSelect = document.getElementById('editAdmissionYear');
-            const admissionDateInput = document.getElementById('editAdmissionDate');
-
-            if (admissionNoInput) admissionNoInput.value = student.admissionNo || '';
-            if (admissionYearSelect) admissionYearSelect.value = student.admissionYear || new Date().getFullYear();
-            if (admissionDateInput) {
-                const admissionDate = student.admissionDate || student.admission_date || '';
-                if (admissionDate) {
-                    admissionDateInput.value = admissionDate.split(' ')[0];
-                }
-            }
-
-            // Set admission mode
-            const admissionAuto = document.getElementById('editAdmissionAuto');
-            const admissionManual = document.getElementById('editAdmissionManual');
-
-            if (student.admissionNo && student.admissionNo.includes('AUTO')) {
-                if (admissionAuto) {
-                    admissionAuto.checked = true;
-                    admissionAuto.required = false;
-                }
-                if (admissionManual) admissionManual.checked = false;
-                if (admissionNoInput) admissionNoInput.readOnly = true;
-            } else {
-                if (admissionAuto) admissionAuto.checked = false;
-                if (admissionManual) {
-                    admissionManual.checked = true;
-                    admissionManual.required = false;
-                }
-                if (admissionNoInput) admissionNoInput.readOnly = false;
-            }
-
-            // Class, Term, Session
-            const classSelect = document.getElementById('editSchoolclassid');
-            if (classSelect && student.schoolclassid) {
-                classSelect.value = student.schoolclassid;
-            }
-
-            const termSelect = document.getElementById('editTermid');
-            if (termSelect && student.termid) {
-                termSelect.value = student.termid;
-            }
-
-            const sessionSelect = document.getElementById('editSessionid');
-            if (sessionSelect && student.sessionid) {
-                sessionSelect.value = student.sessionid;
-            }
-
-            // Status radio buttons
-            if (student.statusId == 1) {
-                document.getElementById('editStatusOld').checked = true;
-            } else if (student.statusId == 2) {
-                document.getElementById('editStatusNew').checked = true;
-            }
-
-            // Activity Status
-            if (student.student_status === 'Active') {
-                document.getElementById('editStatusActive').checked = true;
-            } else if (student.student_status === 'Inactive') {
-                document.getElementById('editStatusInactive').checked = true;
-            }
-
-            // Student Category
-            const categorySelect = document.getElementById('editStudentCategory');
-            if (categorySelect && student.student_category) {
-                categorySelect.value = student.student_category;
-            }
-
-            // ===== PERSONAL DETAILS =====
-            const titleSelect = document.getElementById('editTitle');
-            if (titleSelect && student.title) {
-                titleSelect.value = student.title;
-            }
-
-            const lastnameInput = document.getElementById('editLastname');
-            if (lastnameInput) lastnameInput.value = student.lastname || '';
-
-            const firstnameInput = document.getElementById('editFirstname');
-            if (firstnameInput) firstnameInput.value = student.firstname || '';
-
-            const othernameInput = document.getElementById('editOthername');
-            if (othernameInput) othernameInput.value = student.othername || '';
-
-            // Gender radio buttons
-            if (student.gender === 'Male') {
-                document.getElementById('editGenderMale').checked = true;
-            } else if (student.gender === 'Female') {
-                document.getElementById('editGenderFemale').checked = true;
-            }
-
-            // ===== CRITICAL FIX: DATE OF BIRTH =====
-            // The field name in database is 'dateofbirth' (all lowercase)
-            const dobInput = document.getElementById('editDOB');
-            if (dobInput) {
-                const dobValue = student.dateofbirth || '';
-
-                Utils.log('Setting date of birth - raw value:', dobValue);
-
-                if (dobValue) {
-                    // Handle different date formats
-                    let formattedDate = dobValue;
-                    if (typeof dobValue === 'string') {
-                        // If it's in format "YYYY-MM-DD HH:MM:SS", take just the date part
-                        if (dobValue.includes(' ')) {
-                            formattedDate = dobValue.split(' ')[0];
-                        }
-                        // If it's in format "YYYY-MM-DDTHH:MM:SS.000000Z" (ISO format)
-                        else if (dobValue.includes('T')) {
-                            formattedDate = dobValue.split('T')[0];
-                        }
-                        // If it's in format "DD/MM/YYYY", convert to YYYY-MM-DD
-                        else if (dobValue.includes('/')) {
-                            const parts = dobValue.split('/');
-                            if (parts.length === 3) {
-                                if (parts[2].length === 4) {
-                                    formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-                                }
-                            }
-                        }
-                    }
-
-                    dobInput.value = formattedDate;
-                    Utils.log('Date of birth set to:', formattedDate);
-
-                    // Calculate and set age
-                    const ageInput = document.getElementById('editAgeInput');
-                    if (ageInput) {
-                        const age = Utils.calculateAge(formattedDate);
-                        ageInput.value = age || student.age || '';
-                        Utils.log('Age set to:', ageInput.value);
-                    }
-                } else {
-                    Utils.log('No date of birth value found in student object');
-                }
-            }
-
-            const placeOfBirthInput = document.getElementById('editPlaceofbirth');
-            if (placeOfBirthInput) placeOfBirthInput.value = student.placeofbirth || '';
-
-            const phoneInput = document.getElementById('editPhoneNumber');
-            if (phoneInput) phoneInput.value = student.phone_number || '';
-
-            const emailInput = document.getElementById('editEmail');
-            if (emailInput) emailInput.value = student.email || '';
-
-            const futureAmbitionInput = document.getElementById('editFutureAmbition');
-            if (futureAmbitionInput) futureAmbitionInput.value = student.future_ambition || '';
-
-            const permanentAddressInput = document.getElementById('editPermanentAddress');
-            if (permanentAddressInput) permanentAddressInput.value = student.permanent_address || student.home_address2 || '';
-
-            // ===== ADDITIONAL INFORMATION =====
-            const nationalityInput = document.getElementById('editNationality');
-            if (nationalityInput) nationalityInput.value = student.nationality || '';
-
-            // ===== CRITICAL FIX: BLOOD GROUP =====
-            const bloodGroupSelect = document.getElementById('editBloodGroup');
-            if (bloodGroupSelect && student.blood_group) {
-                Utils.log('Setting blood group:', student.blood_group);
-                bloodGroupSelect.value = student.blood_group;
-            }
-
-            // ===== CRITICAL FIX: SCHOOL HOUSE =====
-            // From your controller, the field is 'schoolhouseid' which is stored in the 'studenthouses' table
-            const houseSelect = document.getElementById('editSchoolHouse');
-            if (houseSelect) {
-                // The student object should contain schoolhouseid from the edit method
-                let houseValue = student.schoolhouseid || student.schoolhouse || student.school_house || null;
-
-                Utils.log('Setting school house - raw values:', {
-                    schoolhouseid: student.schoolhouseid,  // This is the ID from the studenthouses table
-                    schoolhouse: student.schoolhouse,      // From the join in edit method
-                    school_house: student.school_house,    // Aliased field name
-                    selected: houseValue
-                });
-
-                if (houseValue) {
-                    // Log all available options for debugging
-                    const options = [];
-                    for (let i = 0; i < houseSelect.options.length; i++) {
-                        options.push({
-                            value: houseSelect.options[i].value,
-                            text: houseSelect.options[i].text
-                        });
-                    }
-                    Utils.log('Available house options:', options);
-
-                    // Try to find by exact value (ID)
-                    let optionFound = false;
-                    for (let i = 0; i < houseSelect.options.length; i++) {
-                        if (houseSelect.options[i].value == houseValue) {
-                            houseSelect.selectedIndex = i;
-                            optionFound = true;
-                            Utils.log('School house set by ID:', houseValue);
-                            break;
-                        }
-                    }
-
-                    // If not found by ID, try by text content
-                    if (!optionFound) {
-                        for (let i = 0; i < houseSelect.options.length; i++) {
-                            if (houseSelect.options[i].text.toLowerCase().includes(String(houseValue).toLowerCase())) {
-                                houseSelect.selectedIndex = i;
-                                optionFound = true;
-                                Utils.log('School house set by text match:', houseSelect.options[i].text);
-                                break;
-                            }
-                        }
-                    }
-
-                    if (!optionFound) {
-                        Utils.log('WARNING: Could not set school house value:', houseValue);
-                    }
-                } else {
-                    Utils.log('No school house value found in student object');
-                    Utils.log('Available fields containing "house":', Object.keys(student).filter(k =>
-                        k.toLowerCase().includes('house')
-                    ));
-                }
-            }
-
-            // ===== STATE AND LGA =====
-            if (student.state) {
-                Utils.log('Setting state and LGA:', student.state, student.local);
-                StateLGAManager.setEditStateAndLGA(student.state, student.local);
-            }
-
-            const cityInput = document.getElementById('editCity');
-            if (cityInput) cityInput.value = student.city || '';
-
-            const religionSelect = document.getElementById('editReligion');
-            if (religionSelect && student.religion) {
-                religionSelect.value = student.religion;
-            }
-
-            const motherTongueInput = document.getElementById('editMotherTongue');
-            if (motherTongueInput) motherTongueInput.value = student.mother_tongue || '';
-
-            const ninInput = document.getElementById('editNinNumber');
-            if (ninInput) ninInput.value = student.nin_number || '';
-
-            // ===== PARENT/GUARDIAN DETAILS =====
-            const fatherNameInput = document.getElementById('editFatherName');
-            if (fatherNameInput) fatherNameInput.value = student.father_name || student.father || '';
-
-            const fatherPhoneInput = document.getElementById('editFatherPhone');
-            if (fatherPhoneInput) fatherPhoneInput.value = student.father_phone || '';
-
-            const fatherOccupationInput = document.getElementById('editFatherOccupation');
-            if (fatherOccupationInput) fatherOccupationInput.value = student.father_occupation || '';
-
-            const fatherCityInput = document.getElementById('editFatherCity');
-            if (fatherCityInput) fatherCityInput.value = student.father_city || '';
-
-            const motherNameInput = document.getElementById('editMotherName');
-            if (motherNameInput) motherNameInput.value = student.mother_name || student.mother || '';
-
-            const motherPhoneInput = document.getElementById('editMotherPhone');
-            if (motherPhoneInput) motherPhoneInput.value = student.mother_phone || '';
-
-            const parentEmailInput = document.getElementById('editParentEmail');
-            if (parentEmailInput) parentEmailInput.value = student.parent_email || '';
-
-            const parentAddressInput = document.getElementById('editParentAddress');
-            if (parentAddressInput) parentAddressInput.value = student.parent_address || '';
-
-            // ===== PREVIOUS SCHOOL DETAILS =====
-            const lastSchoolInput = document.getElementById('editLastSchool');
-            if (lastSchoolInput) lastSchoolInput.value = student.last_school || '';
-
-            const lastClassInput = document.getElementById('editLastClass');
-            if (lastClassInput) lastClassInput.value = student.last_class || '';
-
-            const reasonLeavingInput = document.getElementById('editReasonForLeaving');
-            if (reasonLeavingInput) reasonLeavingInput.value = student.reason_for_leaving || '';
-
-            // ===== PHOTO =====
-            const avatarImg = document.getElementById('editStudentAvatar');
-            if (avatarImg) {
-                if (student.picture && student.picture !== 'unnamed.jpg') {
-                    avatarImg.src = `/storage/images/student_avatars/${student.picture}`;
-                } else {
-                    avatarImg.src = 'https://via.placeholder.com/120x120/667eea/ffffff?text=Photo';
-                }
-            }
-
-            // ===== UPDATE FORM ACTION URL =====
-            const form = document.getElementById('editStudentForm');
-            if (form && student.id) {
-                form.action = form.action.replace(':id', student.id);
-            }
-
-            // ===== UPDATE PROGRESS STEPS =====
-            this.updateProgressSteps(student);
-
-            Utils.log('Edit form populated successfully');
-        },
-
-        resetEditStateDropdown: function() {
-            const stateSelect = document.getElementById('editState');
-            const lgaSelect = document.getElementById('editLocal');
-
-            if (stateSelect) {
-                stateSelect.value = '';
-            }
-            if (lgaSelect) {
-                lgaSelect.innerHTML = '<option value="">Select LGA</option>';
-                lgaSelect.disabled = true;
-            }
-        },
-
-        updateProgressSteps: function(student) {
-            const steps = document.querySelectorAll('#editStudentModal .progress-steps .step');
-            if (!steps.length) return;
-
-            steps.forEach(step => step.classList.remove('active'));
-
-            let completedSections = 0;
-
-            // Section 1: Academic Details
-            if (student.schoolclassid && student.termid && student.sessionid && student.statusId) {
-                completedSections++;
-            }
-
-            // Section 2: Personal Details
-            if (student.firstname && student.lastname && student.gender && student.dateofbirth) {
-                completedSections++;
-            }
-
-            // Section 3: Additional Information
-            if (student.state && student.religion) {
-                completedSections++;
-            }
-
-            // Section 4: Parent Details
-            if (student.father_name || student.mother_name) {
-                completedSections++;
-            }
-
-            for (let i = 0; i <= completedSections; i++) {
-                if (steps[i]) {
-                    steps[i].classList.add('active');
-                }
-            }
-        }
-    };
-
-    // ============================================================================
-    // VIEW MODAL MANAGER - FIXED VERSION
-    // ============================================================================
-    const ViewModalManager = {
-        currentStudentId: null,
-
-        populateEnhancedViewModal: function(student) {
-            Utils.log('Populating enhanced view modal', student);
-            this.currentStudentId = student.id;
-
-            // Basic Information
-            this.safeSetText('viewFullName', `${student.lastname || ''} ${student.firstname || ''} ${student.othername || ''}`.trim() || '-');
-            this.safeSetText('viewFullNameDetail', `${student.lastname || ''} ${student.firstname || ''} ${student.othername || ''}`.trim() || '-');
-            this.safeSetText('viewAdmissionNumber', student.admissionNo || '-');
-            this.safeSetText('viewAdmissionNo', student.admissionNo || '-');
-            this.safeSetText('viewTitle', student.title || '-');
-            this.safeSetText('viewDOB', Utils.formatDate(student.dateofbirth, 'long'));
-            this.safeSetText('viewAge', student.age || Utils.calculateAge(student.dateofbirth));
-            this.safeSetText('viewAgeDetail', student.age || Utils.calculateAge(student.dateofbirth));
-            this.safeSetText('viewPlaceOfBirth', student.placeofbirth || '-');
-            this.safeSetText('viewGenderDetail', student.gender || '-');
-            this.safeSetText('viewGenderText', student.gender || '-');
-            this.safeSetText('viewBloodGroupDetail', student.blood_group || 'Not Specified');
-            this.safeSetText('viewBloodGroupAdditional', student.blood_group || 'Not Specified');
-            this.safeSetText('viewReligionDetail', student.religion || '-');
-
-            // Contact Information
-            this.safeSetText('viewPhoneNumber', student.phone_number || '-');
-            this.safeSetText('viewEmailAddress', student.email || '-');
-            this.safeSetText('viewPermanentAddress', student.permanent_address || student.home_address2 || '-');
-            this.safeSetText('viewCity', student.city || '-');
-            this.safeSetText('viewStateOrigin', student.state || '-');
-            this.safeSetText('viewLGA', student.local || '-');
-            this.safeSetText('viewNationality', student.nationality || '-');
-
-            // Future Ambition
-            this.safeSetText('viewFutureAmbition', student.future_ambition || 'Not specified');
-
-            // Academic Information
-            this.safeSetText('viewAdmissionDate', Utils.formatDate(student.admission_date, 'long'));
-
-            const classDisplay = `${student.schoolclass || ''} ${student.arm || ''}`.trim() || '-';
-            this.safeSetText('viewCurrentClass', classDisplay);
-            this.safeSetText('viewClassDisplay', classDisplay);
-
-            const classBadge = document.getElementById('viewClassBadge');
-            if (classBadge) {
-                classBadge.innerHTML = `<i class="fas fa-school me-1"></i> ${classDisplay}`;
-            }
-
-            this.safeSetText('viewArm', student.arm || '-');
-            this.safeSetText('viewStudentCategory', student.student_category || '-');
-
-            const studentType = student.statusId == 2 ? 'New Student' : student.statusId == 1 ? 'Old Student' : '-';
-            this.safeSetText('viewStudentType', studentType);
-
-            // Student Status Badge
-            const studentTypeBadge = document.getElementById('viewStudentTypeBadge');
-            if (studentTypeBadge) {
-                if (student.statusId == 2) {
-                    studentTypeBadge.className = 'badge bg-warning bg-gradient px-3 py-2';
-                    studentTypeBadge.innerHTML = `<i class="fas fa-star me-1"></i> New Student`;
-                } else if (student.statusId == 1) {
-                    studentTypeBadge.className = 'badge bg-secondary bg-gradient px-3 py-2';
-                    studentTypeBadge.innerHTML = `<i class="fas fa-history me-1"></i> Old Student`;
-                }
-            }
-
-            this.safeSetText('viewStudentStatus', student.student_status || '-');
-
-            // School house in view modal - get from the join
-            const schoolHouseValue = student.school_house || student.schoolhouse || student.house || '-';
-            this.safeSetText('viewSchoolHouse', schoolHouseValue);
-
-            this.safeSetText('viewAdmittedDate', Utils.formatDate(student.admission_date, 'short'));
-
-            // Student Status Indicator
-            const statusIndicator = document.getElementById('studentStatusIndicator');
-            if (statusIndicator) {
-                if (student.student_status === 'Active') {
-                    statusIndicator.className = 'position-absolute bottom-0 end-0 bg-success rounded-circle p-2 border border-2 border-white';
-                } else {
-                    statusIndicator.className = 'position-absolute bottom-0 end-0 bg-secondary rounded-circle p-2 border border-2 border-white';
-                }
-            }
-
-            // Previous School
-            this.safeSetText('viewLastSchool', student.last_school || '-');
-            this.safeSetText('viewLastClass', student.last_class || '-');
-            this.safeSetText('viewReasonForLeaving', student.reason_for_leaving || '-');
-
-            // Photo
-            this.setStudentPhoto(student);
-
-            // Parent Information
-            this.safeSetText('viewFatherFullName', student.father_name || '-');
-            this.safeSetText('viewFatherPhone', student.father_phone || '-');
-            this.safeSetText('viewFatherOccupation', student.father_occupation || '-');
-            this.safeSetText('viewFatherCityState', student.father_city || '-');
-            this.safeSetText('viewFatherEmail', student.parent_email || '-');
-            this.safeSetText('viewFatherAddress', student.parent_address || '-');
-
-            this.safeSetText('viewMotherFullName', student.mother_name || '-');
-            this.safeSetText('viewMotherPhone', student.mother_phone || '-');
-            this.safeSetText('viewMotherOccupation', student.mother_occupation || '-');
-            this.safeSetText('viewMotherEmail', student.parent_email || '-');
-            this.safeSetText('viewMotherAddress', student.parent_address || '-');
-
-            this.safeSetText('viewParentEmail', student.parent_email || '-');
-            this.safeSetText('viewParentAddress', student.parent_address || '-');
-
-            // Father Status Badge
-            const fatherBadge = document.getElementById('fatherStatusBadge');
-            if (fatherBadge) {
-                if (student.father_name) {
-                    fatherBadge.textContent = 'Available';
-                    fatherBadge.className = 'badge bg-success ms-2';
-                } else {
-                    fatherBadge.textContent = 'Not Provided';
-                    fatherBadge.className = 'badge bg-secondary ms-2';
-                }
-            }
-
-            // Mother Status Badge
-            const motherBadge = document.getElementById('motherStatusBadge');
-            if (motherBadge) {
-                if (student.mother_name) {
-                    motherBadge.textContent = 'Available';
-                    motherBadge.className = 'badge bg-success ms-2';
-                } else {
-                    motherBadge.textContent = 'Not Provided';
-                    motherBadge.className = 'badge bg-secondary ms-2';
-                }
-            }
-
-            // Additional Information
-            this.safeSetText('viewNIN', student.nin_number || '-');
-            this.safeSetText('viewMotherTongue', student.mother_tongue || '-');
-
-            // Reset term history section
-            const termHistoryLoading = document.getElementById('termHistoryLoading');
-            const termHistoryContent = document.getElementById('termHistoryContent');
-
-            if (termHistoryLoading) termHistoryLoading.style.display = 'block';
-            if (termHistoryContent) termHistoryContent.style.display = 'none';
-
-            // Fetch term info
-            this.fetchStudentTermInfo(student.id);
-        },
-
-        safeSetText: function(elementId, text) {
-            const element = document.getElementById(elementId);
-            if (element) {
-                element.textContent = text;
-            }
-        },
-
-        setStudentPhoto: function(student) {
-            const photoElement = document.getElementById('viewStudentPhoto');
-            const avatarContainer = document.getElementById('viewStudentAvatarContainer');
-
-            if (!photoElement || !avatarContainer) return;
-
-            // Remove any existing fallback
-            const existingFallback = avatarContainer.querySelector('.avatar-initials');
-            if (existingFallback) {
-                existingFallback.remove();
-            }
-
-            if (student.picture && student.picture !== 'unnamed.jpg') {
-                photoElement.src = `/storage/images/student_avatars/${student.picture}`;
-                photoElement.style.display = 'inline';
-                photoElement.onerror = () => {
-                    photoElement.style.display = 'none';
-                    this.createAvatarFallback(avatarContainer, student);
-                };
-            } else {
-                photoElement.style.display = 'none';
-                this.createAvatarFallback(avatarContainer, student);
-            }
-        },
-
-        createAvatarFallback: function(container, student) {
-            const fallback = document.createElement('div');
-            fallback.className = 'avatar-initials rounded-circle border border-4 border-white shadow-sm';
-            fallback.style.cssText = 'width: 120px; height: 120px; background: #4361ee; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 42px;';
-            fallback.textContent = Utils.getInitials(student.firstname, student.lastname);
-            container.appendChild(fallback);
-        },
-
-        fetchStudentTermInfo: async function(studentId) {
-            try {
-                const response = await ApiService.getStudentActiveTerm(studentId);
-                const currentTermAlert = document.getElementById('currentTermAlert');
-
-                if (response.success && response.data) {
-                    const data = response.data;
-
-                    this.safeSetText('viewCurrentTerm', data.term?.term || '-');
-                    this.safeSetText('viewCurrentSession', data.session?.session || '-');
-
-                    const statusHtml = data.is_current
-                        ? '<span class="badge bg-success">Current Active Term</span>'
-                        : '<span class="badge bg-warning text-dark">Registered (Not Current)</span>';
-
-                    const currentTermStatus = document.getElementById('viewCurrentTermStatus');
-                    if (currentTermStatus) currentTermStatus.innerHTML = statusHtml;
-
-                    if (currentTermAlert) {
-                        currentTermAlert.innerHTML = `
-                            <div class="alert alert-success mb-0">
-                                <i class="fas fa-check-circle me-2"></i>
-                                <strong>Currently enrolled in:</strong> ${data.schoolClass?.schoolclass || ''} ${data.schoolClass?.armRelation?.arm || ''}
-                                (${data.term?.term || ''} Term, ${data.session?.session || ''} Session)
-                            </div>
-                        `;
-                    }
-                } else {
-                    this.safeSetText('viewCurrentTerm', '-');
-                    this.safeSetText('viewCurrentSession', '-');
-
-                    const currentTermStatus = document.getElementById('viewCurrentTermStatus');
-                    if (currentTermStatus) currentTermStatus.innerHTML = '<span class="badge bg-secondary">Not Registered</span>';
-
-                    if (currentTermAlert) {
-                        currentTermAlert.innerHTML = `
-                            <div class="alert alert-warning mb-0">
-                                <i class="fas fa-exclamation-triangle me-2"></i>
-                                <strong>No active term registration found.</strong> Please update the student's current term.
-                            </div>
-                        `;
-                    }
-                }
-
-                await this.fetchTermHistory(studentId);
-
-            } catch (error) {
-                Utils.log('Error fetching student term info', error, 'error');
-            }
-        },
-
-        fetchTermHistory: async function(studentId) {
-            try {
-                const response = await ApiService.getStudentAllTerms(studentId);
-
-                const loadingEl = document.getElementById('termHistoryLoading');
-                const contentEl = document.getElementById('termHistoryContent');
-
-                if (!loadingEl || !contentEl) return;
-
-                if (response.success && response.data && response.data.length > 0) {
-                    loadingEl.style.display = 'none';
-                    contentEl.style.display = 'block';
-
-                    let html = `
-                        <div class="table-responsive">
-                            <table class="table table-hover table-sm">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Session</th>
-                                        <th>Term</th>
-                                        <th>Class</th>
-                                        <th>Status</th>
-                                        <th>Registered On</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                    `;
-
-                    response.data.forEach(term => {
-                        const statusBadge = term.is_current
-                            ? '<span class="badge bg-success">Current</span>'
-                            : '<span class="badge bg-secondary">Past</span>';
-
-                        html += `
-                            <tr>
-                                <td>${term.session_name || '-'}</td>
-                                <td>${term.term_name || '-'}</td>
-                                <td>${term.class_name || ''} ${term.arm_name || ''}</td>
-                                <td>${statusBadge}</td>
-                                <td>${Utils.formatDate(term.created_at, 'short')}</td>
-                            </tr>
-                        `;
-                    });
-
-                    html += `
-                                </tbody>
-                            </table>
-                        </div>
-                    `;
-
-                    contentEl.innerHTML = html;
-                } else {
-                    loadingEl.style.display = 'none';
-                    contentEl.style.display = 'block';
-                    contentEl.innerHTML = `
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle me-2"></i>
-                            No term registration history found for this student.
-                        </div>
-                    `;
-                }
-            } catch (error) {
-                Utils.log('Error fetching term history', error, 'error');
-                const loadingEl = document.getElementById('termHistoryLoading');
-                const contentEl = document.getElementById('termHistoryContent');
-
-                if (loadingEl) loadingEl.style.display = 'none';
-                if (contentEl) {
-                    contentEl.style.display = 'block';
-                    contentEl.innerHTML = `
-                        <div class="alert alert-danger">
-                            <i class="fas fa-exclamation-circle me-2"></i>
-                            Failed to load term history. Please try again.
-                        </div>
-                    `;
-                }
-            }
-        }
-    };
-
-    // ============================================================================
-    // RENDER MANAGER - FIXED WITH DELEGATED EVENT HANDLING
-    // ============================================================================
-    const RenderManager = {
-        renderTableView: function(students) {
-            const tbody = document.getElementById('studentTableBody');
-            if (!tbody) return;
-
-            if (!students || students.length === 0) {
-                tbody.innerHTML = '';
-                const emptyState = document.getElementById('emptyState');
-                if (emptyState) emptyState.classList.remove('d-none');
-                return;
-            }
-
-            const emptyState = document.getElementById('emptyState');
-            if (emptyState) emptyState.classList.add('d-none');
-
-            const fragment = document.createDocumentFragment();
-
-            students.forEach(student => {
-                const row = document.createElement('tr');
-                row.className = 'align-middle';
-                row.dataset.id = student.id;
-
-                row.innerHTML = `
-                    <td>
-                        <div class="form-check">
-                            <input class="form-check-input student-checkbox" type="checkbox"
-                                   value="${student.id}">
-                        </div>
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center gap-3">
-                            <div class="position-relative">
-                                ${this.getOptimizedAvatar(student)}
-                                <span class="position-absolute bottom-0 end-0 ${student.student_status === 'Active' ? 'bg-success' : 'bg-secondary'} rounded-circle p-1 border border-2 border-white"
-                                      style="width: 12px; height: 12px;"></span>
-                            </div>
-                            <div>
-                                <h6 class="mb-1 fw-semibold">${Utils.escapeHtml(student.lastname || '')} ${Utils.escapeHtml(student.firstname || '')}</h6>
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="badge bg-light text-dark px-2 py-1 rounded-pill">
-                                        <i class="fas fa-id-card me-1 text-muted" style="font-size: 10px;"></i>
-                                        ${Utils.escapeHtml(student.admissionNo || 'N/A')}
-                                    </span>
-                                    ${student.statusId == 2 ?
-                                        '<span class="badge bg-warning bg-gradient text-dark px-2 py-1 rounded-pill"><i class="fas fa-star me-1" style="font-size: 10px;"></i>New</span>' :
-                                        student.statusId == 1 ?
-                                        '<span class="badge bg-secondary bg-gradient px-2 py-1 rounded-pill"><i class="fas fa-history me-1" style="font-size: 10px;"></i>Old</span>' : ''}
-                                </div>
-                            </div>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="d-flex flex-column">
-                            <span class="fw-medium">${Utils.escapeHtml(student.schoolclass || '')} ${Utils.escapeHtml(student.arm || '')}</span>
-                            <small class="text-muted">${Utils.escapeHtml(student.student_category || '')}</small>
-                        </div>
-                    </td>
-                    <td>
-                        ${this.getCompactStatusBadge(student)}
-                    </td>
-                    <td>
-                        <span class="d-flex align-items-center gap-1">
-                            <i class="fas fa-${student.gender === 'Male' ? 'mars text-primary' : 'venus text-pink'}"></i>
-                            ${Utils.escapeHtml(student.gender || 'N/A')}
-                        </span>
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center gap-1">
-                            <i class="fas fa-calendar-alt text-muted" style="font-size: 12px;"></i>
-                            <span>${Utils.formatDate(student.created_at, 'short')}</span>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="d-flex gap-2 justify-content-end">
-                            <div class="btn-group" role="group">
-                                <button type="button"
-                                        class="btn btn-sm btn-soft-info rounded-start view-student-btn"
-                                        data-student-id="${student.id}"
-                                        data-bs-toggle="tooltip"
-                                        data-bs-placement="top"
-                                        title="View Student Details">
-                                    <i class="fas fa-eye"></i>
-                                    <span class="d-none d-xl-inline-block ms-1">View</span>
-                                </button>
-                                <button type="button"
-                                        class="btn btn-sm btn-soft-warning edit-student-btn"
-                                        data-student-id="${student.id}"
-                                        data-bs-toggle="tooltip"
-                                        data-bs-placement="top"
-                                        title="Edit Student">
-                                    <i class="fas fa-edit"></i>
-                                    <span class="d-none d-xl-inline-block ms-1">Edit</span>
-                                </button>
-                                <button type="button"
-                                        class="btn btn-sm btn-soft-danger rounded-end delete-student-btn"
-                                        data-student-id="${student.id}"
-                                        data-bs-toggle="tooltip"
-                                        data-bs-placement="top"
-                                        title="Delete Student">
-                                    <i class="fas fa-trash-alt"></i>
-                                    <span class="d-none d-xl-inline-block ms-1">Delete</span>
-                                </button>
-                            </div>
-                        </div>
-                    </td>
-                `;
-
-                fragment.appendChild(row);
-            });
-
-            tbody.innerHTML = '';
-            tbody.appendChild(fragment);
-
-            Utils.initializeTooltips();
-            this.updateCheckAllState();
-        },
-
-        renderCardView: function(students) {
-            const container = document.getElementById('studentsCardsContainer');
-            if (!container) return;
-
-            if (!students || students.length === 0) {
-                container.innerHTML = '';
-                const emptyState = document.getElementById('emptyState');
-                if (emptyState) emptyState.classList.remove('d-none');
-                return;
-            }
-
-            const emptyState = document.getElementById('emptyState');
-            if (emptyState) emptyState.classList.add('d-none');
-
-            const fragment = document.createDocumentFragment();
-
-            students.forEach(student => {
-                const col = document.createElement('div');
-                col.className = 'col-xl-3 col-lg-4 col-md-6 mb-4';
-
-                col.innerHTML = `
-                    <div class="student-profile-card" data-id="${student.id}">
-                        <div class="checkbox-container">
-                            <div class="form-check">
-                                <input class="form-check-input student-checkbox" type="checkbox"
-                                       value="${student.id}">
-                            </div>
-                        </div>
-                        <div class="card-header">
-                            <div class="header-content">
-                                <h5 class="student-name">${Utils.escapeHtml(student.lastname || '')} ${Utils.escapeHtml(student.firstname || '')}</h5>
-                                <span class="student-admission">${Utils.escapeHtml(student.admissionNo || 'N/A')}</span>
-                            </div>
-                            <div class="avatar-container">
-                                ${this.getOptimizedAvatar(student, true)}
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            ${this.getStatusBadge(student, true)}
-                            <div class="student-info-grid">
-                                <div class="info-item">
-                                    <span class="info-label">Class</span>
-                                    <span class="info-value">${Utils.escapeHtml(student.schoolclass || '')} ${Utils.escapeHtml(student.arm || '')}</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Gender</span>
-                                    <span class="info-value">${Utils.escapeHtml(student.gender || 'N/A')}</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Age</span>
-                                    <span class="info-value">${Utils.escapeHtml(student.age || 'N/A')}</span>
-                                </div>
-                                <div class="info-item">
-                                    <span class="info-label">Registered</span>
-                                    <span class="info-value">${Utils.formatDate(student.created_at, 'short')}</span>
-                                </div>
-                            </div>
-                            <div class="action-buttons">
-                                <button class="action-btn view-btn view-student-btn" data-student-id="${student.id}">
-                                    <i class="fas fa-eye"></i> View
-                                </button>
-                                <button class="action-btn edit-btn edit-student-btn" data-student-id="${student.id}">
-                                    <i class="fas fa-edit"></i> Edit
-                                </button>
-                                <button class="action-btn delete-btn delete-student-btn" data-student-id="${student.id}">
-                                    <i class="fas fa-trash-alt"></i> Delete
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                fragment.appendChild(col);
-            });
-
-            container.innerHTML = '';
-            container.appendChild(fragment);
-
-            this.updateCheckAllState();
-        },
-
-        getOptimizedAvatar: function(student, isCard = false) {
-            const initials = Utils.getInitials(student.firstname, student.lastname);
-            const colors = ['#4361ee', '#3a0ca3', '#f72585', '#4cc9f0', '#7209b7', '#f8961e', '#2ec4b6', '#e71d36'];
-            const colorIndex = (student.id?.toString().length || 0) % colors.length;
-            const bgColor = colors[colorIndex];
-            const size = isCard ? '80px' : '45px';
-            const fontSize = isCard ? '28px' : '16px';
-
-            if (student.picture && student.picture !== 'unnamed.jpg') {
-                return `
-                    <div class="avatar-circle" style="width: ${size}; height: ${size};">
-                        <img src="/storage/images/student_avatars/${Utils.escapeHtml(student.picture)}"
-                             alt="${Utils.escapeHtml(student.firstname || 'Student')}"
-                             class="rounded-circle border border-2 border-white shadow-sm"
-                             style="width: ${size}; height: ${size}; object-fit: cover;"
-                             loading="lazy"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <div class="avatar-initials rounded-circle border border-2 border-white shadow-sm"
-                             style="width: ${size}; height: ${size}; background: ${bgColor}; color: white; display: none; align-items: center; justify-content: center; font-weight: bold; font-size: ${fontSize};">
-                            ${initials}
-                        </div>
-                    </div>
-                `;
-            }
-
-            return `
-                <div class="avatar-initials rounded-circle border border-2 border-white shadow-sm"
-                     style="width: ${size}; height: ${size}; background: ${bgColor}; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: ${fontSize};">
-                    ${initials}
-                </div>
-            `;
-        },
-
-        getStatusBadge: function(student, isCard = false) {
-            let badges = '';
-
-            if (student.student_status === 'Active') {
-                badges += `<span class="status-badge status-active">
-                            <i class="fas fa-check-circle"></i> Active
-                        </span>`;
-            } else if (student.student_status === 'Inactive') {
-                badges += `<span class="status-badge status-inactive">
-                            <i class="fas fa-pause-circle"></i> Inactive
-                        </span>`;
-            }
-
-            if (student.statusId == 2) {
-                badges += `<span class="status-badge status-new ${!isCard ? 'ms-2' : ''}">
-                            <i class="fas fa-star"></i> New Student
-                        </span>`;
-            } else if (student.statusId == 1) {
-                badges += `<span class="status-badge status-old ${!isCard ? 'ms-2' : ''}">
-                            <i class="fas fa-history"></i> Old Student
-                        </span>`;
-            }
-
-            return badges;
-        },
-
-        getCompactStatusBadge: function(student) {
-            let badges = '';
-
-            if (student.student_status === 'Active') {
-                badges += '<span class="badge bg-success bg-gradient px-2 py-1 rounded-pill"><span class="status-dot active"></span>Active</span>';
-            } else if (student.student_status === 'Inactive') {
-                badges += '<span class="badge bg-secondary bg-gradient px-2 py-1 rounded-pill"><span class="status-dot inactive"></span>Inactive</span>';
-            }
-
-            return badges;
-        },
-
-        updateCheckAllState: function() {
-            const checkAll = document.getElementById('checkAll');
-            const checkAllTable = document.getElementById('checkAllTable');
-
-            const totalCheckboxes = document.querySelectorAll('.student-checkbox').length;
-            const checkedCheckboxes = document.querySelectorAll('.student-checkbox:checked').length;
-
-            if (checkAll) {
-                checkAll.checked = totalCheckboxes > 0 && totalCheckboxes === checkedCheckboxes;
-                checkAll.indeterminate = checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes;
-            }
-
-            if (checkAllTable) {
-                checkAllTable.checked = totalCheckboxes > 0 && totalCheckboxes === checkedCheckboxes;
-                checkAllTable.indeterminate = checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes;
-            }
-        },
-
-        toggleView: function(viewType) {
-            AppState.ui.currentView = viewType;
-
-            const tableView = document.getElementById('tableView');
-            const cardView = document.getElementById('cardView');
-            const tableViewBtn = document.getElementById('tableViewBtn');
-            const cardViewBtn = document.getElementById('cardViewBtn');
-
-            if (!tableView || !cardView || !tableViewBtn || !cardViewBtn) return;
-
-            if (viewType === 'table') {
-                tableView.classList.remove('d-none');
-                cardView.classList.add('d-none');
-                tableViewBtn.classList.add('active');
-                cardViewBtn.classList.remove('active');
-
-                if (AppState.pagination.data.length > 0) {
-                    this.renderTableView(AppState.pagination.data);
-                }
-            } else {
-                tableView.classList.add('d-none');
-                cardView.classList.remove('d-none');
-                tableViewBtn.classList.remove('active');
-                cardViewBtn.classList.add('active');
-
-                if (AppState.pagination.data.length > 0) {
-                    this.renderCardView(AppState.pagination.data);
-                }
-            }
-        }
-    };
-
-    // ============================================================================
-    // SELECTION MANAGER
-    // ============================================================================
-    const SelectionManager = {
-        toggleSelectAll: function(e) {
-            const isChecked = e.target.checked;
-            const checkboxes = document.querySelectorAll('.student-checkbox');
-
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = isChecked;
-                const parent = checkbox.closest('.student-profile-card, tr');
-                if (parent) {
-                    parent.classList.toggle('selected', isChecked);
-                }
-
-                if (isChecked) {
-                    AppState.ui.selectedStudents.add(checkbox.value);
-                } else {
-                    AppState.ui.selectedStudents.delete(checkbox.value);
-                }
-            });
-
-            RenderManager.updateCheckAllState();
-            this.updateBulkActionsVisibility();
-        },
-
-        updateBulkActionsVisibility: function() {
-            const selectedCount = document.querySelectorAll('.student-checkbox:checked').length;
-            const bulkActionsDropdown = document.getElementById('bulkActionsDropdown');
-
-            if (bulkActionsDropdown) {
-                if (selectedCount > 0) {
-                    bulkActionsDropdown.disabled = false;
-                    bulkActionsDropdown.innerHTML = `<i class="fas fa-cog me-2"></i>Actions (${selectedCount})`;
-                } else {
-                    bulkActionsDropdown.disabled = true;
-                    bulkActionsDropdown.innerHTML = `<i class="fas fa-cog me-2"></i>Actions`;
-                }
-            }
-
-            AppState.ui.selectedStudents.clear();
-            document.querySelectorAll('.student-checkbox:checked').forEach(cb => {
-                AppState.ui.selectedStudents.add(cb.value);
-            });
-        },
-
-        getSelectedStudentIds: function() {
-            return Array.from(document.querySelectorAll('.student-checkbox:checked')).map(cb => cb.value);
-        },
-
-        clearAllSelections: function() {
-            const checkboxes = document.querySelectorAll('.student-checkbox');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = false;
-                const parent = checkbox.closest('.student-profile-card, tr');
-                if (parent) {
-                    parent.classList.remove('selected');
-                }
-            });
-
-            AppState.ui.selectedStudents.clear();
-
-            const checkAll = document.getElementById('checkAll');
-            const checkAllTable = document.getElementById('checkAllTable');
-            if (checkAll) checkAll.checked = false;
-            if (checkAllTable) checkAllTable.checked = false;
-
-            this.updateBulkActionsVisibility();
-        },
-
-        initializeCheckboxes: function() {
-            const checkAll = document.getElementById('checkAll');
-            const checkAllTable = document.getElementById('checkAllTable');
-
-            if (checkAll) {
-                checkAll.removeEventListener('change', this.toggleSelectAll);
-                checkAll.addEventListener('change', (e) => this.toggleSelectAll(e));
-            }
-
-            if (checkAllTable) {
-                checkAllTable.removeEventListener('change', this.toggleSelectAll);
-                checkAllTable.addEventListener('change', (e) => this.toggleSelectAll(e));
-            }
-
-            // Use event delegation for student checkboxes
-            document.removeEventListener('change', this.checkboxChangeHandler);
-            this.checkboxChangeHandler = (e) => {
-                if (e.target.classList.contains('student-checkbox')) {
-                    this.updateBulkActionsVisibility();
-                    RenderManager.updateCheckAllState();
-                }
-            };
-            document.addEventListener('change', this.checkboxChangeHandler);
-        }
-    };
-
-    // ============================================================================
-    // STUDENT MANAGER - FIXED VERSION
+    // STUDENT MANAGER
     // ============================================================================
     const StudentManager = {
         async fetchStudents() {
@@ -5373,7 +4060,6 @@ use Spatie\Permission\Models\Role;
                 );
 
                 AppState.pagination = {
-                    ...AppState.pagination,
                     currentPage: paginationData.current_page,
                     lastPage: paginationData.last_page,
                     total: paginationData.total,
@@ -5389,7 +4075,7 @@ use Spatie\Permission\Models\Role;
                 }
 
                 PaginationManager.updatePaginationUI(paginationData);
-                SelectionManager.updateBulkActionsVisibility();
+                SelectionManager.clearAllSelections();
 
                 paginationData.data.forEach(student => {
                     AppState.cache.students.set(student.id.toString(), student);
@@ -5397,15 +4083,13 @@ use Spatie\Permission\Models\Role;
 
                 Utils.log('Students fetched successfully', {
                     total: paginationData.total,
-                    showing: paginationData.data.length
+                    showing: paginationData.data.length,
+                    search: AppState.filters.search
                 });
 
             } catch (error) {
                 Utils.log('Error fetching students', error, 'error');
                 Utils.showError('Failed to load students. Please try again.');
-
-                const emptyState = document.getElementById('emptyState');
-                if (emptyState) emptyState.classList.remove('d-none');
 
             } finally {
                 Utils.hideLoading();
@@ -5427,7 +4111,9 @@ use Spatie\Permission\Models\Role;
                 Utils.hideLoading();
 
                 if (student) {
-                    ViewModalManager.populateEnhancedViewModal(student);
+                    // Populate view modal
+                    this.populateViewModal(student);
+
                     const viewModalElement = document.getElementById('viewStudentModal');
                     if (viewModalElement) {
                         const viewModal = new bootstrap.Modal(viewModalElement);
@@ -5443,26 +4129,190 @@ use Spatie\Permission\Models\Role;
             }
         },
 
+        populateViewModal: function(student) {
+            // Set basic info
+            this.setText('viewFullName', `${student.lastname || ''} ${student.firstname || ''} ${student.othername || ''}`.trim() || '-');
+            this.setText('viewFullNameDetail', `${student.lastname || ''} ${student.firstname || ''} ${student.othername || ''}`.trim() || '-');
+            this.setText('viewAdmissionNumber', student.admissionNo || '-');
+            this.setText('viewAdmissionNo', student.admissionNo || '-');
+            this.setText('viewTitle', student.title || '-');
+            this.setText('viewDOB', Utils.formatDate(student.dateofbirth, 'long'));
+            this.setText('viewAge', student.age || Utils.calculateAge(student.dateofbirth));
+            this.setText('viewAgeDetail', student.age || Utils.calculateAge(student.dateofbirth));
+            this.setText('viewPlaceOfBirth', student.placeofbirth || '-');
+            this.setText('viewGenderDetail', student.gender || '-');
+            this.setText('viewGenderText', student.gender || '-');
+            this.setText('viewBloodGroupDetail', student.blood_group || 'Not Specified');
+            this.setText('viewBloodGroupAdditional', student.blood_group || 'Not Specified');
+            this.setText('viewReligionDetail', student.religion || '-');
+
+            // Contact info
+            this.setText('viewPhoneNumber', student.phone_number || '-');
+            this.setText('viewEmailAddress', student.email || '-');
+            this.setText('viewPermanentAddress', student.permanent_address || '-');
+            this.setText('viewCity', student.city || '-');
+            this.setText('viewStateOrigin', student.state || '-');
+            this.setText('viewLGA', student.local || '-');
+            this.setText('viewNationality', student.nationality || '-');
+
+            // Future ambition
+            this.setText('viewFutureAmbition', student.future_ambition || 'Not specified');
+
+            // Academic info
+            this.setText('viewAdmissionDate', Utils.formatDate(student.admission_date, 'long'));
+
+            const classDisplay = `${student.schoolclass || ''} ${student.arm || ''}`.trim() || '-';
+            this.setText('viewCurrentClass', classDisplay);
+            this.setText('viewClassDisplay', classDisplay);
+
+            const classBadge = document.getElementById('viewClassBadge');
+            if (classBadge) {
+                classBadge.innerHTML = `<i class="fas fa-school me-1"></i> ${classDisplay}`;
+            }
+
+            this.setText('viewArm', student.arm || '-');
+            this.setText('viewStudentCategory', student.student_category || '-');
+
+            const studentType = student.statusId == 2 ? 'New Student' : student.statusId == 1 ? 'Old Student' : '-';
+            this.setText('viewStudentType', studentType);
+
+            const studentTypeBadge = document.getElementById('viewStudentTypeBadge');
+            if (studentTypeBadge) {
+                if (student.statusId == 2) {
+                    studentTypeBadge.className = 'badge bg-warning bg-gradient px-3 py-2';
+                    studentTypeBadge.innerHTML = `<i class="fas fa-star me-1"></i> New Student`;
+                } else if (student.statusId == 1) {
+                    studentTypeBadge.className = 'badge bg-secondary bg-gradient px-3 py-2';
+                    studentTypeBadge.innerHTML = `<i class="fas fa-history me-1"></i> Old Student`;
+                }
+            }
+
+            this.setText('viewStudentStatus', student.student_status || '-');
+            this.setText('viewSchoolHouse', student.school_house || '-');
+            this.setText('viewAdmittedDate', Utils.formatDate(student.admission_date, 'short'));
+
+            // Status indicator
+            const statusIndicator = document.getElementById('studentStatusIndicator');
+            if (statusIndicator) {
+                if (student.student_status === 'Active') {
+                    statusIndicator.className = 'position-absolute bottom-0 end-0 bg-success rounded-circle p-2 border border-2 border-white';
+                } else {
+                    statusIndicator.className = 'position-absolute bottom-0 end-0 bg-secondary rounded-circle p-2 border border-2 border-white';
+                }
+            }
+
+            // Previous school
+            this.setText('viewLastSchool', student.last_school || '-');
+            this.setText('viewLastClass', student.last_class || '-');
+            this.setText('viewReasonForLeaving', student.reason_for_leaving || '-');
+
+            // Photo
+            const photoElement = document.getElementById('viewStudentPhoto');
+            if (photoElement) {
+                if (student.picture && student.picture !== 'unnamed.jpg') {
+                    photoElement.src = `/storage/images/student_avatars/${student.picture}`;
+                    photoElement.style.display = 'inline';
+                } else {
+                    photoElement.src = 'https://via.placeholder.com/120x120/667eea/ffffff?text=Photo';
+                }
+            }
+
+            // Parent info
+            this.setText('viewFatherFullName', student.father_name || '-');
+            this.setText('viewFatherPhone', student.father_phone || '-');
+            this.setText('viewFatherOccupation', student.father_occupation || '-');
+            this.setText('viewFatherCityState', student.father_city || '-');
+            this.setText('viewFatherEmail', student.parent_email || '-');
+            this.setText('viewFatherAddress', student.parent_address || '-');
+
+            this.setText('viewMotherFullName', student.mother_name || '-');
+            this.setText('viewMotherPhone', student.mother_phone || '-');
+            this.setText('viewMotherOccupation', student.mother_occupation || '-');
+            this.setText('viewMotherEmail', student.parent_email || '-');
+            this.setText('viewMotherAddress', student.parent_address || '-');
+
+            this.setText('viewParentEmail', student.parent_email || '-');
+            this.setText('viewParentAddress', student.parent_address || '-');
+
+            // Additional info
+            this.setText('viewNIN', student.nin_number || '-');
+            this.setText('viewMotherTongue', student.mother_tongue || '-');
+
+            // Store current student ID
+            window.currentViewStudentId = student.id;
+
+            // Fetch term info
+            this.fetchStudentTermInfo(student.id);
+        },
+
+        setText: function(elementId, text) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.textContent = text;
+            }
+        },
+
+        async fetchStudentTermInfo(studentId) {
+            try {
+                const response = await ApiService.getStudentActiveTerm(studentId);
+                const currentTermAlert = document.getElementById('currentTermAlert');
+
+                if (response.success && response.data) {
+                    const data = response.data;
+
+                    this.setText('viewCurrentTerm', data.term?.term || '-');
+                    this.setText('viewCurrentSession', data.session?.session || '-');
+
+                    const statusHtml = data.is_current
+                        ? '<span class="badge bg-success">Current Active Term</span>'
+                        : '<span class="badge bg-warning text-dark">Registered (Not Current)</span>';
+
+                    const currentTermStatus = document.getElementById('viewCurrentTermStatus');
+                    if (currentTermStatus) currentTermStatus.innerHTML = statusHtml;
+
+                    if (currentTermAlert) {
+                        currentTermAlert.innerHTML = `
+                            <div class="alert alert-success mb-0">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Currently enrolled in:</strong> ${data.schoolClass?.schoolclass || ''} ${data.schoolClass?.armRelation?.arm || ''}
+                                (${data.term?.term || ''} Term, ${data.session?.session || ''} Session)
+                            </div>
+                        `;
+                    }
+                } else {
+                    this.setText('viewCurrentTerm', '-');
+                    this.setText('viewCurrentSession', '-');
+
+                    const currentTermStatus = document.getElementById('viewCurrentTermStatus');
+                    if (currentTermStatus) currentTermStatus.innerHTML = '<span class="badge bg-secondary">Not Registered</span>';
+
+                    if (currentTermAlert) {
+                        currentTermAlert.innerHTML = `
+                            <div class="alert alert-warning mb-0">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>No active term registration found.</strong> Please update the student's current term.
+                            </div>
+                        `;
+                    }
+                }
+            } catch (error) {
+                Utils.log('Error fetching student term info', error, 'error');
+            }
+        },
+
         async editStudent(id) {
             try {
                 Utils.showLoading();
 
-                // First ensure state dropdown is initialized
-                StateLGAManager.initializeEditStateDropdown();
-
                 const student = await ApiService.getStudent(id);
 
-                // Ensure we have a valid student object
                 if (!student || !student.id) {
                     throw new Error('Invalid student data received');
                 }
 
                 Utils.hideLoading();
 
-                // Populate the edit form
-                EditFormManager.populateEditForm(student);
-
-                // Show the modal
+                // Populate edit form (simplified version)
                 const editModalElement = document.getElementById('editStudentModal');
                 if (editModalElement) {
                     const editModal = new bootstrap.Modal(editModalElement);
@@ -5521,6 +4371,355 @@ use Spatie\Permission\Models\Role;
                     Utils.showError('Failed to delete selected students.');
                 }
             }
+        }
+    };
+
+    // ============================================================================
+    // RENDER MANAGER
+    // ============================================================================
+    const RenderManager = {
+        renderTableView: function(students) {
+            const tbody = document.getElementById('studentTableBody');
+            if (!tbody) return;
+
+            if (!students || students.length === 0) {
+                tbody.innerHTML = '';
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+
+            students.forEach(student => {
+                const row = document.createElement('tr');
+                row.className = 'align-middle';
+                row.dataset.id = student.id;
+
+                const statusBadge = student.student_status === 'Active'
+                    ? '<span class="badge bg-success bg-gradient px-2 py-1 rounded-pill"><span class="status-dot active"></span>Active</span>'
+                    : '<span class="badge bg-secondary bg-gradient px-2 py-1 rounded-pill"><span class="status-dot inactive"></span>Inactive</span>';
+
+                const typeBadge = student.statusId == 2
+                    ? '<span class="badge bg-warning bg-gradient text-dark px-2 py-1 rounded-pill ms-1"><i class="fas fa-star me-1" style="font-size: 10px;"></i>New</span>'
+                    : student.statusId == 1
+                    ? '<span class="badge bg-secondary bg-gradient px-2 py-1 rounded-pill ms-1"><i class="fas fa-history me-1" style="font-size: 10px;"></i>Old</span>'
+                    : '';
+
+                row.innerHTML = `
+                    <td>
+                        <div class="form-check">
+                            <input class="form-check-input student-checkbox" type="checkbox"
+                                   value="${student.id}">
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="position-relative">
+                                <div class="avatar-initials rounded-circle border border-2 border-white shadow-sm"
+                                     style="width: 45px; height: 45px; background: #4361ee; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px;">
+                                    ${Utils.getInitials(student.firstname, student.lastname)}
+                                </div>
+                                <span class="position-absolute bottom-0 end-0 ${student.student_status === 'Active' ? 'bg-success' : 'bg-secondary'} rounded-circle p-1 border border-2 border-white"
+                                      style="width: 12px; height: 12px;"></span>
+                            </div>
+                            <div>
+                                <h6 class="mb-1 fw-semibold">${Utils.escapeHtml(student.lastname || '')} ${Utils.escapeHtml(student.firstname || '')}</h6>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-light text-dark px-2 py-1 rounded-pill">
+                                        <i class="fas fa-id-card me-1 text-muted" style="font-size: 10px;"></i>
+                                        ${Utils.escapeHtml(student.admissionNo || 'N/A')}
+                                    </span>
+                                    ${typeBadge}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <span class="fw-medium">${Utils.escapeHtml(student.schoolclass || '')} ${Utils.escapeHtml(student.arm || '')}</span>
+                            <small class="text-muted">${Utils.escapeHtml(student.student_category || '')}</small>
+                        </div>
+                    </td>
+                    <td>
+                        ${statusBadge}
+                    </td>
+                    <td>
+                        <span class="d-flex align-items-center gap-1">
+                            <i class="fas fa-${student.gender === 'Male' ? 'mars text-primary' : 'venus text-pink'}"></i>
+                            ${Utils.escapeHtml(student.gender || 'N/A')}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="fas fa-calendar-alt text-muted" style="font-size: 12px;"></i>
+                            <span>${Utils.formatDate(student.created_at, 'short')}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex gap-2 justify-content-end">
+                            <div class="btn-group" role="group">
+                                <button type="button"
+                                        class="btn btn-sm btn-soft-info rounded-start view-student-btn"
+                                        data-student-id="${student.id}"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="View Student Details">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-sm btn-soft-warning edit-student-btn"
+                                        data-student-id="${student.id}"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Edit Student">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button"
+                                        class="btn btn-sm btn-soft-danger rounded-end delete-student-btn"
+                                        data-student-id="${student.id}"
+                                        data-bs-toggle="tooltip"
+                                        data-bs-placement="top"
+                                        title="Delete Student">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </td>
+                `;
+
+                fragment.appendChild(row);
+            });
+
+            tbody.innerHTML = '';
+            tbody.appendChild(fragment);
+
+            Utils.initializeTooltips();
+            this.updateCheckAllState();
+        },
+
+        renderCardView: function(students) {
+            const container = document.getElementById('studentsCardsContainer');
+            if (!container) return;
+
+            if (!students || students.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const fragment = document.createDocumentFragment();
+
+            students.forEach(student => {
+                const col = document.createElement('div');
+                col.className = 'col-xl-3 col-lg-4 col-md-6 mb-4';
+
+                col.innerHTML = `
+                    <div class="student-profile-card" data-id="${student.id}">
+                        <div class="checkbox-container">
+                            <div class="form-check">
+                                <input class="form-check-input student-checkbox" type="checkbox"
+                                       value="${student.id}">
+                            </div>
+                        </div>
+                        <div class="card-header">
+                            <div class="header-content">
+                                <h5 class="student-name">${Utils.escapeHtml(student.lastname || '')} ${Utils.escapeHtml(student.firstname || '')}</h5>
+                                <span class="student-admission">${Utils.escapeHtml(student.admissionNo || 'N/A')}</span>
+                            </div>
+                            <div class="avatar-container">
+                                <div class="avatar-initials" style="width: 100%; height: 100%; background: #4361ee; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 28px;">
+                                    ${Utils.getInitials(student.firstname, student.lastname)}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="student-info-grid">
+                                <div class="info-item">
+                                    <span class="info-label">Class</span>
+                                    <span class="info-value">${Utils.escapeHtml(student.schoolclass || '')} ${Utils.escapeHtml(student.arm || '')}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Gender</span>
+                                    <span class="info-value">${Utils.escapeHtml(student.gender || 'N/A')}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Age</span>
+                                    <span class="info-value">${Utils.escapeHtml(student.age || 'N/A')}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Registered</span>
+                                    <span class="info-value">${Utils.formatDate(student.created_at, 'short')}</span>
+                                </div>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="action-btn view-btn view-student-btn" data-student-id="${student.id}">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                <button class="action-btn edit-btn edit-student-btn" data-student-id="${student.id}">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button class="action-btn delete-btn delete-student-btn" data-student-id="${student.id}">
+                                    <i class="fas fa-trash-alt"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                fragment.appendChild(col);
+            });
+
+            container.innerHTML = '';
+            container.appendChild(fragment);
+
+            this.updateCheckAllState();
+        },
+
+        updateCheckAllState: function() {
+            const checkAll = document.getElementById('checkAll');
+            const checkAllTable = document.getElementById('checkAllTable');
+
+            const totalCheckboxes = document.querySelectorAll('.student-checkbox').length;
+            const checkedCheckboxes = document.querySelectorAll('.student-checkbox:checked').length;
+
+            if (checkAll) {
+                checkAll.checked = totalCheckboxes > 0 && totalCheckboxes === checkedCheckboxes;
+                checkAll.indeterminate = checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes;
+            }
+
+            if (checkAllTable) {
+                checkAllTable.checked = totalCheckboxes > 0 && totalCheckboxes === checkedCheckboxes;
+                checkAllTable.indeterminate = checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes;
+            }
+
+            // Update bulk actions button
+            const bulkActionsDropdown = document.getElementById('bulkActionsDropdown');
+            if (bulkActionsDropdown) {
+                if (checkedCheckboxes > 0) {
+                    bulkActionsDropdown.disabled = false;
+                    bulkActionsDropdown.innerHTML = `<i class="fas fa-cog me-2"></i>Actions (${checkedCheckboxes})`;
+                } else {
+                    bulkActionsDropdown.disabled = true;
+                    bulkActionsDropdown.innerHTML = `<i class="fas fa-cog me-2"></i>Actions`;
+                }
+            }
+        },
+
+        toggleView: function(viewType) {
+            AppState.ui.currentView = viewType;
+
+            const tableView = document.getElementById('tableView');
+            const cardView = document.getElementById('cardView');
+            const tableViewBtn = document.getElementById('tableViewBtn');
+            const cardViewBtn = document.getElementById('cardViewBtn');
+
+            if (!tableView || !cardView || !tableViewBtn || !cardViewBtn) return;
+
+            if (viewType === 'table') {
+                tableView.classList.remove('d-none');
+                cardView.classList.add('d-none');
+                tableViewBtn.classList.add('active');
+                cardViewBtn.classList.remove('active');
+
+                if (AppState.pagination.data.length > 0) {
+                    this.renderTableView(AppState.pagination.data);
+                }
+            } else {
+                tableView.classList.add('d-none');
+                cardView.classList.remove('d-none');
+                tableViewBtn.classList.remove('active');
+                cardViewBtn.classList.add('active');
+
+                if (AppState.pagination.data.length > 0) {
+                    this.renderCardView(AppState.pagination.data);
+                }
+            }
+        }
+    };
+
+    // ============================================================================
+    // SELECTION MANAGER
+    // ============================================================================
+    const SelectionManager = {
+        initializeCheckboxes: function() {
+            const checkAll = document.getElementById('checkAll');
+            const checkAllTable = document.getElementById('checkAllTable');
+
+            if (checkAll) {
+                checkAll.removeEventListener('change', this.handleSelectAll);
+                checkAll.addEventListener('change', (e) => this.handleSelectAll(e));
+            }
+
+            if (checkAllTable) {
+                checkAllTable.removeEventListener('change', this.handleSelectAll);
+                checkAllTable.addEventListener('change', (e) => this.handleSelectAll(e));
+            }
+
+            // Use event delegation for student checkboxes
+            document.removeEventListener('change', this.handleCheckboxChange);
+            document.addEventListener('change', (e) => this.handleCheckboxChange(e));
+        },
+
+        handleSelectAll: function(e) {
+            const isChecked = e.target.checked;
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+                const parent = checkbox.closest('.student-profile-card, tr');
+                if (parent) {
+                    parent.classList.toggle('selected', isChecked);
+                }
+
+                if (isChecked) {
+                    AppState.ui.selectedStudents.add(checkbox.value);
+                } else {
+                    AppState.ui.selectedStudents.delete(checkbox.value);
+                }
+            });
+
+            RenderManager.updateCheckAllState();
+        },
+
+        handleCheckboxChange: function(e) {
+            if (e.target.classList.contains('student-checkbox')) {
+                const checkbox = e.target;
+                const parent = checkbox.closest('.student-profile-card, tr');
+
+                if (parent) {
+                    parent.classList.toggle('selected', checkbox.checked);
+                }
+
+                if (checkbox.checked) {
+                    AppState.ui.selectedStudents.add(checkbox.value);
+                } else {
+                    AppState.ui.selectedStudents.delete(checkbox.value);
+                }
+
+                RenderManager.updateCheckAllState();
+            }
+        },
+
+        getSelectedStudentIds: function() {
+            return Array.from(document.querySelectorAll('.student-checkbox:checked')).map(cb => cb.value);
+        },
+
+        clearAllSelections: function() {
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+                const parent = checkbox.closest('.student-profile-card, tr');
+                if (parent) {
+                    parent.classList.remove('selected');
+                }
+            });
+
+            AppState.ui.selectedStudents.clear();
+
+            const checkAll = document.getElementById('checkAll');
+            const checkAllTable = document.getElementById('checkAllTable');
+            if (checkAll) checkAll.checked = false;
+            if (checkAllTable) checkAllTable.checked = false;
+
+            RenderManager.updateCheckAllState();
         }
     };
 
@@ -5617,12 +4816,10 @@ use Spatie\Permission\Models\Role;
         columnOrder: [],
 
         initializeReportModal: function() {
-            Utils.log('Initializing report modal...');
             this.columnOrder = [];
             this.initSortable();
             this.updatePreview();
 
-            // Set default checked columns
             const defaultColumns = ['admissionNo', 'lastname', 'firstname', 'class', 'gender'];
             defaultColumns.forEach(col => {
                 const checkbox = document.getElementById(`col_${col}`);
@@ -5636,15 +4833,9 @@ use Spatie\Permission\Models\Role;
 
         initSortable: function() {
             const container = document.getElementById('columnsContainer');
-            if (!container) {
-                Utils.log('Columns container not found', null, 'error');
-                return;
-            }
+            if (!container) return;
 
-            if (typeof Sortable === 'undefined') {
-                Utils.log('Sortable library not loaded', null, 'error');
-                return;
-            }
+            if (typeof Sortable === 'undefined') return;
 
             if (this.sortableInstance) {
                 this.sortableInstance.destroy();
@@ -5662,7 +4853,6 @@ use Spatie\Permission\Models\Role;
                 }
             });
 
-            Utils.log('Sortable initialized');
             this.updateColumnOrder();
 
             document.querySelectorAll('.column-checkbox').forEach(checkbox => {
@@ -5706,8 +4896,6 @@ use Spatie\Permission\Models\Role;
         },
 
         async generateReport() {
-            Utils.log('Generate report clicked');
-
             const form = document.getElementById('printReportForm');
             if (!form) {
                 Utils.showError('Report form not found');
@@ -5756,8 +4944,6 @@ use Spatie\Permission\Models\Role;
             params.include_logo = form.querySelector('input[name="include_logo"]')?.checked ? '1' : '0';
             params.exclude_photos = '0';
 
-            Utils.log('Report parameters:', params);
-
             const modal = bootstrap.Modal.getInstance(document.getElementById('printStudentReportModal'));
             if (modal) modal.hide();
 
@@ -5803,38 +4989,20 @@ use Spatie\Permission\Models\Role;
             } catch (error) {
                 Swal.close();
                 Utils.log('Error generating report', error, 'error');
-
-                let errorMessage = 'Failed to generate report. Please try again.';
-
-                if (error.response) {
-                    if (error.response.data instanceof Blob) {
-                        try {
-                            const text = await error.response.data.text();
-                            const json = JSON.parse(text);
-                            errorMessage = json.message || errorMessage;
-                        } catch (e) {
-                            // Not JSON, use default message
-                        }
-                    } else if (error.response.data && error.response.data.message) {
-                        errorMessage = error.response.data.message;
-                    }
-                } else if (error.message) {
-                    errorMessage = error.message;
-                }
-
-                Utils.showError(errorMessage, 'Report Generation Failed');
+                Utils.showError('Failed to generate report. Please try again.', 'Report Generation Failed');
             }
         }
     };
 
     // ============================================================================
-    // EVENT DELEGATION SETUP - CRITICAL FIX FOR BUTTONS AFTER FILTER
+    // EVENT DELEGATION
     // ============================================================================
     const EventDelegationManager = {
         initialize: function() {
-            // Use event delegation for all student action buttons
             document.addEventListener('click', this.handleClick);
-            Utils.log('Event delegation initialized');
+
+            // Initialize global buttons
+            this.initializeGlobalButtons();
         },
 
         handleClick: function(e) {
@@ -5872,35 +5040,19 @@ use Spatie\Permission\Models\Role;
             }
         },
 
-        // Also handle bulk actions and other global buttons
         initializeGlobalButtons: function() {
-            // Filter buttons
-            const filterBtn = document.querySelector('button[onclick="window.filterData()"]');
-            if (filterBtn) {
-                filterBtn.removeAttribute('onclick');
-                filterBtn.addEventListener('click', () => FilterManager.applyFilters());
-            }
-
-            const resetBtn = document.querySelector('button[onclick="window.resetFilters()"]');
-            if (resetBtn) {
-                resetBtn.removeAttribute('onclick');
-                resetBtn.addEventListener('click', () => FilterManager.resetFilters());
-            }
-
-            // Bulk delete
-            const deleteMultipleBtn = document.querySelector('a[onclick="deleteMultiple()"]');
+            // Delete multiple button
+            const deleteMultipleBtn = document.getElementById('deleteMultipleBtn');
             if (deleteMultipleBtn) {
-                deleteMultipleBtn.removeAttribute('onclick');
                 deleteMultipleBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     StudentManager.deleteMultiple();
                 });
             }
 
-            // Update current term
-            const updateTermBtn = document.querySelector('a[onclick="showUpdateCurrentTermModal()"]');
+            // Update current term button
+            const updateTermBtn = document.getElementById('updateCurrentTermBtn');
             if (updateTermBtn) {
-                updateTermBtn.removeAttribute('onclick');
                 updateTermBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     CurrentTermManager.showUpdateCurrentTermModal();
@@ -5910,14 +5062,12 @@ use Spatie\Permission\Models\Role;
             // Confirm update current term
             const confirmUpdateBtn = document.getElementById('confirmUpdateCurrentTerm');
             if (confirmUpdateBtn) {
-                confirmUpdateBtn.removeAttribute('onclick');
                 confirmUpdateBtn.addEventListener('click', () => CurrentTermManager.updateCurrentTerm());
             }
 
             // Generate report
             const generateReportBtn = document.getElementById('generateReportBtn');
             if (generateReportBtn) {
-                generateReportBtn.removeAttribute('onclick');
                 generateReportBtn.addEventListener('click', (e) => {
                     e.preventDefault();
                     ReportManager.generateReport();
@@ -5982,23 +5132,7 @@ use Spatie\Permission\Models\Role;
                 }
             } catch (error) {
                 Swal.close();
-
-                let errorMessage = 'Failed to save student.';
-                if (error.response?.data?.message) {
-                    errorMessage = error.response.data.message;
-                }
-                if (error.response?.data?.errors) {
-                    const errors = error.response.data.errors;
-                    let errorList = '';
-                    for (const field in errors) {
-                        errorList += `<li>${Utils.escapeHtml(errors[field].join(', '))}</li>`;
-                    }
-                    errorMessage = `<div class="text-start">
-                        <strong>Validation Errors:</strong>
-                        <ul class="mb-0">${errorList}</ul>
-                    </div>`;
-                }
-                Utils.showError(errorMessage);
+                Utils.showError('Failed to save student.');
             }
         },
 
@@ -6038,23 +5172,7 @@ use Spatie\Permission\Models\Role;
                 }
             } catch (error) {
                 Swal.close();
-
-                let errorMessage = 'Failed to update student.';
-                if (error.response?.data?.message) {
-                    errorMessage = error.response.data.message;
-                }
-                if (error.response?.data?.errors) {
-                    const errors = error.response.data.errors;
-                    let errorList = '';
-                    for (const field in errors) {
-                        errorList += `<li>${Utils.escapeHtml(errors[field].join(', '))}</li>`;
-                    }
-                    errorMessage = `<div class="text-start">
-                        <strong>Validation Errors:</strong>
-                        <ul class="mb-0">${errorList}</ul>
-                    </div>`;
-                }
-                Utils.showError(errorMessage);
+                Utils.showError('Failed to update student.');
             }
         }
     };
@@ -6063,7 +5181,7 @@ use Spatie\Permission\Models\Role;
     // INITIALIZATION
     // ============================================================================
     function initializeApplication() {
-        Utils.log('Initializing Student Management System with Complete Fixes...');
+        Utils.log('Initializing Student Management System with AJAX Search...');
 
         if (!Utils.ensureAxios()) {
             Utils.showError('Failed to initialize application. Please refresh the page.');
@@ -6072,29 +5190,18 @@ use Spatie\Permission\Models\Role;
 
         // Initialize all managers
         EventDelegationManager.initialize();
-        EventDelegationManager.initializeGlobalButtons();
-
         FilterManager.initializeFilters();
-        StateLGAManager.initializeAddStateDropdown();
-        StateLGAManager.initializeEditStateDropdown();
-
-        AdmissionNumberManager.updateAdmissionNumber('');
-        AdmissionNumberManager.updateAdmissionNumber('edit');
-
         SelectionManager.initializeCheckboxes();
         PaginationManager.initializePerPageSelector();
-
         FormSubmissionManager.initializeAddForm();
         FormSubmissionManager.initializeEditForm();
 
         // Report modal initialization
         const reportModal = document.getElementById('printStudentReportModal');
         if (reportModal) {
-            reportModal.removeEventListener('show.bs.modal', reportModalShownHandler);
-            reportModal.addEventListener('show.bs.modal', reportModalShownHandler);
-
-            reportModal.removeEventListener('hidden.bs.modal', reportModalHiddenHandler);
-            reportModal.addEventListener('hidden.bs.modal', reportModalHiddenHandler);
+            reportModal.addEventListener('show.bs.modal', () => {
+                setTimeout(() => ReportManager.initializeReportModal(), 100);
+            });
         }
 
         // Load initial data
@@ -6103,24 +5210,13 @@ use Spatie\Permission\Models\Role;
         Utils.log('Student Management System initialized successfully');
     }
 
-    // Report modal handlers
-    function reportModalShownHandler() {
-        setTimeout(() => ReportManager.initializeReportModal(), 100);
-    }
-
-    function reportModalHiddenHandler() {
-        if (ReportManager.sortableInstance) {
-            ReportManager.sortableInstance.destroy();
-            ReportManager.sortableInstance = null;
-        }
-    }
-
     // ============================================================================
     // EXPORT GLOBAL FUNCTIONS
     // ============================================================================
     window.fetchStudents = () => StudentManager.fetchStudents();
     window.filterData = () => FilterManager.applyFilters();
     window.resetFilters = () => FilterManager.resetFilters();
+    window.clearSearch = () => FilterManager.clearSearch();
     window.viewStudent = (id) => StudentManager.viewStudent(id);
     window.editStudent = (id) => StudentManager.editStudent(id);
     window.deleteStudent = (id) => StudentManager.deleteStudent(id);
@@ -6149,10 +5245,9 @@ use Spatie\Permission\Models\Role;
     window.showUpdateCurrentTermModal = (id) => CurrentTermManager.showUpdateCurrentTermModal(id);
     window.updateCurrentTerm = () => CurrentTermManager.updateCurrentTerm();
     window.getSelectedStudentIds = () => SelectionManager.getSelectedStudentIds();
-    window.updateBulkActionsVisibility = () => SelectionManager.updateBulkActionsVisibility();
     window.refreshTermHistory = () => {
-        if (ViewModalManager.currentStudentId) {
-            ViewModalManager.fetchTermHistory(ViewModalManager.currentStudentId);
+        if (window.currentViewStudentId) {
+            StudentManager.fetchStudentTermInfo(window.currentViewStudentId);
         }
     };
     window.callNumber = function(phoneElementId) {
@@ -6174,10 +5269,10 @@ use Spatie\Permission\Models\Role;
         }
     };
     window.editStudentFromView = function() {
-        if (ViewModalManager.currentStudentId) {
+        if (window.currentViewStudentId) {
             const viewModal = bootstrap.Modal.getInstance(document.getElementById('viewStudentModal'));
             if (viewModal) viewModal.hide();
-            StudentManager.editStudent(ViewModalManager.currentStudentId);
+            StudentManager.editStudent(window.currentViewStudentId);
         }
     };
     window.printStudentProfile = function() {
@@ -6192,16 +5287,6 @@ use Spatie\Permission\Models\Role;
     }
 
 })();
-
 </script>
-
-<!-- Include Sortable.js for drag and drop functionality -->
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-
-<!-- Include SweetAlert2 -->
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-<!-- Include Axios -->
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 @endsection
