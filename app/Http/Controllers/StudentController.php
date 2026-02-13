@@ -1300,8 +1300,8 @@ public function getStudentsOptimized(Request $request)
                 Studentpicture::where('studentid', $id)->delete();
                 Broadsheet::where('studentId', $id)->delete();
                 SubjectRegistrationStatus::where('studentId', $id)->delete();
-                Studenthouses::where('studentid', $id)->delete();
-                Studentpersonalityprofiles::where('studentid', $id)->delete();
+                Studenthouse::where('studentid', $id)->delete();
+                Studentpersonalityprofile::where('studentid', $id)->delete();
 
                 // Delete StudentCurrentTerm records
                 StudentCurrentTerm::where('studentId', $id)->delete();
@@ -2734,12 +2734,57 @@ public function getStudentsByClassAndSession(Request $request)
             'studentRegistration.student_status',
             'studentRegistration.dateofbirth',
             'studentRegistration.created_at',
+            'studentRegistration.updated_at',
+            'studentRegistration.admission_date',
             'studentpicture.picture',
             'schoolclass.schoolclass',
             'schoolarm.arm',
         ])->get();
 
         Log::info('Students retrieved:', ['count' => $students->count()]);
+
+        // DEBUG: Check each student for problematic fields
+        $problematicRecords = [];
+        foreach ($students as $index => $student) {
+            $problems = [];
+
+            // Check dateofbirth
+            if ($student->dateofbirth && ($student->dateofbirth === 'N/A' || str_contains($student->dateofbirth, 'N/A'))) {
+                $problems['dateofbirth'] = $student->dateofbirth;
+            }
+
+            // Check created_at
+            if ($student->created_at && ($student->created_at === 'N/A' || str_contains($student->created_at, 'N/A'))) {
+                $problems['created_at'] = $student->created_at;
+            }
+
+            // Check updated_at
+            if ($student->updated_at && ($student->updated_at === 'N/A' || str_contains($student->updated_at, 'N/A'))) {
+                $problems['updated_at'] = $student->updated_at;
+            }
+
+            // Check admission_date
+            if ($student->admission_date && ($student->admission_date === 'N/A' || str_contains($student->admission_date, 'N/A'))) {
+                $problems['admission_date'] = $student->admission_date;
+            }
+
+            // If any problems found, log them
+            if (!empty($problems)) {
+                $problematicRecords[] = [
+                    'id' => $student->id,
+                    'admissionNo' => $student->admissionNo,
+                    'firstname' => $student->firstname,
+                    'lastname' => $student->lastname,
+                    'problems' => $problems
+                ];
+            }
+        }
+
+        if (!empty($problematicRecords)) {
+            Log::warning('Found problematic records with N/A values:', $problematicRecords);
+        } else {
+            Log::info('No problematic records found with N/A values');
+        }
 
         // Process each student to ensure no N/A values in date fields
         $processedStudents = $students->map(function($student) {
@@ -2770,6 +2815,9 @@ public function getStudentsByClassAndSession(Request $request)
                     $processed->dateofbirth = null;
                 }
             } else {
+                if ($student->dateofbirth) {
+                    Log::warning('N/A dateofbirth for student ID ' . $student->id . ': ' . $student->dateofbirth);
+                }
                 $processed->dateofbirth = null;
             }
 
@@ -2783,7 +2831,42 @@ public function getStudentsByClassAndSession(Request $request)
                     $processed->created_at = null;
                 }
             } else {
+                if ($student->created_at) {
+                    Log::warning('N/A created_at for student ID ' . $student->id . ': ' . $student->created_at);
+                }
                 $processed->created_at = null;
+            }
+
+            // Handle updated_at - if it's N/A or invalid, set to null
+            if ($student->updated_at && $student->updated_at !== 'N/A' && !str_contains($student->updated_at, 'N/A')) {
+                try {
+                    $date = new \Carbon\Carbon($student->updated_at);
+                    $processed->updated_at = $date->format('Y-m-d H:i:s');
+                } catch (\Exception $e) {
+                    Log::warning('Invalid updated_at for student ID ' . $student->id . ': ' . $student->updated_at);
+                    $processed->updated_at = null;
+                }
+            } else {
+                if ($student->updated_at) {
+                    Log::warning('N/A updated_at for student ID ' . $student->id . ': ' . $student->updated_at);
+                }
+                $processed->updated_at = null;
+            }
+
+            // Handle admission_date - if it's N/A or invalid, set to null
+            if ($student->admission_date && $student->admission_date !== 'N/A' && !str_contains($student->admission_date, 'N/A')) {
+                try {
+                    $date = new \Carbon\Carbon($student->admission_date);
+                    $processed->admission_date = $date->format('Y-m-d');
+                } catch (\Exception $e) {
+                    Log::warning('Invalid admission_date for student ID ' . $student->id . ': ' . $student->admission_date);
+                    $processed->admission_date = null;
+                }
+            } else {
+                if ($student->admission_date) {
+                    Log::warning('N/A admission_date for student ID ' . $student->id . ': ' . $student->admission_date);
+                }
+                $processed->admission_date = null;
             }
 
             return $processed;
@@ -2828,6 +2911,9 @@ public function getStudentsByClassAndSession(Request $request)
         ], 500);
     }
 }
+
+
+
 /**
  * Bulk update student status (active/inactive and old/new)
  */
