@@ -270,80 +270,89 @@ Route::group(['middleware' => ['auth']], function () {
 
 
 
+    // ================================================
+    // STUDENT MANAGEMENT ROUTES
+    // ================================================
+    Route::resource('student', StudentController::class)->except(['destroy']);
 
-// ================================================
-// STUDENT MANAGEMENT ROUTES
-// ================================================
-Route::resource('student', StudentController::class)->except(['destroy']);
+    // Additional student routes
+    Route::prefix('students')->group(function () {
+        Route::get('/data', [StudentController::class, 'data'])->name('student.data');
+        Route::get('/last-admission-number', [StudentController::class, 'getLastAdmissionNumber'])->name('student.getLastAdmissionNumber');
+        Route::get('/report', [StudentController::class, 'generateReport'])->name('students.report');
+        Route::post('/destroy-multiple', [StudentController::class, 'destroyMultiple'])->name('student.destroyMultiple');
+        Route::get('/optimized', [StudentController::class, 'getStudentsOptimized'])->name('students.optimized'); // THIS IS THE KEY ROUTE
 
-// Additional student routes
-Route::prefix('students')->group(function () {
-    Route::get('/data', [StudentController::class, 'data'])->name('student.data');
-    Route::get('/last-admission-number', [StudentController::class, 'getLastAdmissionNumber'])->name('student.getLastAdmissionNumber');
-    Route::get('/report', [StudentController::class, 'generateReport'])->name('students.report');
-    Route::post('/destroy-multiple', [StudentController::class, 'destroyMultiple'])->name('student.destroyMultiple');
-    Route::get('/optimized', [StudentController::class, 'getStudentsOptimized'])->name('students.optimized'); // THIS IS THE KEY ROUTE
-});
+        // Add these missing routes
+    Route::post('/bulk-update-status', [StudentController::class, 'bulkUpdateStatus'])->name('students.bulk-update-status');
+    Route::get('/by-class-session', [StudentController::class, 'getStudentsByClassAndSession'])->name('students.by-class-session');
+    });
 
-// Individual student operations
-Route::prefix('student')->group(function () {
-    Route::delete('/{id}/destroy', [StudentController::class, 'destroy'])->name('student.destroy');
-    Route::get('/studentid/{studentid}', [StudentController::class, 'deletestudent'])->name('student.deletestudent');
-    Route::get('/overview/{id}', [StudentController::class, 'overview'])->name('student.overview');
-    Route::get('/settings/{id}', [StudentController::class, 'setting'])->name('student.settings');
-    Route::put('/updateclass', [StudentController::class, 'updateClass'])->name('student.updateclass');
-    Route::post('/generate-student-pdf', [StudentController::class, 'generateStudentPdf'])->name('student.pdf');
-});
 
-// Bulk operations
-Route::prefix('student')->group(function () {
-    Route::get('/bulkupload', [StudentController::class, 'bulkupload'])->name('student.bulkupload');
-    Route::post('/bulkuploadsave', [StudentController::class, 'bulkuploadsave'])->name('student.bulkuploadsave');
-    Route::get('/batchindex', [StudentController::class, 'batchindex'])->name('studentbatchindex');
-    Route::delete('/deletestudentbatch', [StudentController::class, 'deletestudentbatch'])->name('student.deletestudentbatch');
-});
+    // Add this separate route (not inside students prefix)
+Route::get('/students-in-term', [StudentController::class, 'getStudentsInTerm'])->name('students.in-term');
+Route::post('/students/remove-from-term', [StudentController::class, 'removeFromTerm'])->name('students.remove-from-term');
+Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkRemoveFromTerm'])->name('students.bulk-remove-from-term');
 
-// ================================================
-// SYSTEM INFO ROUTES
-// ================================================
-Route::get('/system/active-term-session', function() {
-    $activeTerm = \App\Models\Schoolterm::where('status', true)->first();
-    $activeSession = \App\Models\Schoolsession::where('status', 'Current')->first();
 
-    return response()->json([
-        'success' => true,
-        'term' => $activeTerm ? [
-            'id' => $activeTerm->id,
-            'term' => $activeTerm->term,
-            'status' => $activeTerm->status
-        ] : null,
-        'session' => $activeSession ? [
-            'id' => $activeSession->id,
-            'session' => $activeSession->session,
-            'status' => $activeSession->status
-        ] : null
-    ]);
-})->name('system.active-term-session');
+    // Individual student operations
+    Route::prefix('student')->group(function () {
+        Route::delete('/{id}/destroy', [StudentController::class, 'destroy'])->name('student.destroy');
+        Route::get('/studentid/{studentid}', [StudentController::class, 'deletestudent'])->name('student.deletestudent');
+        Route::get('/overview/{id}', [StudentController::class, 'overview'])->name('student.overview');
+        Route::get('/settings/{id}', [StudentController::class, 'setting'])->name('student.settings');
+        Route::put('/updateclass', [StudentController::class, 'updateClass'])->name('student.updateclass');
+        Route::post('/generate-student-pdf', [StudentController::class, 'generateStudentPdf'])->name('student.pdf');
+    });
 
-// ================================================
-// STUDENT CURRENT TERM ROUTES
-// ================================================
-Route::prefix('student-current-term')->group(function () {
-    Route::get('/student/{studentId}', [StudentController::class, 'getCurrentTerm']);
-    Route::get('/student/{studentId}/active', [StudentController::class, 'getActiveTerm']);
-    Route::put('/student/{studentId}', [StudentController::class, 'updateCurrentTerm']);
-    Route::post('/bulk-update', [StudentController::class, 'bulkUpdateCurrentTerm'])->name('student.current-term.bulk-update');
-    Route::get('/students', [StudentController::class, 'getStudentsByCurrentFilters']);
-});
+    // Bulk operations
+    Route::prefix('student')->group(function () {
+        Route::get('/bulkupload', [StudentController::class, 'bulkupload'])->name('student.bulkupload');
+        Route::post('/bulkuploadsave', [StudentController::class, 'bulkuploadsave'])->name('student.bulkuploadsave');
+        Route::get('/batchindex', [StudentController::class, 'batchindex'])->name('studentbatchindex');
+        Route::delete('/deletestudentbatch', [StudentController::class, 'deletestudentbatch'])->name('student.deletestudentbatch');
+    });
 
-// ================================================
-// STUDENT TERM HISTORY ROUTES
-// ================================================
-Route::prefix('student')->group(function () {
-    Route::get('/{id}/current-info', [StudentController::class, 'getCurrentInfo'])->name('student.current-info');
-    Route::get('/{id}/all-terms', [StudentController::class, 'getAllRegisteredTerms'])->name('student.all-terms');
-});
+    // ================================================
+    // SYSTEM INFO ROUTES
+    // ================================================
+    Route::get('/system/active-term-session', function() {
+        $activeTerm = \App\Models\Schoolterm::where('status', true)->first();
+        $activeSession = \App\Models\Schoolsession::where('status', 'Current')->first();
 
+        return response()->json([
+            'success' => true,
+            'term' => $activeTerm ? [
+                'id' => $activeTerm->id,
+                'term' => $activeTerm->term,
+                'status' => $activeTerm->status
+            ] : null,
+            'session' => $activeSession ? [
+                'id' => $activeSession->id,
+                'session' => $activeSession->session,
+                'status' => $activeSession->status
+            ] : null
+        ]);
+    })->name('system.active-term-session');
+
+    // ================================================
+    // STUDENT CURRENT TERM ROUTES
+    // ================================================
+    Route::prefix('student-current-term')->group(function () {
+        Route::get('/student/{studentId}', [StudentController::class, 'getCurrentTerm']);
+        Route::get('/student/{studentId}/active', [StudentController::class, 'getActiveTerm']);
+        Route::put('/student/{studentId}', [StudentController::class, 'updateCurrentTerm']);
+        Route::post('/bulk-update', [StudentController::class, 'bulkUpdateCurrentTerm'])->name('student.current-term.bulk-update');
+        Route::get('/students', [StudentController::class, 'getStudentsByCurrentFilters']);
+    });
+
+    // ================================================
+    // STUDENT TERM HISTORY ROUTES
+    // ================================================
+    Route::prefix('student')->group(function () {
+        Route::get('/{id}/current-info', [StudentController::class, 'getCurrentInfo'])->name('student.current-info');
+        Route::get('/{id}/all-terms', [StudentController::class, 'getAllRegisteredTerms'])->name('student.all-terms');
+    });
 // ================================================
 // REPORT ROUTES
 // ================================================
