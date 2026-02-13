@@ -5614,12 +5614,23 @@ use Spatie\Permission\Models\Role;
             modal.show();
         },
 
-       renderStudentRows: function(students) {
+
+
+        renderStudentRows: function(students) {
     if (!students || students.length === 0) {
         return '<tr><td colspan="7" class="text-center py-4">No students found</td></tr>';
     }
 
     return students.map(student => {
+        // Ensure student.id is valid and is a number
+        const studentId = student.id ? parseInt(student.id) : null;
+
+        // Skip if no valid ID
+        if (!studentId) {
+            console.warn('Student has no valid ID:', student);
+            return '';
+        }
+
         // Safely handle potentially null/undefined values
         const firstName = student.firstname || '';
         const lastName = student.lastname || '';
@@ -5637,11 +5648,11 @@ use Spatie\Permission\Models\Role;
             : '<span class="badge bg-secondary"><i class="fas fa-history me-1"></i>Old</span>';
 
         return `
-            <tr>
+            <tr data-student-id="${studentId}">
                 <td>
                     <div class="form-check">
                         <input class="form-check-input student-status-checkbox" type="checkbox"
-                               value="${student.id}" data-student-id="${student.id}">
+                               value="${studentId}" data-student-id="${studentId}">
                     </div>
                 </td>
                 <td>
@@ -5663,7 +5674,7 @@ use Spatie\Permission\Models\Role;
                     <div class="d-flex align-items-center gap-2">
                         ${activityBadge}
                         <button class="btn btn-sm btn-outline-success toggle-activity"
-                                data-student-id="${student.id}"
+                                data-student-id="${studentId}"
                                 data-current="${student.student_status || 'Inactive'}"
                                 onclick="BulkStatusManager.toggleIndividualStatus(this, 'activity')">
                             <i class="fas fa-exchange-alt"></i>
@@ -5674,7 +5685,7 @@ use Spatie\Permission\Models\Role;
                     <div class="d-flex align-items-center gap-2">
                         ${typeBadge}
                         <button class="btn btn-sm btn-outline-warning toggle-type"
-                                data-student-id="${student.id}"
+                                data-student-id="${studentId}"
                                 data-current="${student.statusId || 1}"
                                 onclick="BulkStatusManager.toggleIndividualStatus(this, 'type')">
                             <i class="fas fa-exchange-alt"></i>
@@ -5683,8 +5694,8 @@ use Spatie\Permission\Models\Role;
                 </td>
                 <td>
                     <button class="btn btn-sm btn-info view-student-btn"
-                            data-student-id="${student.id}"
-                            onclick="StudentManager.viewStudent(${student.id})">
+                            data-student-id="${studentId}"
+                            onclick="StudentManager.viewStudent(${studentId})">
                         <i class="fas fa-eye"></i>
                     </button>
                 </td>
@@ -5692,6 +5703,7 @@ use Spatie\Permission\Models\Role;
         `;
     }).join('');
 },
+
 
         initializeCheckboxes: function() {
             const selectAll = document.getElementById('selectAllCheckbox');
@@ -5713,33 +5725,67 @@ use Spatie\Permission\Models\Role;
             });
         },
 
-        handleSelectAll: function(e) {
-            const checkboxes = document.querySelectorAll('.student-status-checkbox');
-            checkboxes.forEach(cb => cb.checked = e.target.checked);
-            this.updateSelectedCount();
-        },
+      handleSelectAll: function(e) {
+    const isChecked = e.target.checked;
+    // Only select checkboxes with valid numeric values
+    const checkboxes = document.querySelectorAll('.student-status-checkbox');
 
-        updateSelectedCount: function() {
-            const selected = document.querySelectorAll('.student-status-checkbox:checked').length;
-            const selectAll = document.getElementById('selectAllCheckbox');
-            const selectAllStatus = document.getElementById('selectAllStatusStudents');
-            const total = document.querySelectorAll('.student-status-checkbox').length;
+    checkboxes.forEach(checkbox => {
+        const value = checkbox.value;
+        // Only check if it has a valid numeric value
+        if (value && value !== 'on' && !isNaN(parseInt(value))) {
+            checkbox.checked = isChecked;
+        }
+    });
 
-            if (selectAll) {
-                selectAll.checked = selected === total && total > 0;
-                selectAll.indeterminate = selected > 0 && selected < total;
-            }
+    this.updateSelectedCount();
+},
 
-            if (selectAllStatus) {
-                selectAllStatus.checked = selected === total && total > 0;
-                selectAllStatus.indeterminate = selected > 0 && selected < total;
-            }
-        },
+updateSelectedCount: function() {
+    const selected = document.querySelectorAll('.student-status-checkbox:checked').length;
+    const selectAll = document.getElementById('selectAllCheckbox');
+    const selectAllStatus = document.getElementById('selectAllStatusStudents');
+    const total = document.querySelectorAll('.student-status-checkbox:not([disabled])').length;
 
-        getSelectedStudentIds: function() {
-            return Array.from(document.querySelectorAll('.student-status-checkbox:checked'))
-                .map(cb => cb.value);
-        },
+    console.log('Selected count:', selected, 'Total enabled:', total); // Debug log
+
+    if (selectAll) {
+        selectAll.checked = selected === total && total > 0;
+        selectAll.indeterminate = selected > 0 && selected < total;
+    }
+
+    if (selectAllStatus) {
+        selectAllStatus.checked = selected === total && total > 0;
+        selectAllStatus.indeterminate = selected > 0 && selected < total;
+    }
+
+    // Update the bulk actions button text if needed
+    const bulkActionsDropdown = document.getElementById('bulkActionsDropdown');
+    if (bulkActionsDropdown) {
+        if (selected > 0) {
+            bulkActionsDropdown.innerHTML = `<i class="fas fa-cog me-2"></i>Actions (${selected})`;
+        } else {
+            bulkActionsDropdown.innerHTML = `<i class="fas fa-cog me-2"></i>Actions`;
+        }
+    }
+},
+      getSelectedStudentIds: function() {
+    const checkedBoxes = document.querySelectorAll('.student-status-checkbox:checked');
+    const ids = [];
+
+    checkedBoxes.forEach(cb => {
+        const value = cb.value;
+        // Only include valid numeric IDs (not "on" or empty)
+        if (value && value !== 'on' && !isNaN(parseInt(value))) {
+            ids.push(parseInt(value));
+        } else {
+            console.warn('Invalid checkbox value:', value, cb);
+        }
+    });
+
+    console.log('Filtered selected student IDs:', ids);
+    return ids;
+},
 
         async toggleIndividualStatus(button, type) {
             const studentId = button.dataset.studentId;
@@ -5791,52 +5837,57 @@ use Spatie\Permission\Models\Role;
             }
         },
 
-        async bulkUpdateStatus(updateType, value) {
-            const selectedIds = this.getSelectedStudentIds();
+      async bulkUpdateStatus(updateType, value) {
+    const selectedIds = this.getSelectedStudentIds();
 
-            if (selectedIds.length === 0) {
-                Utils.showError('Please select at least one student', 'No Selection');
-                return;
+    console.log('Bulk update - selected IDs:', selectedIds); // Debug log
+    console.log('Selected count:', selectedIds.length); // Debug log
+
+    if (selectedIds.length === 0) {
+        Utils.showError('Please select at least one student', 'No Selection');
+        return;
+    }
+
+    let displayValue = value;
+    if (updateType === 'student_type') {
+        displayValue = value === 'old' ? 'Old Student' : 'New Student';
+    }
+
+    // Show the correct count in the confirmation dialog
+    const confirmed = await Utils.showConfirm(
+        'Confirm Bulk Update',
+        `Update ${selectedIds.length} student(s) to "${displayValue}"?`,
+        'Yes, update'
+    );
+
+    if (confirmed) {
+        try {
+            Swal.fire({
+                title: 'Updating...',
+                html: `Updating ${selectedIds.length} student(s)`,
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            const response = await ApiService.bulkUpdateStatus({
+                student_ids: selectedIds,
+                update_type: updateType,
+                value: value
+            });
+
+            Swal.close();
+
+            if (response.success) {
+                Utils.showSuccess(response.message);
+                this.refreshData();
             }
-
-            let displayValue = value;
-            if (updateType === 'student_type') {
-                displayValue = value === 'old' ? 'Old Student' : 'New Student';
-            }
-
-            const confirmed = await Utils.showConfirm(
-                'Confirm Bulk Update',
-                `Update ${selectedIds.length} student(s) to "${displayValue}"?`,
-                'Yes, update'
-            );
-
-            if (confirmed) {
-                try {
-                    Swal.fire({
-                        title: 'Updating...',
-                        html: `Updating ${selectedIds.length} student(s)`,
-                        allowOutsideClick: false,
-                        didOpen: () => Swal.showLoading()
-                    });
-
-                    const response = await ApiService.bulkUpdateStatus({
-                        student_ids: selectedIds,
-                        update_type: updateType,
-                        value: value
-                    });
-
-                    Swal.close();
-
-                    if (response.success) {
-                        Utils.showSuccess(response.message);
-                        this.refreshData();
-                    }
-                } catch (error) {
-                    Swal.close();
-                    Utils.showError('Failed to update students');
-                }
-            }
-        },
+        } catch (error) {
+            Swal.close();
+            console.error('Bulk update error:', error);
+            Utils.showError('Failed to update students: ' + (error.response?.data?.message || error.message));
+        }
+    }
+},
 
         async refreshData() {
             if (!AppState.bulkStatusFilters) return;
