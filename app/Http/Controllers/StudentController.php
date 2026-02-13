@@ -2616,14 +2616,7 @@ public function getStudentsByClassAndSession(Request $request)
             'session_id' => $request->session_id
         ]);
 
-        // First, let's check if the class and session exist
-        $class = Schoolclass::find($request->class_id);
-        $session = Schoolsession::find($request->session_id);
-
-        Log::info('Class found:', ['id' => $class->id ?? null, 'name' => $class->schoolclass ?? 'Not found']);
-        Log::info('Session found:', ['id' => $session->id ?? null, 'name' => $session->session ?? 'Not found']);
-
-        // Build the query with explicit joins to see what's happening
+        // Build the query
         $query = Student::query()
             ->leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
             ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
@@ -2631,30 +2624,6 @@ public function getStudentsByClassAndSession(Request $request)
             ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->where('studentclass.schoolclassid', $request->class_id)
             ->where('studentclass.sessionid', $request->session_id);
-
-        // Log the SQL query for debugging
-        $sql = $query->toSql();
-        $bindings = $query->getBindings();
-        Log::info('SQL Query:', ['sql' => $sql, 'bindings' => $bindings]);
-
-        // Get count first
-        $count = $query->count();
-        Log::info('Total students found:', ['count' => $count]);
-
-        if ($count === 0) {
-            Log::warning('No students found for this class/session combination');
-            return response()->json([
-                'success' => true,
-                'students' => [],
-                'stats' => [
-                    'total' => 0,
-                    'active' => 0,
-                    'inactive' => 0,
-                    'old_students' => 0,
-                    'new_students' => 0,
-                ]
-            ]);
-        }
 
         // Get the students
         $students = $query->select([
@@ -2675,65 +2644,64 @@ public function getStudentsByClassAndSession(Request $request)
 
         Log::info('Students retrieved:', ['count' => $students->count()]);
 
-        // Log first student for debugging (if any)
-        if ($students->count() > 0) {
-            $firstStudent = $students->first();
-            Log::info('First student data:', [
-                'id' => $firstStudent->id,
-                'admissionNo' => $firstStudent->admissionNo,
-                'firstname' => $firstStudent->firstname,
-                'lastname' => $firstStudent->lastname,
-                'dateofbirth' => $firstStudent->dateofbirth,
-                'created_at' => $firstStudent->created_at,
-                'student_status' => $firstStudent->student_status,
-                'statusId' => $firstStudent->statusId,
-                'schoolclass' => $firstStudent->schoolclass,
-                'arm' => $firstStudent->arm,
-            ]);
-        }
-
-        // Calculate stats
-        $stats = [
-            'total' => $students->count(),
-            'active' => $students->where('student_status', 'Active')->count(),
-            'inactive' => $students->where('student_status', 'Inactive')->count(),
-            'old_students' => $students->where('statusId', 1)->count(),
-            'new_students' => $students->where('statusId', 2)->count(),
-        ];
-
-        Log::info('Stats calculated:', $stats);
-
         // Process each student to ensure no N/A values in date fields
         $processedStudents = $students->map(function($student) {
-            // Handle date fields - ensure they're not N/A or invalid
-            if ($student->dateofbirth && $student->dateofbirth !== 'N/A' && $student->dateofbirth !== '') {
+            // Create a new stdClass to avoid model casting issues
+            $processed = new \stdClass();
+
+            // Copy all properties
+            $processed->id = $student->id;
+            $processed->admissionNo = $student->admissionNo;
+            $processed->firstname = $student->firstname;
+            $processed->lastname = $student->lastname;
+            $processed->othername = $student->othername;
+            $processed->gender = $student->gender;
+            $processed->statusId = $student->statusId;
+            $processed->student_status = $student->student_status;
+            $processed->picture = $student->picture;
+            $processed->schoolclass = $student->schoolclass;
+            $processed->arm = $student->arm;
+
+            // Handle dateofbirth - if it's N/A or invalid, set to null
+            if ($student->dateofbirth && $student->dateofbirth !== 'N/A' && !str_contains($student->dateofbirth, 'N/A')) {
                 try {
                     // Try to parse and format consistently
                     $date = new \Carbon\Carbon($student->dateofbirth);
-                    $student->dateofbirth = $date->format('Y-m-d');
+                    $processed->dateofbirth = $date->format('Y-m-d');
                 } catch (\Exception $e) {
                     Log::warning('Invalid dateofbirth for student ID ' . $student->id . ': ' . $student->dateofbirth);
-                    $student->dateofbirth = null;
+                    $processed->dateofbirth = null;
                 }
             } else {
-                $student->dateofbirth = null;
+                $processed->dateofbirth = null;
             }
 
-            if ($student->created_at && $student->created_at !== 'N/A' && $student->created_at !== '') {
+            // Handle created_at - if it's N/A or invalid, set to null
+            if ($student->created_at && $student->created_at !== 'N/A' && !str_contains($student->created_at, 'N/A')) {
                 try {
                     $date = new \Carbon\Carbon($student->created_at);
-                    $student->created_at = $date->format('Y-m-d H:i:s');
+                    $processed->created_at = $date->format('Y-m-d H:i:s');
                 } catch (\Exception $e) {
                     Log::warning('Invalid created_at for student ID ' . $student->id . ': ' . $student->created_at);
-                    $student->created_at = null;
+                    $processed->created_at = null;
                 }
             } else {
-                $student->created_at = null;
+                $processed->created_at = null;
             }
 
-            return $student;
+            return $processed;
         });
 
+        // Calculate stats using the processed data
+        $stats = [
+            'total' => $processedStudents->count(),
+            'active' => $processedStudents->where('student_status', 'Active')->count(),
+            'inactive' => $processedStudents->where('student_status', 'Inactive')->count(),
+            'old_students' => $processedStudents->where('statusId', 1)->count(),
+            'new_students' => $processedStudents->where('statusId', 2)->count(),
+        ];
+
+        Log::info('Stats calculated:', $stats);
         Log::info('=== getStudentsByClassAndSession COMPLETED SUCCESSFULLY ===');
 
         return response()->json([
@@ -2763,7 +2731,6 @@ public function getStudentsByClassAndSession(Request $request)
         ], 500);
     }
 }
-
 /**
  * Bulk update student status (active/inactive and old/new)
  */
