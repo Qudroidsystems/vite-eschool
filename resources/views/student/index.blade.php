@@ -5614,16 +5614,19 @@ use Spatie\Permission\Models\Role;
             modal.show();
         },
 
-        renderStudentRows: function(students) {
+       renderStudentRows: function(students) {
     if (!students || students.length === 0) {
         return '<tr><td colspan="7" class="text-center py-4">No students found</td></tr>';
     }
 
     return students.map(student => {
-        // Safely get initials
-        const firstInitial = student.firstname && student.firstname.length > 0 ? student.firstname.charAt(0).toUpperCase() : '';
-        const lastInitial = student.lastname && student.lastname.length > 0 ? student.lastname.charAt(0).toUpperCase() : '';
-        const initials = (firstInitial + lastInitial) || 'ST';
+        // Safely handle potentially null/undefined values
+        const firstName = student.firstname || '';
+        const lastName = student.lastname || '';
+        const otherName = student.othername || '';
+        const admissionNo = student.admissionNo || 'N/A';
+        const schoolClass = student.schoolclass || '';
+        const arm = student.arm || '';
 
         const activityBadge = student.student_status === 'Active'
             ? '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Active</span>'
@@ -5632,14 +5635,6 @@ use Spatie\Permission\Models\Role;
         const typeBadge = student.statusId == 2
             ? '<span class="badge bg-warning text-dark"><i class="fas fa-star me-1"></i>New</span>'
             : '<span class="badge bg-secondary"><i class="fas fa-history me-1"></i>Old</span>';
-
-        // Safe escape for all text fields
-        const safeLastname = this.escapeHtml(student.lastname || '');
-        const safeFirstname = this.escapeHtml(student.firstname || '');
-        const safeOthername = this.escapeHtml(student.othername || '');
-        const safeAdmissionNo = this.escapeHtml(student.admissionNo || 'N/A');
-        const safeSchoolclass = this.escapeHtml(student.schoolclass || '');
-        const safeArm = this.escapeHtml(student.arm || '');
 
         return `
             <tr>
@@ -5653,17 +5648,17 @@ use Spatie\Permission\Models\Role;
                     <div class="d-flex align-items-center">
                         <div class="avatar-sm me-2">
                             <span class="avatar-title rounded-circle bg-primary text-white">
-                                ${initials}
+                                ${firstName.charAt(0) || ''}${lastName.charAt(0) || ''}
                             </span>
                         </div>
                         <div>
-                            <h6 class="mb-0">${safeLastname} ${safeFirstname}</h6>
-                            <small class="text-muted">${safeOthername}</small>
+                            <h6 class="mb-0">${Utils.escapeHtml(lastName)} ${Utils.escapeHtml(firstName)}</h6>
+                            <small class="text-muted">${Utils.escapeHtml(otherName)}</small>
                         </div>
                     </div>
                 </td>
-                <td><span class="fw-semibold">${safeAdmissionNo}</span></td>
-                <td>${safeSchoolclass} ${safeArm}</td>
+                <td><span class="fw-semibold">${Utils.escapeHtml(admissionNo)}</span></td>
+                <td>${Utils.escapeHtml(schoolClass)} ${Utils.escapeHtml(arm)}</td>
                 <td>
                     <div class="d-flex align-items-center gap-2">
                         ${activityBadge}
