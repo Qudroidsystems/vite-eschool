@@ -2,9 +2,9 @@ console.log("subjectvetting.init.js is loaded and executing!");
 
 let chartInitCount = 0;
 let currentView = 'table'; // 'table' or 'card'
-let cardCurrentPage = 1;
-let cardItemsPerPage = 6;
-let cardData = [];
+let cardListInstance = null;
+let currentCardPage = 1;
+const cardsPerPage = 9;
 
 // Verify dependencies
 try {
@@ -42,113 +42,6 @@ function initializeSessionFilter() {
         } else {
             window.location.href = '/subjectvetting';
         }
-    });
-}
-
-// View Toggle Functionality
-function initializeViewToggle() {
-    const tableViewBtn = document.getElementById('tableViewBtn');
-    const cardViewBtn = document.getElementById('cardViewBtn');
-    const tableView = document.getElementById('tableView');
-    const cardView = document.getElementById('cardView');
-
-    if (!tableViewBtn || !cardViewBtn) return;
-
-    tableViewBtn.addEventListener('click', function() {
-        if (currentView === 'card') {
-            currentView = 'table';
-            tableViewBtn.classList.add('active');
-            cardViewBtn.classList.remove('active');
-            tableView.classList.add('active-view');
-            cardView.classList.remove('active-view');
-            // Reinitialize List.js when switching to table view
-            setTimeout(() => {
-                if (subjectVettingList) {
-                    subjectVettingList.update();
-                } else {
-                    initializeListJS();
-                }
-            }, 100);
-        }
-    });
-
-    cardViewBtn.addEventListener('click', function() {
-        if (currentView === 'table') {
-            currentView = 'card';
-            cardViewBtn.classList.add('active');
-            tableViewBtn.classList.remove('active');
-            cardView.classList.add('active-view');
-            tableView.classList.remove('active-view');
-            // Render card view with pagination
-            renderCardView();
-        }
-    });
-}
-
-// Render Card View with Pagination
-function renderCardView() {
-    const container = document.getElementById('cardViewContainer');
-    if (!container) return;
-
-    // Get card data from the existing DOM or from stored data
-    const cardItems = document.querySelectorAll('.vetting-card-item');
-    if (cardItems.length === 0) return;
-
-    const totalItems = cardItems.length;
-    const totalPages = Math.ceil(totalItems / cardItemsPerPage);
-
-    // Hide all items first
-    cardItems.forEach(item => item.style.display = 'none');
-
-    // Show items for current page
-    const start = (cardCurrentPage - 1) * cardItemsPerPage;
-    const end = start + cardItemsPerPage;
-
-    for (let i = start; i < end && i < totalItems; i++) {
-        cardItems[i].style.display = 'block';
-    }
-
-    // Render pagination
-    renderCardPagination(totalPages);
-}
-
-function renderCardPagination(totalPages) {
-    const paginationContainer = document.getElementById('cardPaginationList');
-    if (!paginationContainer) return;
-
-    let html = '';
-    html += `<li class="page-item ${cardCurrentPage === 1 ? 'disabled' : ''}">
-                <a class="page-link" href="#" data-page="prev">&laquo; Previous</a>
-            </li>`;
-
-    for (let i = 1; i <= totalPages; i++) {
-        html += `<li class="page-item ${cardCurrentPage === i ? 'active' : ''}">
-                    <a class="page-link" href="#" data-page="${i}">${i}</a>
-                </li>`;
-    }
-
-    html += `<li class="page-item ${cardCurrentPage === totalPages ? 'disabled' : ''}">
-                <a class="page-link" href="#" data-page="next">Next &raquo;</a>
-            </li>`;
-
-    paginationContainer.innerHTML = html;
-
-    // Add event listeners
-    paginationContainer.querySelectorAll('.page-link').forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            const page = this.getAttribute('data-page');
-            if (page === 'prev' && cardCurrentPage > 1) {
-                cardCurrentPage--;
-                renderCardView();
-            } else if (page === 'next' && cardCurrentPage < totalPages) {
-                cardCurrentPage++;
-                renderCardView();
-            } else if (!isNaN(parseInt(page))) {
-                cardCurrentPage = parseInt(page);
-                renderCardView();
-            }
-        });
     });
 }
 
@@ -225,7 +118,7 @@ if (checkAll) {
         checkboxes.forEach((checkbox) => {
             checkbox.checked = this.checked;
             const row = checkbox.closest("tr");
-            if (row) row.classList.toggle("table-active", this.checked);
+            row.classList.toggle("table-active", this.checked);
         });
         const checkedCount = document.querySelectorAll('tbody input[name="chk_child"]:checked').length;
         const removeActions = document.getElementById("remove-actions");
@@ -326,7 +219,7 @@ function initializeCheckboxes() {
 
 function handleCheckboxChange(e) {
     const row = e.target.closest("tr");
-    if (row) row.classList.toggle("table-active", e.target.checked);
+    row.classList.toggle("table-active", e.target.checked);
     const checkedCount = document.querySelectorAll('tbody input[name="chk_child"]:checked').length;
     const removeActions = document.getElementById("remove-actions");
     if (removeActions) {
@@ -361,19 +254,13 @@ document.addEventListener('click', function (e) {
     const editBtn = e.target.closest('.edit-item-btn');
     const removeBtn = e.target.closest('.remove-item-btn');
     const image = e.target.closest('.staff-image');
-    const cardImage = e.target.closest('.staff-image-card');
-    const cardEditBtn = e.target.closest('.edit-item-btn');
-    const cardRemoveBtn = e.target.closest('.remove-item-btn');
 
-    if (editBtn || cardEditBtn) {
-        const btn = editBtn || cardEditBtn;
-        handleEditClick(e, btn);
-    } else if (removeBtn || cardRemoveBtn) {
-        const btn = removeBtn || cardRemoveBtn;
-        handleRemoveClick(e, btn);
-    } else if (image || cardImage) {
-        const img = image || cardImage;
-        handleImageClick(e, img);
+    if (editBtn) {
+        handleEditClick(e, editBtn);
+    } else if (removeBtn) {
+        handleRemoveClick(e, removeBtn);
+    } else if (image) {
+        handleImageClick(e, image);
     }
 });
 
@@ -411,8 +298,8 @@ function handleImageClick(e, image) {
 
 function handleRemoveClick(e, button) {
     e.preventDefault();
-    const itemId = button.getAttribute('data-id') || button.closest("tr")?.querySelector(".id")?.getAttribute("data-id");
-    const deleteUrl = button.getAttribute('data-url') || button.closest("tr")?.getAttribute("data-url");
+    const itemId = button.closest("tr").getAttribute("data-id");
+    const deleteUrl = button.closest("tr").getAttribute("data-url");
 
     if (!itemId || !deleteUrl) return;
 
@@ -450,59 +337,23 @@ function handleRemoveClick(e, button) {
 
 function handleEditClick(e, button) {
     e.preventDefault();
-    let itemId, tr;
+    const itemId = button.closest("tr").getAttribute("data-id");
+    const tr = button.closest("tr");
 
-    if (button.closest('tr')) {
-        // Table view
-        tr = button.closest("tr");
-        itemId = tr.querySelector(".id")?.getAttribute("data-id");
-    } else {
-        // Card view
-        const card = button.closest('.vetting-card');
-        itemId = card?.closest('.vetting-card-item')?.getAttribute('data-svid');
-        if (!itemId && window.subjectVettingsData) {
-            // Try to find by index or other means
-            const cardItem = button.closest('.vetting-card-item');
-            const index = Array.from(document.querySelectorAll('.vetting-card-item')).indexOf(cardItem);
-            if (index >= 0 && window.subjectVettingsData[index]) {
-                itemId = window.subjectVettingsData[index].svid;
-            }
-        }
-        tr = card;
-    }
+    if (!itemId) return;
 
-    if (!itemId) {
-        console.error("Item ID not found");
-        return;
-    }
+    const vettingUserId = tr.querySelector(".vetting_username")?.getAttribute("data-vetting_userid") || "";
+    const subjectClassId = tr.querySelector(".subjectname")?.getAttribute("data-subjectclassid") || "";
+    const termId = tr.querySelector(".termname")?.getAttribute("data-termid") || "";
+    const sessionId = tr.querySelector(".sessionname")?.getAttribute("data-sessionid") || "";
+    const status = tr.querySelector(".status span")?.textContent.trim().toLowerCase() || "pending";
 
-    // Find the data from the stored window data
-    let vettingData = null;
-    if (window.subjectVettingsData) {
-        vettingData = window.subjectVettingsData.find(item => item.svid == itemId);
-    }
-
-    if (vettingData) {
-        if (editIdField) editIdField.value = vettingData.svid;
-        if (editUserIdField) editUserIdField.value = vettingData.vetting_userid;
-        if (editSubjectClassIdField) editSubjectClassIdField.value = vettingData.subjectclassid;
-        if (editTermIdField) editTermIdField.value = vettingData.termid;
-        if (editSessionIdField) editSessionIdField.value = vettingData.sessionid;
-        if (editStatusField) editStatusField.value = vettingData.status || 'pending';
-    } else if (tr) {
-        const vettingUserId = tr.querySelector(".vetting_username")?.getAttribute("data-vetting_userid") || "";
-        const subjectClassId = tr.querySelector(".subjectname")?.getAttribute("data-subjectclassid") || "";
-        const termId = tr.querySelector(".termname")?.getAttribute("data-termid") || "";
-        const sessionId = tr.querySelector(".sessionname")?.getAttribute("data-sessionid") || "";
-        const status = tr.querySelector(".status span")?.textContent.trim().toLowerCase() || "pending";
-
-        if (editIdField) editIdField.value = itemId;
-        if (editUserIdField) editUserIdField.value = vettingUserId;
-        if (editSubjectClassIdField) editSubjectClassIdField.value = subjectClassId;
-        if (editTermIdField) editTermIdField.value = termId;
-        if (editSessionIdField) editSessionIdField.value = sessionId;
-        if (editStatusField) editStatusField.value = status;
-    }
+    if (editIdField) editIdField.value = itemId;
+    if (editUserIdField) editUserIdField.value = vettingUserId;
+    if (editSubjectClassIdField) editSubjectClassIdField.value = subjectClassId;
+    if (editTermIdField) editTermIdField.value = termId;
+    if (editSessionIdField) editSessionIdField.value = sessionId;
+    if (editStatusField) editStatusField.value = status;
 
     try {
         const modal = new bootstrap.Modal(document.getElementById("editModal"));
@@ -544,7 +395,7 @@ function deleteMultiple() {
     const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
 
     checkboxes.forEach((checkbox) => {
-        const id = checkbox.closest("tr").querySelector(".id")?.getAttribute("data-id");
+        const id = checkbox.closest("tr").getAttribute("data-id");
         if (id) ids_array.push(id);
     });
 
@@ -593,10 +444,10 @@ function deleteMultiple() {
 let subjectVettingList;
 
 function initializeListJS() {
-    const tableBody = document.querySelector('#kt_subject_vetting_table tbody');
-    const hasRows = tableBody && tableBody.querySelectorAll('tr:not(.noresult)').length > 0;
+    const subjectVettingListContainer = document.getElementById('kt_subject_vetting_table');
+    const hasRows = document.querySelectorAll('#kt_subject_vetting_table tbody tr:not(.noresult)').length > 0;
 
-    if (hasRows) {
+    if (subjectVettingListContainer && hasRows) {
         try {
             if (subjectVettingList) {
                 subjectVettingList.clear();
@@ -615,21 +466,22 @@ function initializeListJS() {
                 listClass: 'list'
             });
 
-            console.log("List.js initialized with pagination");
-
             subjectVettingList.on('updated', function () {
                 const totalRecords = subjectVettingList.items.length;
                 const visibleRecords = subjectVettingList.visibleItems.length;
                 const showingRecords = Math.min(visibleRecords, subjectVettingList.page);
 
-                const showingSpan = document.getElementById('showing-records');
-                const totalSpan = document.getElementById('total-records-footer');
-                if (showingSpan) showingSpan.textContent = showingRecords;
-                if (totalSpan) totalSpan.textContent = totalRecords;
+                document.getElementById('showing-records').textContent = showingRecords;
+                document.getElementById('total-records-footer').textContent = totalRecords;
+
+                // Update card view if active
+                if (currentView === 'card') {
+                    renderCardView(subjectVettingList.items);
+                }
 
                 const noResultRow = document.querySelector('.noresult');
                 if (noResultRow) {
-                    noResultRow.style.display = visibleRecords === 0 ? 'table-row' : 'none';
+                    noResultRow.style.display = visibleRecords === 0 ? 'block' : 'none';
                 }
 
                 initializeCheckboxes();
@@ -641,11 +493,291 @@ function initializeListJS() {
             console.error("List.js initialization failed:", error);
         }
     } else {
-        const showingSpan = document.getElementById('showing-records');
-        const totalSpan = document.getElementById('total-records-footer');
-        if (showingSpan) showingSpan.textContent = 0;
-        if (totalSpan) totalSpan.textContent = 0;
+        document.getElementById('showing-records').textContent = 0;
+        document.getElementById('total-records-footer').textContent = 0;
     }
+}
+
+function renderCardView(items) {
+    const cardsContainer = document.getElementById('cardsContainer');
+    if (!cardsContainer) return;
+
+    const totalItems = items.length;
+    const totalPages = Math.ceil(totalItems / cardsPerPage);
+
+    // Ensure current page is valid
+    if (currentCardPage > totalPages && totalPages > 0) {
+        currentCardPage = totalPages;
+    }
+    if (currentCardPage < 1) currentCardPage = 1;
+
+    const startIndex = (currentCardPage - 1) * cardsPerPage;
+    const endIndex = Math.min(startIndex + cardsPerPage, totalItems);
+    const currentItems = items.slice(startIndex, endIndex);
+
+    // Clear container
+    cardsContainer.innerHTML = '';
+
+    if (currentItems.length === 0) {
+        cardsContainer.innerHTML = `
+            <div class="col-12 text-center py-5">
+                <i class="ri-inbox-line fs-48 text-muted"></i>
+                <h5 class="mt-3">No Subject Vetting Assignments Found</h5>
+                <p class="text-muted">No assignments found for the selected filters.</p>
+            </div>
+        `;
+    } else {
+        currentItems.forEach((item, index) => {
+            const statusClass = item._values.status.includes('completed') ? 'completed' :
+                              (item._values.status.includes('pending') ? 'pending' : 'rejected');
+            const statusIcon = statusClass === 'completed' ? 'ri-checkbox-circle-line' :
+                              (statusClass === 'pending' ? 'ri-time-line' : 'ri-close-circle-line');
+
+            const card = document.createElement('div');
+            card.className = 'col-md-6 col-xl-4';
+            card.innerHTML = `
+                <div class="vetting-card ${statusClass}-card" data-id="${item._values.sn}">
+                    <div class="card-header-info">
+                        <div class="staff-info-card">
+                            <div class="avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center">
+                                <div class="avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
+                                    <span class="fw-bold fs-16">${(item._values.vetting_username?.charAt(0) || 'U').toUpperCase()}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">${item._values.vetting_username || 'N/A'}</h6>
+                                <small class="text-muted">Vetting Staff</small>
+                            </div>
+                        </div>
+                        <span class="badge-status ${statusClass === 'pending' ? 'badge-pending' : (statusClass === 'completed' ? 'badge-completed' : 'badge-rejected')}">
+                            <i class="${statusIcon} me-1 fs-10"></i>
+                            ${item._values.status}
+                        </span>
+                    </div>
+                    <div class="card-details">
+                        <div class="detail-item">
+                            <i class="ri-book-open-line"></i>
+                            <span><strong>Subject:</strong> ${item._values.subjectname || 'N/A'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="ri-group-line"></i>
+                            <span><strong>Class:</strong> ${item._values.sclass || 'N/A'} ${item._values.schoolarm ? `(${item._values.schoolarm})` : ''}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="ri-user-line"></i>
+                            <span><strong>Teacher:</strong> ${item._values.teachername || 'N/A'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="ri-calendar-line"></i>
+                            <span><strong>Term:</strong> ${item._values.termname || 'N/A'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="ri-calendar-event-line"></i>
+                            <span><strong>Session:</strong> ${item._values.sessionname || 'N/A'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <i class="ri-time-line"></i>
+                            <span><strong>Updated:</strong> ${item._values.datereg || 'N/A'}</span>
+                        </div>
+                    </div>
+                    <div class="card-actions">
+                        @can('Update subject-vettings')
+                            <button class="btn btn-sm btn-light edit-card-btn" data-sn="${item._values.sn}">
+                                <i class="ri-pencil-line"></i> Edit
+                            </button>
+                        @endcan
+                        @can('Delete subject-vettings')
+                            <button class="btn btn-sm btn-light text-danger delete-card-btn" data-sn="${item._values.sn}">
+                                <i class="ri-delete-bin-line"></i> Delete
+                            </button>
+                        @endcan
+                    </div>
+                </div>
+            `;
+            cardsContainer.appendChild(card);
+        });
+    }
+
+    // Update pagination info
+    document.getElementById('card-showing-records').textContent = currentItems.length;
+    document.getElementById('card-total-records').textContent = totalItems;
+
+    // Render card pagination
+    renderCardPagination(totalPages);
+
+    // Attach card event handlers
+    attachCardEventHandlers();
+}
+
+function renderCardPagination(totalPages) {
+    const paginationContainer = document.querySelector('.card-pagination');
+    if (!paginationContainer) return;
+
+    if (totalPages <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+    }
+
+    let paginationHtml = '';
+
+    // Previous button
+    paginationHtml += `
+        <li class="page-item ${currentCardPage === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" data-page="prev">Previous</a>
+        </li>
+    `;
+
+    // Page numbers
+    const maxVisible = 5;
+    let startPage = Math.max(1, currentCardPage - Math.floor(maxVisible / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+    if (endPage - startPage + 1 < maxVisible) {
+        startPage = Math.max(1, endPage - maxVisible + 1);
+    }
+
+    if (startPage > 1) {
+        paginationHtml += `<li class="page-item"><a class="page-link" href="#" data-page="1">1</a></li>`;
+        if (startPage > 2) paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        paginationHtml += `
+            <li class="page-item ${currentCardPage === i ? 'active' : ''}">
+                <a class="page-link" href="#" data-page="${i}">${i}</a>
+            </li>
+        `;
+    }
+
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        paginationHtml += `<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a></li>`;
+    }
+
+    // Next button
+    paginationHtml += `
+        <li class="page-item ${currentCardPage === totalPages ? 'disabled' : ''}">
+            <a class="page-link" href="#" data-page="next">Next</a>
+        </li>
+    `;
+
+    paginationContainer.innerHTML = paginationHtml;
+
+    // Add click handlers
+    paginationContainer.querySelectorAll('.page-link').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const page = link.getAttribute('data-page');
+            if (page === 'prev' && currentCardPage > 1) {
+                currentCardPage--;
+                renderCardView(subjectVettingList.items);
+            } else if (page === 'next' && currentCardPage < totalPages) {
+                currentCardPage++;
+                renderCardView(subjectVettingList.items);
+            } else if (!isNaN(page)) {
+                currentCardPage = parseInt(page);
+                renderCardView(subjectVettingList.items);
+            }
+        });
+    });
+}
+
+function attachCardEventHandlers() {
+    // Edit card buttons
+    document.querySelectorAll('.edit-card-btn').forEach(btn => {
+        btn.removeEventListener('click', handleCardEdit);
+        btn.addEventListener('click', handleCardEdit);
+    });
+
+    // Delete card buttons
+    document.querySelectorAll('.delete-card-btn').forEach(btn => {
+        btn.removeEventListener('click', handleCardDelete);
+        btn.addEventListener('click', handleCardDelete);
+    });
+}
+
+function handleCardEdit(e) {
+    const sn = e.currentTarget.getAttribute('data-sn');
+    const row = document.querySelector(`#kt_subject_vetting_table tbody tr .sn:contains('${sn}')`)?.closest('tr');
+    if (row) {
+        const editBtn = row.querySelector('.edit-item-btn');
+        if (editBtn) {
+            handleEditClick(e, editBtn);
+        }
+    }
+}
+
+function handleCardDelete(e) {
+    const sn = e.currentTarget.getAttribute('data-sn');
+    const row = document.querySelector(`#kt_subject_vetting_table tbody tr .sn:contains('${sn}')`)?.closest('tr');
+    if (row) {
+        const deleteBtn = row.querySelector('.remove-item-btn');
+        if (deleteBtn) {
+            handleRemoveClick(e, deleteBtn);
+        }
+    }
+}
+
+// Helper function for contains selector
+jQuery.expr[':'].contains = function(a, i, m) {
+    return jQuery(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
+};
+
+function initializeViewToggle() {
+    const tableViewBtn = document.getElementById('tableViewBtn');
+    const cardViewBtn = document.getElementById('cardViewBtn');
+    const tableView = document.querySelector('.table-view');
+    const cardView = document.getElementById('cardViewContainer');
+
+    if (!tableViewBtn || !cardViewBtn || !tableView || !cardView) return;
+
+    tableViewBtn.addEventListener('click', () => {
+        tableViewBtn.classList.add('active');
+        cardViewBtn.classList.remove('active');
+        tableView.classList.remove('hide');
+        cardView.classList.remove('active');
+        currentView = 'table';
+
+        // Refresh table view if needed
+        if (subjectVettingList) {
+            subjectVettingList.update();
+        }
+    });
+
+    cardViewBtn.addEventListener('click', () => {
+        cardViewBtn.classList.add('active');
+        tableViewBtn.classList.remove('active');
+        tableView.classList.add('hide');
+        cardView.classList.add('active');
+        currentView = 'card';
+        currentCardPage = 1;
+
+        // Render card view
+        if (subjectVettingList && subjectVettingList.items) {
+            renderCardView(subjectVettingList.items);
+        } else {
+            // Create items from table rows if list not initialized
+            const items = [];
+            const rows = document.querySelectorAll('#kt_subject_vetting_table tbody tr:not(.noresult)');
+            rows.forEach((row, idx) => {
+                items.push({
+                    _values: {
+                        sn: (idx + 1).toString(),
+                        vetting_username: row.querySelector('.vetting_username h6')?.textContent || 'N/A',
+                        subjectname: row.querySelector('.subjectname .fw-medium')?.textContent || 'N/A',
+                        sclass: row.querySelector('.sclass')?.textContent || 'N/A',
+                        schoolarm: row.querySelector('.schoolarm')?.textContent || '',
+                        teachername: row.querySelector('.teachername')?.textContent || 'N/A',
+                        termname: row.querySelector('.termname')?.textContent || 'N/A',
+                        sessionname: row.querySelector('.sessionname')?.textContent || 'N/A',
+                        status: row.querySelector('.status span')?.textContent.trim() || 'Pending',
+                        datereg: row.querySelector('.datereg small')?.textContent || 'N/A'
+                    }
+                });
+            });
+            renderCardView(items);
+        }
+    });
 }
 
 function filterData() {
@@ -655,27 +787,6 @@ function filterData() {
     if (subjectVettingList) {
         subjectVettingList.search(searchValue, ['sn', 'vetting_username', 'subjectname', 'sclass', 'schoolarm', 'teachername', 'termname', 'sessionname', 'status']);
         subjectVettingList.update();
-    }
-
-    // Also filter card view if active
-    if (currentView === 'card') {
-        const searchTerm = searchValue.toLowerCase();
-        const cardItems = document.querySelectorAll('.vetting-card-item');
-        let visibleCount = 0;
-
-        cardItems.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            if (searchTerm === '' || text.includes(searchTerm)) {
-                item.style.display = 'block';
-                visibleCount++;
-            } else {
-                item.style.display = 'none';
-            }
-        });
-
-        // Reset pagination for filtered results
-        cardCurrentPage = 1;
-        renderCardView();
     }
 }
 
@@ -693,25 +804,57 @@ function refreshTable() {
             throw new Error('Invalid response data structure');
         }
 
-        window.subjectVettingsData = response.data.subjectvettings;
+        if (subjectVettingList) {
+            subjectVettingList.clear();
 
-        // Update stats
-        document.getElementById('stat-total').textContent = response.data.subjectvettings.length;
-        document.getElementById('stat-pending').textContent = response.data.statusCounts?.pending || 0;
-        document.getElementById('stat-completed').textContent = response.data.statusCounts?.completed || 0;
-        document.getElementById('stat-rejected').textContent = response.data.statusCounts?.rejected || 0;
+            response.data.subjectvettings.forEach((item, index) => {
+                const statusClass = item.status === 'completed' ? 'badge-completed' :
+                                  (item.status === 'pending' ? 'badge-pending' : 'badge-rejected');
+                const statusIcon = item.status === 'completed' ? 'ri-checkbox-circle-line' :
+                                 (item.status === 'pending' ? 'ri-time-line' : 'ri-close-circle-line');
 
-        // Update chart data
-        window.vettingStatusCounts = response.data.statusCounts || { pending: 0, completed: 0, rejected: 0 };
-        initializeVettingStatusChart();
+                subjectVettingList.add({
+                    sn: index + 1,
+                    vetting_username: `<div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <div class="avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center">
+                                                <div class="avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                                                    <span class="fw-bold">${(item.vetting_username?.charAt(0) || 'U').toUpperCase()}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="flex-grow-1 ms-3">
+                                            <h6 class="mb-0">${item.vetting_username || 'N/A'}</h6>
+                                        </div>
+                                    </div>`,
+                    subjectname: `<span class="fw-medium">${item.subjectname || 'N/A'}</span>${item.subjectcode ? `<small class="text-muted d-block">${item.subjectcode}</small>` : ''}`,
+                    sclass: item.sclass || 'N/A',
+                    schoolarm: item.schoolarm || '',
+                    teachername: item.teachername || 'N/A',
+                    termname: item.termname || 'N/A',
+                    sessionname: item.sessionname || 'N/A',
+                    status: `<span class="badge-status ${statusClass}">
+                                <i class="${statusIcon} me-1 fs-10"></i>
+                                ${item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                            </span>`,
+                    datereg: item.updated_at.split(' ')[0]
+                });
+            });
 
-        // Reload the page to refresh all data (simplest approach)
-        // This ensures both table and card views are in sync
-        const currentUrl = window.location.href;
-        window.location.href = currentUrl;
+            subjectVettingList.update();
+
+            window.vettingStatusCounts = response.data.statusCounts || { pending: 0, completed: 0, rejected: 0 };
+            initializeVettingStatusChart();
+            initializeCheckboxes();
+
+            document.getElementById('stat-total').textContent = response.data.subjectvettings.length;
+            document.getElementById('stat-pending').textContent = window.vettingStatusCounts.pending || 0;
+            document.getElementById('stat-completed').textContent = window.vettingStatusCounts.completed || 0;
+            document.getElementById('stat-rejected').textContent = window.vettingStatusCounts.rejected || 0;
+        }
     })
     .catch(error => {
-        console.error("Error refreshing data:", error);
+        console.error("Error refreshing table and chart:", error);
         Swal.fire({
             icon: "error",
             title: "Error refreshing data",
@@ -966,12 +1109,6 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeCheckboxes();
     initializeSessionFilter();
     initializeViewToggle();
-
-    // Set initial card data
-    cardData = Array.from(document.querySelectorAll('.vetting-card-item'));
-    if (cardData.length > 0) {
-        renderCardView();
-    }
 
     const searchInput = document.querySelector(".search-box input.search");
     if (searchInput) {
