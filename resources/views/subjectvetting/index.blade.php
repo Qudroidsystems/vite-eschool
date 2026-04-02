@@ -198,6 +198,7 @@
                     border: none;
                     border-radius: 1rem;
                     overflow: hidden;
+                    cursor: pointer;
                 }
 
                 .stats-card:hover {
@@ -238,13 +239,27 @@
                     color: #ffc107;
                 }
 
-                /* Table Row Hover Effect */
+                /* Table Row Status Background Colors */
+                .table-row-pending {
+                    background-color: #fff5f5 !important;
+                    border-left: 3px solid #dc3545;
+                }
+
+                .table-row-completed {
+                    background-color: #f0fff4 !important;
+                    border-left: 3px solid #28a745;
+                }
+
+                .table-row-rejected {
+                    background-color: #fffbf0 !important;
+                    border-left: 3px solid #ffc107;
+                }
+
                 .table-row-hover {
                     transition: all 0.2s ease;
                 }
 
                 .table-row-hover:hover {
-                    background-color: #f8f9fa;
                     transform: scale(1.01);
                     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
                 }
@@ -303,19 +318,19 @@
                 }
 
                 /* Card View Styles */
-                .card-view {
+                .card-view-container {
                     display: none;
                 }
 
-                .card-view.active {
+                .card-view-container.active {
                     display: block;
                 }
 
-                .table-view {
+                .table-view-container {
                     display: block;
                 }
 
-                .table-view.hide {
+                .table-view-container.hide {
                     display: none;
                 }
 
@@ -327,6 +342,7 @@
                     box-shadow: 0 2px 8px rgba(0,0,0,0.08);
                     transition: all 0.3s ease;
                     border-left: 4px solid;
+                    cursor: pointer;
                 }
 
                 .vetting-card:hover {
@@ -369,6 +385,13 @@
                     height: 48px;
                     border-radius: 50%;
                     object-fit: cover;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-weight: bold;
+                    font-size: 18px;
                 }
 
                 .card-details {
@@ -412,21 +435,80 @@
                 .view-toggle-btn.active i {
                     color: white;
                 }
+
+                /* Dynamic Stats Cards */
+                .stat-card-clickable {
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                }
+
+                .stat-card-clickable:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+                }
+
+                .stat-card-clickable.active-stat {
+                    border: 2px solid #0d6efd;
+                    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
+                }
             </style>
 
             <div id="subjectVettingList">
-                <!-- Stats Cards Row -->
-                <div class="row g-4 mb-4 animate-fade-in-up">
+                <!-- Term and Session Filter Row -->
+                <div class="row mb-4 animate-fade-in-up">
+                    <div class="col-12">
+                        <div class="card filter-card">
+                            <div class="card-body">
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-md-5">
+                                        <label for="term-filter-stats" class="form-label fw-semibold text-muted mb-2">
+                                            <i class="ri-calendar-line me-1"></i> Select Term
+                                        </label>
+                                        <select class="form-select form-select-lg" id="term-filter-stats">
+                                            <option value="">All Terms</option>
+                                            @foreach ($terms as $term)
+                                                <option value="{{ $term->id }}" class="term-{{ $term->term }}">
+                                                    {{ $term->term }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label for="session-filter-stats" class="form-label fw-semibold text-muted mb-2">
+                                            <i class="ri-calendar-event-line me-1"></i> Select Session
+                                        </label>
+                                        <select class="form-select form-select-lg" id="session-filter-stats">
+                                            <option value="">All Sessions</option>
+                                            @foreach ($sessions as $session)
+                                                <option value="{{ $session->id }}" {{ $currentSession && $currentSession->id == $session->id ? 'selected' : '' }}>
+                                                    {{ $session->session }} @if($session->status == 'Current') (Current) @endif
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <button class="btn btn-secondary w-100" id="reset-stats-btn">
+                                            <i class="ri-refresh-line me-1"></i> Reset
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Stats Cards Row -->
+                <div class="row g-4 mb-4 animate-fade-in-up" id="statsCardsRow">
                     <div class="col-xl-3 col-md-6">
-                        <div class="card stats-card h-100">
+                        <div class="card stats-card stat-card-clickable" data-status="all">
                             <div class="card-body">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
                                         <p class="text-muted mb-1 text-uppercase fw-semibold fs-12">Total Assignments</p>
-                                        <h2 class="mb-0 fw-bold" id="stat-total">{{ $subjectvettings->count() }}</h2>
+                                        <h2 class="mb-0 fw-bold" id="stat-total">0</h2>
                                         <p class="text-muted mb-0 mt-2 fs-13">
                                             <span class="badge bg-primary bg-opacity-10 text-primary">
-                                                <i class="ri-file-list-line me-1"></i>Active Session
+                                                <i class="ri-file-list-line me-1"></i>All Records
                                             </span>
                                         </p>
                                     </div>
@@ -439,12 +521,12 @@
                     </div>
 
                     <div class="col-xl-3 col-md-6">
-                        <div class="card stats-card h-100">
+                        <div class="card stats-card stat-card-clickable" data-status="pending">
                             <div class="card-body">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
                                         <p class="text-muted mb-1 text-uppercase fw-semibold fs-12">Pending</p>
-                                        <h2 class="mb-0 fw-bold text-danger" id="stat-pending">{{ $statusCounts['pending'] }}</h2>
+                                        <h2 class="mb-0 fw-bold text-danger" id="stat-pending">0</h2>
                                         <p class="text-muted mb-0 mt-2 fs-13">
                                             <span class="badge bg-danger bg-opacity-10 text-danger">
                                                 <i class="ri-time-line me-1"></i>Awaiting Review
@@ -460,12 +542,12 @@
                     </div>
 
                     <div class="col-xl-3 col-md-6">
-                        <div class="card stats-card h-100">
+                        <div class="card stats-card stat-card-clickable" data-status="completed">
                             <div class="card-body">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
                                         <p class="text-muted mb-1 text-uppercase fw-semibold fs-12">Completed</p>
-                                        <h2 class="mb-0 fw-bold text-success" id="stat-completed">{{ $statusCounts['completed'] }}</h2>
+                                        <h2 class="mb-0 fw-bold text-success" id="stat-completed">0</h2>
                                         <p class="text-muted mb-0 mt-2 fs-13">
                                             <span class="badge bg-success bg-opacity-10 text-success">
                                                 <i class="ri-checkbox-circle-line me-1"></i>Approved
@@ -481,12 +563,12 @@
                     </div>
 
                     <div class="col-xl-3 col-md-6">
-                        <div class="card stats-card h-100">
+                        <div class="card stats-card stat-card-clickable" data-status="rejected">
                             <div class="card-body">
                                 <div class="d-flex align-items-center justify-content-between">
                                     <div>
                                         <p class="text-muted mb-1 text-uppercase fw-semibold fs-12">Rejected</p>
-                                        <h2 class="mb-0 fw-bold text-warning" id="stat-rejected">{{ $statusCounts['rejected'] }}</h2>
+                                        <h2 class="mb-0 fw-bold text-warning" id="stat-rejected">0</h2>
                                         <p class="text-muted mb-0 mt-2 fs-13">
                                             <span class="badge bg-warning bg-opacity-10 text-warning">
                                                 <i class="ri-close-circle-line me-1"></i>Needs Revision
@@ -529,32 +611,19 @@
                     </div>
                 </div>
 
-                <!-- Filter Card -->
+                <!-- Filter Card for Search and View Toggle -->
                 <div class="row mb-4 animate-fade-in-up" style="animation-delay: 0.2s;">
                     <div class="col-lg-12">
                         <div class="card filter-card">
                             <div class="card-body">
                                 <div class="row g-3 align-items-center">
-                                    <div class="col-xxl-3">
+                                    <div class="col-xxl-4">
                                         <div class="search-box">
                                             <label class="form-label text-muted mb-2 fw-semibold">Search Assignments</label>
                                             <div class="position-relative">
                                                 <input type="text" class="form-control search" placeholder="Search by staff, subject, class, teacher...">
                                                 <i class="ri-search-line search-icon"></i>
                                             </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-xxl-3">
-                                        <div class="filter-group">
-                                            <label for="session-filter" class="form-label text-muted fw-semibold">Filter by Session</label>
-                                            <select class="form-select" id="session-filter">
-                                                <option value="">All Sessions</option>
-                                                @foreach ($sessions as $session)
-                                                    <option value="{{ $session->id }}" {{ $currentSession && $currentSession->id == $session->id ? 'selected' : '' }}>
-                                                        {{ $session->session }} @if($session->status == 'Current') (Current) @endif
-                                                    </option>
-                                                @endforeach
-                                            </select>
                                         </div>
                                     </div>
                                     <div class="col-xxl-3">
@@ -570,7 +639,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-xxl-3">
+                                    <div class="col-xxl-5">
                                         <div class="current-session-info">
                                             <div class="alert alert-light border-0 mb-0 shadow-sm">
                                                 <div class="d-flex align-items-center">
@@ -594,7 +663,7 @@
                 </div>
 
                 <!-- Table View -->
-                <div class="row animate-fade-in-up table-view" style="animation-delay: 0.3s;">
+                <div class="row animate-fade-in-up table-view-container" style="animation-delay: 0.3s;">
                     <div class="col-lg-12">
                         <div class="card">
                             <div class="card-header bg-transparent pt-4 pb-0">
@@ -658,8 +727,19 @@
                                                     'rejected' => 'ri-close-circle-line',
                                                     default => 'ri-time-line'
                                                 };
+                                                $rowStatusClass = match ($sv->status ?? 'pending') {
+                                                    'completed' => 'table-row-completed',
+                                                    'pending' => 'table-row-pending',
+                                                    'rejected' => 'table-row-rejected',
+                                                    default => ''
+                                                };
                                                 ?>
-                                                <tr data-url="{{ route('subjectvetting.destroy', $sv->svid) }}" data-id="{{ $sv->svid }}" class="table-row-hover">
+                                                <tr data-url="{{ route('subjectvetting.destroy', $sv->svid) }}"
+                                                    data-id="{{ $sv->svid }}"
+                                                    data-status="{{ $sv->status ?? 'pending' }}"
+                                                    data-term="{{ $sv->termid }}"
+                                                    data-session="{{ $sv->sessionid }}"
+                                                    class="table-row-hover {{ $rowStatusClass }}">
                                                     <td>
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" name="chk_child" value="{{ $sv->svid }}" />
@@ -765,7 +845,7 @@
                 </div>
 
                 <!-- Card View -->
-                <div class="row card-view" id="cardViewContainer">
+                <div class="row card-view-container" id="cardViewContainer">
                     <div class="col-lg-12">
                         <div class="card">
                             <div class="card-header bg-transparent pt-4 pb-0">
@@ -1077,10 +1157,12 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
     window.vettingStatusCounts = @json($statusCounts);
     window.currentSessionId = @json($currentSession ? $currentSession->id : null);
     window.subjectVettingsData = @json($subjectvettings);
+    window.allSubjectVettings = @json($subjectvettings);
     console.log('Initial vettingStatusCounts:', window.vettingStatusCounts);
     console.log('Current Session ID:', window.currentSessionId);
 </script>

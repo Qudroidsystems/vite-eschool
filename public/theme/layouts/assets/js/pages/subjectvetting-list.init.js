@@ -1,10 +1,14 @@
 console.log("subjectvetting.init.js is loaded and executing!");
 
 let chartInitCount = 0;
-let currentView = 'table'; // 'table' or 'card'
+let currentView = 'table';
 let cardListInstance = null;
 let currentCardPage = 1;
 const cardsPerPage = 9;
+let currentTermFilter = '';
+let currentSessionFilter = '';
+let currentStatusFilter = 'all';
+let subjectVettingList = null;
 
 // Verify dependencies
 try {
@@ -31,18 +35,124 @@ function debounce(func, wait) {
     };
 }
 
-function initializeSessionFilter() {
-    const sessionFilter = document.getElementById('session-filter');
-    if (!sessionFilter) return;
+function initializeTermAndSessionFilters() {
+    const termFilter = document.getElementById('term-filter-stats');
+    const sessionFilter = document.getElementById('session-filter-stats');
+    const resetBtn = document.getElementById('reset-stats-btn');
 
-    sessionFilter.addEventListener('change', function() {
-        const sessionId = this.value;
-        if (sessionId) {
-            window.location.href = '/subjectvetting?session=' + sessionId;
-        } else {
-            window.location.href = '/subjectvetting';
+    if (termFilter) {
+        termFilter.addEventListener('change', function() {
+            currentTermFilter = this.value;
+            filterTableByTermAndSession();
+            updateStatsFromTable();
+            updateChartFromTable();
+        });
+    }
+
+    if (sessionFilter) {
+        sessionFilter.addEventListener('change', function() {
+            currentSessionFilter = this.value;
+            filterTableByTermAndSession();
+            updateStatsFromTable();
+            updateChartFromTable();
+        });
+    }
+
+    if (resetBtn) {
+        resetBtn.addEventListener('click', function() {
+            if (termFilter) termFilter.value = '';
+            if (sessionFilter) sessionFilter.value = '';
+            currentTermFilter = '';
+            currentSessionFilter = '';
+            filterTableByTermAndSession();
+            updateStatsFromTable();
+            updateChartFromTable();
+        });
+    }
+}
+
+function filterTableByTermAndSession() {
+    const rows = document.querySelectorAll('#kt_subject_vetting_table tbody tr:not(.noresult)');
+
+    rows.forEach(row => {
+        const rowTermId = row.getAttribute('data-term');
+        const rowSessionId = row.getAttribute('data-session');
+
+        let showRow = true;
+
+        if (currentTermFilter && currentTermFilter !== '') {
+            if (rowTermId != currentTermFilter) showRow = false;
         }
+
+        if (currentSessionFilter && currentSessionFilter !== '' && showRow) {
+            if (rowSessionId != currentSessionFilter) showRow = false;
+        }
+
+        row.style.display = showRow ? '' : 'none';
     });
+
+    if (subjectVettingList) {
+        subjectVettingList.update();
+    }
+
+    updatePaginationVisibility();
+}
+
+function updatePaginationVisibility() {
+    const visibleRows = document.querySelectorAll('#kt_subject_vetting_table tbody tr:not(.noresult):not([style*="display: none"])').length;
+    const paginationElement = document.getElementById('pagination-element');
+
+    if (paginationElement) {
+        paginationElement.style.display = visibleRows > 10 ? '' : 'none';
+    }
+}
+
+function updateStatsFromTable() {
+    const visibleRows = document.querySelectorAll('#kt_subject_vetting_table tbody tr:not(.noresult):not([style*="display: none"])');
+    let total = 0, pending = 0, completed = 0, rejected = 0;
+
+    visibleRows.forEach(row => {
+        total++;
+        const status = row.getAttribute('data-status');
+        if (status === 'pending') pending++;
+        else if (status === 'completed') completed++;
+        else if (status === 'rejected') rejected++;
+    });
+
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-completed').textContent = completed;
+    document.getElementById('stat-rejected').textContent = rejected;
+
+    if (subjectVettingList && subjectVettingList.items) {
+        const filteredItems = subjectVettingList.items.filter(item => {
+            const row = item.elm;
+            return row.style.display !== 'none';
+        });
+        document.getElementById('total-records-footer').textContent = filteredItems.length;
+        document.getElementById('showing-records').textContent = Math.min(filteredItems.length, subjectVettingList.page);
+    }
+
+    if (currentView === 'card' && subjectVettingList) {
+        renderCardView(subjectVettingList.items);
+    }
+}
+
+function updateChartFromTable() {
+    const visibleRows = document.querySelectorAll('#kt_subject_vetting_table tbody tr:not(.noresult):not([style*="display: none"])');
+    let pending = 0, completed = 0, rejected = 0;
+
+    visibleRows.forEach(row => {
+        const status = row.getAttribute('data-status');
+        if (status === 'pending') pending++;
+        else if (status === 'completed') completed++;
+        else if (status === 'rejected') rejected++;
+    });
+
+    if (vettingStatusChart) {
+        vettingStatusChart.data.datasets[0].data = [pending, completed, rejected];
+        vettingStatusChart.update();
+    }
 }
 
 function initializeSubjectClassSearch() {
@@ -114,7 +224,7 @@ function initializeSubjectClassSearch() {
 const checkAll = document.getElementById("checkAll");
 if (checkAll) {
     checkAll.addEventListener("click", function () {
-        const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
+        const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]:not(:disabled)');
         checkboxes.forEach((checkbox) => {
             checkbox.checked = this.checked;
             const row = checkbox.closest("tr");
@@ -142,7 +252,7 @@ let vettingStatusChart;
 
 function initializeVettingStatusChart() {
     chartInitCount++;
-    console.log(`Attempting to initialize chart (attempt #${chartInitCount}) with data:`, window.vettingStatusCounts);
+    console.log(`Attempting to initialize chart (attempt #${chartInitCount})`);
 
     const ctx = document.getElementById('vettingStatusChart')?.getContext('2d');
     if (!ctx) {
@@ -150,13 +260,19 @@ function initializeVettingStatusChart() {
         return;
     }
 
-    if (!window.vettingStatusCounts) {
-        window.vettingStatusCounts = { pending: 0, completed: 0, rejected: 0 };
-    }
-
     if (vettingStatusChart) {
         vettingStatusChart.destroy();
     }
+
+    const visibleRows = document.querySelectorAll('#kt_subject_vetting_table tbody tr:not(.noresult)');
+    let pending = 0, completed = 0, rejected = 0;
+
+    visibleRows.forEach(row => {
+        const status = row.getAttribute('data-status');
+        if (status === 'pending') pending++;
+        else if (status === 'completed') completed++;
+        else if (status === 'rejected') rejected++;
+    });
 
     try {
         vettingStatusChart = new Chart(ctx, {
@@ -165,11 +281,7 @@ function initializeVettingStatusChart() {
                 labels: ['Pending', 'Completed', 'Rejected'],
                 datasets: [{
                     label: 'Vetting Assignments',
-                    data: [
-                        window.vettingStatusCounts.pending || 0,
-                        window.vettingStatusCounts.completed || 0,
-                        window.vettingStatusCounts.rejected || 0
-                    ],
+                    data: [pending, completed, rejected],
                     backgroundColor: ['#dc3545', '#28a745', '#ffc107'],
                     borderColor: ['#c82333', '#218838', '#e0a800'],
                     borderWidth: 1,
@@ -207,6 +319,54 @@ function initializeVettingStatusChart() {
     } catch (error) {
         console.error("Failed to initialize chart:", error);
     }
+}
+
+function initializeStatsCardClick() {
+    const statCards = document.querySelectorAll('.stat-card-clickable');
+
+    statCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const status = this.getAttribute('data-status');
+
+            statCards.forEach(c => c.classList.remove('active-stat'));
+            this.classList.add('active-stat');
+
+            const rows = document.querySelectorAll('#kt_subject_vetting_table tbody tr:not(.noresult)');
+
+            if (status === 'all') {
+                rows.forEach(row => {
+                    if (row.style.display !== 'none') {
+                        row.style.display = '';
+                    }
+                });
+                currentStatusFilter = 'all';
+            } else {
+                rows.forEach(row => {
+                    const rowStatus = row.getAttribute('data-status');
+                    if (row.style.display !== 'none') {
+                        if (rowStatus === status) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+                currentStatusFilter = status;
+            }
+
+            if (subjectVettingList) {
+                subjectVettingList.update();
+            }
+
+            updatePaginationVisibility();
+
+            setTimeout(() => {
+                if (subjectVettingList && currentView === 'card') {
+                    renderCardView(subjectVettingList.items);
+                }
+            }, 100);
+        });
+    });
 }
 
 function initializeCheckboxes() {
@@ -441,8 +601,6 @@ function deleteMultiple() {
     });
 }
 
-let subjectVettingList;
-
 function initializeListJS() {
     const subjectVettingListContainer = document.getElementById('kt_subject_vetting_table');
     const hasRows = document.querySelectorAll('#kt_subject_vetting_table tbody tr:not(.noresult)').length > 0;
@@ -467,24 +625,21 @@ function initializeListJS() {
             });
 
             subjectVettingList.on('updated', function () {
-                const totalRecords = subjectVettingList.items.length;
-                const visibleRecords = subjectVettingList.visibleItems.length;
-                const showingRecords = Math.min(visibleRecords, subjectVettingList.page);
+                const visibleItems = subjectVettingList.visibleItems.length;
+                const showingRecords = Math.min(visibleItems, subjectVettingList.page);
 
                 document.getElementById('showing-records').textContent = showingRecords;
-                document.getElementById('total-records-footer').textContent = totalRecords;
-
-                // Update card view if active
-                if (currentView === 'card') {
-                    renderCardView(subjectVettingList.items);
-                }
 
                 const noResultRow = document.querySelector('.noresult');
                 if (noResultRow) {
-                    noResultRow.style.display = visibleRecords === 0 ? 'block' : 'none';
+                    noResultRow.style.display = visibleItems === 0 ? 'block' : 'none';
                 }
 
                 initializeCheckboxes();
+
+                if (currentView === 'card') {
+                    renderCardView(subjectVettingList.items);
+                }
             });
 
             subjectVettingList.update();
@@ -502,10 +657,15 @@ function renderCardView(items) {
     const cardsContainer = document.getElementById('cardsContainer');
     if (!cardsContainer) return;
 
-    const totalItems = items.length;
+    // Filter items based on visible rows
+    const visibleItems = items.filter(item => {
+        const row = item.elm;
+        return row && row.style.display !== 'none';
+    });
+
+    const totalItems = visibleItems.length;
     const totalPages = Math.ceil(totalItems / cardsPerPage);
 
-    // Ensure current page is valid
     if (currentCardPage > totalPages && totalPages > 0) {
         currentCardPage = totalPages;
     }
@@ -513,9 +673,8 @@ function renderCardView(items) {
 
     const startIndex = (currentCardPage - 1) * cardsPerPage;
     const endIndex = Math.min(startIndex + cardsPerPage, totalItems);
-    const currentItems = items.slice(startIndex, endIndex);
+    const currentItems = visibleItems.slice(startIndex, endIndex);
 
-    // Clear container
     cardsContainer.innerHTML = '';
 
     if (currentItems.length === 0) {
@@ -528,8 +687,9 @@ function renderCardView(items) {
         `;
     } else {
         currentItems.forEach((item, index) => {
-            const statusClass = item._values.status.includes('completed') ? 'completed' :
-                              (item._values.status.includes('pending') ? 'pending' : 'rejected');
+            const statusText = item._values.status || 'Pending';
+            const statusClass = statusText.toLowerCase().includes('completed') ? 'completed' :
+                              (statusText.toLowerCase().includes('pending') ? 'pending' : 'rejected');
             const statusIcon = statusClass === 'completed' ? 'ri-checkbox-circle-line' :
                               (statusClass === 'pending' ? 'ri-time-line' : 'ri-close-circle-line');
 
@@ -539,10 +699,8 @@ function renderCardView(items) {
                 <div class="vetting-card ${statusClass}-card" data-id="${item._values.sn}">
                     <div class="card-header-info">
                         <div class="staff-info-card">
-                            <div class="avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center">
-                                <div class="avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                                    <span class="fw-bold fs-16">${(item._values.vetting_username?.charAt(0) || 'U').toUpperCase()}</span>
-                                </div>
+                            <div class="staff-avatar-card">
+                                ${(item._values.vetting_username?.charAt(0) || 'U').toUpperCase()}
                             </div>
                             <div>
                                 <h6 class="mb-0">${item._values.vetting_username || 'N/A'}</h6>
@@ -551,7 +709,7 @@ function renderCardView(items) {
                         </div>
                         <span class="badge-status ${statusClass === 'pending' ? 'badge-pending' : (statusClass === 'completed' ? 'badge-completed' : 'badge-rejected')}">
                             <i class="${statusIcon} me-1 fs-10"></i>
-                            ${item._values.status}
+                            ${statusText}
                         </span>
                     </div>
                     <div class="card-details">
@@ -598,14 +756,10 @@ function renderCardView(items) {
         });
     }
 
-    // Update pagination info
     document.getElementById('card-showing-records').textContent = currentItems.length;
     document.getElementById('card-total-records').textContent = totalItems;
 
-    // Render card pagination
     renderCardPagination(totalPages);
-
-    // Attach card event handlers
     attachCardEventHandlers();
 }
 
@@ -620,14 +774,12 @@ function renderCardPagination(totalPages) {
 
     let paginationHtml = '';
 
-    // Previous button
     paginationHtml += `
         <li class="page-item ${currentCardPage === 1 ? 'disabled' : ''}">
             <a class="page-link" href="#" data-page="prev">Previous</a>
         </li>
     `;
 
-    // Page numbers
     const maxVisible = 5;
     let startPage = Math.max(1, currentCardPage - Math.floor(maxVisible / 2));
     let endPage = Math.min(totalPages, startPage + maxVisible - 1);
@@ -654,7 +806,6 @@ function renderCardPagination(totalPages) {
         paginationHtml += `<li class="page-item"><a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a></li>`;
     }
 
-    // Next button
     paginationHtml += `
         <li class="page-item ${currentCardPage === totalPages ? 'disabled' : ''}">
             <a class="page-link" href="#" data-page="next">Next</a>
@@ -663,7 +814,6 @@ function renderCardPagination(totalPages) {
 
     paginationContainer.innerHTML = paginationHtml;
 
-    // Add click handlers
     paginationContainer.querySelectorAll('.page-link').forEach(link => {
         link.addEventListener('click', (e) => {
             e.preventDefault();
@@ -683,13 +833,11 @@ function renderCardPagination(totalPages) {
 }
 
 function attachCardEventHandlers() {
-    // Edit card buttons
     document.querySelectorAll('.edit-card-btn').forEach(btn => {
         btn.removeEventListener('click', handleCardEdit);
         btn.addEventListener('click', handleCardEdit);
     });
 
-    // Delete card buttons
     document.querySelectorAll('.delete-card-btn').forEach(btn => {
         btn.removeEventListener('click', handleCardDelete);
         btn.addEventListener('click', handleCardDelete);
@@ -718,7 +866,6 @@ function handleCardDelete(e) {
     }
 }
 
-// Helper function for contains selector
 jQuery.expr[':'].contains = function(a, i, m) {
     return jQuery(a).text().toUpperCase().indexOf(m[3].toUpperCase()) >= 0;
 };
@@ -726,7 +873,7 @@ jQuery.expr[':'].contains = function(a, i, m) {
 function initializeViewToggle() {
     const tableViewBtn = document.getElementById('tableViewBtn');
     const cardViewBtn = document.getElementById('cardViewBtn');
-    const tableView = document.querySelector('.table-view');
+    const tableView = document.querySelector('.table-view-container');
     const cardView = document.getElementById('cardViewContainer');
 
     if (!tableViewBtn || !cardViewBtn || !tableView || !cardView) return;
@@ -737,8 +884,8 @@ function initializeViewToggle() {
         tableView.classList.remove('hide');
         cardView.classList.remove('active');
         currentView = 'table';
+        currentCardPage = 1;
 
-        // Refresh table view if needed
         if (subjectVettingList) {
             subjectVettingList.update();
         }
@@ -752,11 +899,9 @@ function initializeViewToggle() {
         currentView = 'card';
         currentCardPage = 1;
 
-        // Render card view
         if (subjectVettingList && subjectVettingList.items) {
             renderCardView(subjectVettingList.items);
         } else {
-            // Create items from table rows if list not initialized
             const items = [];
             const rows = document.querySelectorAll('#kt_subject_vetting_table tbody tr:not(.noresult)');
             rows.forEach((row, idx) => {
@@ -772,7 +917,8 @@ function initializeViewToggle() {
                         sessionname: row.querySelector('.sessionname')?.textContent || 'N/A',
                         status: row.querySelector('.status span')?.textContent.trim() || 'Pending',
                         datereg: row.querySelector('.datereg small')?.textContent || 'N/A'
-                    }
+                    },
+                    elm: row
                 });
             });
             renderCardView(items);
@@ -804,57 +950,10 @@ function refreshTable() {
             throw new Error('Invalid response data structure');
         }
 
-        if (subjectVettingList) {
-            subjectVettingList.clear();
-
-            response.data.subjectvettings.forEach((item, index) => {
-                const statusClass = item.status === 'completed' ? 'badge-completed' :
-                                  (item.status === 'pending' ? 'badge-pending' : 'badge-rejected');
-                const statusIcon = item.status === 'completed' ? 'ri-checkbox-circle-line' :
-                                 (item.status === 'pending' ? 'ri-time-line' : 'ri-close-circle-line');
-
-                subjectVettingList.add({
-                    sn: index + 1,
-                    vetting_username: `<div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            <div class="avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center">
-                                                <div class="avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
-                                                    <span class="fw-bold">${(item.vetting_username?.charAt(0) || 'U').toUpperCase()}</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="flex-grow-1 ms-3">
-                                            <h6 class="mb-0">${item.vetting_username || 'N/A'}</h6>
-                                        </div>
-                                    </div>`,
-                    subjectname: `<span class="fw-medium">${item.subjectname || 'N/A'}</span>${item.subjectcode ? `<small class="text-muted d-block">${item.subjectcode}</small>` : ''}`,
-                    sclass: item.sclass || 'N/A',
-                    schoolarm: item.schoolarm || '',
-                    teachername: item.teachername || 'N/A',
-                    termname: item.termname || 'N/A',
-                    sessionname: item.sessionname || 'N/A',
-                    status: `<span class="badge-status ${statusClass}">
-                                <i class="${statusIcon} me-1 fs-10"></i>
-                                ${item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-                            </span>`,
-                    datereg: item.updated_at.split(' ')[0]
-                });
-            });
-
-            subjectVettingList.update();
-
-            window.vettingStatusCounts = response.data.statusCounts || { pending: 0, completed: 0, rejected: 0 };
-            initializeVettingStatusChart();
-            initializeCheckboxes();
-
-            document.getElementById('stat-total').textContent = response.data.subjectvettings.length;
-            document.getElementById('stat-pending').textContent = window.vettingStatusCounts.pending || 0;
-            document.getElementById('stat-completed').textContent = window.vettingStatusCounts.completed || 0;
-            document.getElementById('stat-rejected').textContent = window.vettingStatusCounts.rejected || 0;
-        }
+        location.reload();
     })
     .catch(error => {
-        console.error("Error refreshing table and chart:", error);
+        console.error("Error refreshing table:", error);
         Swal.fire({
             icon: "error",
             title: "Error refreshing data",
@@ -1107,8 +1206,10 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeListJS();
     initializeVettingStatusChart();
     initializeCheckboxes();
-    initializeSessionFilter();
+    initializeTermAndSessionFilters();
+    initializeStatsCardClick();
     initializeViewToggle();
+    updateStatsFromTable();
 
     const searchInput = document.querySelector(".search-box input.search");
     if (searchInput) {
