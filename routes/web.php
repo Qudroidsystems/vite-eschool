@@ -485,7 +485,12 @@ Route::post('/reports/generate', [StudentResultsController::class, 'generateRepo
 
     Route::resource('subjectvetting', SubjectVettingController::class);
     Route::resource('mocksubjectvetting', MockSubjectVettingController::class);
+    // Add these to your existing routes
+    Route::get('/api/subject-classes/search', [MockSubjectVettingController::class, 'searchSubjectClasses'])->name('api.subject-classes.search');
+    Route::post('/api/subject-classes/details', [MockSubjectVettingController::class, 'getSelectedSubjectClasses'])->name('api.subject-classes.details');
 
+
+    
     Route::get('/mysubjectvettings', [MySubjectVettingsController::class, 'index'])->name('mysubjectvettings.index');
     Route::get('/mysubjectvettings/classbroadsheet/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MySubjectVettingsController::class, 'classBroadsheet'])->name('mysubjectvettings.classbroadsheet');
     Route::get('/mysubjectvettings/classbroadsheetmock/{schoolclassid}/{sessionid}/{termid}', [MySubjectVettingsController::class, 'classBroadsheetMock'])->name('mysubjectvettings.classbroadsheetmock');
