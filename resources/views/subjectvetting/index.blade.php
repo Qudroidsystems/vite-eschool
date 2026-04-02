@@ -11,8 +11,8 @@
                         <h4 class="mb-sm-0">Subject Vetting Management</h4>
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="javascript:void(0);">Subject Vetting Management</a></li>
-                                <li class="breadcrumb-item active">Subject Vettings</li>
+                                <li class="breadcrumb-item"><a href="javascript:void(0);">Academics</a></li>
+                                <li class="breadcrumb-item active">Subject Vetting</li>
                             </ol>
                         </div>
                     </div>
@@ -21,24 +21,27 @@
             <!-- End page title -->
 
             @if ($errors->any())
-                <div class="alert alert-danger">
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <strong>Whoops!</strong> There were some problems with your input.<br><br>
-                    <ul>
+                    <ul class="mb-0">
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
                     </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
 
             @if (session('success'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="ri-checkbox-circle-line me-2"></i>
                     {{ session('success') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
             @if (session('danger'))
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="ri-error-warning-line me-2"></i>
                     {{ session('danger') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
@@ -154,27 +157,25 @@
 
                 /* Term color styling */
                 .term-first {
-                    color: #198754 !important;  /* Green for First Term */
+                    color: #198754 !important;
                     font-weight: 500;
                 }
 
                 .term-second {
-                    color: #0d6efd !important;  /* Blue for Second Term */
+                    color: #0d6efd !important;
                     font-weight: 500;
                 }
 
                 .term-third {
-                    color: #ffc107 !important;  /* Yellow for Third Term */
+                    color: #ffc107 !important;
                     font-weight: 500;
                 }
 
-                /* For better visibility of yellow on light background */
                 .form-check-label.term-third {
                     color: #ffc107 !important;
                     text-shadow: 0 0 2px rgba(0,0,0,0.3);
                 }
 
-                /* For select options in edit modal */
                 select option.term-first {
                     color: #198754;
                     font-weight: 500;
@@ -190,16 +191,226 @@
                     font-weight: 500;
                     background-color: #2c3034;
                 }
+
+                /* Stats Card Hover Effects */
+                .stats-card {
+                    transition: all 0.3s ease;
+                    border: none;
+                    border-radius: 1rem;
+                    overflow: hidden;
+                }
+
+                .stats-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+                }
+
+                .stats-icon {
+                    width: 48px;
+                    height: 48px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 12px;
+                    font-size: 24px;
+                }
+
+                /* Status Badge Styles */
+                .badge-status {
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    font-weight: 500;
+                    font-size: 11px;
+                }
+
+                .badge-pending {
+                    background-color: #ffe5e5;
+                    color: #dc3545;
+                }
+
+                .badge-completed {
+                    background-color: #e3f5ec;
+                    color: #28a745;
+                }
+
+                .badge-rejected {
+                    background-color: #fff4e5;
+                    color: #ffc107;
+                }
+
+                /* Table Row Hover Effect */
+                .table-row-hover {
+                    transition: all 0.2s ease;
+                }
+
+                .table-row-hover:hover {
+                    background-color: #f8f9fa;
+                    transform: scale(1.01);
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+                }
+
+                /* Action Buttons */
+                .action-btn {
+                    width: 32px;
+                    height: 32px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 8px;
+                    transition: all 0.2s ease;
+                }
+
+                .action-btn:hover {
+                    transform: scale(1.1);
+                }
+
+                /* Session Badge */
+                .session-badge {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 8px 16px;
+                    border-radius: 12px;
+                    font-weight: 500;
+                }
+
+                /* Card Header Gradient */
+                .card-header-gradient {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                }
+
+                /* Filter Card */
+                .filter-card {
+                    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                    border: none;
+                    border-radius: 1rem;
+                }
+
+                /* Animations */
+                @keyframes fadeInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+
+                .animate-fade-in-up {
+                    animation: fadeInUp 0.5s ease-out;
+                }
             </style>
 
             <div id="subjectVettingList">
-                <!-- Bar Chart for Vetting Status -->
-                <div class="row">
+                <!-- Stats Cards Row -->
+                <div class="row g-4 mb-4 animate-fade-in-up">
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card stats-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted mb-1 text-uppercase fw-semibold fs-12">Total Assignments</p>
+                                        <h2 class="mb-0 fw-bold" id="stat-total">{{ $subjectvettings->count() }}</h2>
+                                        <p class="text-muted mb-0 mt-2 fs-13">
+                                            <span class="badge bg-primary bg-opacity-10 text-primary">
+                                                <i class="ri-file-list-line me-1"></i>Active Session
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="stats-icon bg-primary bg-opacity-10 text-primary">
+                                        <i class="ri-file-list-line fs-24"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card stats-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted mb-1 text-uppercase fw-semibold fs-12">Pending</p>
+                                        <h2 class="mb-0 fw-bold text-danger" id="stat-pending">{{ $statusCounts['pending'] }}</h2>
+                                        <p class="text-muted mb-0 mt-2 fs-13">
+                                            <span class="badge bg-danger bg-opacity-10 text-danger">
+                                                <i class="ri-time-line me-1"></i>Awaiting Review
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="stats-icon bg-danger bg-opacity-10 text-danger">
+                                        <i class="ri-timer-line fs-24"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card stats-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted mb-1 text-uppercase fw-semibold fs-12">Completed</p>
+                                        <h2 class="mb-0 fw-bold text-success" id="stat-completed">{{ $statusCounts['completed'] }}</h2>
+                                        <p class="text-muted mb-0 mt-2 fs-13">
+                                            <span class="badge bg-success bg-opacity-10 text-success">
+                                                <i class="ri-checkbox-circle-line me-1"></i>Approved
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="stats-icon bg-success bg-opacity-10 text-success">
+                                        <i class="ri-checkbox-circle-line fs-24"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6">
+                        <div class="card stats-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted mb-1 text-uppercase fw-semibold fs-12">Rejected</p>
+                                        <h2 class="mb-0 fw-bold text-warning" id="stat-rejected">{{ $statusCounts['rejected'] }}</h2>
+                                        <p class="text-muted mb-0 mt-2 fs-13">
+                                            <span class="badge bg-warning bg-opacity-10 text-warning">
+                                                <i class="ri-close-circle-line me-1"></i>Needs Revision
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="stats-icon bg-warning bg-opacity-10 text-warning">
+                                        <i class="ri-close-circle-line fs-24"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bar Chart Card -->
+                <div class="row mb-4 animate-fade-in-up" style="animation-delay: 0.1s;">
                     <div class="col-lg-12">
                         <div class="card">
+                            <div class="card-header bg-transparent border-0 pt-4">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <h5 class="card-title mb-1 fw-bold">Vetting Status Distribution</h5>
+                                        <p class="text-muted mb-0">Overview of all vetting assignments by status</p>
+                                    </div>
+                                    @if($currentSession)
+                                        <div class="session-badge">
+                                            <i class="ri-calendar-line me-2"></i>
+                                            {{ $currentSession->session }}
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
                             <div class="card-body">
-                                <h5 class="card-title mb-4">Vetting Status Distribution @if($currentSession) ({{ $currentSession->session }}) @endif</h5>
-                                <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+                                <div class="chart-container" style="position: relative; height: 320px; width: 100%;">
                                     <canvas id="vettingStatusChart"></canvas>
                                 </div>
                             </div>
@@ -207,21 +418,25 @@
                     </div>
                 </div>
 
-                <div class="row">
+                <!-- Filter Card -->
+                <div class="row mb-4 animate-fade-in-up" style="animation-delay: 0.2s;">
                     <div class="col-lg-12">
-                        <div class="card">
+                        <div class="card filter-card">
                             <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-xxl-3">
+                                <div class="row g-3 align-items-center">
+                                    <div class="col-xxl-4">
                                         <div class="search-box">
-                                            <input type="text" class="form-control search" placeholder="Search subject vetting assignments">
-                                            <i class="ri-search-line search-icon"></i>
+                                            <label class="form-label text-muted mb-2 fw-semibold">Search Assignments</label>
+                                            <div class="position-relative">
+                                                <input type="text" class="form-control search" placeholder="Search by staff, subject, class, teacher...">
+                                                <i class="ri-search-line search-icon"></i>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-xxl-3">
                                         <div class="filter-group">
-                                            <label for="session-filter" class="form-label">Filter by Session:</label>
-                                            <select class="form-control" id="session-filter">
+                                            <label for="session-filter" class="form-label text-muted fw-semibold">Filter by Session</label>
+                                            <select class="form-select" id="session-filter">
                                                 <option value="">All Sessions</option>
                                                 @foreach ($sessions as $session)
                                                     <option value="{{ $session->id }}" {{ $currentSession && $currentSession->id == $session->id ? 'selected' : '' }}>
@@ -231,14 +446,20 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-xxl-3">
+                                    <div class="col-xxl-5">
                                         <div class="current-session-info">
-                                            <div class="alert alert-info mb-0">
-                                                <i class="ri-information-line me-2"></i>
-                                                Currently viewing: <strong>{{ $currentSession ? $currentSession->session : 'No active session' }}</strong>
-                                                @if($currentSession && $currentSession->status == 'Current')
-                                                    <span class="badge bg-success ms-2">Current Session</span>
-                                                @endif
+                                            <div class="alert alert-light border-0 mb-0 shadow-sm">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="flex-shrink-0">
+                                                        <i class="ri-information-line text-primary fs-18"></i>
+                                                    </div>
+                                                    <div class="flex-grow-1 ms-2">
+                                                        Currently viewing: <strong class="text-primary">{{ $currentSession ? $currentSession->session : 'No active session' }}</strong>
+                                                        @if($currentSession && $currentSession->status == 'Current')
+                                                            <span class="badge bg-success ms-2">Current Session</span>
+                                                        @endif
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -248,46 +469,52 @@
                     </div>
                 </div>
 
-                <div class="row">
+                <!-- Subject Vetting Assignments Card -->
+                <div class="row animate-fade-in-up" style="animation-delay: 0.3s;">
                     <div class="col-lg-12">
                         <div class="card">
-                            <div class="card-header d-flex align-items-center">
-                                <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">Subject Vetting Assignments @if($currentSession) ({{ $currentSession->session }}) @endif <span class="badge bg-dark-subtle text-dark ms-1" id="total-records">{{ $subjectvettings->count() }}</span></h5>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <div class="d-flex flex-wrap align-items-start gap-2">
-                                        <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
+                            <div class="card-header bg-transparent pt-4 pb-0">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                                    <div>
+                                        <h5 class="card-title mb-1 fw-bold">Subject Vetting Assignments</h5>
+                                        <p class="text-muted mb-0">Manage and monitor all subject vetting assignments</p>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()">
+                                            <i class="ri-delete-bin-2-line me-1"></i> Delete Selected
+                                        </button>
                                         @can('Create subject-vettings')
-                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSubjectVettingModal" id="create-subject-vettings-btn"><i class="bi bi-plus-circle align-baseline me-1"></i> Create Subject Vetting Assignment</button>
+                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSubjectVettingModal" id="create-subject-vettings-btn">
+                                                <i class="ri-add-line me-1"></i> Create Assignment
+                                            </button>
                                         @endcan
                                     </div>
                                 </div>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body pt-4">
                                 <div class="table-responsive">
-                                    <table class="table align-middle table-row-dashed fs-6 gy-5 mb-0" id="kt_subject_vetting_table">
-                                        <thead>
-                                            <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
+                                    <table class="table table-hover align-middle mb-0" id="kt_subject_vetting_table">
+                                        <thead class="table-light">
+                                            <tr>
                                                 <th class="w-10px pe-2">
-                                                    <div class="form-check form-check-sm form-check-custom form-check-solid me-3">
+                                                    <div class="form-check">
                                                         <input class="form-check-input" type="checkbox" id="checkAll" />
                                                     </div>
                                                 </th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="sn">SN</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="vetting_username">Vetting Staff</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="subjectname">Subject</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="sclass">Class</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="schoolarm">Arm</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="teachername">Teacher</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="termname">Term</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="sessionname">Session</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="status">Status</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="datereg">Date Updated</th>
-                                                <th class="min-w-100px">Actions</th>
+                                                <th class="sort cursor-pointer" data-sort="sn">#</th>
+                                                <th class="sort cursor-pointer" data-sort="vetting_username">Vetting Staff</th>
+                                                <th class="sort cursor-pointer" data-sort="subjectname">Subject</th>
+                                                <th class="sort cursor-pointer" data-sort="sclass">Class</th>
+                                                <th class="sort cursor-pointer" data-sort="schoolarm">Arm</th>
+                                                <th class="sort cursor-pointer" data-sort="teachername">Teacher</th>
+                                                <th class="sort cursor-pointer" data-sort="termname">Term</th>
+                                                <th class="sort cursor-pointer" data-sort="sessionname">Session</th>
+                                                <th class="sort cursor-pointer" data-sort="status">Status</th>
+                                                <th class="sort cursor-pointer" data-sort="datereg">Updated</th>
+                                                <th>Actions</th>
                                             </tr>
                                         </thead>
-                                        <tbody class="fw-semibold text-gray-600 list form-check-all">
+                                        <tbody class="list">
                                             @php $i = 0 @endphp
                                             @forelse ($subjectvettings as $sv)
                                                 <?php
@@ -295,77 +522,106 @@
                                                 $imagePath = asset('storage/staff_avatars/' . $picture);
                                                 $fileExists = file_exists(storage_path('app/public/staff_avatars/' . $picture));
                                                 $defaultImageExists = file_exists(storage_path('app/public/staff_avatars/unnamed.jpg'));
-                                                $rowClass = match ($sv->status ?? 'pending') {
-                                                    'completed' => 'table-success',
-                                                    'pending' => 'table-danger',
-                                                    'rejected' => 'table-warning',
-                                                    default => ''
+                                                $statusClass = match ($sv->status ?? 'pending') {
+                                                    'completed' => 'badge-completed',
+                                                    'pending' => 'badge-pending',
+                                                    'rejected' => 'badge-rejected',
+                                                    default => 'badge-pending'
+                                                };
+                                                $statusIcon = match ($sv->status ?? 'pending') {
+                                                    'completed' => 'ri-checkbox-circle-line',
+                                                    'pending' => 'ri-time-line',
+                                                    'rejected' => 'ri-close-circle-line',
+                                                    default => 'ri-time-line'
                                                 };
                                                 ?>
-                                                <tr data-url="{{ route('subjectvetting.destroy', $sv->svid) }}" class="{{ $rowClass }}">
-                                                    <td class="id" data-id="{{ $sv->svid }}">
-                                                        <div class="form-check form-check-sm form-check-custom form-check-solid">
+                                                <tr data-url="{{ route('subjectvetting.destroy', $sv->svid) }}" class="table-row-hover">
+                                                    <td>
+                                                        <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" name="chk_child" />
                                                         </div>
                                                     </td>
-                                                    <td class="sn">{{ ++$i }}</td>
+                                                    <td class="sn fw-bold">{{ ++$i }}</td>
                                                     <td class="vetting_username" data-vetting_userid="{{ $sv->vetting_userid }}">
                                                         <div class="d-flex align-items-center">
-                                                            <div class="symbol symbol-circle symbol-50px overflow-hidden me-3">
-                                                                <a href="javascript:void(0);">
-                                                                    <div class="symbol-label">
-                                                                        <img src="{{ $imagePath }}"
-                                                                            alt="{{ $sv->vetting_username ?? 'Unknown Staff' }}"
-                                                                            class="rounded-circle avatar-sm staff-image"
-                                                                            data-bs-toggle="modal"
-                                                                            data-bs-target="#imageViewModal"
-                                                                            data-image="{{ $imagePath }}"
-                                                                            data-picture="{{ $sv->vetting_picture ?? 'none' }}"
-                                                                            data-teachername="{{ $sv->vetting_username ?? 'Unknown Staff' }}"
-                                                                            data-file-exists="{{ $fileExists ? 'true' : 'false' }}"
-                                                                            data-default-exists="{{ $defaultImageExists ? 'true' : 'false' }}"
-                                                                            onerror="this.src='{{ asset('storage/staff_avatars/unnamed.jpg') }}'; console.log('Table image failed to load for staff: {{ $sv->vetting_username ?? 'unknown' }}, picture: {{ $sv->vetting_picture ?? 'none' }}');" />
-                                                                    </div>
-                                                                </a>
+                                                            <div class="flex-shrink-0">
+                                                                <div class="avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center">
+                                                                    <img src="{{ $imagePath }}"
+                                                                        alt="{{ $sv->vetting_username ?? 'Unknown Staff' }}"
+                                                                        class="rounded-circle avatar-xs staff-image"
+                                                                        data-bs-toggle="modal"
+                                                                        data-bs-target="#imageViewModal"
+                                                                        data-image="{{ $imagePath }}"
+                                                                        data-picture="{{ $sv->vetting_picture ?? 'none' }}"
+                                                                        data-teachername="{{ $sv->vetting_username ?? 'Unknown Staff' }}"
+                                                                        data-file-exists="{{ $fileExists ? 'true' : 'false' }}"
+                                                                        data-default-exists="{{ $defaultImageExists ? 'true' : 'false' }}"
+                                                                        style="width: 38px; height: 38px; object-fit: cover; cursor: pointer;"
+                                                                        onerror="this.src='{{ asset('storage/staff_avatars/unnamed.jpg') }}';" />
+                                                                </div>
                                                             </div>
-                                                            <div class="d-flex flex-column">
-                                                                <a href="#" class="text-gray-800 text-hover-primary mb-1">{{ $sv->vetting_username ?? 'N/A' }}</a>
+                                                            <div class="flex-grow-1 ms-3">
+                                                                <h6 class="mb-0">{{ $sv->vetting_username ?? 'N/A' }}</h6>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td class="subjectname" data-subjectclassid="{{ $sv->subjectclassid }}">{{ $sv->subjectname ?? 'N/A' }} {{ $sv->subjectcode ? '(' . $sv->subjectcode . ')' : '' }}</td>
+                                                    <td class="subjectname" data-subjectclassid="{{ $sv->subjectclassid }}">
+                                                        <span class="fw-medium">{{ $sv->subjectname ?? 'N/A' }}</span>
+                                                        @if($sv->subjectcode)
+                                                            <small class="text-muted d-block">{{ $sv->subjectcode }}</small>
+                                                        @endif
+                                                    </td>
                                                     <td class="sclass" data-schoolclassid="{{ $sv->schoolclassid }}">{{ $sv->sclass ?? 'N/A' }}</td>
                                                     <td class="schoolarm">{{ $sv->schoolarm ?? 'N/A' }}</td>
                                                     <td class="teachername" data-subtid="{{ $sv->subtid }}">{{ $sv->teachername ?? 'N/A' }}</td>
                                                     <td class="termname" data-termid="{{ $sv->termid }}">{{ $sv->termname ?? 'N/A' }}</td>
                                                     <td class="sessionname" data-sessionid="{{ $sv->sessionid }}">{{ $sv->sessionname ?? 'N/A' }}</td>
-                                                    <td class="status">{{ $sv->status ?? 'pending' }}</td>
-                                                    <td class="datereg">{{ $sv->updated_at ? $sv->updated_at->format('Y-m-d') : 'N/A' }}</td>
+                                                    <td class="status">
+                                                        <span class="badge-status {{ $statusClass }}">
+                                                            <i class="{{ $statusIcon }} me-1 fs-10"></i>
+                                                            {{ ucfirst($sv->status ?? 'pending') }}
+                                                        </span>
+                                                    </td>
+                                                    <td class="datereg">
+                                                        <small>{{ $sv->updated_at ? $sv->updated_at->format('d M, Y') : 'N/A' }}</small>
+                                                    </td>
                                                     <td>
-                                                        <ul class="d-flex gap-2 list-unstyled mb-0">
+                                                        <div class="d-flex gap-2">
                                                             @can('Update subject-vettings')
-                                                                <li>
-                                                                    <a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"><i class="ph-pencil"></i></a>
-                                                                </li>
+                                                                <a href="javascript:void(0);" class="action-btn btn btn-light btn-sm edit-item-btn" title="Edit">
+                                                                    <i class="ri-pencil-line"></i>
+                                                                </a>
                                                             @endcan
                                                             @can('Delete subject-vettings')
-                                                                <li>
-                                                                    <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i class="ph-trash"></i></a>
-                                                                </li>
+                                                                <a href="javascript:void(0);" class="action-btn btn btn-light btn-sm remove-item-btn text-danger" title="Delete">
+                                                                    <i class="ri-delete-bin-line"></i>
+                                                                </a>
                                                             @endcan
-                                                        </ul>
+                                                        </div>
                                                     </td>
                                                 </tr>
                                             @empty
                                                 <tr class="noresult">
-                                                    <td colspan="12" class="text-center">No subject vetting assignments found for the selected session.</td>
+                                                    <td colspan="12" class="text-center py-5">
+                                                        <div class="text-center">
+                                                            <i class="ri-inbox-line fs-48 text-muted"></i>
+                                                            <h5 class="mt-3">No Subject Vetting Assignments Found</h5>
+                                                            <p class="text-muted">No assignments found for the selected session.</p>
+                                                            @can('Create subject-vettings')
+                                                                <button type="button" class="btn btn-primary add-btn mt-2" data-bs-toggle="modal" data-bs-target="#addSubjectVettingModal">
+                                                                    <i class="ri-add-line me-1"></i> Create Your First Assignment
+                                                                </button>
+                                                            @endcan
+                                                        </div>
+                                                    </td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
                                     </table>
                                 </div>
-                                <!-- Client-side pagination controls -->
-                                <div class="row mt-3 align-items-center" id="pagination-element">
+
+                                <!-- Pagination -->
+                                <div class="row mt-4 align-items-center" id="pagination-element">
                                     <div class="col-sm">
                                         <div class="text-muted text-center text-sm-start">
                                             Showing <span id="showing-records">0</span> of <span id="total-records-footer">{{ $subjectvettings->count() }}</span> Results
@@ -374,7 +630,7 @@
                                     <div class="col-sm-auto mt-3 mt-sm-0">
                                         <div class="pagination-wrap">
                                             <nav aria-label="Page navigation">
-                                                <ul class="pagination listjs-pagination"></ul>
+                                                <ul class="pagination listjs-pagination mb-0"></ul>
                                             </nav>
                                         </div>
                                     </div>
@@ -384,13 +640,15 @@
                     </div>
                 </div>
 
-                <!-- Add Subject Vetting Modal - Made wider with modal-xl class -->
+                <!-- Add Subject Vetting Modal -->
                 <div id="addSubjectVettingModal" class="modal fade" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true" data-bs-backdrop="static">
                     <div class="modal-dialog modal-dialog-centered modal-xl">
                         <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 id="addModalLabel" class="modal-title">Add Subject Vetting Assignment</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <div class="modal-header bg-primary text-white">
+                                <h5 id="addModalLabel" class="modal-title">
+                                    <i class="ri-add-circle-line me-2"></i>Add Subject Vetting Assignment
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <form class="tablelist-form" autocomplete="off" id="add-subjectvetting-form">
                                 <div class="modal-body">
@@ -398,8 +656,8 @@
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="mb-3">
-                                                <label for="userid" class="form-label">Vetting Staff</label>
-                                                <select name="userid" id="userid" class="form-control" required>
+                                                <label for="userid" class="form-label fw-semibold">Vetting Staff <span class="text-danger">*</span></label>
+                                                <select name="userid" id="userid" class="form-select" required>
                                                     <option value="">Select Staff</option>
                                                     @foreach ($staff as $staff_member)
                                                         <option value="{{ $staff_member->id }}">{{ $staff_member->name }}</option>
@@ -409,8 +667,8 @@
                                         </div>
                                         <div class="col-md-6">
                                             <div class="mb-3">
-                                                <label for="sessionid" class="form-label">Session</label>
-                                                <select name="sessionid" id="sessionid" class="form-control" required>
+                                                <label for="sessionid" class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
+                                                <select name="sessionid" id="sessionid" class="form-select" required>
                                                     <option value="">Select Session</option>
                                                     @foreach ($sessions as $session)
                                                         <option value="{{ $session->id }}" {{ $currentSession && $currentSession->id == $session->id ? 'selected' : '' }}>
@@ -422,8 +680,8 @@
                                         </div>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label">Terms</label>
-                                        <div class="checkbox-group" style="max-height: 100px; overflow-y: auto;">
+                                        <label class="form-label fw-semibold">Terms <span class="text-danger">*</span></label>
+                                        <div class="checkbox-group p-3 bg-light rounded" style="max-height: 100px; overflow-y: auto;">
                                             @foreach ($terms as $term)
                                                 <div class="form-check form-check-inline me-3">
                                                     <input class="form-check-input modal-checkbox" type="checkbox" name="termid[]" id="add-term-{{ $term->id }}" value="{{ $term->id }}">
@@ -435,17 +693,15 @@
                                         </div>
                                     </div>
                                     <div class="mb-3">
-                                        <label class="form-label">Subject-Class Assignments</label>
+                                        <label class="form-label fw-semibold">Subject-Class Assignments <span class="text-danger">*</span></label>
 
-                                        <!-- Search Box for Subject-Class Assignments -->
                                         <div class="subject-class-search-box">
                                             <input type="text" class="form-control" id="subjectClassSearch" placeholder="Search by subject, class, teacher, or session...">
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
 
-                                        <!-- No results message -->
                                         <div class="no-results-message" id="noResultsMessage">
-                                            No matching subject-class assignments found.
+                                            <i class="ri-search-eye-line me-2"></i>No matching subject-class assignments found.
                                         </div>
 
                                         <div class="subject-class-checkbox-group" id="subjectClassList">
@@ -455,7 +711,6 @@
                                                     $checkboxId = "add-subjectclass-{$sc->scid}";
                                                     $itemClass = $isCurrentSession ? 'current-session-item' : 'non-current-session';
 
-                                                    // Determine term color based on term ID (1=green, 2=blue, 3=yellow)
                                                     $termColor = '';
                                                     $termId = $sc->termid ?? 0;
                                                     if ($termId == 1) {
@@ -483,27 +738,27 @@
                                                                id="{{ $checkboxId }}"
                                                                value="{{ $sc->scid }}"
                                                                data-termid="{{ $sc->termid }}">
-                                                        <label class="form-check-label {{ $termColor }}" for="{{ $checkboxId }}" id="label-{{ $checkboxId }}">
+                                                        <label class="form-check-label {{ $termColor }}" for="{{ $checkboxId }}">
                                                             {{ $displayText }}
                                                         </label>
                                                     @else
                                                         <div class="text-muted">
                                                             {{ $displayText }}
-                                                            <small class="text-danger d-block">(Not available for current session)</small>
+                                                            <small class="text-danger d-block mt-1">(Not available for current session)</small>
                                                         </div>
                                                     @endif
                                                 </div>
                                             @endforeach
                                         </div>
 
-                                        <!-- Subject-Class Selection Summary -->
-                                        <div class="alert alert-light mt-2 p-2" id="subjectClassSelectionSummary">
+                                        <div class="alert alert-light mt-3 p-2 border" id="subjectClassSelectionSummary">
                                             <div class="d-flex justify-content-between align-items-center">
-                                                <span>Selected: <strong id="selectedCount">0</strong> of <span id="totalCount">{{ count($subjectclasses->where('sessionid', $currentSession ? $currentSession->id : null)) }}</span> current session items</span>
+                                                <span><i class="ri-checkbox-line me-1"></i> Selected: <strong id="selectedCount">0</strong> of <span id="totalCount">{{ count($subjectclasses->where('sessionid', $currentSession ? $currentSession->id : null)) }}</span> current session items</span>
                                                 <button type="button" class="btn btn-sm btn-link p-0" id="clearSelectionBtn">Clear All</button>
                                             </div>
                                         </div>
                                     </div>
+
                                     <div class="alert alert-info">
                                         <i class="ri-information-line me-2"></i>
                                         <strong>Note:</strong> Only subject-class assignments from the current session ({{ $currentSession ? $currentSession->session : 'No active session' }}) are available for selection. Other sessions are disabled.
@@ -511,8 +766,12 @@
                                     <div class="alert alert-danger d-none" id="alert-error-msg"></div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                    <button type="submit" class="btn btn-primary" id="add-btn">Add Subject Vetting Assignment</button>
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                                        <i class="ri-close-line me-1"></i>Cancel
+                                    </button>
+                                    <button type="submit" class="btn btn-primary" id="add-btn">
+                                        <i class="ri-save-line me-1"></i>Add Assignment
+                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -523,16 +782,18 @@
                 <div id="editModal" class="modal fade" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true" data-bs-backdrop="static">
                     <div class="modal-dialog modal-dialog-centered modal-lg">
                         <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 id="editModalLabel" class="modal-title">Edit Subject Vetting Assignment</h5>
+                            <div class="modal-header bg-warning text-dark">
+                                <h5 id="editModalLabel" class="modal-title">
+                                    <i class="ri-edit-line me-2"></i>Edit Subject Vetting Assignment
+                                </h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <form class="tablelist-form" autocomplete="off" id="edit-subjectvetting-form">
                                 <div class="modal-body">
                                     <input type="hidden" id="edit-id-field" name="id">
                                     <div class="mb-3">
-                                        <label for="edit-userid" class="form-label">Vetting Staff</label>
-                                        <select name="userid" id="edit-userid" class="form-control" required>
+                                        <label for="edit-userid" class="form-label fw-semibold">Vetting Staff <span class="text-danger">*</span></label>
+                                        <select name="userid" id="edit-userid" class="form-select" required>
                                             <option value="">Select Staff</option>
                                             @foreach ($staff as $staff_member)
                                                 <option value="{{ $staff_member->id }}">{{ $staff_member->name }}</option>
@@ -540,8 +801,8 @@
                                         </select>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit-termid" class="form-label">Term</label>
-                                        <select name="termid" id="edit-termid" class="form-control" required>
+                                        <label for="edit-termid" class="form-label fw-semibold">Term <span class="text-danger">*</span></label>
+                                        <select name="termid" id="edit-termid" class="form-select" required>
                                             <option value="">Select Term</option>
                                             @foreach ($terms as $term)
                                                 <option value="{{ $term->id }}">{{ $term->term }}</option>
@@ -549,8 +810,8 @@
                                         </select>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit-sessionid" class="form-label">Session</label>
-                                        <select name="sessionid" id="edit-sessionid" class="form-control" required>
+                                        <label for="edit-sessionid" class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
+                                        <select name="sessionid" id="edit-sessionid" class="form-select" required>
                                             <option value="">Select Session</option>
                                             @foreach ($sessions as $session)
                                                 <option value="{{ $session->id }}">
@@ -560,23 +821,17 @@
                                         </select>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit-subjectclassid" class="form-label">Subject-Class</label>
-                                        <select name="subjectclassid" id="edit-subjectclassid" class="form-control" required>
+                                        <label for="edit-subjectclassid" class="form-label fw-semibold">Subject-Class <span class="text-danger">*</span></label>
+                                        <select name="subjectclassid" id="edit-subjectclassid" class="form-select" required>
                                             <option value="">Select Subject-Class</option>
                                             @foreach ($subjectclasses as $sc)
                                                 @php
                                                     $isCurrentSession = $currentSession && $currentSession->id == $sc->sessionid;
-
-                                                    // Determine term color based on term ID (1=green, 2=blue, 3=yellow)
                                                     $termColor = '';
                                                     $termId = $sc->termid ?? 0;
-                                                    if ($termId == 1) {
-                                                        $termColor = 'term-first';
-                                                    } elseif ($termId == 2) {
-                                                        $termColor = 'term-second';
-                                                    } elseif ($termId == 3) {
-                                                        $termColor = 'term-third';
-                                                    }
+                                                    if ($termId == 1) $termColor = 'term-first';
+                                                    elseif ($termId == 2) $termColor = 'term-second';
+                                                    elseif ($termId == 3) $termColor = 'term-third';
 
                                                     $displayText = ($sc->subjectname ?? 'N/A') .
                                                                    ($sc->subjectcode ? ' (' . $sc->subjectcode . ')' : '') .
@@ -595,8 +850,8 @@
                                         <small class="text-muted">Note: Only current session subject-classes are available for editing</small>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit-status" class="form-label">Status</label>
-                                        <select name="status" id="edit-status" class="form-control" required>
+                                        <label for="edit-status" class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
+                                        <select name="status" id="edit-status" class="form-select" required>
                                             <option value="pending">Pending</option>
                                             <option value="completed">Completed</option>
                                             <option value="rejected">Rejected</option>
@@ -605,8 +860,12 @@
                                     <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                                        <i class="ri-close-line me-1"></i>Cancel
+                                    </button>
+                                    <button type="submit" class="btn btn-primary" id="update-btn">
+                                        <i class="ri-save-line me-1"></i>Update
+                                    </button>
                                 </div>
                             </form>
                         </div>
@@ -617,13 +876,14 @@
                 <div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-labelledby="deleteRecordModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
-                            <div class="modal-body text-center">
-                                <h4>Are you sure?</h4>
-                                <p>You won't be able to revert this!</p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-danger" id="delete-record">Delete</button>
+                            <div class="modal-body text-center p-4">
+                                <i class="ri-delete-bin-line text-danger fs-48 mb-3 d-block"></i>
+                                <h4 class="mb-2">Are you sure?</h4>
+                                <p class="text-muted mb-4">You won't be able to revert this!</p>
+                                <div class="d-flex gap-2 justify-content-center">
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="button" class="btn btn-danger" id="delete-record">Yes, Delete It!</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -638,8 +898,8 @@
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body text-center">
-                                <img id="preview-image" src="" alt="Staff Image" class="img-fluid" style="max-height: 400px;" />
-                                <p id="preview-teachername" class="mt-3"></p>
+                                <img id="preview-image" src="" alt="Staff Image" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;" />
+                                <p id="preview-teachername" class="mt-3 fw-bold mb-0"></p>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
@@ -649,13 +909,11 @@
                 </div>
             </div>
         </div>
-        <!-- End Page-content -->
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
-    // Pass status counts to JavaScript
     window.vettingStatusCounts = @json($statusCounts);
     window.currentSessionId = @json($currentSession ? $currentSession->id : null);
     console.log('Initial vettingStatusCounts:', window.vettingStatusCounts);
