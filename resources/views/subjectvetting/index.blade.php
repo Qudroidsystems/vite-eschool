@@ -151,6 +151,45 @@
                     color: #6c757d;
                     cursor: not-allowed;
                 }
+
+                /* Term color styling */
+                .term-first {
+                    color: #198754 !important;  /* Green for First Term */
+                    font-weight: 500;
+                }
+
+                .term-second {
+                    color: #0d6efd !important;  /* Blue for Second Term */
+                    font-weight: 500;
+                }
+
+                .term-third {
+                    color: #ffc107 !important;  /* Yellow for Third Term */
+                    font-weight: 500;
+                }
+
+                /* For better visibility of yellow on light background */
+                .form-check-label.term-third {
+                    color: #ffc107 !important;
+                    text-shadow: 0 0 2px rgba(0,0,0,0.3);
+                }
+
+                /* For select options in edit modal */
+                select option.term-first {
+                    color: #198754;
+                    font-weight: 500;
+                }
+
+                select option.term-second {
+                    color: #0d6efd;
+                    font-weight: 500;
+                }
+
+                select option.term-third {
+                    color: #ffc107;
+                    font-weight: 500;
+                    background-color: #2c3034;
+                }
             </style>
 
             <div id="subjectVettingList">
@@ -323,7 +362,7 @@
                                                 </tr>
                                             @endforelse
                                         </tbody>
-                                     </table>
+                                    </table>
                                 </div>
                                 <!-- Client-side pagination controls -->
                                 <div class="row mt-3 align-items-center" id="pagination-element">
@@ -415,14 +454,25 @@
                                                     $isCurrentSession = $currentSession && $currentSession->id == $sc->sessionid;
                                                     $checkboxId = "add-subjectclass-{$sc->scid}";
                                                     $itemClass = $isCurrentSession ? 'current-session-item' : 'non-current-session';
-                                                    // Format: SUBJECT NAME (CODE) - CLASS (ARM) - TEACHER NAME -- SESSION--TERM
+
+                                                    // Determine term color based on term ID (1=green, 2=blue, 3=yellow)
+                                                    $termColor = '';
+                                                    $termId = $sc->termid ?? 0;
+                                                    if ($termId == 1) {
+                                                        $termColor = 'term-first';
+                                                    } elseif ($termId == 2) {
+                                                        $termColor = 'term-second';
+                                                    } elseif ($termId == 3) {
+                                                        $termColor = 'term-third';
+                                                    }
+
                                                     $displayText = ($sc->subjectname ?? 'N/A') .
                                                                    ($sc->subjectcode ? ' (' . $sc->subjectcode . ')' : '') .
                                                                    ' - ' . ($sc->sclass ?? 'N/A') .
                                                                    ($sc->schoolarm ? ' (' . $sc->schoolarm . ')' : '') .
                                                                    ' - ' . ($sc->teachername ?? 'N/A') .
                                                                    ' -- ' . ($sc->sessionname ?? 'N/A') .
-                                                                   '--' . ($sc->termname ?? 'N/A') . ' TERM';
+                                                                   '--' . ($sc->termname ?? 'N/A');
                                                     $searchableText = strtolower(($sc->subjectname ?? '') . ' ' . ($sc->subjectcode ?? '') . ' ' . ($sc->sclass ?? '') . ' ' . ($sc->schoolarm ?? '') . ' ' . ($sc->teachername ?? '') . ' ' . ($sc->sessionname ?? '') . ' ' . ($sc->termname ?? ''));
                                                 @endphp
                                                 <div class="form-check subject-class-item {{ $itemClass }}" data-search="{{ $searchableText }}">
@@ -433,7 +483,7 @@
                                                                id="{{ $checkboxId }}"
                                                                value="{{ $sc->scid }}"
                                                                data-termid="{{ $sc->termid }}">
-                                                        <label class="form-check-label" for="{{ $checkboxId }}" id="label-{{ $checkboxId }}">
+                                                        <label class="form-check-label {{ $termColor }}" for="{{ $checkboxId }}" id="label-{{ $checkboxId }}">
                                                             {{ $displayText }}
                                                         </label>
                                                     @else
@@ -516,15 +566,27 @@
                                             @foreach ($subjectclasses as $sc)
                                                 @php
                                                     $isCurrentSession = $currentSession && $currentSession->id == $sc->sessionid;
+
+                                                    // Determine term color based on term ID (1=green, 2=blue, 3=yellow)
+                                                    $termColor = '';
+                                                    $termId = $sc->termid ?? 0;
+                                                    if ($termId == 1) {
+                                                        $termColor = 'term-first';
+                                                    } elseif ($termId == 2) {
+                                                        $termColor = 'term-second';
+                                                    } elseif ($termId == 3) {
+                                                        $termColor = 'term-third';
+                                                    }
+
                                                     $displayText = ($sc->subjectname ?? 'N/A') .
                                                                    ($sc->subjectcode ? ' (' . $sc->subjectcode . ')' : '') .
                                                                    ' - ' . ($sc->sclass ?? 'N/A') .
                                                                    ($sc->schoolarm ? ' (' . $sc->schoolarm . ')' : '') .
                                                                    ' - ' . ($sc->teachername ?? 'N/A') .
                                                                    ' -- ' . ($sc->sessionname ?? 'N/A') .
-                                                                   '--' . ($sc->termname ?? 'N/A') . ' TERM';
+                                                                   '--' . ($sc->termname ?? 'N/A');
                                                 @endphp
-                                                <option value="{{ $sc->scid }}" @if(!$isCurrentSession) disabled @endif>
+                                                <option value="{{ $sc->scid }}" class="{{ $termColor }}" @if(!$isCurrentSession) disabled @endif>
                                                     {{ $displayText }}
                                                     @if(!$isCurrentSession) (Not available) @endif
                                                 </option>
