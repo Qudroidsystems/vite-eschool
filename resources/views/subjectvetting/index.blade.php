@@ -18,7 +18,6 @@
                     </div>
                 </div>
             </div>
-            <!-- End page title -->
 
             @if ($errors->any())
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -28,7 +27,7 @@
                             <li>{{ $error }}</li>
                         @endforeach
                     </ul>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
 
@@ -36,453 +35,73 @@
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <i class="ri-checkbox-circle-line me-2"></i>
                     {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
             @if (session('danger'))
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <i class="ri-error-warning-line me-2"></i>
                     {{ session('danger') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
 
             <style>
-                /* Search box styling */
-                .subject-class-search-box {
-                    position: relative;
-                    margin-bottom: 15px;
-                }
-
-                .subject-class-search-box .search-icon {
-                    position: absolute;
-                    right: 15px;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    color: #6c757d;
-                    pointer-events: none;
-                }
-
-                .subject-class-search-box input {
-                    width: 100%;
-                    padding: 8px 40px 8px 15px;
-                    border: 1px solid #ced4da;
-                    border-radius: 0.375rem;
-                    font-size: 14px;
-                }
-
-                .subject-class-search-box input:focus {
-                    outline: none;
-                    border-color: #86b7fe;
-                    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-                }
-
-                /* Selection summary styling */
-                #subjectClassSelectionSummary {
-                    font-size: 0.875rem;
-                    border-left: 3px solid #0d6efd;
-                    margin-top: 10px;
-                }
-
-                #clearSelectionBtn {
-                    text-decoration: none;
-                    font-size: 0.875rem;
-                    cursor: pointer;
-                }
-
-                #clearSelectionBtn:hover {
-                    text-decoration: underline;
-                }
-
-                /* Non-current session items */
-                .non-current-session {
-                    opacity: 0.6;
-                    pointer-events: none;
-                }
-
-                .non-current-session input[type="checkbox"] {
-                    display: none !important;
-                }
-
-                .non-current-session label {
-                    color: #6c757d !important;
-                    cursor: not-allowed;
-                }
-
-                /* Current session items */
-                .current-session-item {
-                    margin-bottom: 8px;
-                }
-
-                /* Checkbox group styling */
-                .subject-class-checkbox-group {
-                    max-height: 300px;
-                    overflow-y: auto;
-                    border: 1px solid #dee2e6;
-                    border-radius: 0.375rem;
-                    padding: 15px;
-                    background-color: #f8f9fa;
-                }
-
-                /* No results message */
-                .no-results-message {
-                    display: none;
-                    text-align: center;
-                    padding: 20px;
-                    color: #6c757d;
-                    font-style: italic;
-                    background-color: #f8f9fa;
-                    border-radius: 0.375rem;
-                    margin-bottom: 10px;
-                }
-
-                /* Search highlight */
-                .highlight-text {
-                    background-color: #fff3cd;
-                    padding: 1px 4px;
-                    border-radius: 3px;
-                    font-weight: 600;
-                }
-
-                /* Checkbox styling */
-                .form-check-input:disabled {
-                    background-color: #e9ecef;
-                    border-color: #ced4da;
-                }
-
-                .form-check-input:disabled ~ .form-check-label {
-                    color: #6c757d;
-                    cursor: not-allowed;
-                }
-
-                /* Term color styling */
-                .term-first {
-                    color: #198754 !important;
-                    font-weight: 500;
-                }
-
-                .term-second {
-                    color: #0d6efd !important;
-                    font-weight: 500;
-                }
-
-                .term-third {
-                    color: #ffc107 !important;
-                    font-weight: 500;
-                }
-
-                .form-check-label.term-third {
-                    color: #ffc107 !important;
-                    text-shadow: 0 0 2px rgba(0,0,0,0.3);
-                }
-
-                select option.term-first {
-                    color: #198754;
-                    font-weight: 500;
-                }
-
-                select option.term-second {
-                    color: #0d6efd;
-                    font-weight: 500;
-                }
-
-                select option.term-third {
-                    color: #ffc107;
-                    font-weight: 500;
-                    background-color: #2c3034;
-                }
-
-                /* Stats Card Hover Effects */
-                .stats-card {
-                    transition: all 0.3s ease;
-                    border: none;
-                    border-radius: 1rem;
-                    overflow: hidden;
-                    cursor: pointer;
-                }
-
-                .stats-card:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
-                }
-
-                .stats-icon {
-                    width: 48px;
-                    height: 48px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    border-radius: 12px;
-                    font-size: 24px;
-                }
-
-                /* Status Badge Styles */
-                .badge-status {
-                    padding: 6px 12px;
-                    border-radius: 20px;
-                    font-weight: 500;
-                    font-size: 11px;
-                }
-
-                .badge-pending {
-                    background-color: #ffe5e5;
-                    color: #dc3545;
-                }
-
-                .badge-completed {
-                    background-color: #e3f5ec;
-                    color: #28a745;
-                }
-
-                .badge-rejected {
-                    background-color: #fff4e5;
-                    color: #ffc107;
-                }
-
-                /* Table Row Status Background Colors */
-                .table-row-pending {
-                    background-color: #fff5f5 !important;
-                    border-left: 3px solid #dc3545;
-                }
-
-                .table-row-completed {
-                    background-color: #f0fff4 !important;
-                    border-left: 3px solid #28a745;
-                }
-
-                .table-row-rejected {
-                    background-color: #fffbf0 !important;
-                    border-left: 3px solid #ffc107;
-                }
-
-                .table-row-hover {
-                    transition: all 0.2s ease;
-                }
-
-                .table-row-hover:hover {
-                    transform: scale(1.01);
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-                }
-
-                /* Action Buttons */
-                .action-btn {
-                    width: 32px;
-                    height: 32px;
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    border-radius: 8px;
-                    transition: all 0.2s ease;
-                }
-
-                .action-btn:hover {
-                    transform: scale(1.1);
-                }
-
-                /* Session Badge */
-                .session-badge {
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                    padding: 8px 16px;
-                    border-radius: 12px;
-                    font-weight: 500;
-                }
-
-                /* Card Header Gradient */
-                .card-header-gradient {
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                }
-
-                /* Filter Card */
-                .filter-card {
-                    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-                    border: none;
-                    border-radius: 1rem;
-                }
-
-                /* Animations */
-                @keyframes fadeInUp {
-                    from {
-                        opacity: 0;
-                        transform: translateY(20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-
-                .animate-fade-in-up {
-                    animation: fadeInUp 0.5s ease-out;
-                }
-
-                /* Card View Styles */
-                .card-view-container {
-                    display: none;
-                }
-
-                .card-view-container.active {
-                    display: block;
-                }
-
-                .table-view-container {
-                    display: block;
-                }
-
-                .table-view-container.hide {
-                    display: none;
-                }
-
-                .vetting-card {
-                    background: white;
-                    border-radius: 1rem;
-                    padding: 1.25rem;
-                    margin-bottom: 1rem;
-                    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-                    transition: all 0.3s ease;
-                    border-left: 4px solid;
-                    cursor: pointer;
-                }
-
-                .vetting-card:hover {
-                    transform: translateY(-3px);
-                    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
-                }
-
-                .vetting-card.pending-card {
-                    border-left-color: #dc3545;
-                    background: linear-gradient(135deg, #fff 0%, #fff5f5 100%);
-                }
-
-                .vetting-card.completed-card {
-                    border-left-color: #28a745;
-                    background: linear-gradient(135deg, #fff 0%, #f0fff4 100%);
-                }
-
-                .vetting-card.rejected-card {
-                    border-left-color: #ffc107;
-                    background: linear-gradient(135deg, #fff 0%, #fffbf0 100%);
-                }
-
-                .card-header-info {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: flex-start;
-                    margin-bottom: 1rem;
-                    padding-bottom: 0.75rem;
-                    border-bottom: 1px solid #e9ecef;
-                }
-
-                .staff-info-card {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.75rem;
-                }
-
-                .staff-avatar-card {
-                    width: 48px;
-                    height: 48px;
-                    border-radius: 50%;
-                    object-fit: cover;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: white;
-                    font-weight: bold;
-                    font-size: 18px;
-                }
-
-                .card-details {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-                    gap: 0.75rem;
-                    margin-bottom: 1rem;
-                }
-
-                .detail-item {
-                    display: flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    font-size: 0.875rem;
-                }
-
-                .detail-item i {
-                    width: 20px;
-                    color: #6c757d;
-                }
-
-                .card-actions {
-                    display: flex;
-                    justify-content: flex-end;
-                    gap: 0.5rem;
-                    padding-top: 0.75rem;
-                    border-top: 1px solid #e9ecef;
-                }
-
-                .view-toggle-btn {
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                }
-
-                .view-toggle-btn.active {
-                    background-color: #0d6efd;
-                    color: white;
-                    border-color: #0d6efd;
-                }
-
-                .view-toggle-btn.active i {
-                    color: white;
-                }
-
-                /* Dynamic Stats Cards */
-                .stat-card-clickable {
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                }
-
-                .stat-card-clickable:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
-                }
-
-                .stat-card-clickable.active-stat {
-                    border: 2px solid #0d6efd;
-                    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
-                }
+                .stats-card { transition: all 0.3s ease; border: none; border-radius: 1rem; overflow: hidden; cursor: pointer; }
+                .stats-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
+                .stats-icon { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 24px; }
+                .badge-status { padding: 6px 12px; border-radius: 20px; font-weight: 500; font-size: 11px; }
+                .badge-pending { background-color: #ffe5e5; color: #dc3545; }
+                .badge-completed { background-color: #e3f5ec; color: #28a745; }
+                .badge-rejected { background-color: #fff4e5; color: #ffc107; }
+                .table-row-pending { background-color: #fff5f5 !important; border-left: 3px solid #dc3545; }
+                .table-row-completed { background-color: #f0fff4 !important; border-left: 3px solid #28a745; }
+                .table-row-rejected { background-color: #fffbf0 !important; border-left: 3px solid #ffc107; }
+                .action-btn { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s ease; }
+                .action-btn:hover { transform: scale(1.1); }
+                .filter-card { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border: none; border-radius: 1rem; }
+                @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+                .animate-fade-in-up { animation: fadeInUp 0.5s ease-out; }
+                .selected-subject-item { transition: all 0.2s ease; }
+                .selected-subject-item:hover { background-color: #f8f9fa; transform: translateX(5px); }
+                .subject-search-item { cursor: pointer; transition: all 0.2s ease; }
+                .subject-search-item:hover { background-color: #f8f9fa; }
+                .term-first { color: #0d6efd !important; font-weight: 600; }
+                .term-second { color: #198754 !important; font-weight: 600; }
+                .term-third { color: #f59e0b !important; font-weight: 600; }
+                .term-bg-first { background-color: #0d6efd10; border-left: 3px solid #0d6efd; }
+                .term-bg-second { background-color: #19875410; border-left: 3px solid #198754; }
+                .term-bg-third { background-color: #f59e0b10; border-left: 3px solid #f59e0b; }
+                .search-box .search-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #6c757d; pointer-events: none; }
+                .search-box { position: relative; }
             </style>
 
             <div id="subjectVettingList">
-                <!-- Term and Session Filter Row -->
+                <!-- Filter Row -->
                 <div class="row mb-4 animate-fade-in-up">
                     <div class="col-12">
                         <div class="card filter-card">
                             <div class="card-body">
                                 <div class="row g-3 align-items-end">
                                     <div class="col-md-5">
-                                        <label for="term-filter-stats" class="form-label fw-semibold text-muted mb-2">
+                                        <label class="form-label fw-semibold text-muted mb-2">
                                             <i class="ri-calendar-line me-1"></i> Select Term
                                         </label>
                                         <select class="form-select form-select-lg" id="term-filter-stats">
                                             <option value="">All Terms</option>
                                             @foreach ($terms as $term)
-                                                <option value="{{ $term->id }}" class="term-{{ $term->term }}">
-                                                    {{ $term->term }}
-                                                </option>
+                                                <option value="{{ $term->id }}">{{ $term->term }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <div class="col-md-5">
-                                        <label for="session-filter-stats" class="form-label fw-semibold text-muted mb-2">
+                                        <label class="form-label fw-semibold text-muted mb-2">
                                             <i class="ri-calendar-event-line me-1"></i> Select Session
                                         </label>
                                         <select class="form-select form-select-lg" id="session-filter-stats">
                                             <option value="">All Sessions</option>
                                             @foreach ($sessions as $session)
-                                                <option value="{{ $session->id }}" {{ $currentSession && $currentSession->id == $session->id ? 'selected' : '' }}>
-                                                    {{ $session->session }} @if($session->status == 'Current') (Current) @endif
-                                                </option>
+                                                <option value="{{ $session->id }}">{{ $session->session }} @if($session->status == 'Current') (Current) @endif</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -497,7 +116,7 @@
                     </div>
                 </div>
 
-                <!-- Dynamic Stats Cards Row -->
+                <!-- Stats Cards -->
                 <div class="row g-4 mb-4 animate-fade-in-up" id="statsCardsRow">
                     <div class="col-xl-3 col-md-6">
                         <div class="card stats-card stat-card-clickable" data-status="all">
@@ -506,11 +125,6 @@
                                     <div>
                                         <p class="text-muted mb-1 text-uppercase fw-semibold fs-12">Total Assignments</p>
                                         <h2 class="mb-0 fw-bold" id="stat-total">0</h2>
-                                        <p class="text-muted mb-0 mt-2 fs-13">
-                                            <span class="badge bg-primary bg-opacity-10 text-primary">
-                                                <i class="ri-file-list-line me-1"></i>All Records
-                                            </span>
-                                        </p>
                                     </div>
                                     <div class="stats-icon bg-primary bg-opacity-10 text-primary">
                                         <i class="ri-file-list-line fs-24"></i>
@@ -519,7 +133,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="col-xl-3 col-md-6">
                         <div class="card stats-card stat-card-clickable" data-status="pending">
                             <div class="card-body">
@@ -527,11 +140,6 @@
                                     <div>
                                         <p class="text-muted mb-1 text-uppercase fw-semibold fs-12">Pending</p>
                                         <h2 class="mb-0 fw-bold text-danger" id="stat-pending">0</h2>
-                                        <p class="text-muted mb-0 mt-2 fs-13">
-                                            <span class="badge bg-danger bg-opacity-10 text-danger">
-                                                <i class="ri-time-line me-1"></i>Awaiting Review
-                                            </span>
-                                        </p>
                                     </div>
                                     <div class="stats-icon bg-danger bg-opacity-10 text-danger">
                                         <i class="ri-timer-line fs-24"></i>
@@ -540,7 +148,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="col-xl-3 col-md-6">
                         <div class="card stats-card stat-card-clickable" data-status="completed">
                             <div class="card-body">
@@ -548,11 +155,6 @@
                                     <div>
                                         <p class="text-muted mb-1 text-uppercase fw-semibold fs-12">Completed</p>
                                         <h2 class="mb-0 fw-bold text-success" id="stat-completed">0</h2>
-                                        <p class="text-muted mb-0 mt-2 fs-13">
-                                            <span class="badge bg-success bg-opacity-10 text-success">
-                                                <i class="ri-checkbox-circle-line me-1"></i>Approved
-                                            </span>
-                                        </p>
                                     </div>
                                     <div class="stats-icon bg-success bg-opacity-10 text-success">
                                         <i class="ri-checkbox-circle-line fs-24"></i>
@@ -561,7 +163,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="col-xl-3 col-md-6">
                         <div class="card stats-card stat-card-clickable" data-status="rejected">
                             <div class="card-body">
@@ -569,11 +170,6 @@
                                     <div>
                                         <p class="text-muted mb-1 text-uppercase fw-semibold fs-12">Rejected</p>
                                         <h2 class="mb-0 fw-bold text-warning" id="stat-rejected">0</h2>
-                                        <p class="text-muted mb-0 mt-2 fs-13">
-                                            <span class="badge bg-warning bg-opacity-10 text-warning">
-                                                <i class="ri-close-circle-line me-1"></i>Needs Revision
-                                            </span>
-                                        </p>
                                     </div>
                                     <div class="stats-icon bg-warning bg-opacity-10 text-warning">
                                         <i class="ri-close-circle-line fs-24"></i>
@@ -584,77 +180,27 @@
                     </div>
                 </div>
 
-                <!-- Bar Chart Card -->
-                <div class="row mb-4 animate-fade-in-up" style="animation-delay: 0.1s;">
+                <!-- Search & Actions -->
+                <div class="row mb-4 animate-fade-in-up">
                     <div class="col-lg-12">
                         <div class="card">
-                            <div class="card-header bg-transparent border-0 pt-4">
-                                <div class="d-flex align-items-center justify-content-between">
-                                    <div>
-                                        <h5 class="card-title mb-1 fw-bold">Vetting Status Distribution</h5>
-                                        <p class="text-muted mb-0">Overview of all vetting assignments by status</p>
-                                    </div>
-                                    @if($currentSession)
-                                        <div class="session-badge">
-                                            <i class="ri-calendar-line me-2"></i>
-                                            {{ $currentSession->session }}
-                                        </div>
-                                    @endif
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="chart-container" style="position: relative; height: 320px; width: 100%;">
-                                    <canvas id="vettingStatusChart"></canvas>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Filter Card for Search and View Toggle -->
-                <div class="row mb-4 animate-fade-in-up" style="animation-delay: 0.2s;">
-                    <div class="col-lg-12">
-                        <div class="card filter-card">
                             <div class="card-body">
                                 <div class="row g-3 align-items-center">
-                                    <div class="col-xxl-4">
+                                    <div class="col-md-6">
                                         <div class="search-box">
                                             <label class="form-label text-muted mb-2 fw-semibold">Search Assignments</label>
                                             <div class="position-relative">
-                                                <input type="text" class="form-control search" placeholder="Search by staff, subject, class, teacher...">
+                                                <input type="text" class="form-control search" id="tableSearchInput" placeholder="Search by staff, subject, class, teacher...">
                                                 <i class="ri-search-line search-icon"></i>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="col-xxl-3">
-                                        <div class="filter-group">
-                                            <label class="form-label text-muted mb-2 fw-semibold">View Mode</label>
-                                            <div class="btn-group w-100" role="group">
-                                                <button type="button" class="btn btn-light view-toggle-btn active" id="tableViewBtn">
-                                                    <i class="ri-table-view me-1"></i> Table View
-                                                </button>
-                                                <button type="button" class="btn btn-light view-toggle-btn" id="cardViewBtn">
-                                                    <i class="ri-layout-grid-line me-1"></i> Card View
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-xxl-5">
-                                        <div class="current-session-info">
-                                            <div class="alert alert-light border-0 mb-0 shadow-sm">
-                                                <div class="d-flex align-items-center">
-                                                    <div class="flex-shrink-0">
-                                                        <i class="ri-information-line text-primary fs-18"></i>
-                                                    </div>
-                                                    <div class="flex-grow-1 ms-2">
-                                                        Currently viewing: <strong class="text-primary">{{ $currentSession ? $currentSession->session : 'No active session' }}</strong>
-                                                        @if($currentSession && $currentSession->status == 'Current')
-                                                            <span class="badge bg-success ms-2">Current Session</span>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
+                                    <div class="col-md-6 text-end">
+                                        @can('Create subject-vettings')
+                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSubjectVettingModal">
+                                                <i class="ri-add-line me-1"></i> Create Assignment
+                                            </button>
+                                        @endcan
                                     </div>
                                 </div>
                             </div>
@@ -663,28 +209,10 @@
                 </div>
 
                 <!-- Table View -->
-                <div class="row animate-fade-in-up table-view-container" style="animation-delay: 0.3s;">
+                <div class="row animate-fade-in-up">
                     <div class="col-lg-12">
                         <div class="card">
-                            <div class="card-header bg-transparent pt-4 pb-0">
-                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                                    <div>
-                                        <h5 class="card-title mb-1 fw-bold">Subject Vetting Assignments</h5>
-                                        <p class="text-muted mb-0">Manage and monitor all subject vetting assignments</p>
-                                    </div>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()">
-                                            <i class="ri-delete-bin-2-line me-1"></i> Delete Selected
-                                        </button>
-                                        @can('Create subject-vettings')
-                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSubjectVettingModal" id="create-subject-vettings-btn">
-                                                <i class="ri-add-line me-1"></i> Create Assignment
-                                            </button>
-                                        @endcan
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body pt-4">
+                            <div class="card-body">
                                 <div class="table-responsive">
                                     <table class="table table-hover align-middle mb-0" id="kt_subject_vetting_table">
                                         <thead class="table-light">
@@ -694,74 +222,57 @@
                                                         <input class="form-check-input" type="checkbox" id="checkAll" />
                                                     </div>
                                                 </th>
-                                                <th class="sort cursor-pointer" data-sort="sn">#</th>
-                                                <th class="sort cursor-pointer" data-sort="vetting_username">Vetting Staff</th>
-                                                <th class="sort cursor-pointer" data-sort="subjectname">Subject</th>
-                                                <th class="sort cursor-pointer" data-sort="sclass">Class</th>
-                                                <th class="sort cursor-pointer" data-sort="schoolarm">Arm</th>
-                                                <th class="sort cursor-pointer" data-sort="teachername">Teacher</th>
-                                                <th class="sort cursor-pointer" data-sort="termname">Term</th>
-                                                <th class="sort cursor-pointer" data-sort="sessionname">Session</th>
-                                                <th class="sort cursor-pointer" data-sort="status">Status</th>
-                                                <th class="sort cursor-pointer" data-sort="datereg">Updated</th>
+                                                <th>#</th>
+                                                <th>Vetting Staff</th>
+                                                <th>Subject</th>
+                                                <th>Class</th>
+                                                <th>Arm</th>
+                                                <th>Teacher</th>
+                                                <th>Term</th>
+                                                <th>Session</th>
+                                                <th>Status</th>
+                                                <th>Updated</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody class="list">
                                             @php $i = 0 @endphp
                                             @forelse ($subjectvettings as $sv)
-                                                <?php
-                                                $picture = $sv->vetting_picture ?? 'unnamed.jpg';
-                                                $imagePath = asset('storage/staff_avatars/' . $picture);
-                                                $fileExists = file_exists(storage_path('app/public/staff_avatars/' . $picture));
-                                                $defaultImageExists = file_exists(storage_path('app/public/staff_avatars/unnamed.jpg'));
-                                                $statusClass = match ($sv->status ?? 'pending') {
-                                                    'completed' => 'badge-completed',
-                                                    'pending' => 'badge-pending',
-                                                    'rejected' => 'badge-rejected',
-                                                    default => 'badge-pending'
-                                                };
-                                                $statusIcon = match ($sv->status ?? 'pending') {
-                                                    'completed' => 'ri-checkbox-circle-line',
-                                                    'pending' => 'ri-time-line',
-                                                    'rejected' => 'ri-close-circle-line',
-                                                    default => 'ri-time-line'
-                                                };
-                                                $rowStatusClass = match ($sv->status ?? 'pending') {
-                                                    'completed' => 'table-row-completed',
-                                                    'pending' => 'table-row-pending',
-                                                    'rejected' => 'table-row-rejected',
-                                                    default => ''
-                                                };
-                                                ?>
-                                                <tr data-url="{{ route('subjectvetting.destroy', $sv->svid) }}"
-                                                    data-id="{{ $sv->svid }}"
-                                                    data-status="{{ $sv->status ?? 'pending' }}"
-                                                    data-term="{{ $sv->termid }}"
-                                                    data-session="{{ $sv->sessionid }}"
+                                                @php
+                                                    $statusClass = match ($sv->status ?? 'pending') {
+                                                        'completed' => 'badge-completed',
+                                                        'pending' => 'badge-pending',
+                                                        'rejected' => 'badge-rejected',
+                                                        default => 'badge-pending'
+                                                    };
+                                                    $rowStatusClass = match ($sv->status ?? 'pending') {
+                                                        'completed' => 'table-row-completed',
+                                                        'pending' => 'table-row-pending',
+                                                        'rejected' => 'table-row-rejected',
+                                                        default => ''
+                                                    };
+                                                    $termColorClass = match ($sv->termid ?? 0) {
+                                                        1 => 'term-first',
+                                                        2 => 'term-second',
+                                                        3 => 'term-third',
+                                                        default => ''
+                                                    };
+                                                @endphp
+                                                <tr data-id="{{ $sv->svid }}" data-status="{{ $sv->status ?? 'pending' }}"
+                                                    data-term="{{ $sv->termid }}" data-session="{{ $sv->sessionid }}"
+                                                    data-subjectclassid="{{ $sv->subjectclassid }}"
+                                                    data-vetting-userid="{{ $sv->vetting_userid }}"
                                                     class="table-row-hover {{ $rowStatusClass }}">
-                                                    <td>
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox" name="chk_child" value="{{ $sv->svid }}" />
-                                                        </div>
-                                                    </td>
+                                                    <td><div class="form-check"><input class="form-check-input" type="checkbox" name="chk_child" value="{{ $sv->svid }}" /></div></td>
                                                     <td class="sn fw-bold">{{ ++$i }}</td>
-                                                    <td class="vetting_username" data-vetting_userid="{{ $sv->vetting_userid }}" data-vetting-name="{{ $sv->vetting_username ?? 'N/A' }}">
+                                                    <td class="vetting_username">
                                                         <div class="d-flex align-items-center">
                                                             <div class="flex-shrink-0">
                                                                 <div class="avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center">
-                                                                    <img src="{{ $imagePath }}"
-                                                                        alt="{{ $sv->vetting_username ?? 'Unknown Staff' }}"
-                                                                        class="rounded-circle avatar-xs staff-image"
-                                                                        data-bs-toggle="modal"
-                                                                        data-bs-target="#imageViewModal"
-                                                                        data-image="{{ $imagePath }}"
-                                                                        data-picture="{{ $sv->vetting_picture ?? 'none' }}"
-                                                                        data-teachername="{{ $sv->vetting_username ?? 'Unknown Staff' }}"
-                                                                        data-file-exists="{{ $fileExists ? 'true' : 'false' }}"
-                                                                        data-default-exists="{{ $defaultImageExists ? 'true' : 'false' }}"
-                                                                        style="width: 38px; height: 38px; object-fit: cover; cursor: pointer;"
-                                                                        onerror="this.src='{{ asset('storage/staff_avatars/unnamed.jpg') }}';" />
+                                                                    <img src="{{ asset('storage/staff_avatars/' . ($sv->vetting_picture ?? 'unnamed.jpg')) }}"
+                                                                        alt="{{ $sv->vetting_username ?? 'Unknown' }}"
+                                                                        class="rounded-circle avatar-xs"
+                                                                        style="width:38px;height:38px;object-fit:cover;" />
                                                                 </div>
                                                             </div>
                                                             <div class="flex-grow-1 ms-3">
@@ -769,26 +280,18 @@
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td class="subjectname" data-subjectclassid="{{ $sv->subjectclassid }}">
-                                                        <span class="fw-medium">{{ $sv->subjectname ?? 'N/A' }}</span>
-                                                        @if($sv->subjectcode)
-                                                            <small class="text-muted d-block">{{ $sv->subjectcode }}</small>
-                                                        @endif
-                                                    </td>
-                                                    <td class="sclass" data-schoolclassid="{{ $sv->schoolclassid }}">{{ $sv->sclass ?? 'N/A' }}</td>
+                                                    <td class="subjectname">{{ $sv->subjectname ?? 'N/A' }}</td>
+                                                    <td class="sclass">{{ $sv->sclass ?? 'N/A' }}</td>
                                                     <td class="schoolarm">{{ $sv->schoolarm ?? 'N/A' }}</td>
-                                                    <td class="teachername" data-subtid="{{ $sv->subtid }}">{{ $sv->teachername ?? 'N/A' }}</td>
-                                                    <td class="termname" data-termid="{{ $sv->termid }}">{{ $sv->termname ?? 'N/A' }}</td>
-                                                    <td class="sessionname" data-sessionid="{{ $sv->sessionid }}">{{ $sv->sessionname ?? 'N/A' }}</td>
+                                                    <td class="teachername">{{ $sv->teachername ?? 'N/A' }}</td>
+                                                    <td class="termname {{ $termColorClass }}">{{ $sv->termname ?? 'N/A' }}</td>
+                                                    <td class="sessionname">{{ $sv->sessionname ?? 'N/A' }}</td>
                                                     <td class="status">
                                                         <span class="badge-status {{ $statusClass }}">
-                                                            <i class="{{ $statusIcon }} me-1 fs-10"></i>
                                                             {{ ucfirst($sv->status ?? 'pending') }}
                                                         </span>
                                                     </td>
-                                                    <td class="datereg">
-                                                        <small>{{ $sv->updated_at ? $sv->updated_at->format('d M, Y') : 'N/A' }}</small>
-                                                    </td>
+                                                    <td class="datereg">{{ $sv->updated_at ? $sv->updated_at->format('d M, Y') : 'N/A' }}</td>
                                                     <td>
                                                         <div class="d-flex gap-2">
                                                             @can('Update subject-vettings')
@@ -807,16 +310,8 @@
                                             @empty
                                                 <tr class="noresult">
                                                     <td colspan="12" class="text-center py-5">
-                                                        <div class="text-center">
-                                                            <i class="ri-inbox-line fs-48 text-muted"></i>
-                                                            <h5 class="mt-3">No Subject Vetting Assignments Found</h5>
-                                                            <p class="text-muted">No assignments found for the selected session.</p>
-                                                            @can('Create subject-vettings')
-                                                                <button type="button" class="btn btn-primary add-btn mt-2" data-bs-toggle="modal" data-bs-target="#addSubjectVettingModal">
-                                                                    <i class="ri-add-line me-1"></i> Create Your First Assignment
-                                                                </button>
-                                                            @endcan
-                                                        </div>
+                                                        <i class="ri-inbox-line fs-48 text-muted"></i>
+                                                        <h5 class="mt-3">No Subject Vetting Assignments Found</h5>
                                                     </td>
                                                 </tr>
                                             @endforelse
@@ -824,7 +319,6 @@
                                     </table>
                                 </div>
 
-                                <!-- Pagination -->
                                 <div class="row mt-4 align-items-center" id="pagination-element">
                                     <div class="col-sm">
                                         <div class="text-muted text-center text-sm-start">
@@ -833,9 +327,7 @@
                                     </div>
                                     <div class="col-sm-auto mt-3 mt-sm-0">
                                         <div class="pagination-wrap">
-                                            <nav aria-label="Page navigation">
-                                                <ul class="pagination listjs-pagination mb-0"></ul>
-                                            </nav>
+                                            <ul class="pagination listjs-pagination mb-0"></ul>
                                         </div>
                                     </div>
                                 </div>
@@ -844,64 +336,22 @@
                     </div>
                 </div>
 
-                <!-- Card View -->
-                <div class="row card-view-container" id="cardViewContainer">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-header bg-transparent pt-4 pb-0">
-                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-                                    <div>
-                                        <h5 class="card-title mb-1 fw-bold">Subject Vetting Assignments</h5>
-                                        <p class="text-muted mb-0">Card view of all subject vetting assignments</p>
-                                    </div>
-                                    <div class="d-flex flex-wrap gap-2">
-                                        @can('Create subject-vettings')
-                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSubjectVettingModal">
-                                                <i class="ri-add-line me-1"></i> Create Assignment
-                                            </button>
-                                        @endcan
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body pt-4">
-                                <div id="cardsContainer" class="row g-3"></div>
-                                <div class="row mt-4 align-items-center" id="card-pagination-element">
-                                    <div class="col-sm">
-                                        <div class="text-muted text-center text-sm-start">
-                                            Showing <span id="card-showing-records">0</span> of <span id="card-total-records">{{ $subjectvettings->count() }}</span> Results
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-auto mt-3 mt-sm-0">
-                                        <div class="pagination-wrap">
-                                            <nav aria-label="Page navigation">
-                                                <ul class="pagination card-pagination mb-0"></ul>
-                                            </nav>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Add Subject Vetting Modal -->
-                <div id="addSubjectVettingModal" class="modal fade" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true" data-bs-backdrop="static">
+                <!-- Add Modal -->
+                <div id="addSubjectVettingModal" class="modal fade" tabindex="-1" data-bs-backdrop="static">
                     <div class="modal-dialog modal-dialog-centered modal-xl">
                         <div class="modal-content">
                             <div class="modal-header bg-primary text-white">
-                                <h5 id="addModalLabel" class="modal-title">
-                                    <i class="ri-add-circle-line me-2"></i>Add Subject Vetting Assignment
-                                </h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <h5 class="modal-title"><i class="ri-add-circle-line me-2"></i>Add Subject Vetting Assignment</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
-                            <form class="tablelist-form" autocomplete="off" id="add-subjectvetting-form">
+                            <form id="add-subjectvetting-form" action="{{ route('subjectvetting.store') }}" method="POST">
+                                @csrf
                                 <div class="modal-body">
-                                    <input type="hidden" id="add-id-field" name="id">
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="mb-3">
-                                                <label for="userid" class="form-label fw-semibold">Vetting Staff <span class="text-danger">*</span></label>
-                                                <select name="userid" id="userid" class="form-select" required>
+                                                <label class="form-label fw-semibold">Vetting Staff <span class="text-danger">*</span></label>
+                                                <select name="userid" id="subject-userid" class="form-select select2" required>
                                                     <option value="">Select Staff</option>
                                                     @foreach ($staff as $staff_member)
                                                         <option value="{{ $staff_member->id }}">{{ $staff_member->name }}</option>
@@ -911,11 +361,11 @@
                                         </div>
                                         <div class="col-md-6">
                                             <div class="mb-3">
-                                                <label for="sessionid" class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
-                                                <select name="sessionid" id="sessionid" class="form-select" required>
+                                                <label class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
+                                                <select name="sessionid" id="subject-sessionid" class="form-select" required>
                                                     <option value="">Select Session</option>
                                                     @foreach ($sessions as $session)
-                                                        <option value="{{ $session->id }}" {{ $currentSession && $currentSession->id == $session->id ? 'selected' : '' }}>
+                                                        <option value="{{ $session->id }}" {{ ($currentSession && $currentSession->id == $session->id) ? 'selected' : '' }}>
                                                             {{ $session->session }} @if($session->status == 'Current') (Current Session) @endif
                                                         </option>
                                                     @endforeach
@@ -923,120 +373,89 @@
                                             </div>
                                         </div>
                                     </div>
+
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">Terms <span class="text-danger">*</span></label>
-                                        <div class="checkbox-group p-3 bg-light rounded" style="max-height: 100px; overflow-y: auto;">
+                                        <div class="p-3 bg-light rounded">
                                             @foreach ($terms as $term)
+                                                @php
+                                                    $termColor = match($term->id) {
+                                                        1 => 'text-primary',
+                                                        2 => 'text-success',
+                                                        3 => 'text-warning',
+                                                        default => ''
+                                                    };
+                                                @endphp
                                                 <div class="form-check form-check-inline me-3">
-                                                    <input class="form-check-input modal-checkbox" type="checkbox" name="termid[]" id="add-term-{{ $term->id }}" value="{{ $term->id }}">
-                                                    <label class="form-check-label" for="add-term-{{ $term->id }}">
-                                                        {{ $term->term }}
+                                                    <input class="form-check-input" type="checkbox" name="termid[]" value="{{ $term->id }}" id="subject-term-{{ $term->id }}">
+                                                    <label class="form-check-label {{ $termColor }}" for="subject-term-{{ $term->id }}">
+                                                        <strong>{{ $term->term }}</strong>
                                                     </label>
                                                 </div>
                                             @endforeach
                                         </div>
                                     </div>
+
+                                    <!-- AJAX Subject Search Section -->
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">Subject-Class Assignments <span class="text-danger">*</span></label>
 
-                                        <div class="subject-class-search-box">
-                                            <input type="text" class="form-control" id="subjectClassSearch" placeholder="Search by subject, class, teacher, or session...">
-                                            <i class="ri-search-line search-icon"></i>
+                                        <div class="input-group mb-3">
+                                            <span class="input-group-text"><i class="ri-search-line"></i></span>
+                                            <input type="text" id="subjectSearchInput" class="form-control"
+                                                   placeholder="Search by subject, class, teacher, term, or session... (min 2 characters)"
+                                                   autocomplete="off">
+                                            <button type="button" id="subjectClearSearchBtn" class="btn btn-outline-secondary" style="display: none;">
+                                                <i class="ri-close-line"></i>
+                                            </button>
                                         </div>
 
-                                        <div class="no-results-message" id="noResultsMessage">
-                                            <i class="ri-search-eye-line me-2"></i>No matching subject-class assignments found.
+                                        <div id="subjectSearchResults" class="list-group mb-3" style="max-height: 300px; overflow-y: auto; display: none;"></div>
+                                        <div id="subjectSearchLoading" class="text-center p-3" style="display: none;">
+                                            <div class="spinner-border spinner-border-sm text-primary"></div>
+                                            <span class="ms-2">Searching...</span>
                                         </div>
 
-                                        <div class="subject-class-checkbox-group" id="subjectClassList">
-                                            @foreach ($subjectclasses as $sc)
-                                                @php
-                                                    $isCurrentSession = $currentSession && $currentSession->id == $sc->sessionid;
-                                                    $checkboxId = "add-subjectclass-{$sc->scid}";
-                                                    $itemClass = $isCurrentSession ? 'current-session-item' : 'non-current-session';
-
-                                                    $termColor = '';
-                                                    $termId = $sc->termid ?? 0;
-                                                    if ($termId == 1) {
-                                                        $termColor = 'term-first';
-                                                    } elseif ($termId == 2) {
-                                                        $termColor = 'term-second';
-                                                    } elseif ($termId == 3) {
-                                                        $termColor = 'term-third';
-                                                    }
-
-                                                    $displayText = ($sc->subjectname ?? 'N/A') .
-                                                                   ($sc->subjectcode ? ' (' . $sc->subjectcode . ')' : '') .
-                                                                   ' - ' . ($sc->sclass ?? 'N/A') .
-                                                                   ($sc->schoolarm ? ' (' . $sc->schoolarm . ')' : '') .
-                                                                   ' - ' . ($sc->teachername ?? 'N/A') .
-                                                                   ' -- ' . ($sc->sessionname ?? 'N/A') .
-                                                                   '--' . ($sc->termname ?? 'N/A');
-                                                    $searchableText = strtolower(($sc->subjectname ?? '') . ' ' . ($sc->subjectcode ?? '') . ' ' . ($sc->sclass ?? '') . ' ' . ($sc->schoolarm ?? '') . ' ' . ($sc->teachername ?? '') . ' ' . ($sc->sessionname ?? '') . ' ' . ($sc->termname ?? ''));
-                                                @endphp
-                                                <div class="form-check subject-class-item {{ $itemClass }}" data-search="{{ $searchableText }}">
-                                                    @if($isCurrentSession)
-                                                        <input class="form-check-input modal-checkbox"
-                                                               type="checkbox"
-                                                               name="subjectclassid[]"
-                                                               id="{{ $checkboxId }}"
-                                                               value="{{ $sc->scid }}"
-                                                               data-termid="{{ $sc->termid }}">
-                                                        <label class="form-check-label {{ $termColor }}" for="{{ $checkboxId }}">
-                                                            {{ $displayText }}
-                                                        </label>
-                                                    @else
-                                                        <div class="text-muted">
-                                                            {{ $displayText }}
-                                                            <small class="text-danger d-block mt-1">(Not available for current session)</small>
-                                                        </div>
-                                                    @endif
-                                                </div>
-                                            @endforeach
-                                        </div>
-
-                                        <div class="alert alert-light mt-3 p-2 border" id="subjectClassSelectionSummary">
-                                            <div class="d-flex justify-content-between align-items-center">
-                                                <span><i class="ri-checkbox-line me-1"></i> Selected: <strong id="selectedCount">0</strong> of <span id="totalCount">{{ count($subjectclasses->where('sessionid', $currentSession ? $currentSession->id : null)) }}</span> current session items</span>
-                                                <button type="button" class="btn btn-sm btn-link p-0" id="clearSelectionBtn">Clear All</button>
+                                        <div class="mt-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <h6 class="mb-0">Selected Subjects (<span id="subjectSelectedCount">0</span>)</h6>
+                                                <button type="button" id="subjectClearAllSelectedBtn" class="btn btn-sm btn-danger" style="display: none;">
+                                                    <i class="ri-delete-bin-line me-1"></i>Clear All
+                                                </button>
                                             </div>
+                                            <div id="subjectSelectedSubjectsContainer" class="border rounded p-2" style="min-height: 100px; max-height: 300px; overflow-y: auto;">
+                                                <div class="text-center text-muted py-3">No subjects selected</div>
+                                            </div>
+                                            <input type="hidden" name="subjectclassid[]" id="subjectSelectedSubjectIds">
                                         </div>
                                     </div>
 
-                                    <div class="alert alert-info">
-                                        <i class="ri-information-line me-2"></i>
-                                        <strong>Note:</strong> Only subject-class assignments from the current session ({{ $currentSession ? $currentSession->session : 'No active session' }}) are available for selection. Other sessions are disabled.
-                                    </div>
-                                    <div class="alert alert-danger d-none" id="alert-error-msg"></div>
+                                    <div class="alert alert-danger d-none" id="subject-alert-error-msg"></div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
-                                        <i class="ri-close-line me-1"></i>Cancel
-                                    </button>
-                                    <button type="submit" class="btn btn-primary" id="add-btn">
-                                        <i class="ri-save-line me-1"></i>Add Assignment
-                                    </button>
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary" id="subject-add-btn">Add Assignment(s)</button>
                                 </div>
                             </form>
                         </div>
                     </div>
                 </div>
 
-                <!-- Edit Subject Vetting Modal -->
-                <div id="editModal" class="modal fade" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true" data-bs-backdrop="static">
+                <!-- Edit Modal -->
+                <div id="editModal" class="modal fade" tabindex="-1" data-bs-backdrop="static">
                     <div class="modal-dialog modal-dialog-centered modal-lg">
                         <div class="modal-content">
                             <div class="modal-header bg-warning text-dark">
-                                <h5 id="editModalLabel" class="modal-title">
-                                    <i class="ri-edit-line me-2"></i>Edit Subject Vetting Assignment
-                                </h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <h5 class="modal-title"><i class="ri-edit-line me-2"></i>Edit Subject Vetting Assignment</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
-                            <form class="tablelist-form" autocomplete="off" id="edit-subjectvetting-form">
+                            <form id="edit-subjectvetting-form" action="" method="POST">
+                                @csrf
+                                @method('PUT')
                                 <div class="modal-body">
                                     <input type="hidden" id="edit-id-field" name="id">
                                     <div class="mb-3">
-                                        <label for="edit-userid" class="form-label fw-semibold">Vetting Staff <span class="text-danger">*</span></label>
+                                        <label class="form-label fw-semibold">Vetting Staff <span class="text-danger">*</span></label>
                                         <select name="userid" id="edit-userid" class="form-select" required>
                                             <option value="">Select Staff</option>
                                             @foreach ($staff as $staff_member)
@@ -1045,7 +464,7 @@
                                         </select>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit-termid" class="form-label fw-semibold">Term <span class="text-danger">*</span></label>
+                                        <label class="form-label fw-semibold">Term <span class="text-danger">*</span></label>
                                         <select name="termid" id="edit-termid" class="form-select" required>
                                             <option value="">Select Term</option>
                                             @foreach ($terms as $term)
@@ -1054,47 +473,25 @@
                                         </select>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit-sessionid" class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
+                                        <label class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
                                         <select name="sessionid" id="edit-sessionid" class="form-select" required>
                                             <option value="">Select Session</option>
                                             @foreach ($sessions as $session)
-                                                <option value="{{ $session->id }}">
-                                                    {{ $session->session }} @if($session->status == 'Current') (Current Session) @endif
-                                                </option>
+                                                <option value="{{ $session->id }}">{{ $session->session }} @if($session->status == 'Current') (Current Session) @endif</option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit-subjectclassid" class="form-label fw-semibold">Subject-Class <span class="text-danger">*</span></label>
+                                        <label class="form-label fw-semibold">Subject-Class <span class="text-danger">*</span></label>
                                         <select name="subjectclassid" id="edit-subjectclassid" class="form-select" required>
                                             <option value="">Select Subject-Class</option>
                                             @foreach ($subjectclasses as $sc)
-                                                @php
-                                                    $isCurrentSession = $currentSession && $currentSession->id == $sc->sessionid;
-                                                    $termColor = '';
-                                                    $termId = $sc->termid ?? 0;
-                                                    if ($termId == 1) $termColor = 'term-first';
-                                                    elseif ($termId == 2) $termColor = 'term-second';
-                                                    elseif ($termId == 3) $termColor = 'term-third';
-
-                                                    $displayText = ($sc->subjectname ?? 'N/A') .
-                                                                   ($sc->subjectcode ? ' (' . $sc->subjectcode . ')' : '') .
-                                                                   ' - ' . ($sc->sclass ?? 'N/A') .
-                                                                   ($sc->schoolarm ? ' (' . $sc->schoolarm . ')' : '') .
-                                                                   ' - ' . ($sc->teachername ?? 'N/A') .
-                                                                   ' -- ' . ($sc->sessionname ?? 'N/A') .
-                                                                   '--' . ($sc->termname ?? 'N/A');
-                                                @endphp
-                                                <option value="{{ $sc->scid }}" class="{{ $termColor }}" @if(!$isCurrentSession) disabled @endif>
-                                                    {{ $displayText }}
-                                                    @if(!$isCurrentSession) (Not available) @endif
-                                                </option>
+                                                <option value="{{ $sc->scid }}">{{ $sc->subjectname }} - {{ $sc->sclass }} ({{ $sc->schoolarm ?? 'N/A' }})</option>
                                             @endforeach
                                         </select>
-                                        <small class="text-muted">Note: Only current session subject-classes are available for editing</small>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="edit-status" class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
+                                        <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
                                         <select name="status" id="edit-status" class="form-select" required>
                                             <option value="pending">Pending</option>
                                             <option value="completed">Completed</option>
@@ -1104,20 +501,16 @@
                                     <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">
-                                        <i class="ri-close-line me-1"></i>Cancel
-                                    </button>
-                                    <button type="submit" class="btn btn-primary" id="update-btn">
-                                        <i class="ri-save-line me-1"></i>Update
-                                    </button>
+                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
                                 </div>
                             </form>
                         </div>
                     </div>
                 </div>
 
-                <!-- Delete Confirmation Modal -->
-                <div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-labelledby="deleteRecordModalLabel" aria-hidden="true">
+                <!-- Delete Modal -->
+                <div id="deleteRecordModal" class="modal fade" tabindex="-1">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
                             <div class="modal-body text-center p-4">
@@ -1132,808 +525,647 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Image Preview Modal -->
-                <div id="imageViewModal" class="modal fade" tabindex="-1" aria-labelledby="imageViewModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 id="imageViewModalLabel" class="modal-title">Staff Image Preview</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body text-center">
-                                <img id="preview-image" src="" alt="Staff Image" class="img-fluid rounded-circle" style="width: 150px; height: 150px; object-fit: cover;" />
-                                <p id="preview-teachername" class="mt-3 fw-bold mb-0"></p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/list.js/2.3.1/list.min.js"></script>
+
 <script>
-    window.vettingStatusCounts = @json($statusCounts);
-    window.currentSessionId = @json($currentSession ? $currentSession->id : null);
-    window.subjectVettingsData = @json($subjectvettings);
-    window.allSubjectVettings = @json($subjectvettings);
-    console.log('Initial vettingStatusCounts:', window.vettingStatusCounts);
-    console.log('Current Session ID:', window.currentSessionId);
+// Escape HTML helper
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
+// Get term color class based on term ID
+function getTermColorClass(termId) {
+    if (termId == 1) return 'term-first';
+    if (termId == 2) return 'term-second';
+    if (termId == 3) return 'term-third';
+    return '';
+}
 
-    /**
- * subjectvetting.init.js
- * Subject Vetting Management — Complete Script
- * Fix: Stats + chart read from List.js matchingItems (all pages),
- *      filter uses List.js .filter() instead of DOM row hiding,
- *      pagination works correctly across all pages.
- */
+function getTermBgClass(termId) {
+    if (termId == 1) return 'term-bg-first';
+    if (termId == 2) return 'term-bg-second';
+    if (termId == 3) return 'term-bg-third';
+    return '';
+}
 
-'use strict';
+// Main Subject Vetting Management
+let subjectSelectedSubjects = new Map();
+let subjectVettingList = null;
+let deleteId = null;
 
-// ─── State ────────────────────────────────────────────────────────────────────
-let currentView         = 'table';
-let currentCardPage     = 1;
-const cardsPerPage      = 9;
-let currentTermFilter   = '';
-let currentSessionFilter = '';
-let subjectVettingList  = null;
-let vettingStatusChart  = null;
-let deleteId            = null;
+// Initialize when document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSubjectListJS();
+    initializeSubjectFilters();
+    initializeSubjectTableSearch();
+    initializeSubjectAddForm();
+    initializeSubjectEditForm();
+    initializeSubjectDelete();
+    initializeSubjectBulkDelete();
+    initializeSubjectSelect2();
+    updateSubjectStatsFromList();
+});
 
-// ─── Stats (reads ALL matchingItems, not just visible page) ──────────────────
-function updateStatsFromList() {
+function initializeSubjectListJS() {
+    try {
+        subjectVettingList = new List('subjectVettingList', {
+            valueNames: ['sn', 'vetting_username', 'subjectname', 'sclass', 'schoolarm', 'teachername', 'termname', 'sessionname', 'status', 'datereg'],
+            page: 10,
+            pagination: { paginationClass: 'listjs-pagination' }
+        });
+        subjectVettingList.on('updated', updateSubjectStatsFromList);
+        console.log('List.js initialized successfully');
+    } catch(e) {
+        console.error('ListJS init error:', e);
+    }
+}
+
+function initializeSubjectTableSearch() {
+    const searchInput = document.getElementById('tableSearchInput');
+    if (searchInput && subjectVettingList) {
+        searchInput.addEventListener('keyup', function() {
+            subjectVettingList.search(this.value);
+        });
+    }
+}
+
+function updateSubjectStatsFromList() {
     if (!subjectVettingList) return;
-
-    const items = subjectVettingList.matchingItems; // full filtered set
+    const items = subjectVettingList.matchingItems;
     let total = items.length, pending = 0, completed = 0, rejected = 0;
-
     items.forEach(item => {
-        const status = (item.elm.getAttribute('data-status') || 'pending').toLowerCase().trim();
-        if (status === 'pending')   pending++;
+        const status = (item.elm.getAttribute('data-status') || 'pending').toLowerCase();
+        if (status === 'pending') pending++;
         else if (status === 'completed') completed++;
-        else if (status === 'rejected')  rejected++;
+        else if (status === 'rejected') rejected++;
+    });
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-completed').textContent = completed;
+    document.getElementById('stat-rejected').textContent = rejected;
+    const showingEl = document.getElementById('showing-records');
+    if (showingEl) showingEl.textContent = Math.min(total, 10);
+    const totalEl = document.getElementById('total-records-footer');
+    if (totalEl) totalEl.textContent = total;
+}
+
+function initializeSubjectFilters() {
+    const termFilter = document.getElementById('term-filter-stats');
+    const sessionFilter = document.getElementById('session-filter-stats');
+    const resetBtn = document.getElementById('reset-stats-btn');
+
+    if (termFilter) {
+        termFilter.addEventListener('change', () => applySubjectFilters());
+    }
+    if (sessionFilter) {
+        sessionFilter.addEventListener('change', () => applySubjectFilters());
+    }
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            if (termFilter) termFilter.value = '';
+            if (sessionFilter) sessionFilter.value = '';
+            applySubjectFilters();
+        });
+    }
+
+    // Stat card filters
+    document.querySelectorAll('#statsCardsRow .stat-card-clickable').forEach(card => {
+        card.addEventListener('click', () => {
+            const status = card.getAttribute('data-status');
+            if (!subjectVettingList) return;
+            if (status === 'all') {
+                subjectVettingList.filter();
+            } else {
+                subjectVettingList.filter(item => {
+                    const itemStatus = (item.elm.getAttribute('data-status') || 'pending').toLowerCase();
+                    return itemStatus === status;
+                });
+            }
+        });
+    });
+}
+
+function applySubjectFilters() {
+    if (!subjectVettingList) return;
+    const termFilter = document.getElementById('term-filter-stats').value;
+    const sessionFilter = document.getElementById('session-filter-stats').value;
+    if (!termFilter && !sessionFilter) {
+        subjectVettingList.filter();
+    } else {
+        subjectVettingList.filter(item => {
+            const rowTerm = item.elm.getAttribute('data-term') || '';
+            const rowSession = item.elm.getAttribute('data-session') || '';
+            const termOk = !termFilter || rowTerm === termFilter;
+            const sessionOk = !sessionFilter || rowSession === sessionFilter;
+            return termOk && sessionOk;
+        });
+    }
+}
+
+// ========== ADD FORM AJAX SUBJECT SEARCH ==========
+function initializeSubjectAddForm() {
+    const form = document.getElementById('add-subjectvetting-form');
+    if (!form) return;
+
+    const searchInput = document.getElementById('subjectSearchInput');
+    const resultsDiv = document.getElementById('subjectSearchResults');
+    const loadingDiv = document.getElementById('subjectSearchLoading');
+    const clearSearchBtn = document.getElementById('subjectClearSearchBtn');
+    let searchTimeout;
+
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value.trim();
+            clearTimeout(searchTimeout);
+            if (query.length < 2) {
+                resultsDiv.style.display = 'none';
+                clearSearchBtn.style.display = 'none';
+                return;
+            }
+            clearSearchBtn.style.display = 'block';
+            loadingDiv.style.display = 'block';
+            resultsDiv.style.display = 'none';
+
+            searchTimeout = setTimeout(() => {
+                const excludeIds = Array.from(subjectSelectedSubjects.keys()).join(',');
+                fetch(`/api/subject-classes/search?q=${encodeURIComponent(query)}&exclude_ids=${excludeIds}`, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.json())
+                .then(response => {
+                    loadingDiv.style.display = 'none';
+                    if (!response.success) {
+                        resultsDiv.innerHTML = `<div class="list-group-item text-danger">${response.message || 'Search failed'}</div>`;
+                        resultsDiv.style.display = 'block';
+                        return;
+                    }
+                    const data = response.data;
+                    if (data.length === 0) {
+                        resultsDiv.innerHTML = '<div class="list-group-item text-muted">No results found</div>';
+                        resultsDiv.style.display = 'block';
+                        return;
+                    }
+                    resultsDiv.innerHTML = data.map(item => {
+                        const termColorClass = getTermColorClass(item.termid);
+                        const termBgClass = getTermBgClass(item.termid);
+                        return `
+                            <div class="list-group-item subject-search-item ${termBgClass}" data-id="${item.id}">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <div class="fw-bold">
+                                            ${escapeHtml(item.subjectname)}
+                                            ${item.subjectcode ? `<span class="text-muted">(${escapeHtml(item.subjectcode)})</span>` : ''}
+                                        </div>
+                                        <div class="small text-muted mt-1">
+                                            <i class="ri-group-line me-1"></i> Class: ${escapeHtml(item.sclass)} ${item.schoolarm ? `(${escapeHtml(item.schoolarm)})` : ''}<br>
+                                            <i class="ri-user-line me-1"></i> Teacher: ${escapeHtml(item.teachername)}<br>
+                                            <i class="ri-calendar-line me-1"></i> Session: ${escapeHtml(item.sessionname)}<br>
+                                            <i class="ri-calendar-event-line me-1"></i> Term: <span class="${termColorClass} fw-bold">${escapeHtml(item.termname)}</span>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-primary add-subject-btn">
+                                        <i class="ri-add-line me-1"></i>Add
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    resultsDiv.style.display = 'block';
+                })
+                .catch(error => {
+                    console.error('Search error:', error);
+                    loadingDiv.style.display = 'none';
+                    resultsDiv.innerHTML = '<div class="list-group-item text-danger">Network error</div>';
+                    resultsDiv.style.display = 'block';
+                });
+            }, 500);
+        });
+    }
+
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            resultsDiv.style.display = 'none';
+            clearSearchBtn.style.display = 'none';
+        });
+    }
+
+    // Add subject handler
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.add-subject-btn')) {
+            const btn = e.target.closest('.add-subject-btn');
+            const item = btn.closest('.subject-search-item');
+            if (item) {
+                const id = item.dataset.id;
+                const name = item.querySelector('.fw-bold')?.innerText || '';
+                if (!subjectSelectedSubjects.has(id)) {
+                    const detailsHtml = item.querySelector('.small')?.innerHTML || '';
+                    subjectSelectedSubjects.set(id, { id, name, detailsHtml });
+                    updateSubjectSelectedDisplay();
+                    item.remove();
+                    showTempMessage('Subject added', 'success');
+                    if (resultsDiv.children.length === 0) {
+                        resultsDiv.style.display = 'none';
+                        searchInput.value = '';
+                        clearSearchBtn.style.display = 'none';
+                    }
+                } else {
+                    showTempMessage('Already selected', 'warning');
+                }
+            }
+        }
     });
 
-    document.getElementById('stat-total').textContent     = total;
-    document.getElementById('stat-pending').textContent   = pending;
-    document.getElementById('stat-completed').textContent = completed;
-    document.getElementById('stat-rejected').textContent  = rejected;
+    // Clear all button
+    const clearAllBtn = document.getElementById('subjectClearAllSelectedBtn');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', () => {
+            if (confirm('Clear all selected subjects?')) {
+                subjectSelectedSubjects.clear();
+                updateSubjectSelectedDisplay();
+            }
+        });
+    }
 
-    const showingEl = document.getElementById('showing-records');
-    const totalEl   = document.getElementById('total-records-footer');
-    if (showingEl) showingEl.textContent = Math.min(total, 10);
-    if (totalEl)   totalEl.textContent   = total;
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        submitSubjectAddForm();
+    });
 
-    updateChart(pending, completed, rejected);
-    if (currentView === 'card') renderCardView();
-}
-
-// ─── Chart ────────────────────────────────────────────────────────────────────
-function updateChart(pending, completed, rejected) {
-    if (!vettingStatusChart) return;
-    vettingStatusChart.data.datasets[0].data = [pending, completed, rejected];
-    vettingStatusChart.update('none');
-}
-
-function initializeVettingStatusChart() {
-    const ctx = document.getElementById('vettingStatusChart')?.getContext('2d');
-    if (!ctx) return;
-    if (vettingStatusChart) vettingStatusChart.destroy();
-
-    vettingStatusChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Pending', 'Completed', 'Rejected'],
-            datasets: [{
-                label: 'Vetting Assignments',
-                data: [0, 0, 0],
-                backgroundColor: ['#dc3545', '#28a745', '#ffc107'],
-                borderWidth: 1,
-                borderRadius: 8,
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
-            plugins: { legend: { display: false } }
+    // Reset on modal close
+    document.getElementById('addSubjectVettingModal')?.addEventListener('hidden.bs.modal', () => {
+        form.reset();
+        subjectSelectedSubjects.clear();
+        updateSubjectSelectedDisplay();
+        if (searchInput) searchInput.value = '';
+        if (resultsDiv) resultsDiv.style.display = 'none';
+        const errorEl = document.getElementById('subject-alert-error-msg');
+        if (errorEl) errorEl.classList.add('d-none');
+        if (typeof $ !== 'undefined' && $.fn.select2) {
+            $('#subject-userid').val('').trigger('change');
         }
     });
 }
 
-// ─── List.js Filter (term + session) ─────────────────────────────────────────
-function applyListFilter() {
-    if (!subjectVettingList) return;
+function updateSubjectSelectedDisplay() {
+    const container = document.getElementById('subjectSelectedSubjectsContainer');
+    const countSpan = document.getElementById('subjectSelectedCount');
+    const hiddenInput = document.getElementById('subjectSelectedSubjectIds');
+    const clearAllBtn = document.getElementById('subjectClearAllSelectedBtn');
+    const count = subjectSelectedSubjects.size;
 
-    if (!currentTermFilter && !currentSessionFilter) {
-        subjectVettingList.filter(); // clear — show all
-    } else {
-        subjectVettingList.filter(item => {
-            const el         = item.elm;
-            const rowTerm    = el.getAttribute('data-term')    || '';
-            const rowSession = el.getAttribute('data-session') || '';
-            const termOk    = !currentTermFilter    || rowTerm    === currentTermFilter;
-            const sessionOk = !currentSessionFilter || rowSession === currentSessionFilter;
-            return termOk && sessionOk;
-        });
-    }
+    if (countSpan) countSpan.textContent = count;
+    if (hiddenInput) hiddenInput.value = Array.from(subjectSelectedSubjects.keys()).join(',');
+    if (clearAllBtn) clearAllBtn.style.display = count > 0 ? 'block' : 'none';
 
-    currentCardPage = 1;
-    // 'updated' event fires automatically → updateStatsFromList() called there
-}
-
-// ─── List.js Init ─────────────────────────────────────────────────────────────
-function initializeListJS() {
-    try {
-        subjectVettingList = new List('subjectVettingList', {
-            valueNames: [
-                'sn', 'vetting_username', 'subjectname', 'sclass',
-                'schoolarm', 'teachername', 'termname', 'sessionname',
-                'status', 'datereg'
-            ],
-            page: 10,
-            pagination: { paginationClass: 'listjs-pagination' }
-        });
-
-        subjectVettingList.on('updated', updateStatsFromList);
-        console.log('✅ List.js initialized');
-    } catch (e) {
-        console.error('List.js init failed:', e);
-    }
-}
-
-// ─── Card View ────────────────────────────────────────────────────────────────
-function renderCardView() {
-    const container = document.getElementById('cardsContainer');
-    if (!container || !subjectVettingList) return;
-
-    const items = subjectVettingList.matchingItems; // respects search + filter
-    container.innerHTML = '';
-
-    if (!items.length) {
-        container.innerHTML = `
-            <div class="col-12 text-center py-5">
-                <i class="ri-inbox-line fs-48 text-muted"></i>
-                <h5 class="mt-3">No Subject Vetting Assignments Found</h5>
-            </div>`;
-        document.getElementById('card-showing-records').textContent = 0;
-        document.getElementById('card-total-records').textContent   = 0;
-        renderCardPagination(0, 0);
+    if (count === 0) {
+        if (container) container.innerHTML = '<div class="text-center text-muted py-3">No subjects selected</div>';
         return;
     }
 
-    const totalPages = Math.ceil(items.length / cardsPerPage);
-    if (currentCardPage > totalPages) currentCardPage = totalPages || 1;
-
-    const start     = (currentCardPage - 1) * cardsPerPage;
-    const pageItems = items.slice(start, start + cardsPerPage);
-
-    pageItems.forEach(item => {
-        const row        = item.elm;
-        const vettingName = row.querySelector('.vetting_username h6')?.textContent.trim() || 'N/A';
-        const subject    = row.querySelector('.subjectname .fw-medium')?.textContent.trim() || 'N/A';
-        const subjectCode = row.querySelector('.subjectname small')?.textContent.trim() || '';
-        const sclass     = row.querySelector('.sclass')?.textContent.trim()     || 'N/A';
-        const arm        = row.querySelector('.schoolarm')?.textContent.trim()  || '';
-        const teacher    = row.querySelector('.teachername')?.textContent.trim()|| 'N/A';
-        const term       = row.querySelector('.termname')?.textContent.trim()   || 'N/A';
-        const session    = row.querySelector('.sessionname')?.textContent.trim()|| 'N/A';
-        const statusText = row.querySelector('.status span')?.textContent.trim()|| 'Pending';
-        const updated    = row.querySelector('.datereg small')?.textContent.trim() || 'N/A';
-
-        const statusLower = statusText.toLowerCase();
-        const statusClass = statusLower.includes('completed') ? 'completed'
-                          : statusLower.includes('pending')   ? 'pending' : 'rejected';
-        const icon = statusLower.includes('completed') ? 'ri-checkbox-circle-line'
-                   : statusLower.includes('pending')   ? 'ri-time-line' : 'ri-close-circle-line';
-        const badgeClass = statusClass === 'completed' ? 'badge-completed'
-                         : statusClass === 'pending'   ? 'badge-pending' : 'badge-rejected';
-
-        // Grab data attributes for edit/delete
-        const svid           = row.getAttribute('data-id')    || '';
-        const deleteUrl      = row.getAttribute('data-url')   || '';
-        const vettingUserId  = row.querySelector('.vetting_username')?.getAttribute('data-vetting_userid') || '';
-        const subjectclassid = row.querySelector('.subjectname')?.getAttribute('data-subjectclassid')      || '';
-        const termid         = row.querySelector('.termname')?.getAttribute('data-termid')                 || '';
-        const sessionid      = row.querySelector('.sessionname')?.getAttribute('data-sessionid')           || '';
-        const subtid         = row.querySelector('.teachername')?.getAttribute('data-subtid')              || '';
-
-        container.insertAdjacentHTML('beforeend', `
-            <div class="col-md-6 col-xl-4">
-                <div class="vetting-card ${statusClass}-card"
-                     data-id="${svid}"
-                     data-url="${deleteUrl}"
-                     data-status="${statusClass}"
-                     data-term="${termid}"
-                     data-session="${sessionid}">
-                    <div class="card-header-info">
-                        <div class="staff-info-card">
-                            <div class="staff-avatar-card">${vettingName.charAt(0).toUpperCase()}</div>
-                            <div>
-                                <h6 class="mb-0">${vettingName}</h6>
-                                <small class="text-muted">Vetting Staff</small>
-                            </div>
-                        </div>
-                        <span class="badge-status ${badgeClass}">
-                            <i class="${icon} me-1"></i>${statusText}
-                        </span>
-                    </div>
-                    <div class="card-details">
-                        <div class="detail-item">
-                            <i class="ri-book-open-line"></i>
-                            <span><strong>Subject:</strong> ${subject}${subjectCode ? ` <small class="text-muted">(${subjectCode})</small>` : ''}</span>
-                        </div>
-                        <div class="detail-item">
-                            <i class="ri-group-line"></i>
-                            <span><strong>Class:</strong> ${sclass}${arm ? ` (${arm})` : ''}</span>
-                        </div>
-                        <div class="detail-item">
-                            <i class="ri-user-line"></i>
-                            <span><strong>Teacher:</strong> ${teacher}</span>
-                        </div>
-                        <div class="detail-item">
-                            <i class="ri-calendar-line"></i>
-                            <span><strong>Term:</strong> ${term}</span>
-                        </div>
-                        <div class="detail-item">
-                            <i class="ri-calendar-event-line"></i>
-                            <span><strong>Session:</strong> ${session}</span>
-                        </div>
-                        <div class="detail-item">
-                            <i class="ri-time-line"></i>
-                            <span><strong>Updated:</strong> ${updated}</span>
-                        </div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn btn-light btn-sm action-btn card-edit-btn"
-                                data-id="${svid}"
-                                data-vetting_userid="${vettingUserId}"
-                                data-subjectclassid="${subjectclassid}"
-                                data-termid="${termid}"
-                                data-sessionid="${sessionid}"
-                                data-status="${statusClass}"
-                                title="Edit">
-                            <i class="ri-pencil-line"></i>
-                        </button>
-                        <button class="btn btn-light btn-sm action-btn text-danger card-delete-btn"
-                                data-id="${svid}"
-                                data-url="${deleteUrl}"
-                                title="Delete">
-                            <i class="ri-delete-bin-line"></i>
-                        </button>
-                    </div>
+    let html = '';
+    for (let [id, subject] of subjectSelectedSubjects) {
+        html += `
+            <div class="selected-subject-item d-flex justify-content-between align-items-center p-2 mb-2 bg-light rounded">
+                <div>
+                    <strong>${escapeHtml(subject.name)}</strong>
+                    <div class="small">${subject.detailsHtml || ''}</div>
                 </div>
-            </div>`);
-    });
-
-    document.getElementById('card-showing-records').textContent = pageItems.length;
-    document.getElementById('card-total-records').textContent   = items.length;
-    renderCardPagination(items.length, totalPages);
-}
-
-function renderCardPagination(total, totalPages) {
-    const ul = document.querySelector('.card-pagination');
-    if (!ul) return;
-    ul.innerHTML = '';
-    if (totalPages <= 1) return;
-
-    const prev = document.createElement('li');
-    prev.className = `page-item${currentCardPage === 1 ? ' disabled' : ''}`;
-    prev.innerHTML = `<a class="page-link" href="#">&laquo;</a>`;
-    prev.addEventListener('click', e => {
-        e.preventDefault();
-        if (currentCardPage > 1) { currentCardPage--; renderCardView(); }
-    });
-    ul.appendChild(prev);
-
-    for (let i = 1; i <= totalPages; i++) {
-        const li = document.createElement('li');
-        li.className = `page-item${i === currentCardPage ? ' active' : ''}`;
-        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-        li.addEventListener('click', e => {
-            e.preventDefault();
-            currentCardPage = i;
-            renderCardView();
-        });
-        ul.appendChild(li);
+                <button type="button" class="btn btn-sm btn-link text-danger remove-subject-btn" data-id="${id}">
+                    <i class="ri-close-line"></i>
+                </button>
+            </div>
+        `;
     }
+    if (container) container.innerHTML = html;
 
-    const next = document.createElement('li');
-    next.className = `page-item${currentCardPage === totalPages ? ' disabled' : ''}`;
-    next.innerHTML = `<a class="page-link" href="#">&raquo;</a>`;
-    next.addEventListener('click', e => {
-        e.preventDefault();
-        if (currentCardPage < totalPages) { currentCardPage++; renderCardView(); }
-    });
-    ul.appendChild(next);
-}
-
-// ─── Term & Session Filters ───────────────────────────────────────────────────
-function initializeTermAndSessionFilters() {
-    const termFilter    = document.getElementById('term-filter-stats');
-    const sessionFilter = document.getElementById('session-filter-stats');
-    const resetBtn      = document.getElementById('reset-stats-btn');
-
-    if (termFilter) {
-        termFilter.addEventListener('change', () => {
-            currentTermFilter = termFilter.value;
-            applyListFilter();
-        });
-    }
-
-    if (sessionFilter) {
-        sessionFilter.addEventListener('change', () => {
-            currentSessionFilter = sessionFilter.value;
-            applyListFilter();
-        });
-    }
-
-    if (resetBtn) {
-        resetBtn.addEventListener('click', () => {
-            currentTermFilter = currentSessionFilter = '';
-            if (termFilter)    termFilter.value    = '';
-            if (sessionFilter) sessionFilter.value = '';
-            applyListFilter();
-        });
-    }
-}
-
-// ─── Stat Card Click Filter ───────────────────────────────────────────────────
-function initializeStatCardFilters() {
-    document.querySelectorAll('.stat-card-clickable').forEach(card => {
-        card.addEventListener('click', () => {
-            const status = card.getAttribute('data-status');
-
-            document.querySelectorAll('.stat-card-clickable').forEach(c => c.classList.remove('active-stat'));
-            card.classList.add('active-stat');
-
-            if (!subjectVettingList) return;
-
-            if (status === 'all') {
-                subjectVettingList.filter(item => {
-                    return applyTermSessionFilter(item);
-                });
-            } else {
-                subjectVettingList.filter(item => {
-                    const itemStatus = (item.elm.getAttribute('data-status') || 'pending').toLowerCase();
-                    return itemStatus === status && applyTermSessionFilter(item);
-                });
-            }
-            currentCardPage = 1;
+    document.querySelectorAll('.remove-subject-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            subjectSelectedSubjects.delete(id);
+            updateSubjectSelectedDisplay();
+            showTempMessage('Subject removed', 'info');
         });
     });
 }
 
-function applyTermSessionFilter(item) {
-    const el         = item.elm;
-    const rowTerm    = el.getAttribute('data-term')    || '';
-    const rowSession = el.getAttribute('data-session') || '';
-    const termOk    = !currentTermFilter    || rowTerm    === currentTermFilter;
-    const sessionOk = !currentSessionFilter || rowSession === currentSessionFilter;
-    return termOk && sessionOk;
-}
-
-// ─── View Toggle ──────────────────────────────────────────────────────────────
-function initializeViewToggle() {
-    const tableBtn       = document.getElementById('tableViewBtn');
-    const cardBtn        = document.getElementById('cardViewBtn');
-    const tableContainer = document.querySelector('.table-view-container');
-    const cardContainer  = document.getElementById('cardViewContainer');
-    if (!tableBtn || !cardBtn) return;
-
-    tableBtn.addEventListener('click', () => {
-        currentView = 'table';
-        tableBtn.classList.add('active');    cardBtn.classList.remove('active');
-        tableContainer?.classList.remove('hide'); cardContainer?.classList.remove('active');
-    });
-
-    cardBtn.addEventListener('click', () => {
-        currentView = 'card';
-        cardBtn.classList.add('active');     tableBtn.classList.remove('active');
-        tableContainer?.classList.add('hide');   cardContainer?.classList.add('active');
-        currentCardPage = 1;
-        renderCardView();
-    });
-}
-
-// ─── Add Assignment ───────────────────────────────────────────────────────────
-function initializeAddForm() {
+function submitSubjectAddForm() {
     const form = document.getElementById('add-subjectvetting-form');
-    if (!form) return;
-
-    // Subject-class search
-    const searchInput = document.getElementById('subjectClassSearch');
-    if (searchInput) {
-        searchInput.addEventListener('input', function () {
-            const query = this.value.toLowerCase().trim();
-            const items = document.querySelectorAll('.subject-class-item');
-            let hasResults = false;
-
-            items.forEach(item => {
-                const text = (item.getAttribute('data-search') || '').toLowerCase();
-                const match = !query || text.includes(query);
-                item.style.display = match ? '' : 'none';
-                if (match && item.classList.contains('current-session-item')) hasResults = true;
-            });
-
-            const noResults = document.getElementById('noResultsMessage');
-            if (noResults) noResults.style.display = hasResults ? 'none' : 'block';
-        });
-    }
-
-    // Selection counter
-    const checkboxes = document.querySelectorAll('#subjectClassList .form-check-input[name="subjectclassid[]"]');
-    checkboxes.forEach(cb => {
-        cb.addEventListener('change', updateSelectionCount);
-    });
-
-    const clearBtn = document.getElementById('clearSelectionBtn');
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            checkboxes.forEach(cb => cb.checked = false);
-            updateSelectionCount();
-        });
-    }
-
-    // Form submit
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        submitAddForm();
-    });
-}
-
-function updateSelectionCount() {
-    const checked = document.querySelectorAll('#subjectClassList .form-check-input[name="subjectclassid[]"]:checked').length;
-    const total   = document.querySelectorAll('#subjectClassList .form-check-input[name="subjectclassid[]"]').length;
-    const countEl = document.getElementById('selectedCount');
-    const totalEl = document.getElementById('totalCount');
-    if (countEl) countEl.textContent = checked;
-    if (totalEl) totalEl.textContent = total;
-}
-
-function submitAddForm() {
-    const form    = document.getElementById('add-subjectvetting-form');
-    const errorEl = document.getElementById('alert-error-msg');
-    const addBtn  = document.getElementById('add-btn');
+    const errorEl = document.getElementById('subject-alert-error-msg');
+    const submitBtn = document.getElementById('subject-add-btn');
 
     const formData = new FormData(form);
+    const selectedIds = Array.from(subjectSelectedSubjects.keys());
 
-    // Validate
     if (!formData.get('userid')) {
-        showFormError(errorEl, 'Please select a vetting staff member.');
+        showSubjectError(errorEl, 'Please select a vetting staff member.');
         return;
     }
     if (!formData.get('sessionid')) {
-        showFormError(errorEl, 'Please select a session.');
+        showSubjectError(errorEl, 'Please select a session.');
         return;
     }
-    if (!formData.getAll('termid[]').length) {
-        showFormError(errorEl, 'Please select at least one term.');
+    const terms = formData.getAll('termid[]');
+    if (terms.length === 0) {
+        showSubjectError(errorEl, 'Please select at least one term.');
         return;
     }
-    if (!formData.getAll('subjectclassid[]').length) {
-        showFormError(errorEl, 'Please select at least one subject-class assignment.');
+    if (selectedIds.length === 0) {
+        showSubjectError(errorEl, 'Please select at least one subject-class assignment.');
+        return;
+    }
+
+    formData.delete('subjectclassid[]');
+    selectedIds.forEach(id => {
+        formData.append('subjectclassid[]', id);
+    });
+
+    if (errorEl) errorEl.classList.add('d-none');
+    if (submitBtn) submitBtn.disabled = true;
+
+    const actionUrl = form.getAttribute('action');
+
+    fetch(actionUrl, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addSubjectVettingModal'));
+            if (modal) modal.hide();
+            showToast(data.message || 'Assignment(s) added successfully!', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            let msg = data.message || 'An error occurred';
+            if (data.errors) {
+                msg = Object.values(data.errors).flat().join('<br>');
+            }
+            showSubjectError(errorEl, msg);
+        }
+    })
+    .catch(error => {
+        console.error('Submit error:', error);
+        showSubjectError(errorEl, 'Network error. Please try again.');
+    })
+    .finally(() => {
+        if (submitBtn) submitBtn.disabled = false;
+    });
+}
+
+// ========== EDIT FORM ==========
+function initializeSubjectEditForm() {
+    document.querySelector('#kt_subject_vetting_table tbody')?.addEventListener('click', function(e) {
+        const btn = e.target.closest('.edit-item-btn');
+        if (!btn) return;
+        const row = btn.closest('tr');
+        if (row) populateSubjectEditModal(row);
+    });
+
+    const form = document.getElementById('edit-subjectvetting-form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            submitSubjectEditForm();
+        });
+    }
+}
+
+function populateSubjectEditModal(row) {
+    const id = row.getAttribute('data-id');
+    const vettingUserId = row.getAttribute('data-vetting-userid') || '';
+    const termid = row.getAttribute('data-term') || '';
+    const sessionid = row.getAttribute('data-session') || '';
+    const subjectclassid = row.getAttribute('data-subjectclassid') || '';
+    const status = row.getAttribute('data-status') || 'pending';
+
+    document.getElementById('edit-id-field').value = id;
+    document.getElementById('edit-userid').value = vettingUserId;
+    document.getElementById('edit-termid').value = termid;
+    document.getElementById('edit-sessionid').value = sessionid;
+    document.getElementById('edit-subjectclassid').value = subjectclassid;
+    document.getElementById('edit-status').value = status;
+
+    const modal = new bootstrap.Modal(document.getElementById('editModal'));
+    modal.show();
+}
+
+function submitSubjectEditForm() {
+    const id = document.getElementById('edit-id-field').value;
+    const errorEl = document.getElementById('edit-alert-error-msg');
+    const submitBtn = document.getElementById('update-btn');
+    const form = document.getElementById('edit-subjectvetting-form');
+    const formData = new FormData(form);
+
+    if (!formData.get('userid')) {
+        showSubjectError(errorEl, 'Please select a vetting staff member.');
+        return;
+    }
+    if (!formData.get('termid')) {
+        showSubjectError(errorEl, 'Please select a term.');
+        return;
+    }
+    if (!formData.get('sessionid')) {
+        showSubjectError(errorEl, 'Please select a session.');
+        return;
+    }
+    if (!formData.get('subjectclassid')) {
+        showSubjectError(errorEl, 'Please select a subject-class assignment.');
         return;
     }
 
     if (errorEl) errorEl.classList.add('d-none');
-    if (addBtn)  addBtn.disabled = true;
+    if (submitBtn) submitBtn.disabled = true;
 
-    fetch(window.subjectVettingStoreUrl || '/subject-vettings', {
+    fetch(`/subjectvetting/${id}`, {
         method: 'POST',
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
             'Accept': 'application/json',
+            'X-HTTP-Method-Override': 'PUT'
         },
         body: formData
     })
     .then(res => res.json())
     .then(data => {
-        if (data.success || data.status === 'success') {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('addSubjectVettingModal'));
-            if (modal) modal.hide();
-            showToast('Assignment created successfully!', 'success');
-            setTimeout(() => location.reload(), 800);
-        } else {
-            showFormError(errorEl, data.message || 'An error occurred. Please try again.');
-        }
-    })
-    .catch(() => {
-        showFormError(errorEl, 'Network error. Please try again.');
-    })
-    .finally(() => {
-        if (addBtn) addBtn.disabled = false;
-    });
-}
-
-// ─── Edit Assignment ──────────────────────────────────────────────────────────
-function initializeEditForm() {
-    const form = document.getElementById('edit-subjectvetting-form');
-    if (!form) return;
-
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        submitEditForm();
-    });
-
-    // Table edit buttons
-    document.querySelector('#kt_subject_vetting_table tbody')?.addEventListener('click', function (e) {
-        const btn = e.target.closest('.edit-item-btn');
-        if (!btn) return;
-        const row = btn.closest('tr');
-        if (row) populateEditModal(row);
-    });
-
-    // Card edit buttons (delegated)
-    document.getElementById('cardsContainer')?.addEventListener('click', function (e) {
-        const btn = e.target.closest('.card-edit-btn');
-        if (!btn) return;
-        populateEditModalFromCard(btn);
-    });
-}
-
-function populateEditModal(row) {
-    const svid         = row.getAttribute('data-id')     || '';
-    const vettingUserId = row.querySelector('.vetting_username')?.getAttribute('data-vetting_userid') || '';
-    const termid       = row.querySelector('.termname')?.getAttribute('data-termid')                   || '';
-    const sessionid    = row.querySelector('.sessionname')?.getAttribute('data-sessionid')             || '';
-    const subjectclassid = row.querySelector('.subjectname')?.getAttribute('data-subjectclassid')      || '';
-    const status       = row.getAttribute('data-status') || 'pending';
-
-    document.getElementById('edit-id-field').value       = svid;
-    document.getElementById('edit-userid').value         = vettingUserId;
-    document.getElementById('edit-termid').value         = termid;
-    document.getElementById('edit-sessionid').value      = sessionid;
-    document.getElementById('edit-subjectclassid').value = subjectclassid;
-    document.getElementById('edit-status').value         = status;
-
-    const modal = new bootstrap.Modal(document.getElementById('editModal'));
-    modal.show();
-}
-
-function populateEditModalFromCard(btn) {
-    document.getElementById('edit-id-field').value       = btn.getAttribute('data-id')            || '';
-    document.getElementById('edit-userid').value         = btn.getAttribute('data-vetting_userid') || '';
-    document.getElementById('edit-termid').value         = btn.getAttribute('data-termid')         || '';
-    document.getElementById('edit-sessionid').value      = btn.getAttribute('data-sessionid')      || '';
-    document.getElementById('edit-subjectclassid').value = btn.getAttribute('data-subjectclassid') || '';
-    document.getElementById('edit-status').value         = btn.getAttribute('data-status')         || 'pending';
-
-    const modal = new bootstrap.Modal(document.getElementById('editModal'));
-    modal.show();
-}
-
-function submitEditForm() {
-    const form    = document.getElementById('edit-subjectvetting-form');
-    const errorEl = document.getElementById('edit-alert-error-msg');
-    const updateBtn = document.getElementById('update-btn');
-    const id      = document.getElementById('edit-id-field').value;
-
-    if (!id) { showFormError(errorEl, 'Invalid record ID.'); return; }
-
-    const formData = new FormData(form);
-    formData.append('_method', 'PUT');
-
-    if (updateBtn) updateBtn.disabled = true;
-
-    fetch(`/subject-vettings/${id}`, {
-        method: 'POST',
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-            'Accept': 'application/json',
-        },
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success || data.status === 'success') {
+        if (data.success) {
             const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
             if (modal) modal.hide();
             showToast('Assignment updated successfully!', 'success');
-            setTimeout(() => location.reload(), 800);
+            setTimeout(() => location.reload(), 1500);
         } else {
-            showFormError(errorEl, data.message || 'An error occurred.');
+            let msg = data.message || 'Update failed';
+            if (data.errors) msg = Object.values(data.errors).flat().join('<br>');
+            if (errorEl) {
+                errorEl.innerHTML = msg;
+                errorEl.classList.remove('d-none');
+            }
         }
     })
-    .catch(() => showFormError(errorEl, 'Network error. Please try again.'))
-    .finally(() => { if (updateBtn) updateBtn.disabled = false; });
+    .catch(error => {
+        console.error('Update error:', error);
+        if (errorEl) {
+            errorEl.innerHTML = 'Network error. Please try again.';
+            errorEl.classList.remove('d-none');
+        }
+    })
+    .finally(() => {
+        if (submitBtn) submitBtn.disabled = false;
+    });
 }
 
-// ─── Delete ───────────────────────────────────────────────────────────────────
-function initializeDelete() {
-    // Table delete buttons
-    document.querySelector('#kt_subject_vetting_table tbody')?.addEventListener('click', function (e) {
+// ========== DELETE ==========
+function initializeSubjectDelete() {
+    document.querySelector('#kt_subject_vetting_table tbody')?.addEventListener('click', function(e) {
         const btn = e.target.closest('.remove-item-btn');
         if (!btn) return;
         const row = btn.closest('tr');
         if (row) {
             deleteId = row.getAttribute('data-id');
-            window._deleteUrl = row.getAttribute('data-url');
             const modal = new bootstrap.Modal(document.getElementById('deleteRecordModal'));
             modal.show();
         }
     });
 
-    // Card delete buttons (delegated)
-    document.getElementById('cardsContainer')?.addEventListener('click', function (e) {
-        const btn = e.target.closest('.card-delete-btn');
-        if (!btn) return;
-        deleteId = btn.getAttribute('data-id');
-        window._deleteUrl = btn.getAttribute('data-url');
-        const modal = new bootstrap.Modal(document.getElementById('deleteRecordModal'));
-        modal.show();
-    });
-
-    // Confirm delete
-    document.getElementById('delete-record')?.addEventListener('click', function () {
-        if (!deleteId || !window._deleteUrl) return;
-
+    document.getElementById('delete-record')?.addEventListener('click', function() {
+        if (!deleteId) return;
         this.disabled = true;
 
-        fetch(window._deleteUrl, {
+        fetch(`/subjectvetting/${deleteId}`, {
             method: 'DELETE',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                'Accept': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+                'Accept': 'application/json'
             }
         })
         .then(res => res.json())
         .then(data => {
             const modal = bootstrap.Modal.getInstance(document.getElementById('deleteRecordModal'));
             if (modal) modal.hide();
-            if (data.success || data.status === 'success') {
-                showToast('Record deleted successfully!', 'success');
-                setTimeout(() => location.reload(), 800);
+            if (data.success) {
+                showToast('Assignment deleted successfully!', 'success');
+                setTimeout(() => location.reload(), 1500);
             } else {
-                showToast(data.message || 'Could not delete record.', 'danger');
+                showToast(data.message || 'Delete failed', 'danger');
             }
         })
-        .catch(() => showToast('Network error. Please try again.', 'danger'))
-        .finally(() => { this.disabled = false; });
+        .catch(error => {
+            console.error('Delete error:', error);
+            showToast('Network error', 'danger');
+        })
+        .finally(() => { this.disabled = false; deleteId = null; });
     });
 }
 
-// ─── Bulk Delete ──────────────────────────────────────────────────────────────
-function initializeBulkDelete() {
-    const checkAll  = document.getElementById('checkAll');
-    const removeBtn = document.getElementById('remove-actions');
-
+// ========== BULK DELETE ==========
+function initializeSubjectBulkDelete() {
+    const checkAll = document.getElementById('checkAll');
     if (checkAll) {
-        checkAll.addEventListener('change', function () {
-            document.querySelectorAll('input[name="chk_child"]').forEach(cb => {
-                cb.checked = this.checked;
-            });
-            toggleRemoveBtn();
+        checkAll.addEventListener('change', function() {
+            document.querySelectorAll('input[name="chk_child"]').forEach(cb => cb.checked = this.checked);
+            toggleSubjectRemoveBtn();
         });
     }
-
-    document.querySelector('#kt_subject_vetting_table tbody')?.addEventListener('change', function (e) {
-        if (e.target.name === 'chk_child') toggleRemoveBtn();
+    document.querySelector('#kt_subject_vetting_table tbody')?.addEventListener('change', function(e) {
+        if (e.target.name === 'chk_child') toggleSubjectRemoveBtn();
     });
-
-    function toggleRemoveBtn() {
-        const anyChecked = document.querySelectorAll('input[name="chk_child"]:checked').length > 0;
-        if (removeBtn) removeBtn.classList.toggle('d-none', !anyChecked);
-    }
 }
 
-window.deleteMultiple = function () {
+function toggleSubjectRemoveBtn() {
+    const anyChecked = document.querySelectorAll('input[name="chk_child"]:checked').length > 0;
+    const removeBtn = document.getElementById('remove-actions');
+    if (removeBtn) removeBtn.classList.toggle('d-none', !anyChecked);
+}
+
+window.deleteMultiple = function() {
     const ids = Array.from(document.querySelectorAll('input[name="chk_child"]:checked')).map(cb => cb.value);
     if (!ids.length) return;
+    if (!confirm(`Delete ${ids.length} record(s)?`)) return;
 
-    if (!confirm(`Are you sure you want to delete ${ids.length} record(s)?`)) return;
-
-    fetch('/subject-vettings/bulk-delete', {
+    fetch('/subjectvetting/bulk-delete', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-            'Accept': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+            'Accept': 'application/json'
         },
         body: JSON.stringify({ ids })
     })
     .then(res => res.json())
     .then(data => {
-        if (data.success || data.status === 'success') {
+        if (data.success) {
             showToast(`${ids.length} record(s) deleted.`, 'success');
-            setTimeout(() => location.reload(), 800);
+            setTimeout(() => location.reload(), 1500);
         } else {
-            showToast(data.message || 'Could not delete records.', 'danger');
+            showToast(data.message || 'Delete failed', 'danger');
         }
     })
-    .catch(() => showToast('Network error.', 'danger'));
+    .catch(error => {
+        console.error('Bulk delete error:', error);
+        showToast('Network error', 'danger');
+    });
 };
 
-// ─── Image Preview Modal ──────────────────────────────────────────────────────
-function initializeImagePreview() {
-    document.querySelectorAll('.staff-image').forEach(img => {
-        img.addEventListener('click', function () {
-            const src         = this.getAttribute('data-image')      || this.src;
-            const teacherName = this.getAttribute('data-teachername') || '';
-            const previewImg  = document.getElementById('preview-image');
-            const previewName = document.getElementById('preview-teachername');
-            if (previewImg)  previewImg.src         = src;
-            if (previewName) previewName.textContent = teacherName;
-        });
-    });
-}
-
-// ─── Search ───────────────────────────────────────────────────────────────────
-function initializeSearch() {
-    const searchInput = document.querySelector('.search-box input.search');
-    if (!searchInput) return;
-
-    searchInput.addEventListener('input', () => {
-        if (subjectVettingList) {
-            subjectVettingList.search(searchInput.value);
-            // 'updated' event fires → updateStatsFromList() called automatically
-        }
-    });
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-function showFormError(el, message) {
+// ========== HELPER FUNCTIONS ==========
+function showSubjectError(el, message) {
     if (!el) return;
-    el.textContent = message;
+    el.innerHTML = message;
     el.classList.remove('d-none');
+    setTimeout(() => el.classList.add('d-none'), 5000);
 }
 
 function showToast(message, type = 'success') {
-    // Uses Bootstrap toasts if available, else alert
-    const toastContainer = document.getElementById('toast-container');
-    if (!toastContainer) {
-        // Fallback: simple alert-style notification
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
-        alertDiv.style.zIndex = 9999;
-        alertDiv.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
-        document.body.appendChild(alertDiv);
-        setTimeout(() => alertDiv.remove(), 3500);
-        return;
-    }
-
-    const id   = 'toast-' + Date.now();
-    const html = `
-        <div id="${id}" class="toast align-items-center text-white bg-${type} border-0" role="alert">
-            <div class="d-flex">
-                <div class="toast-body">${message}</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-        </div>`;
-    toastContainer.insertAdjacentHTML('beforeend', html);
-    const toast = new bootstrap.Toast(document.getElementById(id));
-    toast.show();
-    setTimeout(() => document.getElementById(id)?.remove(), 4000);
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+    toast.style.zIndex = 9999;
+    toast.style.minWidth = '280px';
+    toast.style.maxWidth = '400px';
+    toast.innerHTML = `${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
 }
 
-// ─── Boot ─────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', function () {
-    initializeListJS();
-    initializeVettingStatusChart();
-    initializeTermAndSessionFilters();
-    initializeStatCardFilters();
-    initializeViewToggle();
-    initializeAddForm();
-    initializeEditForm();
-    initializeDelete();
-    initializeBulkDelete();
-    initializeImagePreview();
-    initializeSearch();
+function showTempMessage(message, type = 'info') {
+    const div = document.createElement('div');
+    div.className = `alert alert-${type} alert-dismissible fade show position-fixed bottom-0 end-0 m-3`;
+    div.style.zIndex = 9999;
+    div.style.minWidth = '250px';
+    div.innerHTML = message;
+    document.body.appendChild(div);
+    setTimeout(() => div.remove(), 2000);
+}
 
-    // Initial stats load after List.js has settled
-    setTimeout(updateStatsFromList, 250);
-
-    console.log('✅ Subject Vetting fully initialized');
-});
-
+function initializeSubjectSelect2() {
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+        $('#subject-userid').select2({
+            dropdownParent: $('#addSubjectVettingModal'),
+            placeholder: 'Select Staff',
+            width: '100%'
+        });
+        $('#edit-userid').select2({
+            dropdownParent: $('#editModal'),
+            placeholder: 'Select Staff',
+            width: '100%'
+        });
+    }
+}
 </script>
-
 @endsection
-

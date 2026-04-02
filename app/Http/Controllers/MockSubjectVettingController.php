@@ -425,4 +425,46 @@ class MockSubjectVettingController extends Controller
             ], 500);
         }
     }
+
+
+    public function bulkDelete(Request $request)
+{
+    try {
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No records selected for deletion.'
+            ], 422);
+        }
+
+        DB::transaction(function () use ($ids) {
+            $vettings = MockSubjectVetting::whereIn('id', $ids)->get();
+
+            foreach ($vettings as $vetting) {
+                // Update related broadsheets if they exist
+                BroadsheetsMock::where('vettedby', $vetting->userid)
+                    ->where('subjectclass_id', $vetting->subjectclassId)
+                    ->where('term_id', $vetting->termid)
+                    ->update([
+                        'vettedby' => null,
+                        'vettedstatus' => null
+                    ]);
+            }
+
+            MockSubjectVetting::whereIn('id', $ids)->delete();
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => count($ids) . ' record(s) deleted successfully.'
+        ], 200);
+    } catch (\Exception $e) {
+        Log::error('Error in bulk delete: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Error deleting records: ' . $e->getMessage()
+        ], 500);
+    }
+}
 }

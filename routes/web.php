@@ -484,13 +484,20 @@ Route::post('/reports/generate', [StudentResultsController::class, 'generateRepo
     Route::get('/my-principals-comment/broadsheet-pdf/{schoolclassid}/{sessionid}/{termid}', [MyPrincipalsCommentController::class, 'exportPdf'])->name('myprincipalscomment.exportPdf');
 
 
-        // Add these to your existing routes
-    Route::get('/api/subject-classes/search', [MockSubjectVettingController::class, 'searchSubjectClasses'])->name('api.subject-classes.search');
-    Route::post('/api/subject-classes/details', [MockSubjectVettingController::class, 'getSelectedSubjectClasses'])->name('api.subject-classes.details');
+    // Add these routes to your routes/web.php file
+    Route::get('/api/subject-classes/search', [SubjectVettingController::class, 'searchSubjectClasses'])->name('api.subject-classes.search');
+    Route::post('/api/subject-classes/details', [SubjectVettingController::class, 'getSelectedSubjectClasses'])->name('api.subject-classes.details');
 
+    // For Mock Subject Vetting (if not already added)
+    Route::get('/api/mock-subject-classes/search', [MockSubjectVettingController::class, 'searchSubjectClasses'])->name('api.mock-subject-classes.search');
+    Route::post('/api/mock-subject-classes/details', [MockSubjectVettingController::class, 'getSelectedSubjectClasses'])->name('api.mock-subject-classes.details');
 
     Route::resource('subjectvetting', SubjectVettingController::class);
     Route::resource('mocksubjectvetting', MockSubjectVettingController::class);
+
+    // Bulk delete routes
+    Route::post('/subjectvetting/bulk-delete', [SubjectVettingController::class, 'bulkDelete'])->name('subjectvetting.bulkDelete');
+    Route::post('/mocksubjectvetting/bulk-delete', [MockSubjectVettingController::class, 'bulkDelete'])->name('mocksubjectvetting.bulkDelete');
 
 
     Route::get('/mysubjectvettings', [MySubjectVettingsController::class, 'index'])->name('mysubjectvettings.index');
