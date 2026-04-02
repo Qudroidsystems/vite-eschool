@@ -47,6 +47,7 @@
             @endif
 
             <style>
+                /* Stats Card Styles */
                 .stats-card {
                     transition: all 0.3s ease;
                     border: none;
@@ -67,6 +68,8 @@
                     border-radius: 12px;
                     font-size: 24px;
                 }
+
+                /* Status Badge Styles */
                 .badge-status {
                     padding: 6px 12px;
                     border-radius: 20px;
@@ -110,13 +113,14 @@
                     border-left-color: transparent !important;
                 }
 
-                /* Ensure border disappears on hover for all status types */
+                /* Specific hover states for each status */
                 .table-row-pending:hover,
                 .table-row-completed:hover,
                 .table-row-rejected:hover {
                     border-left-color: transparent !important;
                 }
 
+                /* Action Buttons */
                 .action-btn {
                     width: 32px;
                     height: 32px;
@@ -129,24 +133,24 @@
                 .action-btn:hover {
                     transform: scale(1.1);
                 }
+
+                /* Filter Card */
                 .filter-card {
                     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
                     border: none;
                     border-radius: 1rem;
                 }
+
+                /* Animations */
                 @keyframes fadeInUp {
-                    from {
-                        opacity: 0;
-                        transform: translateY(20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
                 .animate-fade-in-up {
                     animation: fadeInUp 0.5s ease-out;
                 }
+
+                /* Selected Subject Items */
                 .selected-subject-item {
                     transition: all 0.2s ease;
                 }
@@ -154,6 +158,8 @@
                     background-color: #f8f9fa;
                     transform: translateX(5px);
                 }
+
+                /* Search Results */
                 .subject-search-item {
                     cursor: pointer;
                     transition: all 0.2s ease;
@@ -188,6 +194,7 @@
                     border-left: 3px solid #f59e0b;
                 }
 
+                /* Search Box */
                 .search-box .search-icon {
                     position: absolute;
                     right: 15px;
@@ -200,15 +207,14 @@
                     position: relative;
                 }
 
-                /* Remove Actions Button */
-                .btn-subtle-danger {
-                    background-color: #f8d7da;
-                    color: #dc3545;
-                    border: none;
+                /* Stat Card Active State */
+                .stat-card-clickable {
+                    cursor: pointer;
+                    transition: all 0.3s ease;
                 }
-                .btn-subtle-danger:hover {
-                    background-color: #dc3545;
-                    color: white;
+                .stat-card-clickable.active-stat {
+                    border: 2px solid #0d6efd;
+                    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
                 }
             </style>
 
@@ -237,9 +243,7 @@
                                         <select class="form-select form-select-lg" id="mock-session-filter-stats">
                                             <option value="">All Sessions</option>
                                             @foreach ($sessions as $session)
-                                                <option value="{{ $session->id }}" {{ ($currentSession && $currentSession->id == $session->id) ? 'selected' : '' }}>
-                                                    {{ $session->session }} @if($session->status == 'Current') (Current) @endif
-                                                </option>
+                                                <option value="{{ $session->id }}">{{ $session->session }}</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -334,9 +338,6 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6 text-end">
-                                        <button class="btn btn-subtle-danger d-none" id="mock-remove-actions" onclick="mockDeleteMultiple()">
-                                            <i class="ri-delete-bin-2-line me-1"></i> Delete Selected
-                                        </button>
                                         @can('Create mock-subject-vettings')
                                             <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addMockSubjectVettingModal">
                                                 <i class="ri-add-line me-1"></i> Create Assignment
@@ -363,16 +364,16 @@
                                                         <input class="form-check-input" type="checkbox" id="mockCheckAll" />
                                                     </div>
                                                 </th>
-                                                <th class="sort cursor-pointer" data-sort="sn">#</th>
-                                                <th class="sort cursor-pointer" data-sort="vetting_username">Vetting Staff</th>
-                                                <th class="sort cursor-pointer" data-sort="subjectname">Subject</th>
-                                                <th class="sort cursor-pointer" data-sort="sclass">Class</th>
-                                                <th class="sort cursor-pointer" data-sort="schoolarm">Arm</th>
-                                                <th class="sort cursor-pointer" data-sort="teachername">Teacher</th>
-                                                <th class="sort cursor-pointer" data-sort="termname">Term</th>
-                                                <th class="sort cursor-pointer" data-sort="sessionname">Session</th>
-                                                <th class="sort cursor-pointer" data-sort="status">Status</th>
-                                                <th class="sort cursor-pointer" data-sort="datereg">Updated</th>
+                                                <th>#</th>
+                                                <th>Vetting Staff</th>
+                                                <th>Subject</th>
+                                                <th>Class</th>
+                                                <th>Arm</th>
+                                                <th>Teacher</th>
+                                                <th>Term</th>
+                                                <th>Session</th>
+                                                <th>Status</th>
+                                                <th>Updated</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
@@ -405,15 +406,14 @@
                                                     data-session="{{ $sv->sessionid }}"
                                                     data-subjectclassid="{{ $sv->subjectclassid }}"
                                                     data-vetting-userid="{{ $sv->vetting_userid }}"
-                                                    data-url="{{ route('mocksubjectvetting.destroy', $sv->svid) }}"
                                                     class="table-row-hover {{ $rowStatusClass }}">
                                                     <td>
                                                         <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox" name="mock_chk_child" value="{{ $sv->svid }}" />
+                                                            <input class="form-check-input" type="checkbox" name="chk_child" value="{{ $sv->svid }}" />
                                                         </div>
                                                     </div>
                                                     <td class="sn fw-bold">{{ ++$i }}</td>
-                                                    <td class="vetting_username" data-vetting_userid="{{ $sv->vetting_userid }}">
+                                                    <td class="vetting_username">
                                                         <div class="d-flex align-items-center">
                                                             <div class="flex-shrink-0">
                                                                 <div class="avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center">
@@ -427,24 +427,19 @@
                                                                 <h6 class="mb-0">{{ $sv->vetting_username ?? 'N/A' }}</h6>
                                                             </div>
                                                         </div>
-                                                    </div>
-                                                    <td class="subjectname" data-subjectclassid="{{ $sv->subjectclassid }}">
-                                                        <span class="fw-medium">{{ $sv->subjectname ?? 'N/A' }}</span>
-                                                        @if($sv->subjectcode)
-                                                            <small class="text-muted d-block">{{ $sv->subjectcode }}</small>
-                                                        @endif
-                                                    </div>
-                                                    <td class="sclass">{{ $sv->sclass ?? 'N/A' }}</div>
-                                                    <td class="schoolarm">{{ $sv->schoolarm ?? 'N/A' }}</div>
-                                                    <td class="teachername">{{ $sv->teachername ?? 'N/A' }}</div>
-                                                    <td class="termname {{ $termColorClass }}" data-termid="{{ $sv->termid }}">{{ $sv->termname ?? 'N/A' }}</div>
-                                                    <td class="sessionname" data-sessionid="{{ $sv->sessionid }}">{{ $sv->sessionname ?? 'N/A' }}</div>
+                                                    </td>
+                                                    <td class="subjectname">{{ $sv->subjectname ?? 'N/A' }}</td>
+                                                    <td class="sclass">{{ $sv->sclass ?? 'N/A' }}</td>
+                                                    <td class="schoolarm">{{ $sv->schoolarm ?? 'N/A' }}</td>
+                                                    <td class="teachername">{{ $sv->teachername ?? 'N/A' }}</td>
+                                                    <td class="termname {{ $termColorClass }}">{{ $sv->termname ?? 'N/A' }}</td>
+                                                    <td class="sessionname">{{ $sv->sessionname ?? 'N/A' }}</td>
                                                     <td class="status">
                                                         <span class="badge-status {{ $statusClass }}">
                                                             {{ ucfirst($sv->status ?? 'pending') }}
                                                         </span>
-                                                    </div>
-                                                    <td class="datereg">{{ $sv->updated_at ? $sv->updated_at->format('d M, Y') : 'N/A' }}</div>
+                                                    </td>
+                                                    <td class="datereg">{{ $sv->updated_at ? $sv->updated_at->format('d M, Y') : 'N/A' }}</td>
                                                     <td>
                                                         <div class="d-flex gap-2">
                                                             @can('Update mock-subject-vettings')
@@ -458,27 +453,26 @@
                                                                 </a>
                                                             @endcan
                                                         </div>
-                                                    </div>
+                                                    </td>
                                                 </tr>
                                             @empty
                                                 <tr class="noresult">
                                                     <td colspan="12" class="text-center py-5">
                                                         <i class="ri-inbox-line fs-48 text-muted"></i>
                                                         <h5 class="mt-3">No Mock Subject Vetting Assignments Found</h5>
-                                                        <p class="text-muted">No assignments found for the selected session.</p>
+                                                        <p class="text-muted">No assignments found for the selected filters.</p>
                                                         @can('Create mock-subject-vettings')
                                                             <button type="button" class="btn btn-primary add-btn mt-2" data-bs-toggle="modal" data-bs-target="#addMockSubjectVettingModal">
                                                                 <i class="ri-add-line me-1"></i> Create Your First Assignment
                                                             </button>
                                                         @endcan
-                                                    </div>
+                                                    </td>
                                                 </tr>
                                             @endforelse
                                         </tbody>
                                     </table>
                                 </div>
 
-                                <!-- Pagination -->
                                 <div class="row mt-4 align-items-center" id="mock-pagination-element">
                                     <div class="col-sm">
                                         <div class="text-muted text-center text-sm-start">
@@ -525,9 +519,7 @@
                                                 <select name="sessionid" id="mock-sessionid" class="form-select" required>
                                                     <option value="">Select Session</option>
                                                     @foreach ($sessions as $session)
-                                                        <option value="{{ $session->id }}" {{ ($currentSession && $currentSession->id == $session->id) ? 'selected' : '' }}>
-                                                            {{ $session->session }} @if($session->status == 'Current') (Current Session) @endif
-                                                        </option>
+                                                        <option value="{{ $session->id }}">{{ $session->session }}</option>
                                                     @endforeach
                                                 </select>
                                             </div>
@@ -562,7 +554,7 @@
 
                                         <div class="input-group mb-3">
                                             <span class="input-group-text"><i class="ri-search-line"></i></span>
-                                            <input type="text" id="mockSearchInput" class="form-control"
+                                            <input type="text" id="mockSubjectSearchInput" class="form-control"
                                                    placeholder="Search by subject, class, teacher, term, or session... (min 2 characters)"
                                                    autocomplete="off">
                                             <button type="button" id="mockClearSearchBtn" class="btn btn-outline-secondary" style="display: none;">
@@ -603,7 +595,7 @@
 
                 <!-- Edit Modal -->
                 <div id="editMockModal" class="modal fade" tabindex="-1" data-bs-backdrop="static">
-                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-dialog modal-dialog-centered modal-xl">
                         <div class="modal-content">
                             <div class="modal-header bg-warning text-dark">
                                 <h5 class="modal-title"><i class="ri-edit-line me-2"></i>Edit Mock Subject Vetting Assignment</h5>
@@ -613,43 +605,89 @@
                                 @csrf
                                 @method('PUT')
                                 <div class="modal-body">
-                                    <input type="hidden" id="mock-edit-id-field" name="id">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold">Vetting Staff <span class="text-danger">*</span></label>
-                                        <select name="userid" id="mock-edit-userid" class="form-select" required>
-                                            <option value="">Select Staff</option>
-                                            @foreach ($staff as $staff_member)
-                                                <option value="{{ $staff_member->id }}">{{ $staff_member->name }}</option>
-                                            @endforeach
-                                        </select>
+                                    <input type="hidden" name="id" id="mock-edit-id-field">
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">Vetting Staff <span class="text-danger">*</span></label>
+                                                <select name="userid" id="mock-edit-userid" class="form-select select2" required>
+                                                    <option value="">Select Staff</option>
+                                                    @foreach ($staff as $staff_member)
+                                                        <option value="{{ $staff_member->id }}">{{ $staff_member->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
+                                                <select name="sessionid" id="mock-edit-sessionid" class="form-select" required>
+                                                    <option value="">Select Session</option>
+                                                    @foreach ($sessions as $session)
+                                                        <option value="{{ $session->id }}">{{ $session->session }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
                                     </div>
+
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">Term <span class="text-danger">*</span></label>
-                                        <select name="termid" id="mock-edit-termid" class="form-select" required>
-                                            <option value="">Select Term</option>
+                                        <div class="p-3 bg-light rounded">
                                             @foreach ($terms as $term)
-                                                <option value="{{ $term->id }}">{{ $term->term }}</option>
+                                                @php
+                                                    $termColor = match($term->id) {
+                                                        1 => 'text-primary',
+                                                        2 => 'text-success',
+                                                        3 => 'text-warning',
+                                                        default => ''
+                                                    };
+                                                @endphp
+                                                <div class="form-check form-check-inline me-3">
+                                                    <input class="form-check-input edit-term-checkbox" type="radio" name="termid" value="{{ $term->id }}" id="mock-edit-term-{{ $term->id }}">
+                                                    <label class="form-check-label {{ $termColor }}" for="mock-edit-term-{{ $term->id }}">
+                                                        <strong>{{ $term->term }}</strong>
+                                                    </label>
+                                                </div>
                                             @endforeach
-                                        </select>
+                                        </div>
                                     </div>
+
+                                    <!-- AJAX Subject Search Section for Edit (Single selection) -->
                                     <div class="mb-3">
-                                        <label class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
-                                        <select name="sessionid" id="mock-edit-sessionid" class="form-select" required>
-                                            <option value="">Select Session</option>
-                                            @foreach ($sessions as $session)
-                                                <option value="{{ $session->id }}">{{ $session->session }} @if($session->status == 'Current') (Current Session) @endif</option>
-                                            @endforeach
-                                        </select>
+                                        <label class="form-label fw-semibold">Subject-Class Assignment <span class="text-danger">*</span></label>
+
+                                        <div class="input-group mb-3">
+                                            <span class="input-group-text"><i class="ri-search-line"></i></span>
+                                            <input type="text" id="mockEditSubjectSearchInput" class="form-control"
+                                                   placeholder="Search by subject, class, teacher, term, or session... (min 2 characters)"
+                                                   autocomplete="off">
+                                            <button type="button" id="mockEditClearSearchBtn" class="btn btn-outline-secondary" style="display: none;">
+                                                <i class="ri-close-line"></i>
+                                            </button>
+                                        </div>
+
+                                        <div id="mockEditSearchResults" class="list-group mb-3" style="max-height: 300px; overflow-y: auto; display: none;"></div>
+                                        <div id="mockEditSearchLoading" class="text-center p-3" style="display: none;">
+                                            <div class="spinner-border spinner-border-sm text-primary"></div>
+                                            <span class="ms-2">Searching...</span>
+                                        </div>
+
+                                        <div class="mt-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <h6 class="mb-0">Selected Subject</h6>
+                                                <button type="button" id="mockEditClearSelectedBtn" class="btn btn-sm btn-danger" style="display: none;">
+                                                    <i class="ri-delete-bin-line me-1"></i>Clear Selection
+                                                </button>
+                                            </div>
+                                            <div id="mockEditSelectedSubjectContainer" class="border rounded p-2" style="min-height: 80px;">
+                                                <div class="text-center text-muted py-3">No subject selected</div>
+                                            </div>
+                                            <input type="hidden" name="subjectclassid" id="mockEditSelectedSubjectId">
+                                        </div>
                                     </div>
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold">Subject-Class <span class="text-danger">*</span></label>
-                                        <select name="subjectclassid" id="mock-edit-subjectclassid" class="form-select" required>
-                                            <option value="">Select Subject-Class</option>
-                                            @foreach ($subjectclasses as $sc)
-                                                <option value="{{ $sc->scid }}">{{ $sc->subjectname }} - {{ $sc->sclass }} ({{ $sc->schoolarm ?? 'N/A' }})</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
                                         <select name="status" id="mock-edit-status" class="form-select" required>
@@ -658,11 +696,12 @@
                                             <option value="rejected">Rejected</option>
                                         </select>
                                     </div>
+
                                     <div class="alert alert-danger d-none" id="mock-edit-alert-error-msg"></div>
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="submit" class="btn btn-primary" id="mock-update-btn">Update</button>
+                                    <button type="submit" class="btn btn-primary" id="mock-edit-btn">Update Assignment</button>
                                 </div>
                             </form>
                         </div>
@@ -670,7 +709,7 @@
                 </div>
 
                 <!-- Delete Modal -->
-                <div id="mockDeleteRecordModal" class="modal fade" tabindex="-1">
+                <div id="deleteRecordModal" class="modal fade" tabindex="-1">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
                             <div class="modal-body text-center p-4">
@@ -679,7 +718,7 @@
                                 <p class="text-muted mb-4">You won't be able to revert this!</p>
                                 <div class="d-flex gap-2 justify-content-center">
                                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="button" class="btn btn-danger" id="mock-delete-record">Yes, Delete It!</button>
+                                    <button type="button" class="btn btn-danger" id="delete-record">Yes, Delete It!</button>
                                 </div>
                             </div>
                         </div>
@@ -696,7 +735,7 @@
 
 <script>
 // Escape HTML helper
-function mockEscapeHtml(text) {
+function escapeHtml(text) {
     if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
@@ -704,14 +743,14 @@ function mockEscapeHtml(text) {
 }
 
 // Get term color class based on term ID
-function mockGetTermColorClass(termId) {
+function getTermColorClass(termId) {
     if (termId == 1) return 'term-first';
     if (termId == 2) return 'term-second';
     if (termId == 3) return 'term-third';
     return '';
 }
 
-function mockGetTermBgClass(termId) {
+function getTermBgClass(termId) {
     if (termId == 1) return 'term-bg-first';
     if (termId == 2) return 'term-bg-second';
     if (termId == 3) return 'term-bg-third';
@@ -722,7 +761,9 @@ function mockGetTermBgClass(termId) {
 let mockSelectedSubjects = new Map();
 let mockSubjectVettingList = null;
 let mockDeleteId = null;
-let mockDeleteUrl = null;
+
+// Edit modal variables
+let mockEditSelectedSubject = null;
 
 // Initialize when document is ready
 document.addEventListener('DOMContentLoaded', function() {
@@ -745,9 +786,9 @@ function initializeMockListJS() {
             pagination: { paginationClass: 'mock-listjs-pagination' }
         });
         mockSubjectVettingList.on('updated', updateMockStatsFromList);
-        console.log('Mock List.js initialized successfully');
+        console.log('List.js initialized successfully');
     } catch(e) {
-        console.error('Mock ListJS init error:', e);
+        console.error('ListJS init error:', e);
     }
 }
 
@@ -757,6 +798,7 @@ function initializeMockTableSearch() {
         searchInput.addEventListener('keyup', function() {
             mockSubjectVettingList.search(this.value);
         });
+        console.log('Table search initialized');
     }
 }
 
@@ -804,6 +846,11 @@ function initializeMockFilters() {
         card.addEventListener('click', () => {
             const status = card.getAttribute('data-status');
             if (!mockSubjectVettingList) return;
+
+            // Remove active class from all stat cards
+            document.querySelectorAll('#mockStatsCardsRow .stat-card-clickable').forEach(c => c.classList.remove('active-stat'));
+            card.classList.add('active-stat');
+
             if (status === 'all') {
                 mockSubjectVettingList.filter();
             } else {
@@ -838,7 +885,7 @@ function initializeMockAddForm() {
     const form = document.getElementById('add-mocksubjectvetting-form');
     if (!form) return;
 
-    const searchInput = document.getElementById('mockSearchInput');
+    const searchInput = document.getElementById('mockSubjectSearchInput');
     const resultsDiv = document.getElementById('mockSearchResults');
     const loadingDiv = document.getElementById('mockSearchLoading');
     const clearSearchBtn = document.getElementById('mockClearSearchBtn');
@@ -859,7 +906,7 @@ function initializeMockAddForm() {
 
             searchTimeout = setTimeout(() => {
                 const excludeIds = Array.from(mockSelectedSubjects.keys()).join(',');
-                fetch(`/api/subject-classes/search?q=${encodeURIComponent(query)}&exclude_ids=${excludeIds}`, {
+                fetch(`/api/mock-subject-classes/search?q=${encodeURIComponent(query)}&exclude_ids=${excludeIds}`, {
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
                         'Accept': 'application/json'
@@ -880,21 +927,21 @@ function initializeMockAddForm() {
                         return;
                     }
                     resultsDiv.innerHTML = data.map(item => {
-                        const termColorClass = mockGetTermColorClass(item.termid);
-                        const termBgClass = mockGetTermBgClass(item.termid);
+                        const termColorClass = getTermColorClass(item.termid);
+                        const termBgClass = getTermBgClass(item.termid);
                         return `
                             <div class="list-group-item subject-search-item ${termBgClass}" data-id="${item.id}">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div class="flex-grow-1">
                                         <div class="fw-bold">
-                                            ${mockEscapeHtml(item.subjectname)}
-                                            ${item.subjectcode ? `<span class="text-muted">(${mockEscapeHtml(item.subjectcode)})</span>` : ''}
+                                            ${escapeHtml(item.subjectname)}
+                                            ${item.subjectcode ? `<span class="text-muted">(${escapeHtml(item.subjectcode)})</span>` : ''}
                                         </div>
                                         <div class="small text-muted mt-1">
-                                            <i class="ri-group-line me-1"></i> Class: ${mockEscapeHtml(item.sclass)} ${item.schoolarm ? `(${mockEscapeHtml(item.schoolarm)})` : ''}<br>
-                                            <i class="ri-user-line me-1"></i> Teacher: ${mockEscapeHtml(item.teachername)}<br>
-                                            <i class="ri-calendar-line me-1"></i> Session: ${mockEscapeHtml(item.sessionname)}<br>
-                                            <i class="ri-calendar-event-line me-1"></i> Term: <span class="${termColorClass} fw-bold">${mockEscapeHtml(item.termname)}</span>
+                                            <i class="ri-group-line me-1"></i> Class: ${escapeHtml(item.sclass)} ${item.schoolarm ? `(${escapeHtml(item.schoolarm)})` : ''}<br>
+                                            <i class="ri-user-line me-1"></i> Teacher: ${escapeHtml(item.teachername)}<br>
+                                            <i class="ri-calendar-line me-1"></i> Session: ${escapeHtml(item.sessionname)}<br>
+                                            <i class="ri-calendar-event-line me-1"></i> Term: <span class="${termColorClass} fw-bold">${escapeHtml(item.termname)}</span>
                                         </div>
                                     </div>
                                     <button type="button" class="btn btn-sm btn-primary add-subject-btn">
@@ -1003,7 +1050,7 @@ function updateMockSelectedDisplay() {
         html += `
             <div class="selected-subject-item d-flex justify-content-between align-items-center p-2 mb-2 bg-light rounded">
                 <div>
-                    <strong>${mockEscapeHtml(subject.name)}</strong>
+                    <strong>${escapeHtml(subject.name)}</strong>
                     <div class="small">${subject.detailsHtml || ''}</div>
                 </div>
                 <button type="button" class="btn btn-sm btn-link text-danger remove-subject-btn" data-id="${id}">
@@ -1092,7 +1139,7 @@ function submitMockAddForm() {
     });
 }
 
-// ========== EDIT FORM ==========
+// ========== EDIT FORM WITH AJAX SUBJECT SEARCH ==========
 function initializeMockEditForm() {
     document.querySelector('#kt_mock_subject_vetting_table tbody')?.addEventListener('click', function(e) {
         const btn = e.target.closest('.edit-item-btn');
@@ -1108,6 +1155,164 @@ function initializeMockEditForm() {
             submitMockEditForm();
         });
     }
+
+    // Initialize edit modal search
+    initializeMockEditSubjectSearch();
+}
+
+function initializeMockEditSubjectSearch() {
+    const searchInput = document.getElementById('mockEditSubjectSearchInput');
+    const resultsDiv = document.getElementById('mockEditSearchResults');
+    const loadingDiv = document.getElementById('mockEditSearchLoading');
+    const clearSearchBtn = document.getElementById('mockEditClearSearchBtn');
+    let searchTimeout;
+
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        clearTimeout(searchTimeout);
+        if (query.length < 2) {
+            resultsDiv.style.display = 'none';
+            clearSearchBtn.style.display = 'none';
+            return;
+        }
+        clearSearchBtn.style.display = 'block';
+        loadingDiv.style.display = 'block';
+        resultsDiv.style.display = 'none';
+
+        searchTimeout = setTimeout(() => {
+            const excludeId = mockEditSelectedSubject ? mockEditSelectedSubject.id : '';
+            fetch(`/api/mock-subject-classes/search?q=${encodeURIComponent(query)}&exclude_ids=${excludeId}`, {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(response => {
+                loadingDiv.style.display = 'none';
+                if (!response.success) {
+                    resultsDiv.innerHTML = `<div class="list-group-item text-danger">${response.message || 'Search failed'}</div>`;
+                    resultsDiv.style.display = 'block';
+                    return;
+                }
+                const data = response.data;
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = '<div class="list-group-item text-muted">No results found</div>';
+                    resultsDiv.style.display = 'block';
+                    return;
+                }
+                resultsDiv.innerHTML = data.map(item => {
+                    const termColorClass = getTermColorClass(item.termid);
+                    const termBgClass = getTermBgClass(item.termid);
+                    return `
+                        <div class="list-group-item edit-subject-search-item ${termBgClass}" data-id="${item.id}"
+                             data-name="${escapeHtml(item.subjectname)}"
+                             data-details='${JSON.stringify(item)}'>
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">
+                                        ${escapeHtml(item.subjectname)}
+                                        ${item.subjectcode ? `<span class="text-muted">(${escapeHtml(item.subjectcode)})</span>` : ''}
+                                    </div>
+                                    <div class="small text-muted mt-1">
+                                        <i class="ri-group-line me-1"></i> Class: ${escapeHtml(item.sclass)} ${item.schoolarm ? `(${escapeHtml(item.schoolarm)})` : ''}<br>
+                                        <i class="ri-user-line me-1"></i> Teacher: ${escapeHtml(item.teachername)}<br>
+                                        <i class="ri-calendar-line me-1"></i> Session: ${escapeHtml(item.sessionname)}<br>
+                                        <i class="ri-calendar-event-line me-1"></i> Term: <span class="${termColorClass} fw-bold">${escapeHtml(item.termname)}</span>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-primary edit-select-subject-btn">
+                                    <i class="ri-check-line me-1"></i>Select
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                resultsDiv.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                loadingDiv.style.display = 'none';
+                resultsDiv.innerHTML = '<div class="list-group-item text-danger">Network error</div>';
+                resultsDiv.style.display = 'block';
+            });
+        }, 500);
+    });
+
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            resultsDiv.style.display = 'none';
+            clearSearchBtn.style.display = 'none';
+        });
+    }
+
+    // Handle subject selection in edit modal
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-select-subject-btn')) {
+            const btn = e.target.closest('.edit-select-subject-btn');
+            const item = btn.closest('.edit-subject-search-item');
+            if (item) {
+                const id = item.dataset.id;
+                const name = item.dataset.name;
+                const details = JSON.parse(item.dataset.details);
+                mockEditSelectedSubject = { id, name, details };
+                updateMockEditSelectedDisplay();
+                resultsDiv.style.display = 'none';
+                searchInput.value = '';
+                clearSearchBtn.style.display = 'none';
+                showMockTempMessage('Subject selected', 'success');
+            }
+        }
+    });
+
+    // Clear selection button
+    const clearSelectedBtn = document.getElementById('mockEditClearSelectedBtn');
+    if (clearSelectedBtn) {
+        clearSelectedBtn.addEventListener('click', () => {
+            mockEditSelectedSubject = null;
+            updateMockEditSelectedDisplay();
+            showMockTempMessage('Selection cleared', 'info');
+        });
+    }
+}
+
+function updateMockEditSelectedDisplay() {
+    const container = document.getElementById('mockEditSelectedSubjectContainer');
+    const hiddenInput = document.getElementById('mockEditSelectedSubjectId');
+    const clearBtn = document.getElementById('mockEditClearSelectedBtn');
+
+    if (!mockEditSelectedSubject) {
+        if (container) container.innerHTML = '<div class="text-center text-muted py-3">No subject selected</div>';
+        if (hiddenInput) hiddenInput.value = '';
+        if (clearBtn) clearBtn.style.display = 'none';
+        return;
+    }
+
+    const termColorClass = getTermColorClass(mockEditSelectedSubject.details.termid);
+    const termBgClass = getTermBgClass(mockEditSelectedSubject.details.termid);
+
+    if (hiddenInput) hiddenInput.value = mockEditSelectedSubject.id;
+    if (clearBtn) clearBtn.style.display = 'block';
+
+    const html = `
+        <div class="selected-subject-item p-2 bg-light rounded ${termBgClass}">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>${escapeHtml(mockEditSelectedSubject.name)}</strong>
+                    <div class="small text-muted mt-1">
+                        <i class="ri-group-line me-1"></i> Class: ${escapeHtml(mockEditSelectedSubject.details.sclass)} ${mockEditSelectedSubject.details.schoolarm ? `(${escapeHtml(mockEditSelectedSubject.details.schoolarm)})` : ''}<br>
+                        <i class="ri-user-line me-1"></i> Teacher: ${escapeHtml(mockEditSelectedSubject.details.teachername)}<br>
+                        <i class="ri-calendar-line me-1"></i> Session: ${escapeHtml(mockEditSelectedSubject.details.sessionname)}<br>
+                        <i class="ri-calendar-event-line me-1"></i> Term: <span class="${termColorClass} fw-bold">${escapeHtml(mockEditSelectedSubject.details.termname)}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    if (container) container.innerHTML = html;
 }
 
 function populateMockEditModal(row) {
@@ -1117,13 +1322,45 @@ function populateMockEditModal(row) {
     const sessionid = row.getAttribute('data-session') || '';
     const subjectclassid = row.getAttribute('data-subjectclassid') || '';
     const status = row.getAttribute('data-status') || 'pending';
+    const subjectname = row.querySelector('.subjectname')?.innerText || '';
+    const sclass = row.querySelector('.sclass')?.innerText || '';
+    const schoolarm = row.querySelector('.schoolarm')?.innerText || '';
+    const teachername = row.querySelector('.teachername')?.innerText || '';
+    const termname = row.querySelector('.termname')?.innerText || '';
+    const sessionname = row.querySelector('.sessionname')?.innerText || '';
 
     document.getElementById('mock-edit-id-field').value = id;
     document.getElementById('mock-edit-userid').value = vettingUserId;
-    document.getElementById('mock-edit-termid').value = termid;
     document.getElementById('mock-edit-sessionid').value = sessionid;
-    document.getElementById('mock-edit-subjectclassid').value = subjectclassid;
     document.getElementById('mock-edit-status').value = status;
+
+    // Set term radio
+    const termRadio = document.querySelector(`input[name="termid"][value="${termid}"]`);
+    if (termRadio) termRadio.checked = true;
+
+    // Set selected subject for edit
+    mockEditSelectedSubject = {
+        id: subjectclassid,
+        name: subjectname,
+        details: {
+            subjectname: subjectname,
+            sclass: sclass,
+            schoolarm: schoolarm,
+            teachername: teachername,
+            termname: termname,
+            termid: termid,
+            sessionname: sessionname
+        }
+    };
+    updateMockEditSelectedDisplay();
+
+    // Set form action
+    const form = document.getElementById('edit-mocksubjectvetting-form');
+    form.action = `/mocksubjectvetting/${id}`;
+
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+        $('#mock-edit-userid').trigger('change');
+    }
 
     const modal = new bootstrap.Modal(document.getElementById('editMockModal'));
     modal.show();
@@ -1132,7 +1369,7 @@ function populateMockEditModal(row) {
 function submitMockEditForm() {
     const id = document.getElementById('mock-edit-id-field').value;
     const errorEl = document.getElementById('mock-edit-alert-error-msg');
-    const submitBtn = document.getElementById('mock-update-btn');
+    const submitBtn = document.getElementById('mock-edit-btn');
     const form = document.getElementById('edit-mocksubjectvetting-form');
     const formData = new FormData(form);
 
@@ -1140,18 +1377,21 @@ function submitMockEditForm() {
         showMockError(errorEl, 'Please select a vetting staff member.');
         return;
     }
-    if (!formData.get('termid')) {
-        showMockError(errorEl, 'Please select a term.');
-        return;
-    }
     if (!formData.get('sessionid')) {
         showMockError(errorEl, 'Please select a session.');
         return;
     }
-    if (!formData.get('subjectclassid')) {
+    if (!formData.get('termid')) {
+        showMockError(errorEl, 'Please select a term.');
+        return;
+    }
+    if (!mockEditSelectedSubject) {
         showMockError(errorEl, 'Please select a subject-class assignment.');
         return;
     }
+
+    // Ensure subjectclassid is set
+    formData.set('subjectclassid', mockEditSelectedSubject.id);
 
     if (errorEl) errorEl.classList.add('d-none');
     if (submitBtn) submitBtn.disabled = true;
@@ -1193,6 +1433,18 @@ function submitMockEditForm() {
     });
 }
 
+// Reset edit modal on close
+document.getElementById('editMockModal')?.addEventListener('hidden.bs.modal', () => {
+    mockEditSelectedSubject = null;
+    updateMockEditSelectedDisplay();
+    const searchInput = document.getElementById('mockEditSubjectSearchInput');
+    const resultsDiv = document.getElementById('mockEditSearchResults');
+    const errorEl = document.getElementById('mock-edit-alert-error-msg');
+    if (searchInput) searchInput.value = '';
+    if (resultsDiv) resultsDiv.style.display = 'none';
+    if (errorEl) errorEl.classList.add('d-none');
+});
+
 // ========== DELETE ==========
 function initializeMockDelete() {
     document.querySelector('#kt_mock_subject_vetting_table tbody')?.addEventListener('click', function(e) {
@@ -1201,17 +1453,16 @@ function initializeMockDelete() {
         const row = btn.closest('tr');
         if (row) {
             mockDeleteId = row.getAttribute('data-id');
-            mockDeleteUrl = row.getAttribute('data-url');
-            const modal = new bootstrap.Modal(document.getElementById('mockDeleteRecordModal'));
+            const modal = new bootstrap.Modal(document.getElementById('deleteRecordModal'));
             modal.show();
         }
     });
 
-    document.getElementById('mock-delete-record')?.addEventListener('click', function() {
-        if (!mockDeleteId || !mockDeleteUrl) return;
+    document.getElementById('delete-record')?.addEventListener('click', function() {
+        if (!mockDeleteId) return;
         this.disabled = true;
 
-        fetch(mockDeleteUrl, {
+        fetch(`/mocksubjectvetting/${mockDeleteId}`, {
             method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
@@ -1220,7 +1471,7 @@ function initializeMockDelete() {
         })
         .then(res => res.json())
         .then(data => {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('mockDeleteRecordModal'));
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteRecordModal'));
             if (modal) modal.hide();
             if (data.success) {
                 showMockToast('Assignment deleted successfully!', 'success');
@@ -1233,7 +1484,7 @@ function initializeMockDelete() {
             console.error('Delete error:', error);
             showMockToast('Network error', 'danger');
         })
-        .finally(() => { this.disabled = false; mockDeleteId = null; mockDeleteUrl = null; });
+        .finally(() => { this.disabled = false; mockDeleteId = null; });
     });
 }
 
@@ -1242,23 +1493,23 @@ function initializeMockBulkDelete() {
     const checkAll = document.getElementById('mockCheckAll');
     if (checkAll) {
         checkAll.addEventListener('change', function() {
-            document.querySelectorAll('input[name="mock_chk_child"]').forEach(cb => cb.checked = this.checked);
+            document.querySelectorAll('input[name="chk_child"]').forEach(cb => cb.checked = this.checked);
             toggleMockRemoveBtn();
         });
     }
     document.querySelector('#kt_mock_subject_vetting_table tbody')?.addEventListener('change', function(e) {
-        if (e.target.name === 'mock_chk_child') toggleMockRemoveBtn();
+        if (e.target.name === 'chk_child') toggleMockRemoveBtn();
     });
 }
 
 function toggleMockRemoveBtn() {
-    const anyChecked = document.querySelectorAll('input[name="mock_chk_child"]:checked').length > 0;
-    const removeBtn = document.getElementById('mock-remove-actions');
+    const anyChecked = document.querySelectorAll('input[name="chk_child"]:checked').length > 0;
+    const removeBtn = document.getElementById('remove-actions');
     if (removeBtn) removeBtn.classList.toggle('d-none', !anyChecked);
 }
 
-window.mockDeleteMultiple = function() {
-    const ids = Array.from(document.querySelectorAll('input[name="mock_chk_child"]:checked')).map(cb => cb.value);
+window.deleteMultiple = function() {
+    const ids = Array.from(document.querySelectorAll('input[name="chk_child"]:checked')).map(cb => cb.value);
     if (!ids.length) return;
     if (!confirm(`Delete ${ids.length} record(s)?`)) return;
 
