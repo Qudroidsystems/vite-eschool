@@ -38,7 +38,7 @@ function initializeSessionFilter() {
     sessionFilter.addEventListener('change', function() {
         const sessionId = this.value;
         console.log('Session filter changed:', sessionId);
-        
+
         // Reload page with filter parameter
         if (sessionId) {
             window.location.href = '/subjectvetting?session=' + sessionId;
@@ -49,34 +49,33 @@ function initializeSessionFilter() {
 }
 
 // Subject-Class Search Functionality
-// Subject-Class Search Functionality - SIMPLIFIED VERSION
 function initializeSubjectClassSearch() {
     console.log('Initializing subject class search...');
-    
+
     const searchInput = document.getElementById('subjectClassSearch');
     const subjectClassItems = document.querySelectorAll('.subject-class-item');
     const clearSelectionBtn = document.getElementById('clearSelectionBtn');
     const selectedCountSpan = document.getElementById('selectedCount');
     const noResultsMessage = document.getElementById('noResultsMessage');
-    
+
     if (!searchInput) {
         console.error('Search input not found!');
         return;
     }
-    
+
     console.log(`Found ${subjectClassItems.length} subject class items`);
-    
+
     // Simple search function - NO debounce for immediate feedback
     const filterSubjectClasses = () => {
         const searchTerm = searchInput.value.toLowerCase().trim();
         console.log('Searching for:', searchTerm);
-        
+
         let visibleCount = 0;
-        
+
         subjectClassItems.forEach(item => {
             const searchText = item.getAttribute('data-search');
             const matches = searchTerm === '' || searchText.includes(searchTerm);
-            
+
             if (matches) {
                 item.style.display = 'block';
                 visibleCount++;
@@ -84,15 +83,15 @@ function initializeSubjectClassSearch() {
                 item.style.display = 'none';
             }
         });
-        
+
         // Show/hide no results message
         if (noResultsMessage) {
             noResultsMessage.style.display = visibleCount === 0 && searchTerm !== '' ? 'block' : 'none';
         }
-        
+
         console.log(`Found ${visibleCount} matching items`);
     };
-    
+
     // Clear selection function
     const clearAllSelections = () => {
         console.log('Clearing all selections');
@@ -104,40 +103,41 @@ function initializeSubjectClassSearch() {
         });
         updateSelectionCount();
     };
-    
+
     // Update selection count
     const updateSelectionCount = () => {
         const checkedBoxes = document.querySelectorAll('.subject-class-item input[type="checkbox"]:checked:not(:disabled)');
         if (selectedCountSpan) selectedCountSpan.textContent = checkedBoxes.length;
     };
-    
+
     // SIMPLE event listener - direct and immediate
     searchInput.addEventListener('input', filterSubjectClasses);
     searchInput.addEventListener('keyup', filterSubjectClasses);
-    
+
     if (clearSelectionBtn) {
         clearSelectionBtn.addEventListener('click', clearAllSelections);
     }
-    
+
     // Listen for checkbox changes
     document.addEventListener('change', function(e) {
         if (e.target.matches('.subject-class-item input[type="checkbox"]')) {
             updateSelectionCount();
         }
     });
-    
+
     // Initial filter and count update
     filterSubjectClasses();
     updateSelectionCount();
-    
+
     // Make search input focusable and usable
     searchInput.removeAttribute('readonly');
     searchInput.removeAttribute('disabled');
     searchInput.style.pointerEvents = 'auto';
-    
+
     console.log('Subject class search initialized successfully');
     return searchInput;
 }
+
 // Check all checkbox
 const checkAll = document.getElementById("checkAll");
 if (checkAll) {
@@ -174,7 +174,7 @@ let vettingStatusChart;
 function initializeVettingStatusChart() {
     chartInitCount++;
     console.log(`Attempting to initialize chart (attempt #${chartInitCount}) with data:`, window.vettingStatusCounts);
-    
+
     const ctx = document.getElementById('vettingStatusChart')?.getContext('2d');
     if (!ctx) {
         console.error("Chart canvas not found");
@@ -203,8 +203,8 @@ function initializeVettingStatusChart() {
                         window.vettingStatusCounts.completed || 0,
                         window.vettingStatusCounts.rejected || 0
                     ],
-                    backgroundColor: ['#dc3545', '#28a745', '#ffc107'], // Red for Pending, Green for Completed, Yellow for Rejected
-                    borderColor: ['#c82333', '#218838', '#e0a800'], // Darker shades for borders
+                    backgroundColor: ['#dc3545', '#28a745', '#ffc107'],
+                    borderColor: ['#c82333', '#218838', '#e0a800'],
                     borderWidth: 1
                 }]
             },
@@ -290,7 +290,7 @@ document.addEventListener('click', function (e) {
     const editBtn = e.target.closest('.edit-item-btn');
     const removeBtn = e.target.closest('.remove-item-btn');
     const image = e.target.closest('.staff-image');
-    
+
     if (editBtn) {
         handleEditClick(e, editBtn);
     } else if (removeBtn) {
@@ -310,15 +310,15 @@ function handleImageClick(e, image) {
         defaultExists: image.getAttribute('data-default-exists'),
         picture: image.getAttribute('data-picture')
     });
-    
+
     const imageUrl = image.getAttribute('data-image');
     const teacherName = image.getAttribute('data-teachername');
     const fileExists = image.getAttribute('data-file-exists') === 'true';
     const defaultExists = image.getAttribute('data-default-exists') === 'true';
-    
+
     const previewImage = document.getElementById('preview-image');
     const previewTeacherName = document.getElementById('preview-teachername');
-    
+
     if (previewImage && previewTeacherName) {
         if (fileExists || (image.getAttribute('data-picture') === 'none' && defaultExists)) {
             previewImage.src = imageUrl;
@@ -328,12 +328,12 @@ function handleImageClick(e, image) {
             previewTeacherName.textContent = teacherName || 'Unknown Staff';
             console.warn('Image not found, using default');
         }
-        
+
         previewImage.onerror = function() {
             this.src = '/storage/staff_avatars/unnamed.jpg';
             console.error('Preview image failed to load, falling back to default');
         };
-        
+
         try {
             const modal = new bootstrap.Modal(document.getElementById('imageViewModal'));
             modal.show();
@@ -364,15 +364,15 @@ function handleImageClick(e, image) {
 function handleRemoveClick(e, button) {
     e.preventDefault();
     console.log("Remove button clicked");
-    
+
     const itemId = button.closest("tr").querySelector(".id")?.getAttribute("data-id");
     const deleteUrl = button.closest("tr").getAttribute("data-url");
-    
+
     if (!itemId || !deleteUrl) {
         console.error("Item ID or delete URL not found");
         return;
     }
-    
+
     const modal = new bootstrap.Modal(document.getElementById("deleteRecordModal"));
     modal.show();
     console.log("Delete modal opened");
@@ -382,7 +382,7 @@ function handleRemoveClick(e, button) {
         deleteButton.onclick = null;
         deleteButton.onclick = function () {
             console.log("Deleting subject vetting assignment:", itemId);
-            
+
             axios.delete(deleteUrl)
                 .then(function (response) {
                     console.log("Delete success:", response.data);
@@ -416,23 +416,23 @@ function handleRemoveClick(e, button) {
 function handleEditClick(e, button) {
     e.preventDefault();
     console.log("Edit button clicked");
-    
+
     const itemId = button.closest("tr").querySelector(".id")?.getAttribute("data-id");
     const tr = button.closest("tr");
-    
+
     if (!itemId) {
         console.error("Item ID not found");
         return;
     }
-    
+
     const vettingUserId = tr.querySelector(".vetting_username")?.getAttribute("data-vetting_userid") || "";
     const subjectClassId = tr.querySelector(".subjectname")?.getAttribute("data-subjectclassid") || "";
     const termId = tr.querySelector(".termname")?.getAttribute("data-termid") || "";
     const sessionId = tr.querySelector(".sessionname")?.getAttribute("data-sessionid") || "";
     const status = tr.querySelector(".status")?.textContent || "pending";
-    
+
     console.log("Edit data:", { itemId, vettingUserId, subjectClassId, termId, sessionId, status });
-    
+
     if (editIdField) editIdField.value = itemId;
     if (editUserIdField) editUserIdField.value = vettingUserId;
     if (editSubjectClassIdField) editSubjectClassIdField.value = subjectClassId;
@@ -481,15 +481,15 @@ function clearEditFields() {
 // Delete multiple assignments
 function deleteMultiple() {
     console.log("Delete multiple triggered");
-    
+
     const ids_array = [];
     const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
-    
+
     checkboxes.forEach((checkbox) => {
         const id = checkbox.closest("tr").querySelector(".id")?.getAttribute("data-id");
         if (id) ids_array.push(id);
     });
-    
+
     if (ids_array.length === 0) {
         Swal.fire({
             title: "Please select at least one checkbox",
@@ -499,7 +499,7 @@ function deleteMultiple() {
         });
         return;
     }
-    
+
     Swal.fire({
         title: "Are you sure?",
         text: "You won't be able to revert this!",
@@ -543,13 +543,13 @@ let subjectVettingList;
 function initializeListJS() {
     const subjectVettingListContainer = document.getElementById('kt_subject_vetting_table');
     const hasRows = document.querySelectorAll('#kt_subject_vetting_table tbody tr:not(.noresult)').length > 0;
-    
+
     if (subjectVettingListContainer && hasRows) {
         try {
             if (subjectVettingList) {
                 subjectVettingList.clear();
             }
-            
+
             subjectVettingList = new List('subjectVettingList', {
                 valueNames: ['sn', 'vetting_username', 'subjectname', 'sclass', 'schoolarm', 'teachername', 'termname', 'sessionname', 'status', 'datereg'],
                 page: 10,
@@ -562,19 +562,19 @@ function initializeListJS() {
                 },
                 listClass: 'list'
             });
-            
+
             console.log("List.js initialized with pagination");
-            
+
             subjectVettingList.on('updated', function () {
                 const totalRecords = subjectVettingList.items.length;
                 const visibleRecords = subjectVettingList.visibleItems.length;
                 const showingRecords = Math.min(visibleRecords, subjectVettingList.page);
                 const currentPage = Math.ceil((subjectVettingList.i - 1) / subjectVettingList.page) + 1;
-                
+
                 document.getElementById('showing-records').textContent = showingRecords;
                 document.getElementById('total-records').textContent = totalRecords;
                 document.getElementById('total-records-footer').textContent = totalRecords;
-                
+
                 const pagination = document.querySelector('.listjs-pagination');
                 if (pagination) {
                     pagination.querySelectorAll('.page').forEach(page => {
@@ -584,17 +584,17 @@ function initializeListJS() {
                         }
                     });
                 }
-                
+
                 const noResultRow = document.querySelector('.noresult');
                 if (noResultRow) {
                     noResultRow.style.display = visibleRecords === 0 ? 'block' : 'none';
                 }
-                
+
                 initializeCheckboxes();
             });
-            
+
             subjectVettingList.update();
-            
+
         } catch (error) {
             console.error("List.js initialization failed:", error);
         }
@@ -610,9 +610,9 @@ function initializeListJS() {
 function filterData() {
     const searchInput = document.querySelector(".search-box input.search");
     const searchValue = searchInput?.value || "";
-    
+
     console.log("Filtering with search:", searchValue);
-    
+
     if (subjectVettingList) {
         subjectVettingList.search(searchValue, ['sn', 'vetting_username', 'subjectname', 'sclass', 'schoolarm', 'teachername', 'termname', 'sessionname', 'status']);
         subjectVettingList.update();
@@ -630,7 +630,7 @@ function refreshTable() {
 
     isRefreshing = true;
     console.log("Refreshing table and chart via AJAX...");
-    
+
     axios.get('/subjectvetting', {
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
@@ -646,7 +646,7 @@ function refreshTable() {
         // Clear existing items
         if (subjectVettingList) {
             subjectVettingList.clear();
-            
+
             // Add new items
             response.data.subjectvettings.forEach((item, index) => {
                 subjectVettingList.add({
@@ -665,32 +665,32 @@ function refreshTable() {
                                item.status === 'rejected' ? 'table-warning' : ''
                 });
             });
-            
+
             // Update the list
             subjectVettingList.update();
-            
+
             // Update chart data
-            window.vettingStatusCounts = response.data.statusCounts || { 
-                pending: 0, 
-                completed: 0, 
-                rejected: 0 
+            window.vettingStatusCounts = response.data.statusCounts || {
+                pending: 0,
+                completed: 0,
+                rejected: 0
             };
-            
+
             // Reinitialize chart
             initializeVettingStatusChart();
-            
+
             // Reinitialize checkboxes
             initializeCheckboxes();
         }
     })
     .catch(error => {
         console.error("Error refreshing table and chart:", error);
-        
+
         let errorMessage = "An error occurred while refreshing the data.";
         if (error.response) {
             errorMessage = error.response.data.message || errorMessage;
         }
-        
+
         Swal.fire({
             icon: "error",
             title: "Error refreshing data",
@@ -717,7 +717,7 @@ if (addSubjectVettingForm) {
         const userId = formData.get('userid');
         const termIds = formData.getAll('termid[]');
         const sessionId = formData.get('sessionid');
-        
+
         // Only get checkboxes that are enabled (current session ones)
         const subjectClassCheckboxes = document.querySelectorAll('#addSubjectVettingModal input[name="subjectclassid[]"]:checked:not(:disabled)');
         const subjectClassIds = [...new Set(Array.from(subjectClassCheckboxes).map(cb => cb.value))];
@@ -747,7 +747,7 @@ if (addSubjectVettingForm) {
             }
             return;
         }
-        
+
         if (subjectClassIds.length === 0) {
             if (errorMsg) {
                 errorMsg.innerHTML = "Please select at least one subject-class from current session";
@@ -774,14 +774,14 @@ if (addSubjectVettingForm) {
         })
         .then(function (response) {
             console.log("Add success:", response.data);
-            
+
             const modalElement = document.getElementById("addSubjectVettingModal");
             const modal = bootstrap.Modal.getInstance(modalElement);
-            
+
             if (modal) {
                 modal.hide();
             }
-            
+
             setTimeout(() => {
                 Swal.fire({
                     position: "center",
@@ -791,18 +791,18 @@ if (addSubjectVettingForm) {
                     timer: 2000,
                     showCloseButton: true
                 });
-                
+
                 setTimeout(() => refreshTable(), 500);
             }, 300);
         })
         .catch(function (error) {
             console.error("Add error:", error.response?.data || error);
-            
+
             if (submitBtn) {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = "Add Subject Vetting Assignment";
             }
-            
+
             if (errorMsg) {
                 errorMsg.innerHTML = error.response?.data?.message ||
                     Object.values(error.response?.data?.errors || {}).flat().join(", ") ||
@@ -819,10 +819,10 @@ if (editSubjectVettingForm) {
     editSubjectVettingForm.addEventListener("submit", function (e) {
         e.preventDefault();
         console.log("Edit form submitted");
-        
+
         const errorMsg = document.getElementById("edit-alert-error-msg");
         if (errorMsg) errorMsg.classList.add("d-none");
-        
+
         const formData = new FormData(editSubjectVettingForm);
         const userId = formData.get('userid');
         const termId = formData.get('termid');
@@ -830,7 +830,7 @@ if (editSubjectVettingForm) {
         const subjectClassId = formData.get('subjectclassid');
         const status = formData.get('status');
         const id = editIdField?.value;
-        
+
         if (!id || !userId || !termId || !sessionId || !subjectClassId || !status) {
             if (errorMsg) {
                 errorMsg.innerHTML = "Please fill all required fields";
@@ -839,26 +839,26 @@ if (editSubjectVettingForm) {
             }
             return;
         }
-        
+
         const submitBtn = document.getElementById("update-btn");
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.innerHTML = "Updating...";
         }
-        
+
         console.log("Sending edit request:", { id, userId, termId, sessionId, subjectClassId, status });
-        
+
         axios.put(`/subjectvetting/${id}`, { userid: userId, termid: termId, sessionid: sessionId, subjectclassid: subjectClassId, status })
             .then(function (response) {
                 console.log("Edit success:", response.data);
-                
+
                 const modalElement = document.getElementById("editModal");
                 const modal = bootstrap.Modal.getInstance(modalElement);
-                
+
                 if (modal) {
                     modal.hide();
                 }
-                
+
                 setTimeout(() => {
                     Swal.fire({
                         position: "center",
@@ -868,18 +868,18 @@ if (editSubjectVettingForm) {
                         timer: 2000,
                         showCloseButton: true
                     });
-                    
+
                     setTimeout(() => refreshTable(), 500);
                 }, 300);
             })
             .catch(function (error) {
                 console.error("Edit error:", error.response?.data || error);
-                
+
                 if (submitBtn) {
                     submitBtn.disabled = false;
                     submitBtn.innerHTML = "Update";
                 }
-                
+
                 if (errorMsg) {
                     errorMsg.innerHTML = error.response?.data?.message ||
                         Object.values(error.response?.data?.errors || {}).flat().join(", ") ||
@@ -890,7 +890,6 @@ if (editSubjectVettingForm) {
     });
 }
 
-// Modal events
 // Modal events
 const addModal = document.getElementById("addSubjectVettingModal");
 if (addModal) {
@@ -910,7 +909,7 @@ if (addModal) {
         setTimeout(() => {
             console.log('Setting up search after modal shown...');
             initializeSubjectClassSearch();
-            
+
             // Focus on search input for user convenience
             const searchInput = document.getElementById('subjectClassSearch');
             if (searchInput) {
@@ -1047,7 +1046,7 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeListJS();
     initializeVettingStatusChart();
     initializeCheckboxes();
-    initializeSessionFilter(); // Initialize session filter
+    initializeSessionFilter();
 
     const searchInput = document.querySelector(".search-box input.search");
     if (searchInput) {

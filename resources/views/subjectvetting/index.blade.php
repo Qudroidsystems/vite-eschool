@@ -323,7 +323,7 @@
                                                 </tr>
                                             @endforelse
                                         </tbody>
-                                    </table>
+                                     </table>
                                 </div>
                                 <!-- Client-side pagination controls -->
                                 <div class="row mt-3 align-items-center" id="pagination-element">
@@ -345,9 +345,9 @@
                     </div>
                 </div>
 
-                <!-- Add Subject Vetting Modal -->
+                <!-- Add Subject Vetting Modal - Made wider with modal-xl class -->
                 <div id="addSubjectVettingModal" class="modal fade" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true" data-bs-backdrop="static">
-                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-dialog modal-dialog-centered modal-xl">
                         <div class="modal-content">
                             <div class="modal-header">
                                 <h5 id="addModalLabel" class="modal-title">Add Subject Vetting Assignment</h5>
@@ -356,20 +356,37 @@
                             <form class="tablelist-form" autocomplete="off" id="add-subjectvetting-form">
                                 <div class="modal-body">
                                     <input type="hidden" id="add-id-field" name="id">
-                                    <div class="mb-3">
-                                        <label for="userid" class="form-label">Vetting Staff</label>
-                                        <select name="userid" id="userid" class="form-control" required>
-                                            <option value="">Select Staff</option>
-                                            @foreach ($staff as $staff_member)
-                                                <option value="{{ $staff_member->id }}">{{ $staff_member->name }}</option>
-                                            @endforeach
-                                        </select>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="userid" class="form-label">Vetting Staff</label>
+                                                <select name="userid" id="userid" class="form-control" required>
+                                                    <option value="">Select Staff</option>
+                                                    @foreach ($staff as $staff_member)
+                                                        <option value="{{ $staff_member->id }}">{{ $staff_member->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="sessionid" class="form-label">Session</label>
+                                                <select name="sessionid" id="sessionid" class="form-control" required>
+                                                    <option value="">Select Session</option>
+                                                    @foreach ($sessions as $session)
+                                                        <option value="{{ $session->id }}" {{ $currentSession && $currentSession->id == $session->id ? 'selected' : '' }}>
+                                                            {{ $session->session }} @if($session->status == 'Current') (Current Session) @endif
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Terms</label>
-                                        <div class="checkbox-group" style="max-height: 150px; overflow-y: auto;">
+                                        <div class="checkbox-group" style="max-height: 100px; overflow-y: auto;">
                                             @foreach ($terms as $term)
-                                                <div class="form-check me-3">
+                                                <div class="form-check form-check-inline me-3">
                                                     <input class="form-check-input modal-checkbox" type="checkbox" name="termid[]" id="add-term-{{ $term->id }}" value="{{ $term->id }}">
                                                     <label class="form-check-label" for="add-term-{{ $term->id }}">
                                                         {{ $term->term }}
@@ -379,70 +396,56 @@
                                         </div>
                                     </div>
                                     <div class="mb-3">
-                                        <label for="sessionid" class="form-label">Session</label>
-                                        <select name="sessionid" id="sessionid" class="form-control" required>
-                                            <option value="">Select Session</option>
-                                            @foreach ($sessions as $session)
-                                                <option value="{{ $session->id }}" {{ $currentSession && $currentSession->id == $session->id ? 'selected' : '' }}>
-                                                    {{ $session->session }} @if($session->status == 'Current') (Current Session) @endif
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
                                         <label class="form-label">Subject-Class Assignments</label>
-                                        
+
                                         <!-- Search Box for Subject-Class Assignments -->
                                         <div class="subject-class-search-box">
                                             <input type="text" class="form-control" id="subjectClassSearch" placeholder="Search by subject, class, teacher, or session...">
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
-                                        
+
                                         <!-- No results message -->
                                         <div class="no-results-message" id="noResultsMessage">
                                             No matching subject-class assignments found.
                                         </div>
-                                        
+
                                         <div class="subject-class-checkbox-group" id="subjectClassList">
                                             @foreach ($subjectclasses as $sc)
                                                 @php
                                                     $isCurrentSession = $currentSession && $currentSession->id == $sc->sessionid;
                                                     $checkboxId = "add-subjectclass-{$sc->scid}";
                                                     $itemClass = $isCurrentSession ? 'current-session-item' : 'non-current-session';
-                                                    $sessionText = $sc->sessionname . ($sc->sessionstatus == 'Current' ? ' -- Current Session' : '');
-                                                    $searchableText = strtolower(($sc->subjectname ?? '') . ' ' . ($sc->subjectcode ?? '') . ' ' . ($sc->sclass ?? '') . ' ' . ($sc->schoolarm ?? '') . ' ' . ($sc->teachername ?? '') . ' ' . ($sc->sessionname ?? ''));
+                                                    // Format: SUBJECT NAME (CODE) - CLASS (ARM) - TEACHER NAME -- SESSION--TERM
+                                                    $displayText = ($sc->subjectname ?? 'N/A') .
+                                                                   ($sc->subjectcode ? ' (' . $sc->subjectcode . ')' : '') .
+                                                                   ' - ' . ($sc->sclass ?? 'N/A') .
+                                                                   ($sc->schoolarm ? ' (' . $sc->schoolarm . ')' : '') .
+                                                                   ' - ' . ($sc->teachername ?? 'N/A') .
+                                                                   ' -- ' . ($sc->sessionname ?? 'N/A') .
+                                                                   '--' . ($sc->termname ?? 'N/A') . ' TERM';
+                                                    $searchableText = strtolower(($sc->subjectname ?? '') . ' ' . ($sc->subjectcode ?? '') . ' ' . ($sc->sclass ?? '') . ' ' . ($sc->schoolarm ?? '') . ' ' . ($sc->teachername ?? '') . ' ' . ($sc->sessionname ?? '') . ' ' . ($sc->termname ?? ''));
                                                 @endphp
                                                 <div class="form-check subject-class-item {{ $itemClass }}" data-search="{{ $searchableText }}">
                                                     @if($isCurrentSession)
-                                                        <input class="form-check-input modal-checkbox" 
-                                                               type="checkbox" 
-                                                               name="subjectclassid[]" 
-                                                               id="{{ $checkboxId }}" 
-                                                               value="{{ $sc->scid }}" 
+                                                        <input class="form-check-input modal-checkbox"
+                                                               type="checkbox"
+                                                               name="subjectclassid[]"
+                                                               id="{{ $checkboxId }}"
+                                                               value="{{ $sc->scid }}"
                                                                data-termid="{{ $sc->termid }}">
                                                         <label class="form-check-label" for="{{ $checkboxId }}" id="label-{{ $checkboxId }}">
-                                                            <span class="subject-text">{{ $sc->subjectname ?? 'N/A' }}</span> 
-                                                            <span class="subject-code">{{ $sc->subjectcode ? '(' . $sc->subjectcode . ')' : '' }}</span> - 
-                                                            <span class="class-text">{{ $sc->sclass ?? 'N/A' }}</span> 
-                                                            <span class="arm-text">{{ $sc->schoolarm ? '(' . $sc->schoolarm . ')' : '' }}</span> - 
-                                                            <span class="teacher-text">{{ $sc->teachername ?? 'N/A' }}</span> -- 
-                                                            <span class="session-text">{{ $sessionText }}</span>
+                                                            {{ $displayText }}
                                                         </label>
                                                     @else
                                                         <div class="text-muted">
-                                                            <span class="subject-text">{{ $sc->subjectname ?? 'N/A' }}</span> 
-                                                            <span class="subject-code">{{ $sc->subjectcode ? '(' . $sc->subjectcode . ')' : '' }}</span> - 
-                                                            <span class="class-text">{{ $sc->sclass ?? 'N/A' }}</span> 
-                                                            <span class="arm-text">{{ $sc->schoolarm ? '(' . $sc->schoolarm . ')' : '' }}</span> - 
-                                                            <span class="teacher-text">{{ $sc->teachername ?? 'N/A' }}</span> -- 
-                                                            <span class="session-text">{{ $sessionText }}</span>
+                                                            {{ $displayText }}
                                                             <small class="text-danger d-block">(Not available for current session)</small>
                                                         </div>
                                                     @endif
                                                 </div>
                                             @endforeach
                                         </div>
-                                        
+
                                         <!-- Subject-Class Selection Summary -->
                                         <div class="alert alert-light mt-2 p-2" id="subjectClassSelectionSummary">
                                             <div class="d-flex justify-content-between align-items-center">
@@ -513,15 +516,16 @@
                                             @foreach ($subjectclasses as $sc)
                                                 @php
                                                     $isCurrentSession = $currentSession && $currentSession->id == $sc->sessionid;
-                                                    $sessionText = $sc->sessionname . ($sc->sessionstatus == 'Current' ? ' -- Current Session' : '');
+                                                    $displayText = ($sc->subjectname ?? 'N/A') .
+                                                                   ($sc->subjectcode ? ' (' . $sc->subjectcode . ')' : '') .
+                                                                   ' - ' . ($sc->sclass ?? 'N/A') .
+                                                                   ($sc->schoolarm ? ' (' . $sc->schoolarm . ')' : '') .
+                                                                   ' - ' . ($sc->teachername ?? 'N/A') .
+                                                                   ' -- ' . ($sc->sessionname ?? 'N/A') .
+                                                                   '--' . ($sc->termname ?? 'N/A') . ' TERM';
                                                 @endphp
                                                 <option value="{{ $sc->scid }}" @if(!$isCurrentSession) disabled @endif>
-                                                    {{ $sc->subjectname ?? 'N/A' }} 
-                                                    {{ $sc->subjectcode ? '(' . $sc->subjectcode . ')' : '' }} - 
-                                                    {{ $sc->sclass ?? 'N/A' }} 
-                                                    {{ $sc->schoolarm ? '(' . $sc->schoolarm . ')' : '' }} - 
-                                                    {{ $sc->teachername ?? 'N/A' }} -- 
-                                                    {{ $sessionText }}
+                                                    {{ $displayText }}
                                                     @if(!$isCurrentSession) (Not available) @endif
                                                 </option>
                                             @endforeach
