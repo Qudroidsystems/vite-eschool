@@ -243,7 +243,9 @@
                                         <select class="form-select form-select-lg" id="session-filter-stats">
                                             <option value="">All Sessions</option>
                                             @foreach ($sessions as $session)
-                                                <option value="{{ $session->id }}">{{ $session->session }} @if($session->status == 'Current') (Current) @endif</option>
+                                                <option value="{{ $session->id }}" {{ ($currentSession && $currentSession->id == $session->id) ? 'selected' : '' }}>
+                                                    {{ $session->session }} @if($session->status == 'Current') (Current) @endif
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -440,7 +442,7 @@
                                                         </span>
                                                     </div>
                                                     <td class="datereg">{{ $sv->updated_at ? $sv->updated_at->format('d M, Y') : 'N/A' }}</div>
-                                                    <tr>
+                                                    <td>
                                                         <div class="d-flex gap-2">
                                                             @can('Update subject-vettings')
                                                                 <a href="javascript:void(0);" class="action-btn btn btn-light btn-sm edit-item-btn" title="Edit">
@@ -467,7 +469,7 @@
                                                             </button>
                                                         @endcan
                                                     </div>
-                                                </div>
+                                                </tr>
                                             @endforelse
                                         </tbody>
                                     </table>
@@ -596,7 +598,7 @@
                 </div>
 
                 <!-- Edit Modal with AJAX Search -->
-                <div id="editSubjectModal" class="modal fade" tabindex="-1" data-bs-backdrop="static">
+                <div id="editModal" class="modal fade" tabindex="-1" data-bs-backdrop="static">
                     <div class="modal-dialog modal-dialog-centered modal-xl">
                         <div class="modal-content">
                             <div class="modal-header bg-warning text-dark">
@@ -607,13 +609,13 @@
                                 @csrf
                                 @method('PUT')
                                 <div class="modal-body">
-                                    <input type="hidden" name="id" id="subject-edit-id-field">
+                                    <input type="hidden" name="id" id="edit-id-field">
 
                                     <div class="row">
                                         <div class="col-md-6">
                                             <div class="mb-3">
                                                 <label class="form-label fw-semibold">Vetting Staff <span class="text-danger">*</span></label>
-                                                <select name="userid" id="subject-edit-userid" class="form-select select2" required>
+                                                <select name="userid" id="edit-userid" class="form-select select2" required>
                                                     <option value="">Select Staff</option>
                                                     @foreach ($staff as $staff_member)
                                                         <option value="{{ $staff_member->id }}">{{ $staff_member->name }}</option>
@@ -624,10 +626,12 @@
                                         <div class="col-md-6">
                                             <div class="mb-3">
                                                 <label class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
-                                                <select name="sessionid" id="subject-edit-sessionid" class="form-select" required>
+                                                <select name="sessionid" id="edit-sessionid" class="form-select" required>
                                                     <option value="">Select Session</option>
                                                     @foreach ($sessions as $session)
-                                                        <option value="{{ $session->id }}">{{ $session->session }} @if($session->status == 'Current') (Current Session) @endif</option>
+                                                        <option value="{{ $session->id }}" {{ ($currentSession && $currentSession->id == $session->id) ? 'selected' : '' }}>
+                                                            {{ $session->session }} @if($session->status == 'Current') (Current Session) @endif
+                                                        </option>
                                                     @endforeach
                                                 </select>
                                             </div>
@@ -647,8 +651,8 @@
                                                     };
                                                 @endphp
                                                 <div class="form-check form-check-inline me-3">
-                                                    <input class="form-check-input edit-term-checkbox" type="radio" name="termid" value="{{ $term->id }}" id="subject-edit-term-{{ $term->id }}">
-                                                    <label class="form-check-label {{ $termColor }}" for="subject-edit-term-{{ $term->id }}">
+                                                    <input class="form-check-input edit-term-checkbox" type="radio" name="termid" value="{{ $term->id }}" id="edit-term-{{ $term->id }}">
+                                                    <label class="form-check-label {{ $termColor }}" for="edit-term-{{ $term->id }}">
                                                         <strong>{{ $term->term }}</strong>
                                                     </label>
                                                 </div>
@@ -662,16 +666,16 @@
 
                                         <div class="input-group mb-3">
                                             <span class="input-group-text"><i class="ri-search-line"></i></span>
-                                            <input type="text" id="subjectEditSearchInput" class="form-control"
+                                            <input type="text" id="editSubjectSearchInput" class="form-control"
                                                    placeholder="Search by subject, class, teacher, term, or session... (min 2 characters)"
                                                    autocomplete="off">
-                                            <button type="button" id="subjectEditClearSearchBtn" class="btn btn-outline-secondary" style="display: none;">
+                                            <button type="button" id="editClearSearchBtn" class="btn btn-outline-secondary" style="display: none;">
                                                 <i class="ri-close-line"></i>
                                             </button>
                                         </div>
 
-                                        <div id="subjectEditSearchResults" class="list-group mb-3" style="max-height: 300px; overflow-y: auto; display: none;"></div>
-                                        <div id="subjectEditSearchLoading" class="text-center p-3" style="display: none;">
+                                        <div id="editSearchResults" class="list-group mb-3" style="max-height: 300px; overflow-y: auto; display: none;"></div>
+                                        <div id="editSearchLoading" class="text-center p-3" style="display: none;">
                                             <div class="spinner-border spinner-border-sm text-primary"></div>
                                             <span class="ms-2">Searching...</span>
                                         </div>
@@ -679,31 +683,31 @@
                                         <div class="mt-3">
                                             <div class="d-flex justify-content-between align-items-center mb-2">
                                                 <h6 class="mb-0">Selected Subject</h6>
-                                                <button type="button" id="subjectEditClearSelectedBtn" class="btn btn-sm btn-danger" style="display: none;">
+                                                <button type="button" id="editClearSelectedBtn" class="btn btn-sm btn-danger" style="display: none;">
                                                     <i class="ri-delete-bin-line me-1"></i>Clear Selection
                                                 </button>
                                             </div>
-                                            <div id="subjectEditSelectedSubjectContainer" class="border rounded p-2" style="min-height: 80px;">
+                                            <div id="editSelectedSubjectContainer" class="border rounded p-2" style="min-height: 80px;">
                                                 <div class="text-center text-muted py-3">No subject selected</div>
                                             </div>
-                                            <input type="hidden" name="subjectclassid" id="subjectEditSelectedSubjectId">
+                                            <input type="hidden" name="subjectclassid" id="editSelectedSubjectId">
                                         </div>
                                     </div>
 
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
-                                        <select name="status" id="subject-edit-status" class="form-select" required>
+                                        <select name="status" id="edit-status" class="form-select" required>
                                             <option value="pending">Pending</option>
                                             <option value="completed">Completed</option>
                                             <option value="rejected">Rejected</option>
                                         </select>
                                     </div>
 
-                                    <div class="alert alert-danger d-none" id="subject-edit-alert-error-msg"></div>
+                                    <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="submit" class="btn btn-primary" id="subject-edit-btn">Update Assignment</button>
+                                    <button type="submit" class="btn btn-primary" id="edit-btn">Update Assignment</button>
                                 </div>
                             </form>
                         </div>
@@ -762,10 +766,10 @@ function getTermBgClass(termId) {
 // Main Subject Vetting Management
 let subjectSelectedSubjects = new Map();
 let subjectVettingList = null;
-let subjectDeleteId = null;
+let deleteId = null;
 
 // Edit modal variables
-let subjectEditSelectedSubject = null;
+let editSelectedSubject = null;
 
 // Initialize when document is ready
 document.addEventListener('DOMContentLoaded', function() {
@@ -848,6 +852,7 @@ function initializeSubjectFilters() {
             const status = card.getAttribute('data-status');
             if (!subjectVettingList) return;
 
+            // Remove active class from all stat cards
             document.querySelectorAll('#statsCardsRow .stat-card-clickable').forEach(c => c.classList.remove('active-stat'));
             card.classList.add('active-stat');
 
@@ -984,14 +989,14 @@ function initializeSubjectAddForm() {
                     subjectSelectedSubjects.set(id, { id, name, detailsHtml });
                     updateSubjectSelectedDisplay();
                     item.remove();
-                    showSubjectTempMessage('Subject added', 'success');
+                    showTempMessage('Subject added', 'success');
                     if (resultsDiv.children.length === 0) {
                         resultsDiv.style.display = 'none';
                         searchInput.value = '';
                         clearSearchBtn.style.display = 'none';
                     }
                 } else {
-                    showSubjectTempMessage('Already selected', 'warning');
+                    showTempMessage('Already selected', 'warning');
                 }
             }
         }
@@ -1066,7 +1071,7 @@ function updateSubjectSelectedDisplay() {
             const id = btn.dataset.id;
             subjectSelectedSubjects.delete(id);
             updateSubjectSelectedDisplay();
-            showSubjectTempMessage('Subject removed', 'info');
+            showTempMessage('Subject removed', 'info');
         });
     });
 }
@@ -1080,20 +1085,20 @@ function submitSubjectAddForm() {
     const selectedIds = Array.from(subjectSelectedSubjects.keys());
 
     if (!formData.get('userid')) {
-        showSubjectError(errorEl, 'Please select a vetting staff member.');
+        showError(errorEl, 'Please select a vetting staff member.');
         return;
     }
     if (!formData.get('sessionid')) {
-        showSubjectError(errorEl, 'Please select a session.');
+        showError(errorEl, 'Please select a session.');
         return;
     }
     const terms = formData.getAll('termid[]');
     if (terms.length === 0) {
-        showSubjectError(errorEl, 'Please select at least one term.');
+        showError(errorEl, 'Please select at least one term.');
         return;
     }
     if (selectedIds.length === 0) {
-        showSubjectError(errorEl, 'Please select at least one subject-class assignment.');
+        showError(errorEl, 'Please select at least one subject-class assignment.');
         return;
     }
 
@@ -1120,19 +1125,19 @@ function submitSubjectAddForm() {
         if (data.success) {
             const modal = bootstrap.Modal.getInstance(document.getElementById('addSubjectVettingModal'));
             if (modal) modal.hide();
-            showSubjectToast(data.message || 'Assignment(s) added successfully!', 'success');
+            showToast(data.message || 'Assignment(s) added successfully!', 'success');
             setTimeout(() => location.reload(), 1500);
         } else {
             let msg = data.message || 'An error occurred';
             if (data.errors) {
                 msg = Object.values(data.errors).flat().join('<br>');
             }
-            showSubjectError(errorEl, msg);
+            showError(errorEl, msg);
         }
     })
     .catch(error => {
         console.error('Submit error:', error);
-        showSubjectError(errorEl, 'Network error. Please try again.');
+        showError(errorEl, 'Network error. Please try again.');
     })
     .finally(() => {
         if (submitBtn) submitBtn.disabled = false;
@@ -1145,26 +1150,26 @@ function initializeSubjectEditForm() {
         const btn = e.target.closest('.edit-item-btn');
         if (!btn) return;
         const row = btn.closest('tr');
-        if (row) populateSubjectEditModal(row);
+        if (row) populateEditModal(row);
     });
 
     const form = document.getElementById('edit-subjectvetting-form');
     if (form) {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-            submitSubjectEditForm();
+            submitEditForm();
         });
     }
 
     // Initialize edit modal search
-    initializeSubjectEditSearch();
+    initializeEditSubjectSearch();
 }
 
-function initializeSubjectEditSearch() {
-    const searchInput = document.getElementById('subjectEditSearchInput');
-    const resultsDiv = document.getElementById('subjectEditSearchResults');
-    const loadingDiv = document.getElementById('subjectEditSearchLoading');
-    const clearSearchBtn = document.getElementById('subjectEditClearSearchBtn');
+function initializeEditSubjectSearch() {
+    const searchInput = document.getElementById('editSubjectSearchInput');
+    const resultsDiv = document.getElementById('editSearchResults');
+    const loadingDiv = document.getElementById('editSearchLoading');
+    const clearSearchBtn = document.getElementById('editClearSearchBtn');
     let searchTimeout;
 
     if (!searchInput) return;
@@ -1182,7 +1187,7 @@ function initializeSubjectEditSearch() {
         resultsDiv.style.display = 'none';
 
         searchTimeout = setTimeout(() => {
-            const excludeId = subjectEditSelectedSubject ? subjectEditSelectedSubject.id : '';
+            const excludeId = editSelectedSubject ? editSelectedSubject.id : '';
             fetch(`/api/subject-classes/search?q=${encodeURIComponent(query)}&exclude_ids=${excludeId}`, {
                 headers: {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
@@ -1258,55 +1263,55 @@ function initializeSubjectEditSearch() {
                 const id = item.dataset.id;
                 const name = item.dataset.name;
                 const details = JSON.parse(item.dataset.details);
-                subjectEditSelectedSubject = { id, name, details };
-                updateSubjectEditSelectedDisplay();
+                editSelectedSubject = { id, name, details };
+                updateEditSelectedDisplay();
                 resultsDiv.style.display = 'none';
                 searchInput.value = '';
                 clearSearchBtn.style.display = 'none';
-                showSubjectTempMessage('Subject selected', 'success');
+                showTempMessage('Subject selected', 'success');
             }
         }
     });
 
     // Clear selection button
-    const clearSelectedBtn = document.getElementById('subjectEditClearSelectedBtn');
+    const clearSelectedBtn = document.getElementById('editClearSelectedBtn');
     if (clearSelectedBtn) {
         clearSelectedBtn.addEventListener('click', () => {
-            subjectEditSelectedSubject = null;
-            updateSubjectEditSelectedDisplay();
-            showSubjectTempMessage('Selection cleared', 'info');
+            editSelectedSubject = null;
+            updateEditSelectedDisplay();
+            showTempMessage('Selection cleared', 'info');
         });
     }
 }
 
-function updateSubjectEditSelectedDisplay() {
-    const container = document.getElementById('subjectEditSelectedSubjectContainer');
-    const hiddenInput = document.getElementById('subjectEditSelectedSubjectId');
-    const clearBtn = document.getElementById('subjectEditClearSelectedBtn');
+function updateEditSelectedDisplay() {
+    const container = document.getElementById('editSelectedSubjectContainer');
+    const hiddenInput = document.getElementById('editSelectedSubjectId');
+    const clearBtn = document.getElementById('editClearSelectedBtn');
 
-    if (!subjectEditSelectedSubject) {
+    if (!editSelectedSubject) {
         if (container) container.innerHTML = '<div class="text-center text-muted py-3">No subject selected</div>';
         if (hiddenInput) hiddenInput.value = '';
         if (clearBtn) clearBtn.style.display = 'none';
         return;
     }
 
-    const termColorClass = getTermColorClass(subjectEditSelectedSubject.details.termid);
-    const termBgClass = getTermBgClass(subjectEditSelectedSubject.details.termid);
+    const termColorClass = getTermColorClass(editSelectedSubject.details.termid);
+    const termBgClass = getTermBgClass(editSelectedSubject.details.termid);
 
-    if (hiddenInput) hiddenInput.value = subjectEditSelectedSubject.id;
+    if (hiddenInput) hiddenInput.value = editSelectedSubject.id;
     if (clearBtn) clearBtn.style.display = 'block';
 
     const html = `
         <div class="selected-subject-item p-2 bg-light rounded ${termBgClass}">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <strong>${escapeHtml(subjectEditSelectedSubject.name)}</strong>
+                    <strong>${escapeHtml(editSelectedSubject.name)}</strong>
                     <div class="small text-muted mt-1">
-                        <i class="ri-group-line me-1"></i> Class: ${escapeHtml(subjectEditSelectedSubject.details.sclass)} ${subjectEditSelectedSubject.details.schoolarm ? `(${escapeHtml(subjectEditSelectedSubject.details.schoolarm)})` : ''}<br>
-                        <i class="ri-user-line me-1"></i> Teacher: ${escapeHtml(subjectEditSelectedSubject.details.teachername)}<br>
-                        <i class="ri-calendar-line me-1"></i> Session: ${escapeHtml(subjectEditSelectedSubject.details.sessionname)}<br>
-                        <i class="ri-calendar-event-line me-1"></i> Term: <span class="${termColorClass} fw-bold">${escapeHtml(subjectEditSelectedSubject.details.termname)}</span>
+                        <i class="ri-group-line me-1"></i> Class: ${escapeHtml(editSelectedSubject.details.sclass)} ${editSelectedSubject.details.schoolarm ? `(${escapeHtml(editSelectedSubject.details.schoolarm)})` : ''}<br>
+                        <i class="ri-user-line me-1"></i> Teacher: ${escapeHtml(editSelectedSubject.details.teachername)}<br>
+                        <i class="ri-calendar-line me-1"></i> Session: ${escapeHtml(editSelectedSubject.details.sessionname)}<br>
+                        <i class="ri-calendar-event-line me-1"></i> Term: <span class="${termColorClass} fw-bold">${escapeHtml(editSelectedSubject.details.termname)}</span>
                     </div>
                 </div>
             </div>
@@ -1315,7 +1320,7 @@ function updateSubjectEditSelectedDisplay() {
     if (container) container.innerHTML = html;
 }
 
-function populateSubjectEditModal(row) {
+function populateEditModal(row) {
     const id = row.getAttribute('data-id');
     const vettingUserId = row.getAttribute('data-vetting-userid') || '';
     const termid = row.getAttribute('data-term') || '';
@@ -1329,17 +1334,17 @@ function populateSubjectEditModal(row) {
     const termname = row.querySelector('.termname')?.innerText || '';
     const sessionname = row.querySelector('.sessionname')?.innerText || '';
 
-    document.getElementById('subject-edit-id-field').value = id;
-    document.getElementById('subject-edit-userid').value = vettingUserId;
-    document.getElementById('subject-edit-sessionid').value = sessionid;
-    document.getElementById('subject-edit-status').value = status;
+    document.getElementById('edit-id-field').value = id;
+    document.getElementById('edit-userid').value = vettingUserId;
+    document.getElementById('edit-sessionid').value = sessionid;
+    document.getElementById('edit-status').value = status;
 
     // Set term radio
     const termRadio = document.querySelector(`input[name="termid"][value="${termid}"]`);
     if (termRadio) termRadio.checked = true;
 
     // Set selected subject for edit
-    subjectEditSelectedSubject = {
+    editSelectedSubject = {
         id: subjectclassid,
         name: subjectname,
         details: {
@@ -1352,46 +1357,46 @@ function populateSubjectEditModal(row) {
             sessionname: sessionname
         }
     };
-    updateSubjectEditSelectedDisplay();
+    updateEditSelectedDisplay();
 
     // Set form action
     const form = document.getElementById('edit-subjectvetting-form');
     form.action = `/subjectvetting/${id}`;
 
     if (typeof $ !== 'undefined' && $.fn.select2) {
-        $('#subject-edit-userid').trigger('change');
+        $('#edit-userid').trigger('change');
     }
 
-    const modal = new bootstrap.Modal(document.getElementById('editSubjectModal'));
+    const modal = new bootstrap.Modal(document.getElementById('editModal'));
     modal.show();
 }
 
-function submitSubjectEditForm() {
-    const id = document.getElementById('subject-edit-id-field').value;
-    const errorEl = document.getElementById('subject-edit-alert-error-msg');
-    const submitBtn = document.getElementById('subject-edit-btn');
+function submitEditForm() {
+    const id = document.getElementById('edit-id-field').value;
+    const errorEl = document.getElementById('edit-alert-error-msg');
+    const submitBtn = document.getElementById('edit-btn');
     const form = document.getElementById('edit-subjectvetting-form');
     const formData = new FormData(form);
 
     if (!formData.get('userid')) {
-        showSubjectError(errorEl, 'Please select a vetting staff member.');
+        showError(errorEl, 'Please select a vetting staff member.');
         return;
     }
     if (!formData.get('sessionid')) {
-        showSubjectError(errorEl, 'Please select a session.');
+        showError(errorEl, 'Please select a session.');
         return;
     }
     if (!formData.get('termid')) {
-        showSubjectError(errorEl, 'Please select a term.');
+        showError(errorEl, 'Please select a term.');
         return;
     }
-    if (!subjectEditSelectedSubject) {
-        showSubjectError(errorEl, 'Please select a subject-class assignment.');
+    if (!editSelectedSubject) {
+        showError(errorEl, 'Please select a subject-class assignment.');
         return;
     }
 
     // Ensure subjectclassid is set
-    formData.set('subjectclassid', subjectEditSelectedSubject.id);
+    formData.set('subjectclassid', editSelectedSubject.id);
 
     if (errorEl) errorEl.classList.add('d-none');
     if (submitBtn) submitBtn.disabled = true;
@@ -1408,9 +1413,9 @@ function submitSubjectEditForm() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('editSubjectModal'));
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
             if (modal) modal.hide();
-            showSubjectToast('Assignment updated successfully!', 'success');
+            showToast('Assignment updated successfully!', 'success');
             setTimeout(() => location.reload(), 1500);
         } else {
             let msg = data.message || 'Update failed';
@@ -1434,12 +1439,12 @@ function submitSubjectEditForm() {
 }
 
 // Reset edit modal on close
-document.getElementById('editSubjectModal')?.addEventListener('hidden.bs.modal', () => {
-    subjectEditSelectedSubject = null;
-    updateSubjectEditSelectedDisplay();
-    const searchInput = document.getElementById('subjectEditSearchInput');
-    const resultsDiv = document.getElementById('subjectEditSearchResults');
-    const errorEl = document.getElementById('subject-edit-alert-error-msg');
+document.getElementById('editModal')?.addEventListener('hidden.bs.modal', () => {
+    editSelectedSubject = null;
+    updateEditSelectedDisplay();
+    const searchInput = document.getElementById('editSubjectSearchInput');
+    const resultsDiv = document.getElementById('editSearchResults');
+    const errorEl = document.getElementById('edit-alert-error-msg');
     if (searchInput) searchInput.value = '';
     if (resultsDiv) resultsDiv.style.display = 'none';
     if (errorEl) errorEl.classList.add('d-none');
@@ -1452,17 +1457,17 @@ function initializeSubjectDelete() {
         if (!btn) return;
         const row = btn.closest('tr');
         if (row) {
-            subjectDeleteId = row.getAttribute('data-id');
+            deleteId = row.getAttribute('data-id');
             const modal = new bootstrap.Modal(document.getElementById('deleteRecordModal'));
             modal.show();
         }
     });
 
     document.getElementById('delete-record')?.addEventListener('click', function() {
-        if (!subjectDeleteId) return;
+        if (!deleteId) return;
         this.disabled = true;
 
-        fetch(`/subjectvetting/${subjectDeleteId}`, {
+        fetch(`/subjectvetting/${deleteId}`, {
             method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
@@ -1474,17 +1479,17 @@ function initializeSubjectDelete() {
             const modal = bootstrap.Modal.getInstance(document.getElementById('deleteRecordModal'));
             if (modal) modal.hide();
             if (data.success) {
-                showSubjectToast('Assignment deleted successfully!', 'success');
+                showToast('Assignment deleted successfully!', 'success');
                 setTimeout(() => location.reload(), 1500);
             } else {
-                showSubjectToast(data.message || 'Delete failed', 'danger');
+                showToast(data.message || 'Delete failed', 'danger');
             }
         })
         .catch(error => {
             console.error('Delete error:', error);
-            showSubjectToast('Network error', 'danger');
+            showToast('Network error', 'danger');
         })
-        .finally(() => { this.disabled = false; subjectDeleteId = null; });
+        .finally(() => { this.disabled = false; deleteId = null; });
     });
 }
 
@@ -1494,15 +1499,15 @@ function initializeSubjectBulkDelete() {
     if (checkAll) {
         checkAll.addEventListener('change', function() {
             document.querySelectorAll('input[name="chk_child"]').forEach(cb => cb.checked = this.checked);
-            toggleSubjectRemoveBtn();
+            toggleRemoveBtn();
         });
     }
     document.querySelector('#kt_subject_vetting_table tbody')?.addEventListener('change', function(e) {
-        if (e.target.name === 'chk_child') toggleSubjectRemoveBtn();
+        if (e.target.name === 'chk_child') toggleRemoveBtn();
     });
 }
 
-function toggleSubjectRemoveBtn() {
+function toggleRemoveBtn() {
     const anyChecked = document.querySelectorAll('input[name="chk_child"]:checked').length > 0;
     const removeBtn = document.getElementById('remove-actions');
     if (removeBtn) removeBtn.classList.toggle('d-none', !anyChecked);
@@ -1525,27 +1530,27 @@ window.deleteMultiple = function() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            showSubjectToast(`${ids.length} record(s) deleted.`, 'success');
+            showToast(`${ids.length} record(s) deleted.`, 'success');
             setTimeout(() => location.reload(), 1500);
         } else {
-            showSubjectToast(data.message || 'Delete failed', 'danger');
+            showToast(data.message || 'Delete failed', 'danger');
         }
     })
     .catch(error => {
         console.error('Bulk delete error:', error);
-        showSubjectToast('Network error', 'danger');
+        showToast('Network error', 'danger');
     });
 };
 
 // ========== HELPER FUNCTIONS ==========
-function showSubjectError(el, message) {
+function showError(el, message) {
     if (!el) return;
     el.innerHTML = message;
     el.classList.remove('d-none');
     setTimeout(() => el.classList.add('d-none'), 5000);
 }
 
-function showSubjectToast(message, type = 'success') {
+function showToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
     toast.style.zIndex = 9999;
@@ -1556,7 +1561,7 @@ function showSubjectToast(message, type = 'success') {
     setTimeout(() => toast.remove(), 3000);
 }
 
-function showSubjectTempMessage(message, type = 'info') {
+function showTempMessage(message, type = 'info') {
     const div = document.createElement('div');
     div.className = `alert alert-${type} alert-dismissible fade show position-fixed bottom-0 end-0 m-3`;
     div.style.zIndex = 9999;
@@ -1573,8 +1578,8 @@ function initializeSubjectSelect2() {
             placeholder: 'Select Staff',
             width: '100%'
         });
-        $('#subject-edit-userid').select2({
-            dropdownParent: $('#editSubjectModal'),
+        $('#edit-userid').select2({
+            dropdownParent: $('#editModal'),
             placeholder: 'Select Staff',
             width: '100%'
         });
