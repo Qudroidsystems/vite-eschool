@@ -136,14 +136,6 @@
                     margin-bottom: 10px;
                 }
 
-                /* Search highlight */
-                .highlight-text {
-                    background-color: #fff3cd;
-                    padding: 1px 4px;
-                    border-radius: 3px;
-                    font-weight: 600;
-                }
-
                 /* Checkbox styling */
                 .form-check-input:disabled {
                     background-color: #e9ecef;
@@ -238,15 +230,21 @@
                     color: #ffc107;
                 }
 
-                /* Table Row Hover Effect */
-                .table-row-hover {
-                    transition: all 0.2s ease;
+                /* Table Row Background Colors */
+                .row-pending {
+                    background-color: #ffe5e5 !important;
+                }
+
+                .row-completed {
+                    background-color: #e3f5ec !important;
+                }
+
+                .row-rejected {
+                    background-color: #fff4e5 !important;
                 }
 
                 .table-row-hover:hover {
-                    background-color: #f8f9fa;
-                    transform: scale(1.01);
-                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+                    filter: brightness(0.97);
                 }
 
                 /* Action Buttons */
@@ -273,17 +271,62 @@
                     font-weight: 500;
                 }
 
-                /* Card Header Gradient */
-                .card-header-gradient {
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: white;
-                }
-
                 /* Filter Card */
                 .filter-card {
                     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
                     border: none;
                     border-radius: 1rem;
+                }
+
+                /* View Toggle Buttons */
+                .view-toggle-btn {
+                    padding: 8px 16px;
+                    border-radius: 8px;
+                    transition: all 0.2s ease;
+                    cursor: pointer;
+                }
+
+                .view-toggle-btn.active {
+                    background-color: #0d6efd;
+                    color: white;
+                }
+
+                .view-toggle-btn:not(.active):hover {
+                    background-color: #e9ecef;
+                }
+
+                /* Card View Styles */
+                .card-view-container {
+                    display: none;
+                }
+
+                .card-view-container.active-view {
+                    display: block;
+                }
+
+                .table-view-container.active-view {
+                    display: block;
+                }
+
+                .table-view-container {
+                    display: block;
+                }
+
+                .vetting-card {
+                    transition: all 0.3s ease;
+                    border-radius: 1rem;
+                    overflow: hidden;
+                }
+
+                .vetting-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+                }
+
+                .card-status-badge {
+                    position: absolute;
+                    top: 15px;
+                    right: 15px;
                 }
 
                 /* Animations */
@@ -300,6 +343,35 @@
 
                 .animate-fade-in-up {
                     animation: fadeInUp 0.5s ease-out;
+                }
+
+                /* Pagination Styles */
+                .listjs-pagination {
+                    display: flex;
+                    gap: 5px;
+                    margin-bottom: 0;
+                }
+
+                .listjs-pagination li {
+                    list-style: none;
+                }
+
+                .listjs-pagination li a {
+                    display: block;
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    color: #0d6efd;
+                    text-decoration: none;
+                    transition: all 0.2s;
+                }
+
+                .listjs-pagination li a:hover {
+                    background-color: #e9ecef;
+                }
+
+                .listjs-pagination li.active a {
+                    background-color: #0d6efd;
+                    color: white;
                 }
             </style>
 
@@ -424,7 +496,7 @@
                         <div class="card filter-card">
                             <div class="card-body">
                                 <div class="row g-3 align-items-center">
-                                    <div class="col-xxl-4">
+                                    <div class="col-xxl-3">
                                         <div class="search-box">
                                             <label class="form-label text-muted mb-2 fw-semibold">Search Assignments</label>
                                             <div class="position-relative">
@@ -446,7 +518,20 @@
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="col-xxl-5">
+                                    <div class="col-xxl-3">
+                                        <div class="view-toggle">
+                                            <label class="form-label text-muted mb-2 fw-semibold">View Mode</label>
+                                            <div class="d-flex gap-2">
+                                                <button type="button" class="view-toggle-btn active" id="tableViewBtn">
+                                                    <i class="ri-table-view me-1"></i> Table View
+                                                </button>
+                                                <button type="button" class="view-toggle-btn" id="cardViewBtn">
+                                                    <i class="ri-layout-grid-line me-1"></i> Card View
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-xxl-3">
                                         <div class="current-session-info">
                                             <div class="alert alert-light border-0 mb-0 shadow-sm">
                                                 <div class="d-flex align-items-center">
@@ -469,8 +554,8 @@
                     </div>
                 </div>
 
-                <!-- Subject Vetting Assignments Card -->
-                <div class="row animate-fade-in-up" style="animation-delay: 0.3s;">
+                <!-- Table View -->
+                <div class="row animate-fade-in-up table-view-container active-view" id="tableView" style="animation-delay: 0.3s;">
                     <div class="col-lg-12">
                         <div class="card">
                             <div class="card-header bg-transparent pt-4 pb-0">
@@ -493,7 +578,7 @@
                             </div>
                             <div class="card-body pt-4">
                                 <div class="table-responsive">
-                                    <table class="table table-hover align-middle mb-0" id="kt_subject_vetting_table">
+                                    <table class="table align-middle mb-0" id="kt_subject_vetting_table">
                                         <thead class="table-light">
                                             <tr>
                                                 <th class="w-10px pe-2">
@@ -534,8 +619,14 @@
                                                     'rejected' => 'ri-close-circle-line',
                                                     default => 'ri-time-line'
                                                 };
+                                                $rowBgClass = match ($sv->status ?? 'pending') {
+                                                    'completed' => 'row-completed',
+                                                    'pending' => 'row-pending',
+                                                    'rejected' => 'row-rejected',
+                                                    default => ''
+                                                };
                                                 ?>
-                                                <tr data-url="{{ route('subjectvetting.destroy', $sv->svid) }}" class="table-row-hover">
+                                                <tr data-url="{{ route('subjectvetting.destroy', $sv->svid) }}" class="table-row-hover {{ $rowBgClass }}">
                                                     <td>
                                                         <div class="form-check">
                                                             <input class="form-check-input" type="checkbox" name="chk_child" />
@@ -633,6 +724,144 @@
                                                 <ul class="pagination listjs-pagination mb-0"></ul>
                                             </nav>
                                         </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card View -->
+                <div class="row animate-fade-in-up card-view-container" id="cardView" style="animation-delay: 0.3s;">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-header bg-transparent pt-4 pb-0">
+                                <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+                                    <div>
+                                        <h5 class="card-title mb-1 fw-bold">Subject Vetting Assignments</h5>
+                                        <p class="text-muted mb-0">Manage and monitor all subject vetting assignments</p>
+                                    </div>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @can('Create subject-vettings')
+                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSubjectVettingModal">
+                                                <i class="ri-add-line me-1"></i> Create Assignment
+                                            </button>
+                                        @endcan
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="card-body pt-4">
+                                <div class="row" id="cardViewContainer">
+                                    @forelse ($subjectvettings as $sv)
+                                        <?php
+                                        $picture = $sv->vetting_picture ?? 'unnamed.jpg';
+                                        $imagePath = asset('storage/staff_avatars/' . $picture);
+                                        $cardBgClass = match ($sv->status ?? 'pending') {
+                                            'completed' => 'border-success',
+                                            'pending' => 'border-danger',
+                                            'rejected' => 'border-warning',
+                                            default => ''
+                                        };
+                                        $cardHeaderBg = match ($sv->status ?? 'pending') {
+                                            'completed' => 'bg-success bg-opacity-10',
+                                            'pending' => 'bg-danger bg-opacity-10',
+                                            'rejected' => 'bg-warning bg-opacity-10',
+                                            default => ''
+                                        };
+                                        ?>
+                                        <div class="col-xl-4 col-md-6 mb-4 vetting-card-item" data-svid="{{ $sv->svid }}">
+                                            <div class="card vetting-card h-100 {{ $cardBgClass }} border-2">
+                                                <div class="card-header {{ $cardHeaderBg }} border-0">
+                                                    <div class="d-flex align-items-center justify-content-between">
+                                                        <div class="d-flex align-items-center">
+                                                            <img src="{{ $imagePath }}"
+                                                                 alt="{{ $sv->vetting_username ?? 'Unknown' }}"
+                                                                 class="rounded-circle me-2 staff-image-card"
+                                                                 style="width: 45px; height: 45px; object-fit: cover; cursor: pointer;"
+                                                                 data-bs-toggle="modal"
+                                                                 data-bs-target="#imageViewModal"
+                                                                 data-image="{{ $imagePath }}"
+                                                                 data-picture="{{ $sv->vetting_picture ?? 'none' }}"
+                                                                 data-teachername="{{ $sv->vetting_username ?? 'Unknown Staff' }}"
+                                                                 data-file-exists="{{ file_exists(storage_path('app/public/staff_avatars/' . $picture)) ? 'true' : 'false' }}"
+                                                                 data-default-exists="{{ file_exists(storage_path('app/public/staff_avatars/unnamed.jpg')) ? 'true' : 'false' }}"
+                                                                 onerror="this.src='{{ asset('storage/staff_avatars/unnamed.jpg') }}';">
+                                                            <div>
+                                                                <h6 class="mb-0">{{ $sv->vetting_username ?? 'N/A' }}</h6>
+                                                                <small class="text-muted">Vetting Officer</small>
+                                                            </div>
+                                                        </div>
+                                                        <div class="dropdown">
+                                                            <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown">
+                                                                <i class="ri-more-2-fill"></i>
+                                                            </button>
+                                                            <ul class="dropdown-menu">
+                                                                @can('Update subject-vettings')
+                                                                    <li>
+                                                                        <a class="dropdown-item edit-item-btn" href="javascript:void(0);" data-id="{{ $sv->svid }}">
+                                                                            <i class="ri-pencil-line me-2"></i> Edit
+                                                                        </a>
+                                                                    </li>
+                                                                @endcan
+                                                                @can('Delete subject-vettings')
+                                                                    <li>
+                                                                        <a class="dropdown-item text-danger remove-item-btn" href="javascript:void(0);" data-id="{{ $sv->svid }}" data-url="{{ route('subjectvetting.destroy', $sv->svid) }}">
+                                                                            <i class="ri-delete-bin-line me-2"></i> Delete
+                                                                        </a>
+                                                                    </li>
+                                                                @endcan
+                                                            </ul>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="mb-3">
+                                                        <span class="badge-status {{ $sv->status == 'completed' ? 'badge-completed' : ($sv->status == 'pending' ? 'badge-pending' : 'badge-rejected') }} position-absolute top-0 end-0 mt-3 me-3">
+                                                            <i class="{{ $sv->status == 'completed' ? 'ri-checkbox-circle-line' : ($sv->status == 'pending' ? 'ri-time-line' : 'ri-close-circle-line') }} me-1"></i>
+                                                            {{ ucfirst($sv->status ?? 'pending') }}
+                                                        </span>
+                                                    </div>
+                                                    <div class="info-item mb-3 pb-2 border-bottom">
+                                                        <label class="text-muted mb-1 fs-12">Subject</label>
+                                                        <p class="mb-0 fw-semibold">{{ $sv->subjectname ?? 'N/A' }} {{ $sv->subjectcode ? '(' . $sv->subjectcode . ')' : '' }}</p>
+                                                    </div>
+                                                    <div class="info-item mb-3 pb-2 border-bottom">
+                                                        <label class="text-muted mb-1 fs-12">Class & Arm</label>
+                                                        <p class="mb-0 fw-semibold">{{ $sv->sclass ?? 'N/A' }} {{ $sv->schoolarm ? '(' . $sv->schoolarm . ')' : '' }}</p>
+                                                    </div>
+                                                    <div class="info-item mb-3 pb-2 border-bottom">
+                                                        <label class="text-muted mb-1 fs-12">Teacher</label>
+                                                        <p class="mb-0 fw-semibold">{{ $sv->teachername ?? 'N/A' }}</p>
+                                                    </div>
+                                                    <div class="info-item mb-3 pb-2 border-bottom">
+                                                        <label class="text-muted mb-1 fs-12">Term & Session</label>
+                                                        <p class="mb-0 fw-semibold">{{ $sv->termname ?? 'N/A' }} - {{ $sv->sessionname ?? 'N/A' }}</p>
+                                                    </div>
+                                                    <div class="info-item">
+                                                        <label class="text-muted mb-1 fs-12">Last Updated</label>
+                                                        <p class="mb-0">{{ $sv->updated_at ? $sv->updated_at->format('d M, Y') : 'N/A' }}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @empty
+                                        <div class="col-12 text-center py-5">
+                                            <i class="ri-inbox-line fs-48 text-muted"></i>
+                                            <h5 class="mt-3">No Subject Vetting Assignments Found</h5>
+                                            <p class="text-muted">No assignments found for the selected session.</p>
+                                            @can('Create subject-vettings')
+                                                <button type="button" class="btn btn-primary add-btn mt-2" data-bs-toggle="modal" data-bs-target="#addSubjectVettingModal">
+                                                    <i class="ri-add-line me-1"></i> Create Your First Assignment
+                                                </button>
+                                            @endcan
+                                        </div>
+                                    @endforelse
+                                </div>
+                                <div class="row mt-3" id="cardPagination">
+                                    <div class="col-sm-12 text-center">
+                                        <nav>
+                                            <ul class="pagination justify-content-center" id="cardPaginationList"></ul>
+                                        </nav>
                                     </div>
                                 </div>
                             </div>
@@ -916,6 +1145,7 @@
 <script>
     window.vettingStatusCounts = @json($statusCounts);
     window.currentSessionId = @json($currentSession ? $currentSession->id : null);
+    window.subjectVettingsData = @json($subjectvettings);
     console.log('Initial vettingStatusCounts:', window.vettingStatusCounts);
     console.log('Current Session ID:', window.currentSessionId);
 </script>

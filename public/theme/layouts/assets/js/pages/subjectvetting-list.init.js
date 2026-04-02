@@ -1,6 +1,10 @@
 console.log("subjectvetting.init.js is loaded and executing!");
 
 let chartInitCount = 0;
+let currentView = 'table'; // 'table' or 'card'
+let cardCurrentPage = 1;
+let cardItemsPerPage = 6;
+let cardData = [];
 
 // Verify dependencies
 try {
@@ -38,6 +42,113 @@ function initializeSessionFilter() {
         } else {
             window.location.href = '/subjectvetting';
         }
+    });
+}
+
+// View Toggle Functionality
+function initializeViewToggle() {
+    const tableViewBtn = document.getElementById('tableViewBtn');
+    const cardViewBtn = document.getElementById('cardViewBtn');
+    const tableView = document.getElementById('tableView');
+    const cardView = document.getElementById('cardView');
+
+    if (!tableViewBtn || !cardViewBtn) return;
+
+    tableViewBtn.addEventListener('click', function() {
+        if (currentView === 'card') {
+            currentView = 'table';
+            tableViewBtn.classList.add('active');
+            cardViewBtn.classList.remove('active');
+            tableView.classList.add('active-view');
+            cardView.classList.remove('active-view');
+            // Reinitialize List.js when switching to table view
+            setTimeout(() => {
+                if (subjectVettingList) {
+                    subjectVettingList.update();
+                } else {
+                    initializeListJS();
+                }
+            }, 100);
+        }
+    });
+
+    cardViewBtn.addEventListener('click', function() {
+        if (currentView === 'table') {
+            currentView = 'card';
+            cardViewBtn.classList.add('active');
+            tableViewBtn.classList.remove('active');
+            cardView.classList.add('active-view');
+            tableView.classList.remove('active-view');
+            // Render card view with pagination
+            renderCardView();
+        }
+    });
+}
+
+// Render Card View with Pagination
+function renderCardView() {
+    const container = document.getElementById('cardViewContainer');
+    if (!container) return;
+
+    // Get card data from the existing DOM or from stored data
+    const cardItems = document.querySelectorAll('.vetting-card-item');
+    if (cardItems.length === 0) return;
+
+    const totalItems = cardItems.length;
+    const totalPages = Math.ceil(totalItems / cardItemsPerPage);
+
+    // Hide all items first
+    cardItems.forEach(item => item.style.display = 'none');
+
+    // Show items for current page
+    const start = (cardCurrentPage - 1) * cardItemsPerPage;
+    const end = start + cardItemsPerPage;
+
+    for (let i = start; i < end && i < totalItems; i++) {
+        cardItems[i].style.display = 'block';
+    }
+
+    // Render pagination
+    renderCardPagination(totalPages);
+}
+
+function renderCardPagination(totalPages) {
+    const paginationContainer = document.getElementById('cardPaginationList');
+    if (!paginationContainer) return;
+
+    let html = '';
+    html += `<li class="page-item ${cardCurrentPage === 1 ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="prev">&laquo; Previous</a>
+            </li>`;
+
+    for (let i = 1; i <= totalPages; i++) {
+        html += `<li class="page-item ${cardCurrentPage === i ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>`;
+    }
+
+    html += `<li class="page-item ${cardCurrentPage === totalPages ? 'disabled' : ''}">
+                <a class="page-link" href="#" data-page="next">Next &raquo;</a>
+            </li>`;
+
+    paginationContainer.innerHTML = html;
+
+    // Add event listeners
+    paginationContainer.querySelectorAll('.page-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const page = this.getAttribute('data-page');
+            if (page === 'prev' && cardCurrentPage > 1) {
+                cardCurrentPage--;
+                renderCardView();
+            } else if (page === 'next' && cardCurrentPage < totalPages) {
+                cardCurrentPage++;
+                renderCardView();
+            } else if (!isNaN(parseInt(page))) {
+                cardCurrentPage = parseInt(page);
+                renderCardView();
+            }
+        });
     });
 }
 
@@ -114,7 +225,7 @@ if (checkAll) {
         checkboxes.forEach((checkbox) => {
             checkbox.checked = this.checked;
             const row = checkbox.closest("tr");
-            row.classList.toggle("table-active", this.checked);
+            if (row) row.classList.toggle("table-active", this.checked);
         });
         const checkedCount = document.querySelectorAll('tbody input[name="chk_child"]:checked').length;
         const removeActions = document.getElementById("remove-actions");
@@ -215,7 +326,7 @@ function initializeCheckboxes() {
 
 function handleCheckboxChange(e) {
     const row = e.target.closest("tr");
-    row.classList.toggle("table-active", e.target.checked);
+    if (row) row.classList.toggle("table-active", e.target.checked);
     const checkedCount = document.querySelectorAll('tbody input[name="chk_child"]:checked').length;
     const removeActions = document.getElementById("remove-actions");
     if (removeActions) {
@@ -250,13 +361,19 @@ document.addEventListener('click', function (e) {
     const editBtn = e.target.closest('.edit-item-btn');
     const removeBtn = e.target.closest('.remove-item-btn');
     const image = e.target.closest('.staff-image');
+    const cardImage = e.target.closest('.staff-image-card');
+    const cardEditBtn = e.target.closest('.edit-item-btn');
+    const cardRemoveBtn = e.target.closest('.remove-item-btn');
 
-    if (editBtn) {
-        handleEditClick(e, editBtn);
-    } else if (removeBtn) {
-        handleRemoveClick(e, removeBtn);
-    } else if (image) {
-        handleImageClick(e, image);
+    if (editBtn || cardEditBtn) {
+        const btn = editBtn || cardEditBtn;
+        handleEditClick(e, btn);
+    } else if (removeBtn || cardRemoveBtn) {
+        const btn = removeBtn || cardRemoveBtn;
+        handleRemoveClick(e, btn);
+    } else if (image || cardImage) {
+        const img = image || cardImage;
+        handleImageClick(e, img);
     }
 });
 
@@ -294,8 +411,8 @@ function handleImageClick(e, image) {
 
 function handleRemoveClick(e, button) {
     e.preventDefault();
-    const itemId = button.closest("tr").querySelector(".id")?.getAttribute("data-id");
-    const deleteUrl = button.closest("tr").getAttribute("data-url");
+    const itemId = button.getAttribute('data-id') || button.closest("tr")?.querySelector(".id")?.getAttribute("data-id");
+    const deleteUrl = button.getAttribute('data-url') || button.closest("tr")?.getAttribute("data-url");
 
     if (!itemId || !deleteUrl) return;
 
@@ -333,23 +450,59 @@ function handleRemoveClick(e, button) {
 
 function handleEditClick(e, button) {
     e.preventDefault();
-    const itemId = button.closest("tr").querySelector(".id")?.getAttribute("data-id");
-    const tr = button.closest("tr");
+    let itemId, tr;
 
-    if (!itemId) return;
+    if (button.closest('tr')) {
+        // Table view
+        tr = button.closest("tr");
+        itemId = tr.querySelector(".id")?.getAttribute("data-id");
+    } else {
+        // Card view
+        const card = button.closest('.vetting-card');
+        itemId = card?.closest('.vetting-card-item')?.getAttribute('data-svid');
+        if (!itemId && window.subjectVettingsData) {
+            // Try to find by index or other means
+            const cardItem = button.closest('.vetting-card-item');
+            const index = Array.from(document.querySelectorAll('.vetting-card-item')).indexOf(cardItem);
+            if (index >= 0 && window.subjectVettingsData[index]) {
+                itemId = window.subjectVettingsData[index].svid;
+            }
+        }
+        tr = card;
+    }
 
-    const vettingUserId = tr.querySelector(".vetting_username")?.getAttribute("data-vetting_userid") || "";
-    const subjectClassId = tr.querySelector(".subjectname")?.getAttribute("data-subjectclassid") || "";
-    const termId = tr.querySelector(".termname")?.getAttribute("data-termid") || "";
-    const sessionId = tr.querySelector(".sessionname")?.getAttribute("data-sessionid") || "";
-    const status = tr.querySelector(".status span")?.textContent.trim().toLowerCase() || "pending";
+    if (!itemId) {
+        console.error("Item ID not found");
+        return;
+    }
 
-    if (editIdField) editIdField.value = itemId;
-    if (editUserIdField) editUserIdField.value = vettingUserId;
-    if (editSubjectClassIdField) editSubjectClassIdField.value = subjectClassId;
-    if (editTermIdField) editTermIdField.value = termId;
-    if (editSessionIdField) editSessionIdField.value = sessionId;
-    if (editStatusField) editStatusField.value = status;
+    // Find the data from the stored window data
+    let vettingData = null;
+    if (window.subjectVettingsData) {
+        vettingData = window.subjectVettingsData.find(item => item.svid == itemId);
+    }
+
+    if (vettingData) {
+        if (editIdField) editIdField.value = vettingData.svid;
+        if (editUserIdField) editUserIdField.value = vettingData.vetting_userid;
+        if (editSubjectClassIdField) editSubjectClassIdField.value = vettingData.subjectclassid;
+        if (editTermIdField) editTermIdField.value = vettingData.termid;
+        if (editSessionIdField) editSessionIdField.value = vettingData.sessionid;
+        if (editStatusField) editStatusField.value = vettingData.status || 'pending';
+    } else if (tr) {
+        const vettingUserId = tr.querySelector(".vetting_username")?.getAttribute("data-vetting_userid") || "";
+        const subjectClassId = tr.querySelector(".subjectname")?.getAttribute("data-subjectclassid") || "";
+        const termId = tr.querySelector(".termname")?.getAttribute("data-termid") || "";
+        const sessionId = tr.querySelector(".sessionname")?.getAttribute("data-sessionid") || "";
+        const status = tr.querySelector(".status span")?.textContent.trim().toLowerCase() || "pending";
+
+        if (editIdField) editIdField.value = itemId;
+        if (editUserIdField) editUserIdField.value = vettingUserId;
+        if (editSubjectClassIdField) editSubjectClassIdField.value = subjectClassId;
+        if (editTermIdField) editTermIdField.value = termId;
+        if (editSessionIdField) editSessionIdField.value = sessionId;
+        if (editStatusField) editStatusField.value = status;
+    }
 
     try {
         const modal = new bootstrap.Modal(document.getElementById("editModal"));
@@ -440,10 +593,10 @@ function deleteMultiple() {
 let subjectVettingList;
 
 function initializeListJS() {
-    const subjectVettingListContainer = document.getElementById('kt_subject_vetting_table');
-    const hasRows = document.querySelectorAll('#kt_subject_vetting_table tbody tr:not(.noresult)').length > 0;
+    const tableBody = document.querySelector('#kt_subject_vetting_table tbody');
+    const hasRows = tableBody && tableBody.querySelectorAll('tr:not(.noresult)').length > 0;
 
-    if (subjectVettingListContainer && hasRows) {
+    if (hasRows) {
         try {
             if (subjectVettingList) {
                 subjectVettingList.clear();
@@ -462,28 +615,21 @@ function initializeListJS() {
                 listClass: 'list'
             });
 
+            console.log("List.js initialized with pagination");
+
             subjectVettingList.on('updated', function () {
                 const totalRecords = subjectVettingList.items.length;
                 const visibleRecords = subjectVettingList.visibleItems.length;
                 const showingRecords = Math.min(visibleRecords, subjectVettingList.page);
-                const currentPage = Math.ceil((subjectVettingList.i - 1) / subjectVettingList.page) + 1;
 
-                document.getElementById('showing-records').textContent = showingRecords;
-                document.getElementById('total-records-footer').textContent = totalRecords;
-
-                const pagination = document.querySelector('.listjs-pagination');
-                if (pagination) {
-                    pagination.querySelectorAll('.page').forEach(page => {
-                        page.classList.remove('active');
-                        if (parseInt(page.textContent) === currentPage) {
-                            page.classList.add('active');
-                        }
-                    });
-                }
+                const showingSpan = document.getElementById('showing-records');
+                const totalSpan = document.getElementById('total-records-footer');
+                if (showingSpan) showingSpan.textContent = showingRecords;
+                if (totalSpan) totalSpan.textContent = totalRecords;
 
                 const noResultRow = document.querySelector('.noresult');
                 if (noResultRow) {
-                    noResultRow.style.display = visibleRecords === 0 ? 'block' : 'none';
+                    noResultRow.style.display = visibleRecords === 0 ? 'table-row' : 'none';
                 }
 
                 initializeCheckboxes();
@@ -495,8 +641,10 @@ function initializeListJS() {
             console.error("List.js initialization failed:", error);
         }
     } else {
-        document.getElementById('showing-records').textContent = 0;
-        document.getElementById('total-records-footer').textContent = 0;
+        const showingSpan = document.getElementById('showing-records');
+        const totalSpan = document.getElementById('total-records-footer');
+        if (showingSpan) showingSpan.textContent = 0;
+        if (totalSpan) totalSpan.textContent = 0;
     }
 }
 
@@ -507,6 +655,27 @@ function filterData() {
     if (subjectVettingList) {
         subjectVettingList.search(searchValue, ['sn', 'vetting_username', 'subjectname', 'sclass', 'schoolarm', 'teachername', 'termname', 'sessionname', 'status']);
         subjectVettingList.update();
+    }
+
+    // Also filter card view if active
+    if (currentView === 'card') {
+        const searchTerm = searchValue.toLowerCase();
+        const cardItems = document.querySelectorAll('.vetting-card-item');
+        let visibleCount = 0;
+
+        cardItems.forEach(item => {
+            const text = item.textContent.toLowerCase();
+            if (searchTerm === '' || text.includes(searchTerm)) {
+                item.style.display = 'block';
+                visibleCount++;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Reset pagination for filtered results
+        cardCurrentPage = 1;
+        renderCardView();
     }
 }
 
@@ -524,41 +693,25 @@ function refreshTable() {
             throw new Error('Invalid response data structure');
         }
 
-        if (subjectVettingList) {
-            subjectVettingList.clear();
+        window.subjectVettingsData = response.data.subjectvettings;
 
-            response.data.subjectvettings.forEach((item, index) => {
-                subjectVettingList.add({
-                    sn: index + 1,
-                    vetting_username: item.vetting_username,
-                    subjectname: `${item.subjectname} ${item.subjectcode ? `(${item.subjectcode})` : ''}`,
-                    sclass: item.sclass,
-                    schoolarm: item.schoolarm || '',
-                    teachername: item.teachername || '',
-                    termname: item.termname,
-                    sessionname: item.sessionname,
-                    status: `<span class="badge-status ${item.status === 'completed' ? 'badge-completed' : (item.status === 'pending' ? 'badge-pending' : 'badge-rejected')}">
-                                <i class="${item.status === 'completed' ? 'ri-checkbox-circle-line' : (item.status === 'pending' ? 'ri-time-line' : 'ri-close-circle-line')} me-1 fs-10"></i>
-                                ${item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-                            </span>`,
-                    datereg: item.updated_at.split(' ')[0]
-                });
-            });
+        // Update stats
+        document.getElementById('stat-total').textContent = response.data.subjectvettings.length;
+        document.getElementById('stat-pending').textContent = response.data.statusCounts?.pending || 0;
+        document.getElementById('stat-completed').textContent = response.data.statusCounts?.completed || 0;
+        document.getElementById('stat-rejected').textContent = response.data.statusCounts?.rejected || 0;
 
-            subjectVettingList.update();
+        // Update chart data
+        window.vettingStatusCounts = response.data.statusCounts || { pending: 0, completed: 0, rejected: 0 };
+        initializeVettingStatusChart();
 
-            window.vettingStatusCounts = response.data.statusCounts || { pending: 0, completed: 0, rejected: 0 };
-            initializeVettingStatusChart();
-            initializeCheckboxes();
-
-            document.getElementById('stat-total').textContent = response.data.subjectvettings.length;
-            document.getElementById('stat-pending').textContent = window.vettingStatusCounts.pending || 0;
-            document.getElementById('stat-completed').textContent = window.vettingStatusCounts.completed || 0;
-            document.getElementById('stat-rejected').textContent = window.vettingStatusCounts.rejected || 0;
-        }
+        // Reload the page to refresh all data (simplest approach)
+        // This ensures both table and card views are in sync
+        const currentUrl = window.location.href;
+        window.location.href = currentUrl;
     })
     .catch(error => {
-        console.error("Error refreshing table and chart:", error);
+        console.error("Error refreshing data:", error);
         Swal.fire({
             icon: "error",
             title: "Error refreshing data",
@@ -812,6 +965,13 @@ document.addEventListener('DOMContentLoaded', function () {
     initializeVettingStatusChart();
     initializeCheckboxes();
     initializeSessionFilter();
+    initializeViewToggle();
+
+    // Set initial card data
+    cardData = Array.from(document.querySelectorAll('.vetting-card-item'));
+    if (cardData.length > 0) {
+        renderCardView();
+    }
 
     const searchInput = document.querySelector(".search-box input.search");
     if (searchInput) {
