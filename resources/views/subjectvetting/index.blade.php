@@ -47,6 +47,7 @@
             @endif
 
             <style>
+                /* Stats Card Styles */
                 .stats-card {
                     transition: all 0.3s ease;
                     border: none;
@@ -67,6 +68,8 @@
                     border-radius: 12px;
                     font-size: 24px;
                 }
+
+                /* Status Badge Styles */
                 .badge-status {
                     padding: 6px 12px;
                     border-radius: 20px;
@@ -110,13 +113,14 @@
                     border-left-color: transparent !important;
                 }
 
-                /* Ensure border disappears on hover for all status types */
+                /* Specific hover states for each status */
                 .table-row-pending:hover,
                 .table-row-completed:hover,
                 .table-row-rejected:hover {
                     border-left-color: transparent !important;
                 }
 
+                /* Action Buttons */
                 .action-btn {
                     width: 32px;
                     height: 32px;
@@ -129,24 +133,24 @@
                 .action-btn:hover {
                     transform: scale(1.1);
                 }
+
+                /* Filter Card */
                 .filter-card {
                     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
                     border: none;
                     border-radius: 1rem;
                 }
+
+                /* Animations */
                 @keyframes fadeInUp {
-                    from {
-                        opacity: 0;
-                        transform: translateY(20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
                 }
                 .animate-fade-in-up {
                     animation: fadeInUp 0.5s ease-out;
                 }
+
+                /* Selected Subject Items */
                 .selected-subject-item {
                     transition: all 0.2s ease;
                 }
@@ -154,6 +158,8 @@
                     background-color: #f8f9fa;
                     transform: translateX(5px);
                 }
+
+                /* Search Results */
                 .subject-search-item {
                     cursor: pointer;
                     transition: all 0.2s ease;
@@ -188,6 +194,7 @@
                     border-left: 3px solid #f59e0b;
                 }
 
+                /* Search Box */
                 .search-box .search-icon {
                     position: absolute;
                     right: 15px;
@@ -200,15 +207,14 @@
                     position: relative;
                 }
 
-                /* Remove Actions Button */
-                .btn-subtle-danger {
-                    background-color: #f8d7da;
-                    color: #dc3545;
-                    border: none;
+                /* Stat Card Active State */
+                .stat-card-clickable {
+                    cursor: pointer;
+                    transition: all 0.3s ease;
                 }
-                .btn-subtle-danger:hover {
-                    background-color: #dc3545;
-                    color: white;
+                .stat-card-clickable.active-stat {
+                    border: 2px solid #0d6efd;
+                    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.1);
                 }
             </style>
 
@@ -237,9 +243,7 @@
                                         <select class="form-select form-select-lg" id="session-filter-stats">
                                             <option value="">All Sessions</option>
                                             @foreach ($sessions as $session)
-                                                <option value="{{ $session->id }}" {{ ($currentSession && $currentSession->id == $session->id) ? 'selected' : '' }}>
-                                                    {{ $session->session }} @if($session->status == 'Current') (Current) @endif
-                                                </option>
+                                                <option value="{{ $session->id }}">{{ $session->session }} @if($session->status == 'Current') (Current) @endif</option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -334,9 +338,6 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6 text-end">
-                                        <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()">
-                                            <i class="ri-delete-bin-2-line me-1"></i> Delete Selected
-                                        </button>
                                         @can('Create subject-vettings')
                                             <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSubjectVettingModal">
                                                 <i class="ri-add-line me-1"></i> Create Assignment
@@ -363,16 +364,16 @@
                                                         <input class="form-check-input" type="checkbox" id="checkAll" />
                                                     </div>
                                                 </th>
-                                                <th class="sort cursor-pointer" data-sort="sn">#</th>
-                                                <th class="sort cursor-pointer" data-sort="vetting_username">Vetting Staff</th>
-                                                <th class="sort cursor-pointer" data-sort="subjectname">Subject</th>
-                                                <th class="sort cursor-pointer" data-sort="sclass">Class</th>
-                                                <th class="sort cursor-pointer" data-sort="schoolarm">Arm</th>
-                                                <th class="sort cursor-pointer" data-sort="teachername">Teacher</th>
-                                                <th class="sort cursor-pointer" data-sort="termname">Term</th>
-                                                <th class="sort cursor-pointer" data-sort="sessionname">Session</th>
-                                                <th class="sort cursor-pointer" data-sort="status">Status</th>
-                                                <th class="sort cursor-pointer" data-sort="datereg">Updated</th>
+                                                <th>#</th>
+                                                <th>Vetting Staff</th>
+                                                <th>Subject</th>
+                                                <th>Class</th>
+                                                <th>Arm</th>
+                                                <th>Teacher</th>
+                                                <th>Term</th>
+                                                <th>Session</th>
+                                                <th>Status</th>
+                                                <th>Updated</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
@@ -405,7 +406,6 @@
                                                     data-session="{{ $sv->sessionid }}"
                                                     data-subjectclassid="{{ $sv->subjectclassid }}"
                                                     data-vetting-userid="{{ $sv->vetting_userid }}"
-                                                    data-url="{{ route('subjectvetting.destroy', $sv->svid) }}"
                                                     class="table-row-hover {{ $rowStatusClass }}">
                                                     <td>
                                                         <div class="form-check">
@@ -413,7 +413,7 @@
                                                         </div>
                                                     </div>
                                                     <td class="sn fw-bold">{{ ++$i }}</td>
-                                                    <td class="vetting_username" data-vetting_userid="{{ $sv->vetting_userid }}">
+                                                    <td class="vetting_username">
                                                         <div class="d-flex align-items-center">
                                                             <div class="flex-shrink-0">
                                                                 <div class="avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center">
@@ -427,25 +427,20 @@
                                                                 <h6 class="mb-0">{{ $sv->vetting_username ?? 'N/A' }}</h6>
                                                             </div>
                                                         </div>
-                                                    </td>
-                                                    <td class="subjectname" data-subjectclassid="{{ $sv->subjectclassid }}">
-                                                        <span class="fw-medium">{{ $sv->subjectname ?? 'N/A' }}</span>
-                                                        @if($sv->subjectcode)
-                                                            <small class="text-muted d-block">{{ $sv->subjectcode }}</small>
-                                                        @endif
-                                                    </td>
-                                                    <td class="sclass">{{ $sv->sclass ?? 'N/A' }}</td>
-                                                    <td class="schoolarm">{{ $sv->schoolarm ?? 'N/A' }}</td>
-                                                    <td class="teachername">{{ $sv->teachername ?? 'N/A' }}</td>
-                                                    <td class="termname {{ $termColorClass }}" data-termid="{{ $sv->termid }}">{{ $sv->termname ?? 'N/A' }}</td>
-                                                    <td class="sessionname" data-sessionid="{{ $sv->sessionid }}">{{ $sv->sessionname ?? 'N/A' }}</td>
+                                                    </div>
+                                                    <td class="subjectname">{{ $sv->subjectname ?? 'N/A' }}</div>
+                                                    <td class="sclass">{{ $sv->sclass ?? 'N/A' }}</div>
+                                                    <td class="schoolarm">{{ $sv->schoolarm ?? 'N/A' }}</div>
+                                                    <td class="teachername">{{ $sv->teachername ?? 'N/A' }}</div>
+                                                    <td class="termname {{ $termColorClass }}">{{ $sv->termname ?? 'N/A' }}</div>
+                                                    <td class="sessionname">{{ $sv->sessionname ?? 'N/A' }}</div>
                                                     <td class="status">
                                                         <span class="badge-status {{ $statusClass }}">
                                                             {{ ucfirst($sv->status ?? 'pending') }}
                                                         </span>
-                                                    </td>
-                                                    <td class="datereg">{{ $sv->updated_at ? $sv->updated_at->format('d M, Y') : 'N/A' }}</td>
-                                                    <td>
+                                                    </div>
+                                                    <td class="datereg">{{ $sv->updated_at ? $sv->updated_at->format('d M, Y') : 'N/A' }}</div>
+                                                    <tr>
                                                         <div class="d-flex gap-2">
                                                             @can('Update subject-vettings')
                                                                 <a href="javascript:void(0);" class="action-btn btn btn-light btn-sm edit-item-btn" title="Edit">
@@ -458,27 +453,26 @@
                                                                 </a>
                                                             @endcan
                                                         </div>
-                                                    </td>
+                                                    </div>
                                                 </tr>
                                             @empty
                                                 <tr class="noresult">
                                                     <td colspan="12" class="text-center py-5">
                                                         <i class="ri-inbox-line fs-48 text-muted"></i>
                                                         <h5 class="mt-3">No Subject Vetting Assignments Found</h5>
-                                                        <p class="text-muted">No assignments found for the selected session.</p>
+                                                        <p class="text-muted">No assignments found for the selected filters.</p>
                                                         @can('Create subject-vettings')
                                                             <button type="button" class="btn btn-primary add-btn mt-2" data-bs-toggle="modal" data-bs-target="#addSubjectVettingModal">
                                                                 <i class="ri-add-line me-1"></i> Create Your First Assignment
                                                             </button>
                                                         @endcan
-                                                    </td>
-                                                </tr>
+                                                    </div>
+                                                </div>
                                             @endforelse
                                         </tbody>
                                     </table>
                                 </div>
 
-                                <!-- Pagination -->
                                 <div class="row mt-4 align-items-center" id="pagination-element">
                                     <div class="col-sm">
                                         <div class="text-muted text-center text-sm-start">
@@ -601,9 +595,9 @@
                     </div>
                 </div>
 
-                <!-- Edit Modal -->
-                <div id="editModal" class="modal fade" tabindex="-1" data-bs-backdrop="static">
-                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                <!-- Edit Modal with AJAX Search -->
+                <div id="editSubjectModal" class="modal fade" tabindex="-1" data-bs-backdrop="static">
+                    <div class="modal-dialog modal-dialog-centered modal-xl">
                         <div class="modal-content">
                             <div class="modal-header bg-warning text-dark">
                                 <h5 class="modal-title"><i class="ri-edit-line me-2"></i>Edit Subject Vetting Assignment</h5>
@@ -613,56 +607,103 @@
                                 @csrf
                                 @method('PUT')
                                 <div class="modal-body">
-                                    <input type="hidden" id="edit-id-field" name="id">
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold">Vetting Staff <span class="text-danger">*</span></label>
-                                        <select name="userid" id="edit-userid" class="form-select" required>
-                                            <option value="">Select Staff</option>
-                                            @foreach ($staff as $staff_member)
-                                                <option value="{{ $staff_member->id }}">{{ $staff_member->name }}</option>
-                                            @endforeach
-                                        </select>
+                                    <input type="hidden" name="id" id="subject-edit-id-field">
+
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">Vetting Staff <span class="text-danger">*</span></label>
+                                                <select name="userid" id="subject-edit-userid" class="form-select select2" required>
+                                                    <option value="">Select Staff</option>
+                                                    @foreach ($staff as $staff_member)
+                                                        <option value="{{ $staff_member->id }}">{{ $staff_member->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
+                                                <select name="sessionid" id="subject-edit-sessionid" class="form-select" required>
+                                                    <option value="">Select Session</option>
+                                                    @foreach ($sessions as $session)
+                                                        <option value="{{ $session->id }}">{{ $session->session }} @if($session->status == 'Current') (Current Session) @endif</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
                                     </div>
+
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">Term <span class="text-danger">*</span></label>
-                                        <select name="termid" id="edit-termid" class="form-select" required>
-                                            <option value="">Select Term</option>
+                                        <div class="p-3 bg-light rounded">
                                             @foreach ($terms as $term)
-                                                <option value="{{ $term->id }}">{{ $term->term }}</option>
+                                                @php
+                                                    $termColor = match($term->id) {
+                                                        1 => 'text-primary',
+                                                        2 => 'text-success',
+                                                        3 => 'text-warning',
+                                                        default => ''
+                                                    };
+                                                @endphp
+                                                <div class="form-check form-check-inline me-3">
+                                                    <input class="form-check-input edit-term-checkbox" type="radio" name="termid" value="{{ $term->id }}" id="subject-edit-term-{{ $term->id }}">
+                                                    <label class="form-check-label {{ $termColor }}" for="subject-edit-term-{{ $term->id }}">
+                                                        <strong>{{ $term->term }}</strong>
+                                                    </label>
+                                                </div>
                                             @endforeach
-                                        </select>
+                                        </div>
                                     </div>
+
+                                    <!-- AJAX Subject Search Section for Edit (Single selection) -->
                                     <div class="mb-3">
-                                        <label class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
-                                        <select name="sessionid" id="edit-sessionid" class="form-select" required>
-                                            <option value="">Select Session</option>
-                                            @foreach ($sessions as $session)
-                                                <option value="{{ $session->id }}">{{ $session->session }} @if($session->status == 'Current') (Current Session) @endif</option>
-                                            @endforeach
-                                        </select>
+                                        <label class="form-label fw-semibold">Subject-Class Assignment <span class="text-danger">*</span></label>
+
+                                        <div class="input-group mb-3">
+                                            <span class="input-group-text"><i class="ri-search-line"></i></span>
+                                            <input type="text" id="subjectEditSearchInput" class="form-control"
+                                                   placeholder="Search by subject, class, teacher, term, or session... (min 2 characters)"
+                                                   autocomplete="off">
+                                            <button type="button" id="subjectEditClearSearchBtn" class="btn btn-outline-secondary" style="display: none;">
+                                                <i class="ri-close-line"></i>
+                                            </button>
+                                        </div>
+
+                                        <div id="subjectEditSearchResults" class="list-group mb-3" style="max-height: 300px; overflow-y: auto; display: none;"></div>
+                                        <div id="subjectEditSearchLoading" class="text-center p-3" style="display: none;">
+                                            <div class="spinner-border spinner-border-sm text-primary"></div>
+                                            <span class="ms-2">Searching...</span>
+                                        </div>
+
+                                        <div class="mt-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <h6 class="mb-0">Selected Subject</h6>
+                                                <button type="button" id="subjectEditClearSelectedBtn" class="btn btn-sm btn-danger" style="display: none;">
+                                                    <i class="ri-delete-bin-line me-1"></i>Clear Selection
+                                                </button>
+                                            </div>
+                                            <div id="subjectEditSelectedSubjectContainer" class="border rounded p-2" style="min-height: 80px;">
+                                                <div class="text-center text-muted py-3">No subject selected</div>
+                                            </div>
+                                            <input type="hidden" name="subjectclassid" id="subjectEditSelectedSubjectId">
+                                        </div>
                                     </div>
-                                    <div class="mb-3">
-                                        <label class="form-label fw-semibold">Subject-Class <span class="text-danger">*</span></label>
-                                        <select name="subjectclassid" id="edit-subjectclassid" class="form-select" required>
-                                            <option value="">Select Subject-Class</option>
-                                            @foreach ($subjectclasses as $sc)
-                                                <option value="{{ $sc->scid }}">{{ $sc->subjectname }} - {{ $sc->sclass }} ({{ $sc->schoolarm ?? 'N/A' }})</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
+
                                     <div class="mb-3">
                                         <label class="form-label fw-semibold">Status <span class="text-danger">*</span></label>
-                                        <select name="status" id="edit-status" class="form-select" required>
+                                        <select name="status" id="subject-edit-status" class="form-select" required>
                                             <option value="pending">Pending</option>
                                             <option value="completed">Completed</option>
                                             <option value="rejected">Rejected</option>
                                         </select>
                                     </div>
-                                    <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
+
+                                    <div class="alert alert-danger d-none" id="subject-edit-alert-error-msg"></div>
                                 </div>
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
+                                    <button type="submit" class="btn btn-primary" id="subject-edit-btn">Update Assignment</button>
                                 </div>
                             </form>
                         </div>
@@ -721,8 +762,10 @@ function getTermBgClass(termId) {
 // Main Subject Vetting Management
 let subjectSelectedSubjects = new Map();
 let subjectVettingList = null;
-let deleteId = null;
-let deleteUrl = null;
+let subjectDeleteId = null;
+
+// Edit modal variables
+let subjectEditSelectedSubject = null;
 
 // Initialize when document is ready
 document.addEventListener('DOMContentLoaded', function() {
@@ -804,6 +847,10 @@ function initializeSubjectFilters() {
         card.addEventListener('click', () => {
             const status = card.getAttribute('data-status');
             if (!subjectVettingList) return;
+
+            document.querySelectorAll('#statsCardsRow .stat-card-clickable').forEach(c => c.classList.remove('active-stat'));
+            card.classList.add('active-stat');
+
             if (status === 'all') {
                 subjectVettingList.filter();
             } else {
@@ -937,14 +984,14 @@ function initializeSubjectAddForm() {
                     subjectSelectedSubjects.set(id, { id, name, detailsHtml });
                     updateSubjectSelectedDisplay();
                     item.remove();
-                    showTempMessage('Subject added', 'success');
+                    showSubjectTempMessage('Subject added', 'success');
                     if (resultsDiv.children.length === 0) {
                         resultsDiv.style.display = 'none';
                         searchInput.value = '';
                         clearSearchBtn.style.display = 'none';
                     }
                 } else {
-                    showTempMessage('Already selected', 'warning');
+                    showSubjectTempMessage('Already selected', 'warning');
                 }
             }
         }
@@ -1019,7 +1066,7 @@ function updateSubjectSelectedDisplay() {
             const id = btn.dataset.id;
             subjectSelectedSubjects.delete(id);
             updateSubjectSelectedDisplay();
-            showTempMessage('Subject removed', 'info');
+            showSubjectTempMessage('Subject removed', 'info');
         });
     });
 }
@@ -1073,7 +1120,7 @@ function submitSubjectAddForm() {
         if (data.success) {
             const modal = bootstrap.Modal.getInstance(document.getElementById('addSubjectVettingModal'));
             if (modal) modal.hide();
-            showToast(data.message || 'Assignment(s) added successfully!', 'success');
+            showSubjectToast(data.message || 'Assignment(s) added successfully!', 'success');
             setTimeout(() => location.reload(), 1500);
         } else {
             let msg = data.message || 'An error occurred';
@@ -1092,7 +1139,7 @@ function submitSubjectAddForm() {
     });
 }
 
-// ========== EDIT FORM ==========
+// ========== EDIT FORM WITH AJAX SUBJECT SEARCH ==========
 function initializeSubjectEditForm() {
     document.querySelector('#kt_subject_vetting_table tbody')?.addEventListener('click', function(e) {
         const btn = e.target.closest('.edit-item-btn');
@@ -1108,6 +1155,164 @@ function initializeSubjectEditForm() {
             submitSubjectEditForm();
         });
     }
+
+    // Initialize edit modal search
+    initializeSubjectEditSearch();
+}
+
+function initializeSubjectEditSearch() {
+    const searchInput = document.getElementById('subjectEditSearchInput');
+    const resultsDiv = document.getElementById('subjectEditSearchResults');
+    const loadingDiv = document.getElementById('subjectEditSearchLoading');
+    const clearSearchBtn = document.getElementById('subjectEditClearSearchBtn');
+    let searchTimeout;
+
+    if (!searchInput) return;
+
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        clearTimeout(searchTimeout);
+        if (query.length < 2) {
+            resultsDiv.style.display = 'none';
+            clearSearchBtn.style.display = 'none';
+            return;
+        }
+        clearSearchBtn.style.display = 'block';
+        loadingDiv.style.display = 'block';
+        resultsDiv.style.display = 'none';
+
+        searchTimeout = setTimeout(() => {
+            const excludeId = subjectEditSelectedSubject ? subjectEditSelectedSubject.id : '';
+            fetch(`/api/subject-classes/search?q=${encodeURIComponent(query)}&exclude_ids=${excludeId}`, {
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+                    'Accept': 'application/json'
+                }
+            })
+            .then(res => res.json())
+            .then(response => {
+                loadingDiv.style.display = 'none';
+                if (!response.success) {
+                    resultsDiv.innerHTML = `<div class="list-group-item text-danger">${response.message || 'Search failed'}</div>`;
+                    resultsDiv.style.display = 'block';
+                    return;
+                }
+                const data = response.data;
+                if (data.length === 0) {
+                    resultsDiv.innerHTML = '<div class="list-group-item text-muted">No results found</div>';
+                    resultsDiv.style.display = 'block';
+                    return;
+                }
+                resultsDiv.innerHTML = data.map(item => {
+                    const termColorClass = getTermColorClass(item.termid);
+                    const termBgClass = getTermBgClass(item.termid);
+                    return `
+                        <div class="list-group-item edit-subject-search-item ${termBgClass}" data-id="${item.id}"
+                             data-name="${escapeHtml(item.subjectname)}"
+                             data-details='${JSON.stringify(item)}'>
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="fw-bold">
+                                        ${escapeHtml(item.subjectname)}
+                                        ${item.subjectcode ? `<span class="text-muted">(${escapeHtml(item.subjectcode)})</span>` : ''}
+                                    </div>
+                                    <div class="small text-muted mt-1">
+                                        <i class="ri-group-line me-1"></i> Class: ${escapeHtml(item.sclass)} ${item.schoolarm ? `(${escapeHtml(item.schoolarm)})` : ''}<br>
+                                        <i class="ri-user-line me-1"></i> Teacher: ${escapeHtml(item.teachername)}<br>
+                                        <i class="ri-calendar-line me-1"></i> Session: ${escapeHtml(item.sessionname)}<br>
+                                        <i class="ri-calendar-event-line me-1"></i> Term: <span class="${termColorClass} fw-bold">${escapeHtml(item.termname)}</span>
+                                    </div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-primary edit-select-subject-btn">
+                                    <i class="ri-check-line me-1"></i>Select
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                resultsDiv.style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Search error:', error);
+                loadingDiv.style.display = 'none';
+                resultsDiv.innerHTML = '<div class="list-group-item text-danger">Network error</div>';
+                resultsDiv.style.display = 'block';
+            });
+        }, 500);
+    });
+
+    if (clearSearchBtn) {
+        clearSearchBtn.addEventListener('click', () => {
+            searchInput.value = '';
+            resultsDiv.style.display = 'none';
+            clearSearchBtn.style.display = 'none';
+        });
+    }
+
+    // Handle subject selection in edit modal
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-select-subject-btn')) {
+            const btn = e.target.closest('.edit-select-subject-btn');
+            const item = btn.closest('.edit-subject-search-item');
+            if (item) {
+                const id = item.dataset.id;
+                const name = item.dataset.name;
+                const details = JSON.parse(item.dataset.details);
+                subjectEditSelectedSubject = { id, name, details };
+                updateSubjectEditSelectedDisplay();
+                resultsDiv.style.display = 'none';
+                searchInput.value = '';
+                clearSearchBtn.style.display = 'none';
+                showSubjectTempMessage('Subject selected', 'success');
+            }
+        }
+    });
+
+    // Clear selection button
+    const clearSelectedBtn = document.getElementById('subjectEditClearSelectedBtn');
+    if (clearSelectedBtn) {
+        clearSelectedBtn.addEventListener('click', () => {
+            subjectEditSelectedSubject = null;
+            updateSubjectEditSelectedDisplay();
+            showSubjectTempMessage('Selection cleared', 'info');
+        });
+    }
+}
+
+function updateSubjectEditSelectedDisplay() {
+    const container = document.getElementById('subjectEditSelectedSubjectContainer');
+    const hiddenInput = document.getElementById('subjectEditSelectedSubjectId');
+    const clearBtn = document.getElementById('subjectEditClearSelectedBtn');
+
+    if (!subjectEditSelectedSubject) {
+        if (container) container.innerHTML = '<div class="text-center text-muted py-3">No subject selected</div>';
+        if (hiddenInput) hiddenInput.value = '';
+        if (clearBtn) clearBtn.style.display = 'none';
+        return;
+    }
+
+    const termColorClass = getTermColorClass(subjectEditSelectedSubject.details.termid);
+    const termBgClass = getTermBgClass(subjectEditSelectedSubject.details.termid);
+
+    if (hiddenInput) hiddenInput.value = subjectEditSelectedSubject.id;
+    if (clearBtn) clearBtn.style.display = 'block';
+
+    const html = `
+        <div class="selected-subject-item p-2 bg-light rounded ${termBgClass}">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>${escapeHtml(subjectEditSelectedSubject.name)}</strong>
+                    <div class="small text-muted mt-1">
+                        <i class="ri-group-line me-1"></i> Class: ${escapeHtml(subjectEditSelectedSubject.details.sclass)} ${subjectEditSelectedSubject.details.schoolarm ? `(${escapeHtml(subjectEditSelectedSubject.details.schoolarm)})` : ''}<br>
+                        <i class="ri-user-line me-1"></i> Teacher: ${escapeHtml(subjectEditSelectedSubject.details.teachername)}<br>
+                        <i class="ri-calendar-line me-1"></i> Session: ${escapeHtml(subjectEditSelectedSubject.details.sessionname)}<br>
+                        <i class="ri-calendar-event-line me-1"></i> Term: <span class="${termColorClass} fw-bold">${escapeHtml(subjectEditSelectedSubject.details.termname)}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    if (container) container.innerHTML = html;
 }
 
 function populateSubjectEditModal(row) {
@@ -1117,22 +1322,54 @@ function populateSubjectEditModal(row) {
     const sessionid = row.getAttribute('data-session') || '';
     const subjectclassid = row.getAttribute('data-subjectclassid') || '';
     const status = row.getAttribute('data-status') || 'pending';
+    const subjectname = row.querySelector('.subjectname')?.innerText || '';
+    const sclass = row.querySelector('.sclass')?.innerText || '';
+    const schoolarm = row.querySelector('.schoolarm')?.innerText || '';
+    const teachername = row.querySelector('.teachername')?.innerText || '';
+    const termname = row.querySelector('.termname')?.innerText || '';
+    const sessionname = row.querySelector('.sessionname')?.innerText || '';
 
-    document.getElementById('edit-id-field').value = id;
-    document.getElementById('edit-userid').value = vettingUserId;
-    document.getElementById('edit-termid').value = termid;
-    document.getElementById('edit-sessionid').value = sessionid;
-    document.getElementById('edit-subjectclassid').value = subjectclassid;
-    document.getElementById('edit-status').value = status;
+    document.getElementById('subject-edit-id-field').value = id;
+    document.getElementById('subject-edit-userid').value = vettingUserId;
+    document.getElementById('subject-edit-sessionid').value = sessionid;
+    document.getElementById('subject-edit-status').value = status;
 
-    const modal = new bootstrap.Modal(document.getElementById('editModal'));
+    // Set term radio
+    const termRadio = document.querySelector(`input[name="termid"][value="${termid}"]`);
+    if (termRadio) termRadio.checked = true;
+
+    // Set selected subject for edit
+    subjectEditSelectedSubject = {
+        id: subjectclassid,
+        name: subjectname,
+        details: {
+            subjectname: subjectname,
+            sclass: sclass,
+            schoolarm: schoolarm,
+            teachername: teachername,
+            termname: termname,
+            termid: termid,
+            sessionname: sessionname
+        }
+    };
+    updateSubjectEditSelectedDisplay();
+
+    // Set form action
+    const form = document.getElementById('edit-subjectvetting-form');
+    form.action = `/subjectvetting/${id}`;
+
+    if (typeof $ !== 'undefined' && $.fn.select2) {
+        $('#subject-edit-userid').trigger('change');
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById('editSubjectModal'));
     modal.show();
 }
 
 function submitSubjectEditForm() {
-    const id = document.getElementById('edit-id-field').value;
-    const errorEl = document.getElementById('edit-alert-error-msg');
-    const submitBtn = document.getElementById('update-btn');
+    const id = document.getElementById('subject-edit-id-field').value;
+    const errorEl = document.getElementById('subject-edit-alert-error-msg');
+    const submitBtn = document.getElementById('subject-edit-btn');
     const form = document.getElementById('edit-subjectvetting-form');
     const formData = new FormData(form);
 
@@ -1140,18 +1377,21 @@ function submitSubjectEditForm() {
         showSubjectError(errorEl, 'Please select a vetting staff member.');
         return;
     }
-    if (!formData.get('termid')) {
-        showSubjectError(errorEl, 'Please select a term.');
-        return;
-    }
     if (!formData.get('sessionid')) {
         showSubjectError(errorEl, 'Please select a session.');
         return;
     }
-    if (!formData.get('subjectclassid')) {
+    if (!formData.get('termid')) {
+        showSubjectError(errorEl, 'Please select a term.');
+        return;
+    }
+    if (!subjectEditSelectedSubject) {
         showSubjectError(errorEl, 'Please select a subject-class assignment.');
         return;
     }
+
+    // Ensure subjectclassid is set
+    formData.set('subjectclassid', subjectEditSelectedSubject.id);
 
     if (errorEl) errorEl.classList.add('d-none');
     if (submitBtn) submitBtn.disabled = true;
@@ -1168,9 +1408,9 @@ function submitSubjectEditForm() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('editModal'));
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editSubjectModal'));
             if (modal) modal.hide();
-            showToast('Assignment updated successfully!', 'success');
+            showSubjectToast('Assignment updated successfully!', 'success');
             setTimeout(() => location.reload(), 1500);
         } else {
             let msg = data.message || 'Update failed';
@@ -1193,6 +1433,18 @@ function submitSubjectEditForm() {
     });
 }
 
+// Reset edit modal on close
+document.getElementById('editSubjectModal')?.addEventListener('hidden.bs.modal', () => {
+    subjectEditSelectedSubject = null;
+    updateSubjectEditSelectedDisplay();
+    const searchInput = document.getElementById('subjectEditSearchInput');
+    const resultsDiv = document.getElementById('subjectEditSearchResults');
+    const errorEl = document.getElementById('subject-edit-alert-error-msg');
+    if (searchInput) searchInput.value = '';
+    if (resultsDiv) resultsDiv.style.display = 'none';
+    if (errorEl) errorEl.classList.add('d-none');
+});
+
 // ========== DELETE ==========
 function initializeSubjectDelete() {
     document.querySelector('#kt_subject_vetting_table tbody')?.addEventListener('click', function(e) {
@@ -1200,18 +1452,17 @@ function initializeSubjectDelete() {
         if (!btn) return;
         const row = btn.closest('tr');
         if (row) {
-            deleteId = row.getAttribute('data-id');
-            deleteUrl = row.getAttribute('data-url');
+            subjectDeleteId = row.getAttribute('data-id');
             const modal = new bootstrap.Modal(document.getElementById('deleteRecordModal'));
             modal.show();
         }
     });
 
     document.getElementById('delete-record')?.addEventListener('click', function() {
-        if (!deleteId || !deleteUrl) return;
+        if (!subjectDeleteId) return;
         this.disabled = true;
 
-        fetch(deleteUrl, {
+        fetch(`/subjectvetting/${subjectDeleteId}`, {
             method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
@@ -1223,17 +1474,17 @@ function initializeSubjectDelete() {
             const modal = bootstrap.Modal.getInstance(document.getElementById('deleteRecordModal'));
             if (modal) modal.hide();
             if (data.success) {
-                showToast('Assignment deleted successfully!', 'success');
+                showSubjectToast('Assignment deleted successfully!', 'success');
                 setTimeout(() => location.reload(), 1500);
             } else {
-                showToast(data.message || 'Delete failed', 'danger');
+                showSubjectToast(data.message || 'Delete failed', 'danger');
             }
         })
         .catch(error => {
             console.error('Delete error:', error);
-            showToast('Network error', 'danger');
+            showSubjectToast('Network error', 'danger');
         })
-        .finally(() => { this.disabled = false; deleteId = null; deleteUrl = null; });
+        .finally(() => { this.disabled = false; subjectDeleteId = null; });
     });
 }
 
@@ -1274,15 +1525,15 @@ window.deleteMultiple = function() {
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            showToast(`${ids.length} record(s) deleted.`, 'success');
+            showSubjectToast(`${ids.length} record(s) deleted.`, 'success');
             setTimeout(() => location.reload(), 1500);
         } else {
-            showToast(data.message || 'Delete failed', 'danger');
+            showSubjectToast(data.message || 'Delete failed', 'danger');
         }
     })
     .catch(error => {
         console.error('Bulk delete error:', error);
-        showToast('Network error', 'danger');
+        showSubjectToast('Network error', 'danger');
     });
 };
 
@@ -1294,7 +1545,7 @@ function showSubjectError(el, message) {
     setTimeout(() => el.classList.add('d-none'), 5000);
 }
 
-function showToast(message, type = 'success') {
+function showSubjectToast(message, type = 'success') {
     const toast = document.createElement('div');
     toast.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
     toast.style.zIndex = 9999;
@@ -1305,7 +1556,7 @@ function showToast(message, type = 'success') {
     setTimeout(() => toast.remove(), 3000);
 }
 
-function showTempMessage(message, type = 'info') {
+function showSubjectTempMessage(message, type = 'info') {
     const div = document.createElement('div');
     div.className = `alert alert-${type} alert-dismissible fade show position-fixed bottom-0 end-0 m-3`;
     div.style.zIndex = 9999;
@@ -1322,8 +1573,8 @@ function initializeSubjectSelect2() {
             placeholder: 'Select Staff',
             width: '100%'
         });
-        $('#edit-userid').select2({
-            dropdownParent: $('#editModal'),
+        $('#subject-edit-userid').select2({
+            dropdownParent: $('#editSubjectModal'),
             placeholder: 'Select Staff',
             width: '100%'
         });
