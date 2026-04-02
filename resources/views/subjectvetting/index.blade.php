@@ -47,33 +47,169 @@
             @endif
 
             <style>
-                .stats-card { transition: all 0.3s ease; border: none; border-radius: 1rem; overflow: hidden; cursor: pointer; }
-                .stats-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
-                .stats-icon { width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; border-radius: 12px; font-size: 24px; }
-                .badge-status { padding: 6px 12px; border-radius: 20px; font-weight: 500; font-size: 11px; }
-                .badge-pending { background-color: #ffe5e5; color: #dc3545; }
-                .badge-completed { background-color: #e3f5ec; color: #28a745; }
-                .badge-rejected { background-color: #fff4e5; color: #ffc107; }
-                .table-row-pending { background-color: #fff5f5 !important; border-left: 3px solid #dc3545; }
-                .table-row-completed { background-color: #f0fff4 !important; border-left: 3px solid #28a745; }
-                .table-row-rejected { background-color: #fffbf0 !important; border-left: 3px solid #ffc107; }
-                .action-btn { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s ease; }
-                .action-btn:hover { transform: scale(1.1); }
-                .filter-card { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border: none; border-radius: 1rem; }
-                @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-                .animate-fade-in-up { animation: fadeInUp 0.5s ease-out; }
-                .selected-subject-item { transition: all 0.2s ease; }
-                .selected-subject-item:hover { background-color: #f8f9fa; transform: translateX(5px); }
-                .subject-search-item { cursor: pointer; transition: all 0.2s ease; }
-                .subject-search-item:hover { background-color: #f8f9fa; }
-                .term-first { color: #0d6efd !important; font-weight: 600; }
-                .term-second { color: #198754 !important; font-weight: 600; }
-                .term-third { color: #f59e0b !important; font-weight: 600; }
-                .term-bg-first { background-color: #0d6efd10; border-left: 3px solid #0d6efd; }
-                .term-bg-second { background-color: #19875410; border-left: 3px solid #198754; }
-                .term-bg-third { background-color: #f59e0b10; border-left: 3px solid #f59e0b; }
-                .search-box .search-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #6c757d; pointer-events: none; }
-                .search-box { position: relative; }
+                .stats-card {
+                    transition: all 0.3s ease;
+                    border: none;
+                    border-radius: 1rem;
+                    overflow: hidden;
+                    cursor: pointer;
+                }
+                .stats-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+                }
+                .stats-icon {
+                    width: 48px;
+                    height: 48px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 12px;
+                    font-size: 24px;
+                }
+                .badge-status {
+                    padding: 6px 12px;
+                    border-radius: 20px;
+                    font-weight: 500;
+                    font-size: 11px;
+                }
+                .badge-pending {
+                    background-color: #ffe5e5;
+                    color: #dc3545;
+                }
+                .badge-completed {
+                    background-color: #e3f5ec;
+                    color: #28a745;
+                }
+                .badge-rejected {
+                    background-color: #fff4e5;
+                    color: #ffc107;
+                }
+
+                /* Table Row Status Background Colors with border-left */
+                .table-row-pending {
+                    background-color: #fff5f5 !important;
+                    border-left: 3px solid #dc3545;
+                }
+                .table-row-completed {
+                    background-color: #f0fff4 !important;
+                    border-left: 3px solid #28a745;
+                }
+                .table-row-rejected {
+                    background-color: #fffbf0 !important;
+                    border-left: 3px solid #ffc107;
+                }
+
+                /* Hover effects - border color disappears */
+                .table-row-hover {
+                    transition: all 0.2s ease;
+                }
+                .table-row-hover:hover {
+                    transform: scale(1.01);
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+                    border-left-color: transparent !important;
+                }
+
+                /* Ensure border disappears on hover for all status types */
+                .table-row-pending:hover,
+                .table-row-completed:hover,
+                .table-row-rejected:hover {
+                    border-left-color: transparent !important;
+                }
+
+                .action-btn {
+                    width: 32px;
+                    height: 32px;
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 8px;
+                    transition: all 0.2s ease;
+                }
+                .action-btn:hover {
+                    transform: scale(1.1);
+                }
+                .filter-card {
+                    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+                    border: none;
+                    border-radius: 1rem;
+                }
+                @keyframes fadeInUp {
+                    from {
+                        opacity: 0;
+                        transform: translateY(20px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+                .animate-fade-in-up {
+                    animation: fadeInUp 0.5s ease-out;
+                }
+                .selected-subject-item {
+                    transition: all 0.2s ease;
+                }
+                .selected-subject-item:hover {
+                    background-color: #f8f9fa;
+                    transform: translateX(5px);
+                }
+                .subject-search-item {
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+                .subject-search-item:hover {
+                    background-color: #f8f9fa;
+                }
+
+                /* Term Colors */
+                .term-first {
+                    color: #0d6efd !important;
+                    font-weight: 600;
+                }
+                .term-second {
+                    color: #198754 !important;
+                    font-weight: 600;
+                }
+                .term-third {
+                    color: #f59e0b !important;
+                    font-weight: 600;
+                }
+                .term-bg-first {
+                    background-color: #0d6efd10;
+                    border-left: 3px solid #0d6efd;
+                }
+                .term-bg-second {
+                    background-color: #19875410;
+                    border-left: 3px solid #198754;
+                }
+                .term-bg-third {
+                    background-color: #f59e0b10;
+                    border-left: 3px solid #f59e0b;
+                }
+
+                .search-box .search-icon {
+                    position: absolute;
+                    right: 15px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #6c757d;
+                    pointer-events: none;
+                }
+                .search-box {
+                    position: relative;
+                }
+
+                /* Remove Actions Button */
+                .btn-subtle-danger {
+                    background-color: #f8d7da;
+                    color: #dc3545;
+                    border: none;
+                }
+                .btn-subtle-danger:hover {
+                    background-color: #dc3545;
+                    color: white;
+                }
             </style>
 
             <div id="subjectVettingList">
@@ -101,7 +237,9 @@
                                         <select class="form-select form-select-lg" id="session-filter-stats">
                                             <option value="">All Sessions</option>
                                             @foreach ($sessions as $session)
-                                                <option value="{{ $session->id }}">{{ $session->session }} @if($session->status == 'Current') (Current) @endif</option>
+                                                <option value="{{ $session->id }}" {{ ($currentSession && $currentSession->id == $session->id) ? 'selected' : '' }}>
+                                                    {{ $session->session }} @if($session->status == 'Current') (Current) @endif
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -196,6 +334,9 @@
                                         </div>
                                     </div>
                                     <div class="col-md-6 text-end">
+                                        <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()">
+                                            <i class="ri-delete-bin-2-line me-1"></i> Delete Selected
+                                        </button>
                                         @can('Create subject-vettings')
                                             <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSubjectVettingModal">
                                                 <i class="ri-add-line me-1"></i> Create Assignment
@@ -222,16 +363,16 @@
                                                         <input class="form-check-input" type="checkbox" id="checkAll" />
                                                     </div>
                                                 </th>
-                                                <th>#</th>
-                                                <th>Vetting Staff</th>
-                                                <th>Subject</th>
-                                                <th>Class</th>
-                                                <th>Arm</th>
-                                                <th>Teacher</th>
-                                                <th>Term</th>
-                                                <th>Session</th>
-                                                <th>Status</th>
-                                                <th>Updated</th>
+                                                <th class="sort cursor-pointer" data-sort="sn">#</th>
+                                                <th class="sort cursor-pointer" data-sort="vetting_username">Vetting Staff</th>
+                                                <th class="sort cursor-pointer" data-sort="subjectname">Subject</th>
+                                                <th class="sort cursor-pointer" data-sort="sclass">Class</th>
+                                                <th class="sort cursor-pointer" data-sort="schoolarm">Arm</th>
+                                                <th class="sort cursor-pointer" data-sort="teachername">Teacher</th>
+                                                <th class="sort cursor-pointer" data-sort="termname">Term</th>
+                                                <th class="sort cursor-pointer" data-sort="sessionname">Session</th>
+                                                <th class="sort cursor-pointer" data-sort="status">Status</th>
+                                                <th class="sort cursor-pointer" data-sort="datereg">Updated</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
@@ -258,14 +399,21 @@
                                                         default => ''
                                                     };
                                                 @endphp
-                                                <tr data-id="{{ $sv->svid }}" data-status="{{ $sv->status ?? 'pending' }}"
-                                                    data-term="{{ $sv->termid }}" data-session="{{ $sv->sessionid }}"
+                                                <tr data-id="{{ $sv->svid }}"
+                                                    data-status="{{ $sv->status ?? 'pending' }}"
+                                                    data-term="{{ $sv->termid }}"
+                                                    data-session="{{ $sv->sessionid }}"
                                                     data-subjectclassid="{{ $sv->subjectclassid }}"
                                                     data-vetting-userid="{{ $sv->vetting_userid }}"
+                                                    data-url="{{ route('subjectvetting.destroy', $sv->svid) }}"
                                                     class="table-row-hover {{ $rowStatusClass }}">
-                                                    <td><div class="form-check"><input class="form-check-input" type="checkbox" name="chk_child" value="{{ $sv->svid }}" /></div></td>
+                                                    <td>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="checkbox" name="chk_child" value="{{ $sv->svid }}" />
+                                                        </div>
+                                                    </div>
                                                     <td class="sn fw-bold">{{ ++$i }}</td>
-                                                    <td class="vetting_username">
+                                                    <td class="vetting_username" data-vetting_userid="{{ $sv->vetting_userid }}">
                                                         <div class="d-flex align-items-center">
                                                             <div class="flex-shrink-0">
                                                                 <div class="avatar-sm rounded-circle bg-light d-flex align-items-center justify-content-center">
@@ -280,12 +428,17 @@
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td class="subjectname">{{ $sv->subjectname ?? 'N/A' }}</td>
+                                                    <td class="subjectname" data-subjectclassid="{{ $sv->subjectclassid }}">
+                                                        <span class="fw-medium">{{ $sv->subjectname ?? 'N/A' }}</span>
+                                                        @if($sv->subjectcode)
+                                                            <small class="text-muted d-block">{{ $sv->subjectcode }}</small>
+                                                        @endif
+                                                    </td>
                                                     <td class="sclass">{{ $sv->sclass ?? 'N/A' }}</td>
                                                     <td class="schoolarm">{{ $sv->schoolarm ?? 'N/A' }}</td>
                                                     <td class="teachername">{{ $sv->teachername ?? 'N/A' }}</td>
-                                                    <td class="termname {{ $termColorClass }}">{{ $sv->termname ?? 'N/A' }}</td>
-                                                    <td class="sessionname">{{ $sv->sessionname ?? 'N/A' }}</td>
+                                                    <td class="termname {{ $termColorClass }}" data-termid="{{ $sv->termid }}">{{ $sv->termname ?? 'N/A' }}</td>
+                                                    <td class="sessionname" data-sessionid="{{ $sv->sessionid }}">{{ $sv->sessionname ?? 'N/A' }}</td>
                                                     <td class="status">
                                                         <span class="badge-status {{ $statusClass }}">
                                                             {{ ucfirst($sv->status ?? 'pending') }}
@@ -312,6 +465,12 @@
                                                     <td colspan="12" class="text-center py-5">
                                                         <i class="ri-inbox-line fs-48 text-muted"></i>
                                                         <h5 class="mt-3">No Subject Vetting Assignments Found</h5>
+                                                        <p class="text-muted">No assignments found for the selected session.</p>
+                                                        @can('Create subject-vettings')
+                                                            <button type="button" class="btn btn-primary add-btn mt-2" data-bs-toggle="modal" data-bs-target="#addSubjectVettingModal">
+                                                                <i class="ri-add-line me-1"></i> Create Your First Assignment
+                                                            </button>
+                                                        @endcan
                                                     </td>
                                                 </tr>
                                             @endforelse
@@ -319,6 +478,7 @@
                                     </table>
                                 </div>
 
+                                <!-- Pagination -->
                                 <div class="row mt-4 align-items-center" id="pagination-element">
                                     <div class="col-sm">
                                         <div class="text-muted text-center text-sm-start">
@@ -562,6 +722,7 @@ function getTermBgClass(termId) {
 let subjectSelectedSubjects = new Map();
 let subjectVettingList = null;
 let deleteId = null;
+let deleteUrl = null;
 
 // Initialize when document is ready
 document.addEventListener('DOMContentLoaded', function() {
@@ -1040,16 +1201,17 @@ function initializeSubjectDelete() {
         const row = btn.closest('tr');
         if (row) {
             deleteId = row.getAttribute('data-id');
+            deleteUrl = row.getAttribute('data-url');
             const modal = new bootstrap.Modal(document.getElementById('deleteRecordModal'));
             modal.show();
         }
     });
 
     document.getElementById('delete-record')?.addEventListener('click', function() {
-        if (!deleteId) return;
+        if (!deleteId || !deleteUrl) return;
         this.disabled = true;
 
-        fetch(`/subjectvetting/${deleteId}`, {
+        fetch(deleteUrl, {
             method: 'DELETE',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
@@ -1071,7 +1233,7 @@ function initializeSubjectDelete() {
             console.error('Delete error:', error);
             showToast('Network error', 'danger');
         })
-        .finally(() => { this.disabled = false; deleteId = null; });
+        .finally(() => { this.disabled = false; deleteId = null; deleteUrl = null; });
     });
 }
 
