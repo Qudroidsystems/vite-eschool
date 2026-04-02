@@ -1169,7 +1169,7 @@
 
 @endsection
 <script>
-console.log("subjectvetting.init.js - FIXED & SIMPLIFIED VERSION");
+console.log("subjectvetting.init.js - FIXED: Cards now show ALL filtered records");
 
 let currentView = 'table';
 let currentCardPage = 1;
@@ -1181,41 +1181,35 @@ let currentSessionFilter = '';
 let subjectVettingList = null;
 let vettingStatusChart = null;
 
-// ====================== UPDATE STATS & CHART ======================
+// ====================== MAIN UPDATE FUNCTION ======================
 function updateAll() {
     updateStatsFromTable();
     updateChartFromTable();
 
-    if (currentView === 'card' && subjectVettingList) {
-        setTimeout(() => renderCardView(subjectVettingList.items), 80);
+    if (currentView === 'card') {
+        setTimeout(renderCardView, 100);   // Render from visible rows (not List.js pagination)
     }
 }
 
+// ====================== STATS & CHART ======================
 function updateStatsFromTable() {
     const visibleRows = document.querySelectorAll('#kt_subject_vetting_table tbody tr:not(.noresult):not([style*="display: none"])');
 
-    let total = visibleRows.length;
-    let pending = 0, completed = 0, rejected = 0;
+    let total = 0, pending = 0, completed = 0, rejected = 0;
 
     visibleRows.forEach(row => {
+        total++;
         const status = (row.getAttribute('data-status') || 'pending').toLowerCase().trim();
         if (status === 'pending') pending++;
         else if (status === 'completed') completed++;
         else if (status === 'rejected') rejected++;
     });
 
-    // Update Stats Cards
-    const totalEl = document.getElementById('stat-total');
-    const pendingEl = document.getElementById('stat-pending');
-    const completedEl = document.getElementById('stat-completed');
-    const rejectedEl = document.getElementById('stat-rejected');
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-completed').textContent = completed;
+    document.getElementById('stat-rejected').textContent = rejected;
 
-    if (totalEl) totalEl.textContent = total;
-    if (pendingEl) pendingEl.textContent = pending;
-    if (completedEl) completedEl.textContent = completed;
-    if (rejectedEl) rejectedEl.textContent = rejected;
-
-    // Safe footer update
     const totalFooter = document.getElementById('total-records-footer');
     const showingEl = document.getElementById('showing-records');
     if (totalFooter) totalFooter.textContent = total;
@@ -1228,7 +1222,6 @@ function updateChartFromTable() {
     const visibleRows = document.querySelectorAll('#kt_subject_vetting_table tbody tr:not(.noresult):not([style*="display: none"])');
 
     let pending = 0, completed = 0, rejected = 0;
-
     visibleRows.forEach(row => {
         const status = (row.getAttribute('data-status') || 'pending').toLowerCase().trim();
         if (status === 'pending') pending++;
@@ -1240,7 +1233,7 @@ function updateChartFromTable() {
     vettingStatusChart.update('none');
 }
 
-// ====================== FILTER FUNCTION ======================
+// ====================== FILTER ======================
 function filterTableByTermAndSession() {
     const rows = document.querySelectorAll('#kt_subject_vetting_table tbody tr:not(.noresult)');
 
@@ -1291,9 +1284,7 @@ function initializeVettingStatusChart() {
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-                y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } }
-            },
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
             plugins: { legend: { display: false } }
         }
     });
@@ -1310,29 +1301,24 @@ function initializeListJS() {
             pagination: { paginationClass: "listjs-pagination" }
         });
 
-        subjectVettingList.on('updated', function () {
-            updateAll();
-        });
-
-        console.log("List.js initialized successfully");
+        subjectVettingList.on('updated', updateAll);
+        console.log("List.js initialized");
     } catch (e) {
-        console.error("List.js initialization failed:", e);
+        console.error("List.js failed:", e);
     }
 }
 
-// ====================== CARD VIEW ======================
-function renderCardView(items = []) {
+// ====================== CARD VIEW - FIXED (Uses visible rows, not pagination) ======================
+function renderCardView() {
     const container = document.getElementById('cardsContainer');
     if (!container) return;
 
-    const visibleItems = items.filter(item => {
-        const row = item.elm;
-        return row && row.style.display !== 'none';
-    });
+    // Get ALL visible rows (ignores List.js pagination limit)
+    const visibleRows = document.querySelectorAll('#kt_subject_vetting_table tbody tr:not(.noresult):not([style*="display: none"])');
 
     container.innerHTML = '';
 
-    if (visibleItems.length === 0) {
+    if (visibleRows.length === 0) {
         container.innerHTML = `
             <div class="col-12 text-center py-5">
                 <i class="ri-inbox-line fs-48 text-muted"></i>
@@ -1341,63 +1327,88 @@ function renderCardView(items = []) {
         return;
     }
 
-    const start = (currentCardPage - 1) * cardsPerPage;
-    const currentItems = visibleItems.slice(start, start + cardsPerPage);
+    // Pagination for cards
+    const totalPages = Math.ceil(visibleRows.length / cardsPerPage);
+    if (currentCardPage > totalPages) currentCardPage = totalPages || 1;
 
-    currentItems.forEach(item => {
-        const status = (item._values.status || 'Pending').toLowerCase();
-        const statusClass = status.includes('completed') ? 'completed' :
-                           (status.includes('pending') ? 'pending' : 'rejected');
-        const icon = status.includes('completed') ? 'ri-checkbox-circle-line' :
-                    (status.includes('pending') ? 'ri-time-line' : 'ri-close-circle-line');
+    const start = (currentCardPage - 1) * cardsPerPage;
+    const end = start + cardsPerPage;
+    const currentRows = Array.from(visibleRows).slice(start, end);
+
+    currentRows.forEach(row => {
+        const vettingName = row.querySelector('.vetting_username h6')?.textContent.trim() || 'N/A';
+        const subject = row.querySelector('.subjectname .fw-medium')?.textContent.trim() || 'N/A';
+        const sclass = row.querySelector('.sclass')?.textContent.trim() || 'N/A';
+        const arm = row.querySelector('.schoolarm')?.textContent.trim() || '';
+        const teacher = row.querySelector('.teachername')?.textContent.trim() || 'N/A';
+        const term = row.querySelector('.termname')?.textContent.trim() || 'N/A';
+        const session = row.querySelector('.sessionname')?.textContent.trim() || 'N/A';
+        const statusText = row.querySelector('.status span')?.textContent.trim() || 'Pending';
+
+        const statusLower = statusText.toLowerCase();
+        const statusClass = statusLower.includes('completed') ? 'completed' :
+                           (statusLower.includes('pending') ? 'pending' : 'rejected');
+        const icon = statusLower.includes('completed') ? 'ri-checkbox-circle-line' :
+                    (statusLower.includes('pending') ? 'ri-time-line' : 'ri-close-circle-line');
 
         const html = `
             <div class="col-md-6 col-xl-4">
                 <div class="vetting-card ${statusClass}-card">
                     <div class="card-header-info">
                         <div class="staff-info-card">
-                            <div class="staff-avatar-card">${(item._values.vetting_username || 'U')[0].toUpperCase()}</div>
-                            <div><h6 class="mb-0">${item._values.vetting_username || 'N/A'}</h6></div>
+                            <div class="staff-avatar-card">${vettingName.charAt(0).toUpperCase()}</div>
+                            <div><h6 class="mb-0">${vettingName}</h6></div>
                         </div>
                         <span class="badge-status ${statusClass === 'pending' ? 'badge-pending' : statusClass === 'completed' ? 'badge-completed' : 'badge-rejected'}">
-                            <i class="${icon} me-1"></i>${item._values.status || 'Pending'}
+                            <i class="${icon} me-1"></i>${statusText}
                         </span>
                     </div>
                     <div class="card-details">
-                        <div class="detail-item"><i class="ri-book-open-line"></i> <strong>Subject:</strong> ${item._values.subjectname || 'N/A'}</div>
-                        <div class="detail-item"><i class="ri-group-line"></i> <strong>Class:</strong> ${item._values.sclass || 'N/A'}</div>
-                        <div class="detail-item"><i class="ri-user-line"></i> <strong>Teacher:</strong> ${item._values.teachername || 'N/A'}</div>
-                        <div class="detail-item"><i class="ri-calendar-line"></i> <strong>Term:</strong> ${item._values.termname || 'N/A'}</div>
-                        <div class="detail-item"><i class="ri-calendar-event-line"></i> <strong>Session:</strong> ${item._values.sessionname || 'N/A'}</div>
+                        <div class="detail-item"><i class="ri-book-open-line"></i> <strong>Subject:</strong> ${subject}</div>
+                        <div class="detail-item"><i class="ri-group-line"></i> <strong>Class:</strong> ${sclass} ${arm ? `(${arm})` : ''}</div>
+                        <div class="detail-item"><i class="ri-user-line"></i> <strong>Teacher:</strong> ${teacher}</div>
+                        <div class="detail-item"><i class="ri-calendar-line"></i> <strong>Term:</strong> ${term}</div>
+                        <div class="detail-item"><i class="ri-calendar-event-line"></i> <strong>Session:</strong> ${session}</div>
                     </div>
                 </div>
             </div>`;
+
         container.insertAdjacentHTML('beforeend', html);
     });
+
+    // Update card pagination info
+    document.getElementById('card-showing-records').textContent = currentRows.length;
+    document.getElementById('card-total-records').textContent = visibleRows.length;
 }
 
-// ====================== FILTERS ======================
+// ====================== TERM & SESSION FILTERS ======================
 function initializeTermAndSessionFilters() {
     const termFilter = document.getElementById('term-filter-stats');
     const sessionFilter = document.getElementById('session-filter-stats');
     const resetBtn = document.getElementById('reset-stats-btn');
 
-    if (termFilter) termFilter.addEventListener('change', () => {
-        currentTermFilter = termFilter.value;
-        filterTableByTermAndSession();
-    });
+    if (termFilter) {
+        termFilter.addEventListener('change', () => {
+            currentTermFilter = termFilter.value;
+            filterTableByTermAndSession();
+        });
+    }
 
-    if (sessionFilter) sessionFilter.addEventListener('change', () => {
-        currentSessionFilter = sessionFilter.value;
-        filterTableByTermAndSession();
-    });
+    if (sessionFilter) {
+        sessionFilter.addEventListener('change', () => {
+            currentSessionFilter = sessionFilter.value;
+            filterTableByTermAndSession();
+        });
+    }
 
-    if (resetBtn) resetBtn.addEventListener('click', () => {
-        currentTermFilter = currentSessionFilter = '';
-        if (termFilter) termFilter.value = '';
-        if (sessionFilter) sessionFilter.value = '';
-        filterTableByTermAndSession();
-    });
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            currentTermFilter = currentSessionFilter = '';
+            if (termFilter) termFilter.value = '';
+            if (sessionFilter) sessionFilter.value = '';
+            filterTableByTermAndSession();
+        });
+    }
 }
 
 // ====================== VIEW TOGGLE ======================
@@ -1423,31 +1434,31 @@ function initializeViewToggle() {
         tableBtn.classList.remove('active');
         tableContainer.classList.add('hide');
         cardContainer.classList.add('active');
-        if (subjectVettingList) renderCardView(subjectVettingList.items);
+        renderCardView();        // Force render when switching to card view
     });
 }
 
-// ====================== DOM READY ======================
+// ====================== DOMContentLoaded ======================
 document.addEventListener('DOMContentLoaded', function () {
     initializeListJS();
     initializeVettingStatusChart();
     initializeTermAndSessionFilters();
     initializeViewToggle();
 
-    // Initial update
-    setTimeout(() => {
-        updateAll();
-    }, 300);
+    // Initial load
+    setTimeout(updateAll, 200);
 
-    // Search input
+    // Search
     const searchInput = document.querySelector(".search-box input.search");
-    if (searchInput && subjectVettingList) {
+    if (searchInput) {
         searchInput.addEventListener("input", () => {
-            subjectVettingList.search(searchInput.value);
-            setTimeout(updateAll, 50);
+            if (subjectVettingList) {
+                subjectVettingList.search(searchInput.value);
+                setTimeout(updateAll, 80);
+            }
         });
     }
 
-    console.log("✅ Subject Vetting initialized with fixed card updates");
+    console.log("✅ Subject Vetting initialized - Cards now show ALL filtered records");
 });
 </script>
