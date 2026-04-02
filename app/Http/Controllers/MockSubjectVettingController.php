@@ -26,7 +26,7 @@ class MockSubjectVettingController extends Controller
     }
 
     /**
-     * Search subject classes via AJAX - FIXED for large datasets
+     * Search subject classes via AJAX with term colors
      */
     public function searchSubjectClasses(Request $request)
     {
@@ -48,7 +48,9 @@ class MockSubjectVettingController extends Controller
                     'schoolclass.schoolclass as sclass',
                     'schoolarm.arm as schoolarm',
                     'users.name as teachername',
+                    'schoolterm.id as termid',
                     'schoolterm.term as termname',
+                    'schoolsession.id as sessionid',
                     'schoolsession.session as sessionname'
                 )
                 ->leftJoin('schoolclass', 'subjectclass.schoolclassid', '=', 'schoolclass.id')
@@ -77,7 +79,9 @@ class MockSubjectVettingController extends Controller
                         $q->where('subjectclass.id', '!=', $excludeIds);
                     }
                 })
-                ->limit(20)
+                ->orderBy('schoolterm.id')
+                ->orderBy('subject.subject')
+                ->limit(30)
                 ->get();
 
             return response()->json([
@@ -114,7 +118,9 @@ class MockSubjectVettingController extends Controller
                     'schoolclass.schoolclass as sclass',
                     'schoolarm.arm as schoolarm',
                     'users.name as teachername',
+                    'schoolterm.id as termid',
                     'schoolterm.term as termname',
+                    'schoolsession.id as sessionid',
                     'schoolsession.session as sessionname'
                 )
                 ->leftJoin('schoolclass', 'subjectclass.schoolclassid', '=', 'schoolclass.id')
@@ -191,10 +197,10 @@ class MockSubjectVettingController extends Controller
             }
 
             // Check for existing assignments
-            $existingAssignments = MockSubjectVetting::whereIn('subjectclassid', $subjectClassIds)
+            $existingAssignments = MockSubjectVetting::whereIn('subjectclassId', $subjectClassIds)
                 ->whereIn('termid', $termIds)
                 ->where('sessionid', $sessionId)
-                ->pluck('subjectclassid')
+                ->pluck('subjectclassId')
                 ->toArray();
 
             if (!empty($existingAssignments)) {
@@ -219,7 +225,7 @@ class MockSubjectVettingController extends Controller
                 foreach ($subjectClassIds as $subjectClassId) {
                     $mockSubjectVetting = MockSubjectVetting::create([
                         'userid' => $userId,
-                        'subjectclassid' => $subjectClassId,
+                        'subjectclassId' => $subjectClassId,  // Note: capital I
                         'termid' => $termId,
                         'sessionid' => $sessionId,
                         'status' => 'pending',
@@ -259,14 +265,13 @@ class MockSubjectVettingController extends Controller
                 ->get(['schoolclass.id as id', 'schoolclass.schoolclass as schoolclass', 'schoolarm.arm as arm'])
                 ->sortBy('schoolclass');
 
-            // DON'T load all subjectclasses here anymore - will load via AJAX
-            $subjectclasses = collect(); // Empty collection
+            $subjectclasses = collect();
 
             $staff = User::get(['id', 'name', 'avatar'])->sortBy('name');
             $terms = Schoolterm::get(['id', 'term'])->sortBy('term');
             $sessions = Schoolsession::get(['id', 'session'])->sortBy('session');
 
-            $mocksubjectvettings = MockSubjectVetting::leftJoin('subjectclass', 'mock_subject_vettings.subjectclassid', '=', 'subjectclass.id')
+            $mocksubjectvettings = MockSubjectVetting::leftJoin('subjectclass', 'mock_subject_vettings.subjectclassId', '=', 'subjectclass.id')
                 ->leftJoin('schoolclass', 'subjectclass.schoolclassid', '=', 'schoolclass.id')
                 ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
                 ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
@@ -363,7 +368,7 @@ class MockSubjectVettingController extends Controller
 
             $mockSubjectVetting->update([
                 'userid' => $request->input('userid'),
-                'subjectclassid' => $request->input('subjectclassid'),
+                'subjectclassId' => $request->input('subjectclassid'),  // Note: capital I
                 'termid' => $request->input('termid'),
                 'sessionid' => $request->input('sessionid'),
                 'status' => $request->input('status'),
@@ -396,9 +401,8 @@ class MockSubjectVettingController extends Controller
             }
 
             DB::transaction(function () use ($mockSubjectVetting) {
-                // Update broadsheets if they exist
                 BroadsheetsMock::where('vettedby', $mockSubjectVetting->userid)
-                    ->where('subjectclass_id', $mockSubjectVetting->subjectclassid)
+                    ->where('subjectclass_id', $mockSubjectVetting->subjectclassId)
                     ->where('term_id', $mockSubjectVetting->termid)
                     ->update([
                         'vettedby' => null,

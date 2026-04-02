@@ -18,7 +18,6 @@
                     </div>
                 </div>
             </div>
-            <!-- End page title -->
 
             @if ($errors->any())
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
@@ -28,7 +27,7 @@
                             <li>{{ $error }}</li>
                         @endforeach
                     </ul>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
 
@@ -36,14 +35,14 @@
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     <i class="ri-checkbox-circle-line me-2"></i>
                     {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
             @if (session('danger'))
                 <div class="alert alert-danger alert-dismissible fade show" role="alert">
                     <i class="ri-error-warning-line me-2"></i>
                     {{ session('danger') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
 
@@ -69,12 +68,24 @@
                 .subject-search-item:hover { background-color: #f8f9fa; }
 
                 /* Term Colors */
-                .term-first { color: #0d6efd !important; font-weight: 500; }      /* Blue - First Term */
-                .term-second { color: #198754 !important; font-weight: 500; }     /* Green - Second Term */
-                .term-third { color: #ffc107 !important; font-weight: 500; }      /* Yellow - Third Term */
-                .term-badge-first { background-color: #0d6efd20; color: #0d6efd; border-left: 3px solid #0d6efd; }
-                .term-badge-second { background-color: #19875420; color: #198754; border-left: 3px solid #198754; }
-                .term-badge-third { background-color: #ffc10720; color: #ffc107; border-left: 3px solid #ffc107; }
+                .term-first { color: #0d6efd !important; font-weight: 600; }
+                .term-second { color: #198754 !important; font-weight: 600; }
+                .term-third { color: #f59e0b !important; font-weight: 600; }
+                .term-bg-first { background-color: #0d6efd10; border-left: 3px solid #0d6efd; }
+                .term-bg-second { background-color: #19875410; border-left: 3px solid #198754; }
+                .term-bg-third { background-color: #f59e0b10; border-left: 3px solid #f59e0b; }
+
+                .search-box .search-icon {
+                    position: absolute;
+                    right: 15px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #6c757d;
+                    pointer-events: none;
+                }
+                .search-box {
+                    position: relative;
+                }
             </style>
 
             <div id="mockSubjectVettingList">
@@ -192,8 +203,8 @@
                                         <div class="search-box">
                                             <label class="form-label text-muted mb-2 fw-semibold">Search Assignments</label>
                                             <div class="position-relative">
-                                                <input type="text" class="form-control search" placeholder="Search by staff, subject, class, teacher...">
-                                                <i class="ri-search-line search-icon" style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%);"></i>
+                                                <input type="text" class="form-control search" id="tableSearchInput" placeholder="Search by staff, subject, class, teacher...">
+                                                <i class="ri-search-line search-icon"></i>
                                             </div>
                                         </div>
                                     </div>
@@ -424,7 +435,7 @@
                                             <div id="mockSelectedSubjectsContainer" class="border rounded p-2" style="min-height: 100px; max-height: 300px; overflow-y: auto;">
                                                 <div class="text-center text-muted py-3">No subjects selected</div>
                                             </div>
-                                            <input type="hidden" name="subjectclassid" id="mockSelectedSubjectIds">
+                                            <input type="hidden" name="subjectclassid[]" id="mockSelectedSubjectIds">
                                         </div>
                                     </div>
 
@@ -447,7 +458,7 @@
                                 <h5 class="modal-title"><i class="ri-edit-line me-2"></i>Edit Mock Subject Vetting</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                             </div>
-                            <form id="edit-mocksubjectvetting-form">
+                            <form id="edit-mocksubjectvetting-form" action="" method="POST">
                                 @csrf
                                 @method('PUT')
                                 <div class="modal-body">
@@ -548,10 +559,10 @@ function getTermColorClass(termId) {
     return '';
 }
 
-function getTermBadgeClass(termId) {
-    if (termId == 1) return 'term-badge-first';
-    if (termId == 2) return 'term-badge-second';
-    if (termId == 3) return 'term-badge-third';
+function getTermBgClass(termId) {
+    if (termId == 1) return 'term-bg-first';
+    if (termId == 2) return 'term-bg-second';
+    if (termId == 3) return 'term-bg-third';
     return '';
 }
 
@@ -559,13 +570,12 @@ function getTermBadgeClass(termId) {
 let mockSelectedSubjects = new Map();
 let mockSubjectVettingList = null;
 let mockDeleteId = null;
-let mockDeleteUrl = null;
 
 // Initialize when document is ready
 document.addEventListener('DOMContentLoaded', function() {
     initializeMockListJS();
     initializeMockFilters();
-    initializeMockSearch();
+    initializeMockTableSearch();
     initializeMockAddForm();
     initializeMockEditForm();
     initializeMockDelete();
@@ -582,7 +592,20 @@ function initializeMockListJS() {
             pagination: { paginationClass: 'listjs-pagination' }
         });
         mockSubjectVettingList.on('updated', updateStatsFromList);
-    } catch(e) { console.error('ListJS init error:', e); }
+        console.log('List.js initialized successfully');
+    } catch(e) {
+        console.error('ListJS init error:', e);
+    }
+}
+
+function initializeMockTableSearch() {
+    const searchInput = document.getElementById('tableSearchInput');
+    if (searchInput && mockSubjectVettingList) {
+        searchInput.addEventListener('keyup', function() {
+            mockSubjectVettingList.search(this.value);
+        });
+        console.log('Table search initialized');
+    }
 }
 
 function updateStatsFromList() {
@@ -609,6 +632,7 @@ function initializeMockFilters() {
     const termFilter = document.getElementById('mock-term-filter-stats');
     const sessionFilter = document.getElementById('mock-session-filter-stats');
     const resetBtn = document.getElementById('mock-reset-stats-btn');
+
     if (termFilter) {
         termFilter.addEventListener('change', () => applyFilters());
     }
@@ -622,6 +646,7 @@ function initializeMockFilters() {
             applyFilters();
         });
     }
+
     // Stat card filters
     document.querySelectorAll('#mockStatsCardsRow .stat-card-clickable').forEach(card => {
         card.addEventListener('click', () => {
@@ -656,21 +681,11 @@ function applyFilters() {
     }
 }
 
-function initializeMockSearch() {
-    const searchInput = document.querySelector('.search-box input.search');
-    if (searchInput && mockSubjectVettingList) {
-        searchInput.addEventListener('input', () => {
-            mockSubjectVettingList.search(searchInput.value);
-        });
-    }
-}
-
 // ========== AJAX SUBJECT SEARCH WITH TERM COLORS ==========
 function initializeMockAddForm() {
     const form = document.getElementById('add-mocksubjectvetting-form');
     if (!form) return;
 
-    // Initialize search
     const searchInput = document.getElementById('mockSubjectSearchInput');
     const resultsDiv = document.getElementById('mockSearchResults');
     const loadingDiv = document.getElementById('mockSearchLoading');
@@ -714,9 +729,9 @@ function initializeMockAddForm() {
                     }
                     resultsDiv.innerHTML = data.map(item => {
                         const termColorClass = getTermColorClass(item.termid);
-                        const termBadgeClass = getTermBadgeClass(item.termid);
+                        const termBgClass = getTermBgClass(item.termid);
                         return `
-                            <div class="list-group-item subject-search-item" data-id="${item.id}">
+                            <div class="list-group-item subject-search-item ${termBgClass}" data-id="${item.id}">
                                 <div class="d-flex justify-content-between align-items-start">
                                     <div class="flex-grow-1">
                                         <div class="fw-bold">
@@ -767,10 +782,7 @@ function initializeMockAddForm() {
                 const name = item.querySelector('.fw-bold')?.innerText || '';
                 if (!mockSelectedSubjects.has(id)) {
                     const detailsHtml = item.querySelector('.small')?.innerHTML || '';
-                    // Extract term info for color
-                    const termSpan = item.querySelector('.term-color, .term-first, .term-second, .term-third');
-                    const termClass = termSpan ? termSpan.className : '';
-                    mockSelectedSubjects.set(id, { id, name, detailsHtml, termClass });
+                    mockSelectedSubjects.set(id, { id, name, detailsHtml });
                     updateSelectedSubjectsDisplay();
                     item.remove();
                     showTempMessage('Subject added', 'success');
@@ -797,7 +809,7 @@ function initializeMockAddForm() {
         });
     }
 
-    // Form submission - Use the form's action URL
+    // Form submission
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         submitAddForm();
@@ -812,6 +824,10 @@ function initializeMockAddForm() {
         if (resultsDiv) resultsDiv.style.display = 'none';
         const errorEl = document.getElementById('mock-alert-error-msg');
         if (errorEl) errorEl.classList.add('d-none');
+        // Reset select2
+        if (typeof $ !== 'undefined' && $.fn.select2) {
+            $('#mock-userid').val('').trigger('change');
+        }
     });
 }
 
@@ -885,7 +901,8 @@ function submitAddForm() {
         return;
     }
 
-    // Append selected IDs to form data
+    // Remove existing subjectclassid and add selected IDs
+    formData.delete('subjectclassid[]');
     selectedIds.forEach(id => {
         formData.append('subjectclassid[]', id);
     });
@@ -893,7 +910,6 @@ function submitAddForm() {
     if (errorEl) errorEl.classList.add('d-none');
     if (submitBtn) submitBtn.disabled = true;
 
-    // Use the form's action URL (which is the route)
     const actionUrl = form.getAttribute('action');
 
     fetch(actionUrl, {
@@ -910,7 +926,7 @@ function submitAddForm() {
             const modal = bootstrap.Modal.getInstance(document.getElementById('addMockSubjectVettingModal'));
             if (modal) modal.hide();
             showToast(data.message || 'Assignment(s) added successfully!', 'success');
-            setTimeout(() => location.reload(), 1000);
+            setTimeout(() => location.reload(), 1500);
         } else {
             let msg = data.message || 'An error occurred';
             if (data.errors) {
@@ -930,7 +946,6 @@ function submitAddForm() {
 
 // ========== EDIT FORM ==========
 function initializeMockEditForm() {
-    // Table edit buttons
     document.querySelector('#kt_mock_subject_vetting_table tbody')?.addEventListener('click', function(e) {
         const btn = e.target.closest('.edit-item-btn');
         if (!btn) return;
@@ -960,6 +975,10 @@ function populateEditModal(row) {
     document.getElementById('mock-edit-termid').value = termid;
     document.getElementById('mock-edit-sessionid').value = sessionid;
     document.getElementById('mock-edit-status').value = status;
+
+    // Set form action
+    const form = document.getElementById('edit-mocksubjectvetting-form');
+    form.action = `/mocksubjectvetting/${id}`;
 
     // Load subject classes for dropdown
     fetch('/api/subject-classes/search?q=&limit=500', {
@@ -1011,7 +1030,7 @@ function submitEditForm() {
             const modal = bootstrap.Modal.getInstance(document.getElementById('editMockModal'));
             if (modal) modal.hide();
             showToast('Assignment updated successfully!', 'success');
-            setTimeout(() => location.reload(), 1000);
+            setTimeout(() => location.reload(), 1500);
         } else {
             let msg = data.message || 'Update failed';
             if (data.errors) msg = Object.values(data.errors).flat().join('<br>');
@@ -1032,7 +1051,6 @@ function submitEditForm() {
 
 // ========== DELETE ==========
 function initializeMockDelete() {
-    // Table delete buttons
     document.querySelector('#kt_mock_subject_vetting_table tbody')?.addEventListener('click', function(e) {
         const btn = e.target.closest('.remove-item-btn');
         if (!btn) return;
@@ -1061,7 +1079,7 @@ function initializeMockDelete() {
             if (modal) modal.hide();
             if (data.success) {
                 showToast('Assignment deleted successfully!', 'success');
-                setTimeout(() => location.reload(), 1000);
+                setTimeout(() => location.reload(), 1500);
             } else {
                 showToast(data.message || 'Delete failed', 'danger');
             }
@@ -1112,7 +1130,7 @@ window.deleteMultiple = function() {
     .then(data => {
         if (data.success) {
             showToast(`${ids.length} record(s) deleted.`, 'success');
-            setTimeout(() => location.reload(), 1000);
+            setTimeout(() => location.reload(), 1500);
         } else {
             showToast(data.message || 'Delete failed', 'danger');
         }
