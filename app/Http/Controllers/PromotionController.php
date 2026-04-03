@@ -116,62 +116,141 @@ class PromotionController extends Controller
         return view('promotions.index', compact('allstudents', 'schoolsessions', 'schoolclasses', 'pagetitle'));
     }
 
-    public function update(Request $request, $studentId)
-    {
-        $request->validate([
-            'new_schoolclassid' => 'required|exists:schoolclass,id',
-            'new_sessionid' => 'required|exists:schoolsession,id',
-            'new_termid' => 'required|integer|min:1|max:3',
-            'promotion' => 'boolean',
-            'repeat' => 'boolean',
+
+
+// ============================================================
+// REPLACEMENT for PromotionController::update()
+// ============================================================
+// The root cause of promotion-duplication:
+//   updateOrCreate for PromotionStatus used:
+//     ['studentId', 'schoolclassid', 'sessionid', 'termid']
+//   ...but updateOrCreate for Studentclass only used:
+//     ['studentId', 'sessionid', 'termid']
+//   WITHOUT 'schoolclassid' in the studentclass key, a new
+//   class assignment was inserted every time the class changed.
+//
+//   Also: if a student is promoted to a different class for the
+//   same session+term, the old Studentclass row must be removed
+//   first (or updated in-place), otherwise both rows survive
+//   and the student appears in two classes.
+//
+// Fix:
+//   - Studentclass: use the OLD class row (matched by studentId
+//     + old sessionid + old termid) and UPDATE it in-place.
+//     If no existing row is found, create one (fresh registration).
+//   - PromotionStatus: identical scoping — old class is updated,
+//     not duplicated.
+// ============================================================
+
+public function update(Request $request, $studentId)
+{
+    $request->validate([
+        'new_schoolclassid' => 'required|exists:schoolclass,id',
+        'new_sessionid'     => 'required|exists:schoolsession,id',
+        'new_termid'        => 'required|integer|min:1|max:3',
+        'promotion'         => 'boolean',
+        'repeat'            => 'boolean',
+    ]);
+
+    if ($request->boolean('promotion') && $request->boolean('repeat')) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Cannot select both promotion and repeat.',
+        ], 422);
+    }
+
+    $promotionStatus = $request->boolean('promotion')
+        ? 'PROMOTED'
+        : ($request->boolean('repeat') ? 'REPEAT' : 'PARENTS TO SEE PRINCIPAL');
+
+    try {
+        DB::transaction(function () use ($studentId, $request, $promotionStatus) {
+            $newClassId  = $request->new_schoolclassid;
+            $newSessionId= $request->new_sessionid;
+            $newTermId   = $request->new_termid;
+
+            // ----------------------------------------------------------
+            // Studentclass: find the most-recent existing row for this
+            // student in the target session+term and update it in-place.
+            // This avoids leaving orphan rows from the old class.
+            // If no row exists yet (first time for this term), create one.
+            // ----------------------------------------------------------
+            $existingClass = Studentclass::where('studentId', $studentId)
+                ->where('sessionid', $newSessionId)
+                ->where('termid', $newTermId)
+                ->first();
+
+            if ($existingClass) {
+                // Update the existing row — never insert a second one
+                $existingClass->update(['schoolclassid' => $newClassId]);
+            } else {
+                // First registration for this term/session — safe to insert
+                Studentclass::create([
+                    'studentId'    => $studentId,
+                    'schoolclassid'=> $newClassId,
+                    'sessionid'    => $newSessionId,
+                    'termid'       => $newTermId,
+                ]);
+            }
+
+            // ----------------------------------------------------------
+            // PromotionStatus: same scoping.
+            // Key = studentId + schoolclassid + sessionid + termid
+            // All four together form the unique business key.
+            // ----------------------------------------------------------
+            PromotionStatus::updateOrCreate(
+                [
+                    'studentId'    => $studentId,
+                    'schoolclassid'=> $newClassId,
+                    'sessionid'    => $newSessionId,
+                    'termid'       => $newTermId,
+                ],
+                [
+                    'promotionStatus' => $promotionStatus,
+                    'classstatus'     => 'CURRENT',
+                    'position'        => null,
+                ]
+            );
+
+            // ----------------------------------------------------------
+            // StudentCurrentTerm: mark this as the current term and
+            // unmark any previously-current row for this student.
+            // ----------------------------------------------------------
+            DB::table('student_current_term')
+                ->where('studentId', $studentId)
+                ->update(['is_current' => false]);
+
+            \App\Models\StudentCurrentTerm::updateOrCreate(
+                [
+                    'studentId'    => $studentId,
+                    'schoolclassId'=> $newClassId,
+                    'termId'       => $newTermId,
+                    'sessionId'    => $newSessionId,
+                ],
+                ['is_current' => true]
+            );
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Promotion updated successfully.',
         ]);
 
-        if ($request->boolean('promotion') && $request->boolean('repeat')) {
-            return response()->json(['success' => false, 'message' => 'Cannot select both promotion and repeat.'], 422);
-        }
-
-        $promotionStatus = $request->boolean('promotion') ? 'PROMOTED' : ($request->boolean('repeat') ? 'REPEAT' : 'PARENTS TO SEE PRINCIPAL');
-
-        try {
-            DB::transaction(function () use ($studentId, $request, $promotionStatus) {
-                $newClassId = $request->new_schoolclassid;
-
-                Studentclass::updateOrCreate(
-                    [
-                        'studentId' => $studentId,
-                        'sessionid' => $request->new_sessionid,
-                        'termid' => $request->new_termid,
-                    ],
-                    [
-                        'schoolclassid' => $newClassId,
-                    ]
-                );
-
-                PromotionStatus::updateOrCreate(
-                    [
-                        'studentId' => $studentId,
-                        'schoolclassid' => $newClassId,
-                        'sessionid' => $request->new_sessionid,
-                        'termid' => $request->new_termid,
-                    ],
-                    [
-                        'promotionStatus' => $promotionStatus,
-                        'classstatus' => 'CURRENT',
-                        'position' => null,
-                    ]
-                );
-            });
-
-            return response()->json(['success' => true, 'message' => 'Promotion updated successfully.']);
-        } catch (Exception $e) {
-            Log::error('Promotion update failed', [
-                'studentId' => $studentId,
-                'request' => $request->all(),
-                'error' => $e->getMessage(),
-            ]);
-            return response()->json(['success' => false, 'message' => 'Failed to update promotion.'], 500);
-        }
+    } catch (Exception $e) {
+        Log::error('Promotion update failed', [
+            'studentId' => $studentId,
+            'request'   => $request->all(),
+            'error'     => $e->getMessage(),
+        ]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update promotion.',
+        ], 500);
     }
+}
+
+
+
 
     public function destroy(Request $request, $studentId)
     {
