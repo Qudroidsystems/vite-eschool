@@ -50,7 +50,7 @@ class MyPrincipalsCommentController extends Controller
             ->with(compact('assignments', 'pagetitle', 'currentSession', 'currentTerm'));
     }
 
-    public function classBroadsheet($schoolclassid, $sessionid, $termid)
+    public function classBroadsheet($schoolclassid, $sessionid, $termid=2)
     {
         $isAssigned = Principalscomment::where('staffId', Auth::id())
             ->where('schoolclassid', $schoolclassid)
