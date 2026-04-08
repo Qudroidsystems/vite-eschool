@@ -58,9 +58,9 @@ class MyPrincipalsCommentController extends Controller
             ->where('termid', $termid)
             ->exists();
 
-        if (!$isAssigned) {
-            abort(403, 'You are not authorized to enter Principal comments for this class in this session and term.');
-        }
+        // if (!$isAssigned) {
+        //     abort(403, 'You are not authorized to enter Principal comments for this class in this session and term.');
+        // }
 
         $pagetitle = "Principal's Comment & Class Broadsheet";
 
@@ -147,7 +147,7 @@ class MyPrincipalsCommentController extends Controller
             // CORRECTED GRADE CALCULATION
             $grade = 'F';
             $gradeLetter = 'F';
-            
+
             if ($isSenior) {
                 // Senior grading system (WAEC/NECO style)
                 if ($total >= 75 && $total <= 100) {
@@ -423,7 +423,7 @@ class MyPrincipalsCommentController extends Controller
 
         if (!$isAssigned) {
             return response()->json([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Unauthorized: You are not assigned to enter comments for this class.'
             ], 403);
         }
@@ -437,7 +437,7 @@ class MyPrincipalsCommentController extends Controller
         try {
             foreach ($comments as $studentId => $comment) {
                 $comment = $comment ? trim($comment) : null;
-                
+
                 \Log::info("Processing principal comment", [
                     'student_id' => $studentId,
                     'comment_length' => strlen($comment ?? ''),
@@ -475,16 +475,16 @@ class MyPrincipalsCommentController extends Controller
 
             DB::commit();
 
-            $message = $updatedCount > 0 
-                ? "$updatedCount comment(s) saved successfully" 
+            $message = $updatedCount > 0
+                ? "$updatedCount comment(s) saved successfully"
                 : "No changes detected";
 
             return response()->json([
-                'success' => true, 
+                'success' => true,
                 'message' => $message,
                 'count' => $updatedCount
             ]);
-                
+
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Error saving principals comments', [
@@ -492,9 +492,9 @@ class MyPrincipalsCommentController extends Controller
                 'trace' => $e->getTraceAsString(),
                 'request_data' => array_keys($comments)
             ]);
-            
+
             return response()->json([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Server error: ' . $e->getMessage()
             ], 500);
         }
