@@ -112,7 +112,8 @@ class MyPrincipalsCommentController extends Controller
 
         $schoolterm = Schoolterm::find($termid)?->term ?? 'N/A';
         $schoolsession = Schoolsession::find($sessionid)?->session ?? 'N/A';
-
+dd($schoolterm);
+dd($schoolsession);
         $classCategory = $schoolclass->classcategory()->first();
         $isSenior = $classCategory?->is_senior ?? false;
 
