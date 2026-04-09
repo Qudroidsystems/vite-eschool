@@ -185,6 +185,15 @@
         padding: 8px;
     }
 
+    .cumulative-badge {
+        background-color: #17a2b8;
+        color: white;
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        border-radius: 10px;
+        margin-left: 8px;
+    }
+
     @media (min-width: 992px) {
         .desktop-table { display: block !important; }
         .mobile-cards { display: none !important; }
@@ -252,15 +261,25 @@
                                         @else
                                             <span class="badge bg-info ms-2">Junior Class</span>
                                         @endif
+                                        <span class="badge bg-info ms-2 cumulative-badge">
+                                            <i class="ri-bar-chart-2-line"></i> Cumulative Scores ({{ $schoolterm }})
+                                        </span>
                                     </h5>
                                     <div class="alert alert-info mt-2 mb-0">
                                         <i class="ri-bar-chart-line me-2"></i>
-                                        <strong>Class Average:</strong> {{ $classAnalytics['average'] }} |
+                                        <strong>Class Average (Cumulative):</strong> {{ $classAnalytics['average'] }} |
                                         <strong>Students:</strong> {{ $classAnalytics['total_students'] }}
                                         @if($isSenior)
                                             <span class="ms-3"><strong>Grading:</strong> Senior (A1-F9)</span>
                                         @else
                                             <span class="ms-3"><strong>Grading:</strong> Junior (A-F)</span>
+                                        @endif
+                                        @if($schoolterm == '2nd Term' || $schoolterm == 'Second Term')
+                                            <span class="ms-3 text-success"><i class="ri-information-line"></i> Showing cumulative average of 1st & 2nd Terms</span>
+                                        @elseif($schoolterm == '3rd Term' || $schoolterm == 'Third Term')
+                                            <span class="ms-3 text-success"><i class="ri-information-line"></i> Showing cumulative average of 1st, 2nd & 3rd Terms</span>
+                                        @else
+                                            <span class="ms-3 text-success"><i class="ri-information-line"></i> Showing 1st Term scores</span>
                                         @endif
                                     </div>
                                 </div>
@@ -290,7 +309,6 @@
                                                             $picture = $student->picture ? basename($student->picture) : 'unnamed.jpg';
                                                             $imagePath = asset('storage/student_avatars/' . $picture);
                                                             $currentComment = $profiles[$student->id] ?? '';
-                                                            // Strip any HTML tags from stored comment for display in dropdown
                                                             $currentCommentPlain = strip_tags($currentComment);
                                                             $intelligentComment = $intelligentComments[$student->id] ?? '';
                                                             $hasWeakAdvice = !empty($studentGradeAnalysis[$student->id]['weak_subjects'] ?? []);
@@ -312,14 +330,22 @@
                                                             </td>
                                                             <td>{{ $student->gender ?? 'N/A' }}</td>
                                                             @foreach ($subjects as $subject)
-                                                                @php $score = $scores->where('student_id', $student->id)->where('subject_name', $subject)->first(); @endphp
-                                                                <td class="{{ ($score && $score->total < 50) ? 'highlight-red' : '' }}">{{ $score?->total ?? '-' }}</td>
+                                                                @php
+                                                                    $score = $scores->where('student_id', $student->id)->where('subject_name', $subject)->first();
+                                                                    $isFailing = ($score && $score->total < 50);
+                                                                @endphp
+                                                                <td class="{{ $isFailing ? 'highlight-red' : '' }}">
+                                                                    {{ $score?->total ?? '-' }}
+                                                                    @if($score && $schoolterm != '1st Term' && $schoolterm != 'First Term')
+                                                                        <small class="text-muted d-block" style="font-size: 0.65rem;">cumulative</small>
+                                                                    @endif
+                                                                </td>
                                                             @endforeach
                                                             <td class="comment-cell">
                                                                 @if($intelligentComment)
                                                                 <div class="intelligent-comment-section mb-3">
                                                                     <small class="text-muted d-block mb-1">
-                                                                        <i class="ri-lightbulb-line"></i> Grade summary comment
+                                                                        <i class="ri-lightbulb-line"></i> Grade summary comment (based on cumulative scores)
                                                                         @if($hasWeakAdvice)<span class="badge bg-warning intelligent-comment-badge">Includes improvement advice</span>@endif
                                                                     </small>
                                                                     <div class="intelligent-comment-preview">
@@ -363,7 +389,7 @@
                                                                             $isSelected = ($currentCommentPlain == $intelligentPlain);
                                                                         @endphp
                                                                         <option value="{{ $intelligentPlain }}" class="intelligent-option" {{ $isSelected ? 'selected' : '' }}>
-                                                                            💡 Use Grade Summary Comment
+                                                                            💡 Use Grade Summary Comment (Cumulative)
                                                                             @if($hasWeakAdvice)<span class="badge bg-warning ms-2">Improvement advice</span>@endif
                                                                         </option>
                                                                     @endif
@@ -377,21 +403,21 @@
 
                                                                 <div class="grades-tooltip position-bottom" id="tooltip-{{ $student->id }}">
                                                                     <div class="tooltip-header">
-                                                                        <span id="tooltip-title-{{ $student->id }}">Grades</span>
+                                                                        <span id="tooltip-title-{{ $student->id }}">Cumulative Grades</span>
                                                                         <button type="button" class="tooltip-close"><i class="ri-close-line"></i></button>
                                                                     </div>
                                                                     <div class="tooltip-body">
                                                                         <div class="text-center mb-3 p-3 bg-light rounded">
                                                                             <div class="row">
                                                                                 <div class="col-6"><strong>Total Score:</strong> {{ $analytics['total_score'] ?? 0 }}</div>
-                                                                                <div class="col-6"><strong>Average:</strong> <span class="{{ ($analytics['average'] ?? 0) < 50 ? 'text-danger' : 'text-success' }}">{{ $analytics['average'] ?? 0 }}</span></div>
+                                                                                <div class="col-6"><strong>Cumulative Average:</strong> <span class="{{ ($analytics['average'] ?? 0) < 50 ? 'text-danger' : 'text-success' }}">{{ $analytics['average'] ?? 0 }}</span></div>
                                                                             </div>
                                                                             <div class="row mt-2">
                                                                                 <div class="col-6"><strong>Subjects:</strong> {{ $analytics['subjects'] ?? 0 }}</div>
                                                                                 <div class="col-6"><strong>Position:</strong> <strong class="text-primary">{{ $analytics['position_text'] ?? '-' }}</strong></div>
                                                                             </div>
                                                                             <div class="mt-3">
-                                                                                <strong>Grades:</strong>
+                                                                                <strong>Grade Distribution:</strong>
                                                                                 A: {{ $analytics['grade_counts']['A'] ?? 0 }} |
                                                                                 B: {{ $analytics['grade_counts']['B'] ?? 0 }} |
                                                                                 C: {{ $analytics['grade_counts']['C'] ?? 0 }} |
@@ -417,7 +443,7 @@
                                                                             <thead>
                                                                                 <tr>
                                                                                     <th>Subject</th>
-                                                                                    <th>Score</th>
+                                                                                    <th>Cumulative Score</th>
                                                                                     <th>Grade</th>
                                                                                 </tr>
                                                                             </thead>
@@ -426,9 +452,8 @@
                                                                         <div class="text-center py-4 text-muted d-none" id="no-grades-{{ $student->id }}">No grades available</div>
                                                                     </div>
                                                                 </div>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
+                                                            </td>
+                                                        </tr>
                                                     @endforeach
                                                 </tbody>
                                             </table>
@@ -469,12 +494,12 @@
                                                 <div class="student-body">
                                                     <div class="performance-summary">
                                                         <div class="summary-title">
-                                                            <i class="ri-bar-chart-line"></i> Performance Analytics
+                                                            <i class="ri-bar-chart-line"></i> Cumulative Performance Analytics
                                                             @if($hasWeakAdvice)<span class="badge bg-warning ms-auto">Needs Improvement</span>@endif
                                                         </div>
                                                         <div class="summary-grid">
                                                             <div class="summary-item">
-                                                                <div class="summary-label">My Average</div>
+                                                                <div class="summary-label">Cumulative Average</div>
                                                                 <div class="summary-value {{ $myAvg < 50 ? 'text-danger' : 'text-success' }}">{{ $myAvg }}</div>
                                                             </div>
                                                             <div class="summary-item">
@@ -531,13 +556,16 @@
                                                                         @endif
                                                                     </div>
                                                                 @endif
+                                                                @if($schoolterm != '1st Term' && $schoolterm != 'First Term')
+                                                                    <small class="text-muted" style="font-size: 0.6rem;">cumulative</small>
+                                                                @endif
                                                             </div>
                                                         @endforeach
                                                     </div>
 
                                                     @if($intelligentComment)
                                                     <div class="intelligent-comment-section mb-3">
-                                                        <div class="comment-label-mobile"><i class="ri-lightbulb-line"></i> Grade Summary Comment</div>
+                                                        <div class="comment-label-mobile"><i class="ri-lightbulb-line"></i> Cumulative Grade Summary Comment</div>
                                                         <div class="intelligent-comment-preview">
                                                             <div class="intelligent-comment-text">{!! nl2br(e($intelligentComment)) !!}</div>
                                                             @if($hasWeakAdvice)<small class="text-muted d-block mt-2"><i class="ri-alert-line"></i> Includes improvement advice</small>@endif
@@ -581,7 +609,7 @@
                                                                     $isSelected = ($currentCommentPlain == $intelligentPlain);
                                                                 @endphp
                                                                 <option value="{{ $intelligentPlain }}" class="intelligent-option" {{ $isSelected ? 'selected' : '' }}>
-                                                                    💡 Use Grade Summary Comment
+                                                                    💡 Use Cumulative Grade Summary Comment
                                                                     @if($hasWeakAdvice)<span class="badge bg-warning ms-2">Improvement advice</span>@endif
                                                                 </option>
                                                             @endif
@@ -656,7 +684,7 @@ function showTooltip(tooltipId, studentId, studentName) {
     if (!tooltip) return;
     closeAllTooltips();
     document.querySelector(`.grades-trigger[data-student-id="${studentId}"]`)?.classList.add('active');
-    document.getElementById(`tooltip-title-${studentId}`).textContent = studentName + "'s Grades";
+    document.getElementById(`tooltip-title-${studentId}`).textContent = studentName + "'s Cumulative Grades";
 
     const grades = window.studentGrades[studentId] || [];
     const tbody = document.getElementById(`grades-body-${studentId}`);
@@ -753,7 +781,6 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
                 this.style.backgroundColor = '#d1e7dd';
                 showToast(data.message || 'Comment saved successfully!', 'success');
 
-                // Update the previously saved comment preview if it exists
                 const savedCommentDiv = this.closest('td')?.querySelector('.saved-comment-preview');
                 if (savedCommentDiv && comment) {
                     savedCommentDiv.innerHTML = `<small class="text-secondary">${escapeHtml(comment).replace(/\n/g, '<br>')}</small>`;
@@ -826,11 +853,9 @@ document.getElementById('commentsForm')?.addEventListener('submit', function(e) 
     .then(data => {
         if (data.success) {
             showToast(data.message, 'success');
-            // Update all original values
             document.querySelectorAll('.auto-save-comment').forEach(select => {
                 select.dataset.originalValue = select.value;
             });
-            // Update all previews
             document.querySelectorAll('.saved-comment-preview').forEach(preview => {
                 const select = preview.closest('td')?.querySelector('.auto-save-comment');
                 if (select && select.value) {

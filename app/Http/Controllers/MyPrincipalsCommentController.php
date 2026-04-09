@@ -58,10 +58,6 @@ class MyPrincipalsCommentController extends Controller
             ->where('termid', $termid)
             ->exists();
 
-        // if (!$isAssigned) {
-        //     abort(403, 'You are not authorized to enter Principal comments for this class in this session and term.');
-        // }
-
         $pagetitle = "Principal's Comment & Class Broadsheet";
 
         $students = Studentclass::where('schoolclassid', $schoolclassid)
@@ -90,6 +86,7 @@ class MyPrincipalsCommentController extends Controller
             ->pluck('subject.subject')
             ->toArray();
 
+        // FIXED: Use cum (cumulative) instead of total for accurate cross-term grading
         $scores = Broadsheets::where('broadsheet_records.schoolclass_id', $schoolclassid)
             ->where('broadsheets.term_id', $termid)
             ->where('broadsheet_records.session_id', $sessionid)
@@ -98,7 +95,7 @@ class MyPrincipalsCommentController extends Controller
             ->get([
                 'broadsheet_records.student_id',
                 'subject.subject as subject_name',
-                'broadsheets.total',
+                'broadsheets.cum as total',  // KEY FIX: Using cum instead of total
             ]);
 
         $profiles = Studentpersonalityprofile::where('schoolclassid', $schoolclassid)
@@ -116,6 +113,7 @@ class MyPrincipalsCommentController extends Controller
         $classCategory = $schoolclass->classcategory()->first();
         $isSenior = $classCategory?->is_senior ?? false;
 
+        // FIXED: Use cum (cumulative) for grade calculation
         $rawGrades = Broadsheets::where('broadsheet_records.schoolclass_id', $schoolclassid)
             ->where('broadsheets.term_id', $termid)
             ->where('broadsheet_records.session_id', $sessionid)
@@ -124,7 +122,7 @@ class MyPrincipalsCommentController extends Controller
             ->select([
                 'broadsheet_records.student_id',
                 'subject.subject as subject_name',
-                'broadsheets.total',
+                'broadsheets.cum as total',  // KEY FIX: Using cum instead of total
             ])
             ->get();
 
@@ -144,12 +142,12 @@ class MyPrincipalsCommentController extends Controller
                 ];
             }
 
-            // CORRECTED GRADE CALCULATION
+            // CORRECTED GRADE CALCULATION based on CUMULATIVE score
             $grade = 'F';
             $gradeLetter = 'F';
 
             if ($isSenior) {
-                // Senior grading system (WAEC/NECO style)
+                // Senior grading system (WAEC/NECO style) based on cumulative
                 if ($total >= 75 && $total <= 100) {
                     $grade = 'A1';
                     $gradeLetter = 'A';
@@ -179,7 +177,7 @@ class MyPrincipalsCommentController extends Controller
                     $gradeLetter = 'F';
                 }
             } else {
-                // Junior grading system
+                // Junior grading system based on cumulative
                 if ($total >= 70 && $total <= 100) {
                     $grade = 'A';
                     $gradeLetter = 'A';
@@ -240,11 +238,9 @@ class MyPrincipalsCommentController extends Controller
             $studentId = $student->id;
             $firstName = $student->fname;
 
-            // Pronoun setup
             $pronoun = strtoupper($student->gender) === 'MALE' ? 'You' : 'You';
             $possessive = strtoupper($student->gender) === 'MALE' ? 'You' : 'You';
 
-            // Weak subjects advice
             $weakSubjects = $studentGradeAnalysis[$studentId]['weak_subjects'] ?? [];
             $advice = '';
 
@@ -272,7 +268,7 @@ class MyPrincipalsCommentController extends Controller
             $standardPersonalizedComments[$studentId] = $options;
         }
 
-        // Intelligent (auto-generated) comment with name + pronoun advice
+        // Intelligent (auto-generated) comment based on CUMULATIVE performance
         $intelligentComments = [];
         foreach ($students as $student) {
             $studentId = $student->id;
@@ -303,7 +299,6 @@ class MyPrincipalsCommentController extends Controller
 
             $comment = "$firstName has $gradeSummary. " . str_replace('{NAME}', $firstName, $baseComment);
 
-            // Pronoun-based advice
             $pronoun = strtoupper($student->gender) === 'MALE' ? 'He' : 'She';
             $possessive = strtoupper($student->gender) === 'MALE' ? 'his' : 'her';
 
@@ -326,21 +321,21 @@ class MyPrincipalsCommentController extends Controller
             $intelligentComments[$studentId] = $comment;
         }
 
-        // Student Analytics
+        // Student Analytics based on CUMULATIVE scores
         $studentTotals = [];
         foreach ($students as $student) {
             $sid = $student->id;
-            $total = 0;
+            $totalCum = 0;
             $count = 0;
             foreach ($subjects as $subject) {
                 $score = $scores->where('student_id', $sid)->where('subject_name', $subject)->first();
                 if ($score) {
-                    $total += $score->total;
+                    $totalCum += $score->total;  // This is now cum value
                     $count++;
                 }
             }
-            $average = $count > 0 ? round($total / $count, 1) : 0;
-            $studentTotals[$sid] = ['total' => $total, 'average' => $average, 'subjects' => $count];
+            $average = $count > 0 ? round($totalCum / $count, 1) : 0;
+            $studentTotals[$sid] = ['total' => $totalCum, 'average' => $average, 'subjects' => $count];
         }
 
         $sortedStudents = $students->sortByDesc(fn($s) => $studentTotals[$s->id]['average'] ?? 0)->values();
@@ -415,7 +410,6 @@ class MyPrincipalsCommentController extends Controller
 
     public function updateComments(Request $request, $schoolclassid, $sessionid, $termid)
     {
-        // Debug logging
         \Log::info('Update Comments Request Received', [
             'schoolclassid' => $schoolclassid,
             'sessionid' => $sessionid,
@@ -455,17 +449,13 @@ class MyPrincipalsCommentController extends Controller
         DB::beginTransaction();
         try {
             foreach ($comments as $studentId => $comment) {
-                // Skip if comment is null or empty string
                 if (is_null($comment) || trim($comment) === '') {
                     $skippedCount++;
                     \Log::info("Skipping empty comment for student", ['student_id' => $studentId]);
                     continue;
                 }
 
-                // Strip any HTML tags from the comment to prevent storing <br /> tags
                 $comment = trim(strip_tags($comment));
-
-                // Also convert any remaining HTML entities
                 $comment = html_entity_decode($comment, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
                 \Log::info("Processing principal comment", [
