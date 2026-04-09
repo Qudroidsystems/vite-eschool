@@ -241,8 +241,8 @@ class MyPrincipalsCommentController extends Controller
             $firstName = $student->fname;
 
             // Pronoun setup
-            $pronoun = strtoupper($student->gender) === 'MALE' ? 'He' : 'She';
-            $possessive = strtoupper($student->gender) === 'MALE' ? 'his' : 'her';
+            $pronoun = strtoupper($student->gender) === 'MALE' ? 'You' : 'You';
+            $possessive = strtoupper($student->gender) === 'MALE' ? 'You' : 'You';
 
             // Weak subjects advice
             $weakSubjects = $studentGradeAnalysis[$studentId]['weak_subjects'] ?? [];
