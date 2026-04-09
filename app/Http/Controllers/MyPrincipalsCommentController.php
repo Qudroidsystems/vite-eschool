@@ -201,8 +201,8 @@ class MyPrincipalsCommentController extends Controller
             $studentGrades[$studentId][] = [
                 'subject' => $subjectName,
                 'score'   => $total,
-                'grade'   => $grade,           // Full grade (A1, B2, C4, etc. for senior)
-                'grade_letter' => $gradeLetter // Letter for CSS classes (A, B, C, etc.)
+                'grade'   => $grade,
+                'grade_letter' => $gradeLetter
             ];
 
             $studentGradeAnalysis[$studentId]['grades'][] = [
@@ -415,6 +415,18 @@ class MyPrincipalsCommentController extends Controller
 
     public function updateComments(Request $request, $schoolclassid, $sessionid, $termid)
     {
+        // Debug logging
+        \Log::info('Update Comments Request Received', [
+            'schoolclassid' => $schoolclassid,
+            'sessionid' => $sessionid,
+            'termid' => $termid,
+            'auth_id' => Auth::id(),
+            'all_request_data' => $request->all(),
+            'teacher_comments' => $request->input('teacher_comments', []),
+            'request_method' => $request->method(),
+            'ajax' => $request->ajax()
+        ]);
+
         $isAssigned = Principalscomment::where('staffId', Auth::id())
             ->where('schoolclassid', $schoolclassid)
             ->where('sessionid', $sessionid)
@@ -422,6 +434,7 @@ class MyPrincipalsCommentController extends Controller
             ->exists();
 
         if (!$isAssigned) {
+            \Log::warning('Unauthorized access attempt', ['staffId' => Auth::id()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized: You are not assigned to enter comments for this class.'
@@ -431,20 +444,33 @@ class MyPrincipalsCommentController extends Controller
         $request->validate(['teacher_comments.*' => 'nullable|string|max:2000']);
 
         $comments = $request->input('teacher_comments', []);
+
+        \Log::info('Processing comments', [
+            'comments_count' => count($comments),
+            'student_ids' => array_keys($comments),
+            'has_empty' => empty(array_filter($comments))
+        ]);
+
         $updatedCount = 0;
+        $createdCount = 0;
+        $skippedCount = 0;
 
         DB::beginTransaction();
         try {
             foreach ($comments as $studentId => $comment) {
-                $comment = $comment ? trim($comment) : null;
+                // Skip if comment is null or empty string
+                if (is_null($comment) || trim($comment) === '') {
+                    $skippedCount++;
+                    \Log::info("Skipping empty comment for student", ['student_id' => $studentId]);
+                    continue;
+                }
+
+                $comment = trim($comment);
 
                 \Log::info("Processing principal comment", [
                     'student_id' => $studentId,
-                    'comment_length' => strlen($comment ?? ''),
-                    'schoolclassid' => $schoolclassid,
-                    'sessionid' => $sessionid,
-                    'termid' => $termid,
-                    'staff_id' => Auth::id()
+                    'comment_length' => strlen($comment),
+                    'comment_preview' => substr($comment, 0, 100)
                 ]);
 
                 $existing = Studentpersonalityprofile::where('studentid', $studentId)
@@ -455,11 +481,16 @@ class MyPrincipalsCommentController extends Controller
 
                 if ($existing) {
                     if ($existing->principalscomment !== $comment) {
-                        $existing->update(['staffid' => Auth::id(), 'principalscomment' => $comment]);
+                        $existing->update([
+                            'staffid' => Auth::id(),
+                            'principalscomment' => $comment
+                        ]);
                         $updatedCount++;
                         \Log::info("Updated existing comment", ['student_id' => $studentId]);
+                    } else {
+                        \Log::info("No change for student", ['student_id' => $studentId]);
                     }
-                } elseif ($comment) {
+                } else {
                     Studentpersonalityprofile::create([
                         'studentid' => $studentId,
                         'schoolclassid' => $schoolclassid,
@@ -468,21 +499,30 @@ class MyPrincipalsCommentController extends Controller
                         'staffid' => Auth::id(),
                         'principalscomment' => $comment,
                     ]);
-                    $updatedCount++;
+                    $createdCount++;
                     \Log::info("Created new comment", ['student_id' => $studentId]);
                 }
             }
 
             DB::commit();
 
-            $message = $updatedCount > 0
-                ? "$updatedCount comment(s) saved successfully"
-                : "No changes detected";
+            $totalProcessed = $updatedCount + $createdCount;
+            $message = $totalProcessed > 0
+                ? "Successfully saved: $updatedCount updated, $createdCount created. Skipped: $skippedCount empty comments."
+                : "No changes detected. $skippedCount empty comments skipped.";
+
+            \Log::info('Update completed', [
+                'updated' => $updatedCount,
+                'created' => $createdCount,
+                'skipped' => $skippedCount
+            ]);
 
             return response()->json([
                 'success' => true,
                 'message' => $message,
-                'count' => $updatedCount
+                'updated' => $updatedCount,
+                'created' => $createdCount,
+                'skipped' => $skippedCount
             ]);
 
         } catch (\Exception $e) {
@@ -490,7 +530,8 @@ class MyPrincipalsCommentController extends Controller
             \Log::error('Error saving principals comments', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'request_data' => array_keys($comments)
+                'line' => $e->getLine(),
+                'file' => $e->getFile()
             ]);
 
             return response()->json([

@@ -139,7 +139,7 @@
     .grades-tooltip th { color: #6c757d; font-weight: 600; font-size: 0.9rem; padding: 12px 8px; border-bottom: 2px solid #e9ecef; }
     .grades-tooltip td { padding: 14px 12px; background: #f8f9fa; border-radius: 12px; font-size: 0.95rem; }
     .grade-badge { font-weight: 800; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; min-width: 50px; text-align: center; }
-    
+
     /* Grade color classes */
     .grade-a { background-color: #28a745; color: white; }
     .grade-b { background-color: #17a2b8; color: white; }
@@ -147,7 +147,7 @@
     .grade-d { background-color: #ffc107; color: black; }
     .grade-e { background-color: #fd7e14; color: white; }
     .grade-f { background-color: #dc3545; color: white; }
-    
+
     /* Senior grade specific colors */
     .grade-a1, .grade-a { background-color: #28a745; color: white; }
     .grade-b2, .grade-b3, .grade-b { background-color: #17a2b8; color: white; }
@@ -174,6 +174,8 @@
     .summary-label { font-size: 0.75rem; color: #6c757d; margin-bottom: 4px; }
     .summary-value { font-size: 1.1rem; font-weight: 700; color: #212529; }
     .comment-label-mobile { font-weight: 600; margin-bottom: 8px; font-size: 0.95rem; color: #495057; display: flex; align-items: center; gap: 8px; }
+    .btn-save-all { padding: 10px 24px; font-weight: 600; }
+    .saving-indicator { display: none; }
 
     @media (min-width: 992px) {
         .desktop-table { display: block !important; }
@@ -245,7 +247,7 @@
                                     </h5>
                                     <div class="alert alert-info mt-2 mb-0">
                                         <i class="ri-bar-chart-line me-2"></i>
-                                        <strong>Class Average:</strong> {{ $classAnalytics['average'] }} | 
+                                        <strong>Class Average:</strong> {{ $classAnalytics['average'] }} |
                                         <strong>Students:</strong> {{ $classAnalytics['total_students'] }}
                                         @if($isSenior)
                                             <span class="ms-3"><strong>Grading:</strong> Senior (A1-F9)</span>
@@ -284,7 +286,7 @@
                                                             $hasWeakAdvice = !empty($studentGradeAnalysis[$student->id]['weak_subjects'] ?? []);
                                                             $analytics = $studentAnalytics[$student->id] ?? [];
                                                         @endphp
-                                                        <tr>
+                                                        <tr data-student-id="{{ $student->id }}">
                                                             <td>{{ $index + 1 }}</td>
                                                             <td>{{ $student->admissionNo }}</td>
                                                             <td>
@@ -311,7 +313,7 @@
                                                                         @if($hasWeakAdvice)<span class="badge bg-warning intelligent-comment-badge">Includes improvement advice</span>@endif
                                                                     </small>
                                                                     <div class="intelligent-comment-preview">
-                                                                        <div class="intelligent-comment-text">{{ $intelligentComment }}</div>
+                                                                        <div class="intelligent-comment-text">{{ nl2br(e($intelligentComment)) }}</div>
                                                                     </div>
                                                                 </div>
                                                                 @endif
@@ -320,7 +322,7 @@
                                                                 <div class="mb-3">
                                                                     <small class="text-success d-block mb-1"><i class="ri-chat-check-line"></i> Previously saved comment</small>
                                                                     <div class="saved-comment-preview">
-                                                                        <small class="text-secondary">{{ $currentComment }}</small>
+                                                                        <small class="text-secondary">{{ nl2br(e($currentComment)) }}</small>
                                                                     </div>
                                                                 </div>
                                                                 @endif
@@ -392,8 +394,14 @@
                                                                                 <span class="text-info fw-bold"><i class="ri-subtract-line"></i> At class average</span>
                                                                             @endif
                                                                         </div>
-                                                                        <table>
-                                                                            <thead><tr><th>Subject</th><th>Score</th><th>Grade</th></tr></thead>
+                                                                        <table class="table table-sm">
+                                                                            <thead>
+                                                                                <tr>
+                                                                                    <th>Subject</th>
+                                                                                    <th>Score</th>
+                                                                                    <th>Grade</th>
+                                                                                </tr>
+                                                                            </thead>
                                                                             <tbody id="grades-body-{{ $student->id }}"></tbody>
                                                                         </table>
                                                                         <div class="text-center py-4 text-muted d-none" id="no-grades-{{ $student->id }}">No grades available</div>
@@ -422,7 +430,7 @@
                                                 $above = $diff > 0.5;
                                                 $below = $diff < -0.5;
                                             @endphp
-                                            <div class="student-card">
+                                            <div class="student-card" data-student-id="{{ $student->id }}">
                                                 <div class="student-header">
                                                     <div class="student-info">
                                                         <img src="{{ $imagePath }}" class="avatar-sm" alt="">
@@ -510,7 +518,7 @@
                                                     <div class="intelligent-comment-section mb-3">
                                                         <div class="comment-label-mobile"><i class="ri-lightbulb-line"></i> Grade Summary Comment</div>
                                                         <div class="intelligent-comment-preview">
-                                                            <div class="intelligent-comment-text">{{ $intelligentComment }}</div>
+                                                            <div class="intelligent-comment-text">{{ nl2br(e($intelligentComment)) }}</div>
                                                             @if($hasWeakAdvice)<small class="text-muted d-block mt-2"><i class="ri-alert-line"></i> Includes improvement advice</small>@endif
                                                         </div>
                                                     </div>
@@ -520,7 +528,7 @@
                                                     <div class="mb-3">
                                                         <div class="comment-label-mobile"><i class="ri-chat-check-line text-success"></i> Previously Saved Comment</div>
                                                         <div class="saved-comment-preview">
-                                                            <small class="text-secondary">{{ $currentComment }}</small>
+                                                            <small class="text-secondary">{{ nl2br(e($currentComment)) }}</small>
                                                         </div>
                                                     </div>
                                                     @endif
@@ -554,6 +562,18 @@
                                             </div>
                                         @endforeach
                                     </div>
+
+                                    <!-- Save All Button -->
+                                    <div class="row mt-4">
+                                        <div class="col-12 text-end">
+                                            <button type="submit" class="btn btn-primary btn-save-all" id="saveAllBtn">
+                                                <i class="ri-save-line me-1"></i> Save All Comments
+                                            </button>
+                                            <span class="saving-indicator ms-2 text-muted" id="savingIndicator" style="display: none;">
+                                                <i class="ri-loader-4-line spin-icon me-1"></i> Saving...
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -565,6 +585,16 @@
         </div>
     </div>
 </div>
+
+<style>
+    .spin-icon {
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+</style>
 
 <script>
 window.studentGrades = @json($studentGrades);
@@ -578,7 +608,7 @@ function showToast(message, type = 'info') {
     toast.className = `auto-save-toast alert alert-${type} alert-dismissible fade show`;
     toast.innerHTML = `
         <div class="d-flex align-items-center">
-            <i class="ri-${type === 'success' ? 'checkbox-circle' : 'error-warning'}-fill me-2 fs-5"></i>
+            <i class="ri-${type === 'success' ? 'checkbox-circle' : (type === 'danger' ? 'error-warning' : 'information')}-fill me-2 fs-5"></i>
             <span>${message}</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>`;
@@ -609,24 +639,23 @@ function showTooltip(tooltipId, studentId, studentName) {
     } else {
         noGrades.classList.add('d-none');
         grades.forEach(g => {
-            // Determine color based on grade letter
             let color = 'secondary';
             const gradeLetter = g.grade_letter || g.grade.charAt(0);
-            
+
             if (gradeLetter === 'A') color = 'success';
             else if (gradeLetter === 'B') color = 'info';
             else if (gradeLetter === 'C') color = 'secondary';
             else if (gradeLetter === 'D') color = 'warning';
             else if (gradeLetter === 'E') color = 'warning';
             else if (gradeLetter === 'F') color = 'danger';
-            
+
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td><strong>${g.subject}</strong></td>
+                <td><strong>${escapeHtml(g.subject)}</strong></td>
                 <td class="text-center fw-bold ${g.score < 50 ? 'text-danger' : 'text-success'}">${g.score}</td>
                 <td class="text-center">
                     <span class="badge bg-${color} grade-badge grade-${g.grade.toLowerCase()}">
-                        ${g.grade}
+                        ${escapeHtml(g.grade)}
                     </span>
                 </td>`;
             tbody.appendChild(row);
@@ -636,25 +665,28 @@ function showTooltip(tooltipId, studentId, studentName) {
     activeTooltip = tooltipId;
 }
 
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Auto-save functionality
 document.querySelectorAll('.auto-save-comment').forEach(select => {
     select.addEventListener('change', function () {
         const studentId = this.dataset.studentId;
         const comment = this.value.trim();
         const original = this.dataset.originalValue || '';
 
-        // Skip if no change
         if (comment === original) return;
 
-        // Store original state for restoration
         const originalBorder = this.style.borderColor;
         const originalBg = this.style.backgroundColor;
-        
-        // Visual feedback
+
         this.style.borderColor = '#ffc107';
         this.style.backgroundColor = '#fff3cd';
         this.disabled = true;
 
-        // Store original text and show saving state
         const option = this.selectedOptions[0];
         const originalText = option ? option.textContent : '';
         if (option) {
@@ -662,87 +694,52 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
             option.disabled = true;
         }
 
-        // Prepare form data
         const formData = new FormData();
-        formData.append('_token', '{{ csrf_token() }}');
+        formData.append('_token', document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}');
         formData.append(`teacher_comments[${studentId}]`, comment);
 
-        console.log('Attempting to save comment for student:', studentId, 'Comment:', comment);
-        console.log('CSRF Token present:', !!document.querySelector('meta[name="csrf-token"]')?.content);
-        
-        // Make the request
         fetch('{{ route("myprincipalscomment.updateComments", [$schoolclassid, $sessionid, $termid]) }}', {
             method: 'POST',
             body: formData,
-            headers: { 
+            headers: {
                 'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}' // Add this header explicitly
+                'X-Requested-With': 'XMLHttpRequest'
             }
         })
         .then(async response => {
-            console.log('Response status:', response.status, response.statusText);
-            
             if (!response.ok) {
-                // Try to get error message from response
                 let errorMsg = `HTTP ${response.status}: ${response.statusText}`;
                 try {
                     const errorData = await response.json();
                     errorMsg = errorData.message || errorMsg;
-                } catch (e) {
-                    // If response is not JSON, try to get text
-                    try {
-                        const text = await response.text();
-                        if (text) errorMsg += ` - ${text.substring(0, 100)}`;
-                    } catch (e2) {
-                        // Ignore if can't read text
-                    }
-                }
+                } catch (e) {}
                 throw new Error(errorMsg);
             }
-            
             return response.json();
         })
         .then(data => {
-            console.log('Save successful:', data);
-            
             if (data.success) {
-                // Update original value marker
                 this.dataset.originalValue = comment;
-                
-                // Show success feedback
                 this.style.borderColor = '#28a745';
                 this.style.backgroundColor = '#d1e7dd';
-                
-                // Show success toast
                 showToast(data.message || 'Comment saved successfully!', 'success');
-                
-                // Restore normal state after delay
+
                 setTimeout(() => {
                     this.style.borderColor = originalBorder;
                     this.style.backgroundColor = originalBg;
                     this.disabled = false;
                 }, 2000);
             } else {
-                throw new Error(data.message || 'Server returned error: ' + JSON.stringify(data));
+                throw new Error(data.message || 'Server returned error');
             }
         })
         .catch(error => {
-            console.error('Auto-save error details:', error);
-            console.error('Full error object:', error);
-            
-            // Revert to original value on error
+            console.error('Auto-save error:', error);
             this.value = original;
-            
-            // Show error feedback
             this.style.borderColor = '#dc3545';
             this.style.backgroundColor = '#f8d7da';
-            
-            // Show error toast with more specific message
-            const errorMessage = error.message || 'Unknown error occurred';
-            showToast('Error saving comment: ' + errorMessage, 'danger');
-            
-            // Restore normal state after delay
+            showToast('Error saving comment: ' + error.message, 'danger');
+
             setTimeout(() => {
                 this.style.borderColor = originalBorder;
                 this.style.backgroundColor = originalBg;
@@ -750,7 +747,6 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
             }, 3000);
         })
         .finally(() => {
-            // Always restore option text
             if (option) {
                 option.textContent = originalText;
                 option.disabled = false;
@@ -759,6 +755,70 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
     });
 });
 
+// Form submission handler
+document.getElementById('commentsForm')?.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const submitBtn = document.getElementById('saveAllBtn');
+    const savingIndicator = document.getElementById('savingIndicator');
+    const originalText = submitBtn.innerHTML;
+
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="ri-loader-4-line spin-icon me-1"></i> Saving...';
+    savingIndicator.style.display = 'inline-block';
+
+    const formData = new FormData(this);
+
+    // Debug: Log what's being submitted
+    console.log('=== Submitting Comments ===');
+    for (let pair of formData.entries()) {
+        console.log(pair[0] + ':', pair[1] ? pair[1].substring(0, 100) : 'empty');
+    }
+
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(async response => {
+        if (!response.ok) {
+            let errorMsg = `HTTP ${response.status}`;
+            try {
+                const errorData = await response.json();
+                errorMsg = errorData.message || errorMsg;
+            } catch (e) {}
+            throw new Error(errorMsg);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            // Update all original values
+            document.querySelectorAll('.auto-save-comment').forEach(select => {
+                select.dataset.originalValue = select.value;
+            });
+            // Optionally reload after 2 seconds
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            throw new Error(data.message || 'Save failed');
+        }
+    })
+    .catch(error => {
+        console.error('Bulk save error:', error);
+        showToast('Error saving comments: ' + error.message, 'danger');
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+        savingIndicator.style.display = 'none';
+    });
+});
+
+// Tooltip handlers
 if (window.innerWidth > 991) {
     document.querySelectorAll('.grades-trigger').forEach(trigger => {
         let hoverTimeout;
@@ -769,7 +829,8 @@ if (window.innerWidth > 991) {
         });
         trigger.addEventListener('mouseleave', () => clearTimeout(hoverTimeout));
         trigger.addEventListener('click', function(e) {
-            e.preventDefault(); e.stopPropagation();
+            e.preventDefault();
+            e.stopPropagation();
             const tid = `tooltip-${this.dataset.studentId}`;
             activeTooltip === tid ? closeAllTooltips() : showTooltip(tid, this.dataset.studentId, this.dataset.studentName);
         });
@@ -785,70 +846,24 @@ if (window.innerWidth > 991) {
     });
 }
 
+// Search functionality
 document.getElementById('searchInput')?.addEventListener('input', function() {
     const term = this.value.toLowerCase().trim();
-    document.querySelectorAll('.desktop-table tbody tr, .mobile-cards .student-card').forEach(el => {
+    // Desktop search
+    document.querySelectorAll('.desktop-table tbody tr').forEach(el => {
+        el.style.display = term === '' || el.textContent.toLowerCase().includes(term) ? '' : 'none';
+    });
+    // Mobile search
+    document.querySelectorAll('.mobile-cards .student-card').forEach(el => {
         el.style.display = term === '' || el.textContent.toLowerCase().includes(term) ? '' : 'none';
     });
 });
 
-document.getElementById('commentsForm')?.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const btn = this.querySelector('button[type="submit"]');
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
-    btn.disabled = true;
-
-    fetch(this.action, {
-        method: 'POST',
-        body: new FormData(this),
-        headers: { 
-            'Accept': 'application/json', 
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-        }
-    })
-    .then(async response => {
-        if (!response.ok) {
-            let errorMsg = `HTTP ${response.status}`;
-            try {
-                const errorData = await response.json();
-                errorMsg = errorData.message || errorMsg;
-            } catch (e) {
-                // Ignore
-            }
-            throw new Error(errorMsg);
-        }
-        return response.json();
-    })
-    .then(data => {
-        if (data.success) {
-            showToast('All comments saved successfully!', 'success');
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            throw new Error(data.message || 'Save failed');
-        }
-    })
-    .catch(error => {
-        console.error('Bulk save error:', error);
-        showToast('Error saving comments: ' + error.message, 'danger');
-    })
-    .finally(() => {
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    });
-});
-
+// Initialize original values on load
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.auto-save-comment').forEach(s => {
         s.dataset.originalValue = s.value;
     });
-    
-    // Check CSRF token
-    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-    if (!csrfToken) {
-        console.warn('CSRF token not found in meta tag');
-    }
 });
 </script>
 @endsection
