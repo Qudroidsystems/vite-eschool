@@ -421,8 +421,6 @@ class MyPrincipalsCommentController extends Controller
             'sessionid' => $sessionid,
             'termid' => $termid,
             'auth_id' => Auth::id(),
-            'all_request_data' => $request->all(),
-            'teacher_comments' => $request->input('teacher_comments', []),
             'request_method' => $request->method(),
             'ajax' => $request->ajax()
         ]);
@@ -441,14 +439,13 @@ class MyPrincipalsCommentController extends Controller
             ], 403);
         }
 
-        $request->validate(['teacher_comments.*' => 'nullable|string|max:2000']);
+        $request->validate(['teacher_comments.*' => 'nullable|string|max:5000']);
 
         $comments = $request->input('teacher_comments', []);
 
         \Log::info('Processing comments', [
             'comments_count' => count($comments),
-            'student_ids' => array_keys($comments),
-            'has_empty' => empty(array_filter($comments))
+            'student_ids' => array_keys($comments)
         ]);
 
         $updatedCount = 0;
@@ -465,7 +462,11 @@ class MyPrincipalsCommentController extends Controller
                     continue;
                 }
 
-                $comment = trim($comment);
+                // Strip any HTML tags from the comment to prevent storing <br /> tags
+                $comment = trim(strip_tags($comment));
+
+                // Also convert any remaining HTML entities
+                $comment = html_entity_decode($comment, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
                 \Log::info("Processing principal comment", [
                     'student_id' => $studentId,
