@@ -3,8 +3,76 @@
 @section('content')
 <style>
     .highlight-red { color: red !important; }
+    .highlight-orange { color: #fd7e14 !important; }
     .avatar-sm { width: 32px; height: 32px; object-fit: cover; border-radius: 50%; }
     .table-centered th, .table-centered td { text-align: center; vertical-align: middle; }
+
+    /* Subject Score Card Styles */
+    .subject-score-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 6px 4px;
+        text-align: center;
+        transition: all 0.2s ease;
+        min-width: 90px;
+    }
+    .subject-score-card:hover {
+        background: #e9ecef;
+        transform: translateY(-2px);
+    }
+    .term-score {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #495057;
+    }
+    .cumulative-score {
+        font-size: 0.8rem;
+        color: #6c757d;
+        border-top: 1px dashed #dee2e6;
+        margin-top: 4px;
+        padding-top: 4px;
+    }
+    .term-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: #adb5bd;
+    }
+    .cumulative-label {
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        font-weight: 600;
+        color: #17a2b8;
+    }
+
+    /* Grade Badge Styles */
+    .grade-badge-sm {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        margin-top: 4px;
+    }
+    .grade-a, .grade-a1 { background-color: #28a745; color: white; }
+    .grade-b, .grade-b2, .grade-b3 { background-color: #17a2b8; color: white; }
+    .grade-c, .grade-c4, .grade-c5, .grade-c6 { background-color: #6c757d; color: white; }
+    .grade-d, .grade-d7 { background-color: #ffc107; color: black; }
+    .grade-e, .grade-e8 { background-color: #fd7e14; color: white; }
+    .grade-f, .grade-f9 { background-color: #dc3545; color: white; }
+
+    /* Table Header Styles */
+    .subject-header {
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: #e9ecef;
+    }
+    .score-header {
+        font-size: 0.7rem;
+        font-weight: 600;
+        background: #f8f9fa;
+    }
+
     .form-select.teacher-comment-dropdown {
         width: 100%;
         min-width: 150px;
@@ -85,8 +153,8 @@
         border: 2px solid #667eea;
         border-radius: 20px;
         box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-        width: 380px;
-        max-height: 500px;
+        width: 450px;
+        max-height: 550px;
         overflow: hidden;
         z-index: 10050;
         opacity: 0;
@@ -134,27 +202,11 @@
         justify-content: center;
         cursor: pointer;
     }
-    .grades-tooltip .tooltip-body { padding: 0 20px 20px 20px; max-height: 380px; overflow-y: auto; }
+    .grades-tooltip .tooltip-body { padding: 0 20px 20px 20px; max-height: 420px; overflow-y: auto; }
     .grades-tooltip table { width: 100%; border-collapse: separate; border-spacing: 0 8px; }
-    .grades-tooltip th { color: #6c757d; font-weight: 600; font-size: 0.9rem; padding: 12px 8px; border-bottom: 2px solid #e9ecef; }
-    .grades-tooltip td { padding: 14px 12px; background: #f8f9fa; border-radius: 12px; font-size: 0.95rem; }
-    .grade-badge { font-weight: 800; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; min-width: 50px; text-align: center; }
-
-    /* Grade color classes */
-    .grade-a { background-color: #28a745; color: white; }
-    .grade-b { background-color: #17a2b8; color: white; }
-    .grade-c { background-color: #6c757d; color: white; }
-    .grade-d { background-color: #ffc107; color: black; }
-    .grade-e { background-color: #fd7e14; color: white; }
-    .grade-f { background-color: #dc3545; color: white; }
-
-    /* Senior grade specific colors */
-    .grade-a1, .grade-a { background-color: #28a745; color: white; }
-    .grade-b2, .grade-b3, .grade-b { background-color: #17a2b8; color: white; }
-    .grade-c4, .grade-c5, .grade-c6, .grade-c { background-color: #6c757d; color: white; }
-    .grade-d7, .grade-d { background-color: #ffc107; color: black; }
-    .grade-e8, .grade-e { background-color: #fd7e14; color: white; }
-    .grade-f9, .grade-f { background-color: #dc3545; color: white; }
+    .grades-tooltip th { color: #6c757d; font-weight: 600; font-size: 0.85rem; padding: 12px 8px; border-bottom: 2px solid #e9ecef; }
+    .grades-tooltip td { padding: 12px 8px; background: #f8f9fa; border-radius: 10px; font-size: 0.9rem; }
+    .grade-badge { font-weight: 800; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; min-width: 50px; text-align: center; display: inline-block; }
 
     .student-card { background: #fff; border: 1px solid #dee2e6; border-radius: 12px; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); overflow: hidden; }
     .student-header { background: #f8f9fa; padding: 15px; border-bottom: 1px solid #dee2e6; }
@@ -162,48 +214,63 @@
     .student-details h6 { margin: 0; font-size: 1rem; font-weight: 600; }
     .student-meta { font-size: 0.875rem; color: #6c757d; }
     .student-body { padding: 15px; }
-    .subjects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px; }
-    .subject-item { text-align: center; padding: 12px 8px; background: #f8f9fa; border-radius: 10px; border: 1px solid #e9ecef; }
-    .subject-name { font-size: 0.75rem; font-weight: 600; color: #495057; margin-bottom: 5px; line-height: 1.2; height: 2.4em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-    .subject-score { font-size: 1.3rem; font-weight: bold; margin: 5px 0; color: #212529; }
-    .subject-grade { font-size: 0.8rem; font-weight: 700; padding: 3px 8px; border-radius: 12px; display: inline-block; min-width: 35px; }
-    .performance-summary { background: #f8f9fa; border-radius: 10px; padding: 12px; margin-bottom: 15px; border: 1px solid #e9ecef; }
-    .summary-title { font-weight: 600; font-size: 0.9rem; color: #495057; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
-    .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; text-align: center; }
-    .summary-item { padding: 8px 5px; background: white; border-radius: 8px; border: 1px solid #dee2e6; }
-    .summary-label { font-size: 0.75rem; color: #6c757d; margin-bottom: 4px; }
-    .summary-value { font-size: 1.1rem; font-weight: 700; color: #212529; }
+    .subjects-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .performance-summary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 15px; margin-bottom: 15px; color: white; }
+    .summary-title { font-weight: 600; font-size: 0.9rem; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; text-align: center; }
+    .summary-item { padding: 10px; background: rgba(255,255,255,0.15); border-radius: 10px; backdrop-filter: blur(5px); }
+    .summary-label { font-size: 0.7rem; opacity: 0.9; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .summary-value { font-size: 1.3rem; font-weight: 700; }
     .comment-label-mobile { font-weight: 600; margin-bottom: 8px; font-size: 0.95rem; color: #495057; display: flex; align-items: center; gap: 8px; }
     .btn-save-all { padding: 10px 24px; font-weight: 600; }
     .saving-indicator { display: none; }
-    .comment-option-text {
-        white-space: normal;
-        line-height: 1.4;
-    }
-    select option {
-        white-space: normal;
-        padding: 8px;
-    }
 
     .cumulative-badge {
         background-color: #17a2b8;
         color: white;
         font-size: 0.7rem;
-        padding: 2px 6px;
-        border-radius: 10px;
+        padding: 2px 8px;
+        border-radius: 20px;
         margin-left: 8px;
     }
+    .term-badge {
+        background-color: #6c757d;
+        color: white;
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 20px;
+        margin-left: 5px;
+    }
 
-    @media (min-width: 992px) {
+    .split-score {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+    }
+    .term-score-box {
+        background: white;
+        padding: 4px 8px;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .cum-score-box {
+        background: #e8f4f8;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+    }
+
+    @media (min-width: 1200px) {
         .desktop-table { display: block !important; }
         .mobile-cards { display: none !important; }
         .comment-info-icon { display: block !important; }
+        .subject-score-card { min-width: 100px; }
     }
-    @media (max-width: 991.98px) {
+    @media (max-width: 1199.98px) {
         .desktop-table { display: none !important; }
         .mobile-cards { display: block !important; }
         .comment-info-icon { display: none !important; }
-        .summary-grid { grid-template-columns: repeat(2, 1fr); }
     }
 </style>
 
@@ -226,9 +293,7 @@
 
             @if ($errors->any())
                 <div class="alert alert-danger">
-                    <ul class="mb-0">
-                        @foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach
-                    </ul>
+                    <ul class="mb-0">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
                 </div>
             @endif
 
@@ -253,34 +318,43 @@
                     <div class="row">
                         <div class="col-lg-12">
                             <div class="card">
-                                <div class="card-header">
-                                    <h5 class="card-title mb-0">
-                                        Broadsheet: {{ $schoolclass->schoolclass }} {{ $schoolclass->arm_name }} - {{ $schoolterm }} {{ $schoolsession }}
-                                        @if($isSenior)
-                                            <span class="badge bg-warning ms-2">Senior Class</span>
-                                        @else
-                                            <span class="badge bg-info ms-2">Junior Class</span>
-                                        @endif
-                                        <span class="badge bg-info ms-2 cumulative-badge">
-                                            <i class="ri-bar-chart-2-line"></i> Cumulative Scores ({{ $schoolterm }})
-                                        </span>
-                                    </h5>
-                                    <div class="alert alert-info mt-2 mb-0">
-                                        <i class="ri-bar-chart-line me-2"></i>
-                                        <strong>Class Average (Cumulative):</strong> {{ $classAnalytics['average'] }} |
-                                        <strong>Students:</strong> {{ $classAnalytics['total_students'] }}
-                                        @if($isSenior)
-                                            <span class="ms-3"><strong>Grading:</strong> Senior (A1-F9)</span>
-                                        @else
-                                            <span class="ms-3"><strong>Grading:</strong> Junior (A-F)</span>
-                                        @endif
-                                        @if($schoolterm == '2nd Term' || $schoolterm == 'Second Term')
-                                            <span class="ms-3 text-success"><i class="ri-information-line"></i> Showing cumulative average of 1st & 2nd Terms</span>
-                                        @elseif($schoolterm == '3rd Term' || $schoolterm == 'Third Term')
-                                            <span class="ms-3 text-success"><i class="ri-information-line"></i> Showing cumulative average of 1st, 2nd & 3rd Terms</span>
-                                        @else
-                                            <span class="ms-3 text-success"><i class="ri-information-line"></i> Showing 1st Term scores</span>
-                                        @endif
+                                <div class="card-header bg-white">
+                                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                                        <h5 class="card-title mb-0">
+                                            <i class="ri-bar-chart-2-line me-2"></i>
+                                            Broadsheet: {{ $schoolclass->schoolclass }} {{ $schoolclass->arm_name }} - {{ $schoolterm }} {{ $schoolsession }}
+                                            @if($isSenior)
+                                                <span class="badge bg-warning ms-2">Senior Class</span>
+                                            @else
+                                                <span class="badge bg-info ms-2">Junior Class</span>
+                                            @endif
+                                        </h5>
+                                        <div class="mt-2 mt-sm-0">
+                                            <span class="badge bg-info cumulative-badge">
+                                                <i class="ri-bar-chart-line"></i> Cumulative ({{ $schoolterm }})
+                                            </span>
+                                            <span class="badge bg-secondary term-badge">
+                                                <i class="ri-calendar-line"></i> Term Total
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="alert alert-info mt-3 mb-0">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-6">
+                                                <i class="ri-bar-chart-line me-2"></i>
+                                                <strong>Class Average (Cumulative):</strong> {{ $classAnalytics['average'] }} |
+                                                <strong>Students:</strong> {{ $classAnalytics['total_students'] }}
+                                            </div>
+                                            <div class="col-md-6 text-md-end">
+                                                @if($schoolterm == '2nd Term' || $schoolterm == 'Second Term')
+                                                    <span class="text-success"><i class="ri-information-line"></i> Cumulative = Average of 1st & 2nd Terms</span>
+                                                @elseif($schoolterm == '3rd Term' || $schoolterm == 'Third Term')
+                                                    <span class="text-success"><i class="ri-information-line"></i> Cumulative = Average of 1st, 2nd & 3rd Terms</span>
+                                                @else
+                                                    <span class="text-success"><i class="ri-information-line"></i> Cumulative = Current Term Score</span>
+                                                @endif
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="card-body">
@@ -292,15 +366,25 @@
                                     <!-- Desktop Table -->
                                     <div class="desktop-table">
                                         <div class="table-responsive">
-                                            <table class="table table-centered align-middle">
-                                                <thead class="table-light">
-                                                    <tr>
-                                                        <th>SN</th>
-                                                        <th>Admission No</th>
-                                                        <th>Student</th>
-                                                        <th>Gender</th>
-                                                        @foreach ($subjects as $subject)<th>{{ $subject }}</th>@endforeach
-                                                        <th style="min-width: 300px;">Principal's Comment</th>
+                                            <table class="table table-bordered align-middle">
+                                                <thead>
+                                                    <tr class="subject-header">
+                                                        <th rowspan="2" style="vertical-align: middle; width: 40px;">SN</th>
+                                                        <th rowspan="2" style="vertical-align: middle; width: 100px;">Admission No</th>
+                                                        <th rowspan="2" style="vertical-align: middle; width: 200px;">Student</th>
+                                                        <th rowspan="2" style="vertical-align: middle; width: 80px;">Gender</th>
+                                                        <th colspan="{{ count($subjects) * 2 }}" class="text-center">Subjects Performance</th>
+                                                        <th rowspan="2" style="vertical-align: middle; min-width: 280px;">Principal's Comment</th>
+                                                    </tr>
+                                                    <tr class="score-header">
+                                                        @foreach ($subjects as $subject)
+                                                            <th class="text-center" style="min-width: 110px;">
+                                                                {{ $subject }}
+                                                                <div class="small text-muted mt-1">
+                                                                    <span class="text-secondary">Term</span> | <span class="text-info">Cum</span>
+                                                                </div>
+                                                            </th>
+                                                        @endforeach
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -319,9 +403,9 @@
                                                             <td>{{ $student->admissionNo }}</td>
                                                             <td>
                                                                 <div class="d-flex align-items-center">
-                                                                    <img src="{{ $imagePath }}" class="avatar-sm me-3" alt="">
+                                                                    <img src="{{ $imagePath }}" class="avatar-sm me-2" alt="">
                                                                     <div>
-                                                                        {{ $student->lastname }} {{ $student->firstname }} {{ $student->othername }}
+                                                                        {{ $student->lastname }} {{ $student->firstname }}
                                                                         @if($currentComment)
                                                                             <small class="d-block text-success mt-1"><i class="ri-check-double-line"></i> Comment saved</small>
                                                                         @endif
@@ -329,45 +413,91 @@
                                                                 </div>
                                                             </td>
                                                             <td>{{ $student->gender ?? 'N/A' }}</td>
+
                                                             @foreach ($subjects as $subject)
                                                                 @php
-                                                                    $score = $scores->where('student_id', $student->id)->where('subject_name', $subject)->first();
-                                                                    $isFailing = ($score && $score->total < 50);
+                                                                    $termScore = $termScores->where('student_id', $student->id)->where('subject_name', $subject)->first();
+                                                                    $cumulativeScore = $scores->where('student_id', $student->id)->where('subject_name', $subject)->first();
+
+                                                                    $termTotal = $termScore?->total ?? 0;
+                                                                    $cumTotal = $cumulativeScore?->total ?? 0;
+
+                                                                    // Get grade for cumulative score
+                                                                    $cumGrade = '';
+                                                                    if ($cumTotal > 0) {
+                                                                        if ($isSenior) {
+                                                                            if ($cumTotal >= 75) $cumGrade = 'A1';
+                                                                            elseif ($cumTotal >= 70) $cumGrade = 'B2';
+                                                                            elseif ($cumTotal >= 65) $cumGrade = 'B3';
+                                                                            elseif ($cumTotal >= 60) $cumGrade = 'C4';
+                                                                            elseif ($cumTotal >= 55) $cumGrade = 'C5';
+                                                                            elseif ($cumTotal >= 50) $cumGrade = 'C6';
+                                                                            elseif ($cumTotal >= 45) $cumGrade = 'D7';
+                                                                            elseif ($cumTotal >= 40) $cumGrade = 'E8';
+                                                                            else $cumGrade = 'F9';
+                                                                        } else {
+                                                                            if ($cumTotal >= 70) $cumGrade = 'A';
+                                                                            elseif ($cumTotal >= 60) $cumGrade = 'B';
+                                                                            elseif ($cumTotal >= 50) $cumGrade = 'C';
+                                                                            elseif ($cumTotal >= 40) $cumGrade = 'D';
+                                                                            else $cumGrade = 'F';
+                                                                        }
+                                                                    }
+
+                                                                    $termGradeClass = $termTotal < 50 ? 'text-danger' : ($termTotal < 60 ? 'text-warning' : 'text-success');
+                                                                    $cumGradeClass = $cumTotal < 50 ? 'text-danger' : ($cumTotal < 60 ? 'text-warning' : 'text-success');
                                                                 @endphp
-                                                                <td class="{{ $isFailing ? 'highlight-red' : '' }}">
-                                                                    {{ $score?->total ?? '-' }}
-                                                                    @if($score && $schoolterm != '1st Term' && $schoolterm != 'First Term')
-                                                                        <small class="text-muted d-block" style="font-size: 0.65rem;">cumulative</small>
-                                                                    @endif
+                                                                <td class="p-2">
+                                                                    <div class="subject-score-card">
+                                                                        <div class="split-score">
+                                                                            <div class="term-score-box w-100">
+                                                                                <span class="term-label">TERM</span>
+                                                                                <div class="term-score {{ $termGradeClass }} fw-bold">
+                                                                                    {{ $termTotal ?: '-' }}
+                                                                                </div>
+                                                                            </div>
+                                                                            <div class="cum-score-box w-100">
+                                                                                <span class="cumulative-label">CUM</span>
+                                                                                <div class="cumulative-score {{ $cumGradeClass }} fw-bold">
+                                                                                    {{ $cumTotal ?: '-' }}
+                                                                                    @if($cumGrade)
+                                                                                        <span class="grade-badge-sm grade-{{ strtolower($cumGrade) }} ms-1">
+                                                                                            {{ $cumGrade }}
+                                                                                        </span>
+                                                                                    @endif
+                                                                                </div>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
                                                                 </td>
                                                             @endforeach
-                                                            <td class="comment-cell">
+
+                                                            <td class="comment-cell position-relative">
                                                                 @if($intelligentComment)
-                                                                <div class="intelligent-comment-section mb-3">
+                                                                <div class="intelligent-comment-section mb-2">
                                                                     <small class="text-muted d-block mb-1">
-                                                                        <i class="ri-lightbulb-line"></i> Grade summary comment (based on cumulative scores)
-                                                                        @if($hasWeakAdvice)<span class="badge bg-warning intelligent-comment-badge">Includes improvement advice</span>@endif
+                                                                        <i class="ri-lightbulb-line"></i> AI Generated (Cumulative)
+                                                                        @if($hasWeakAdvice)<span class="badge bg-warning intelligent-comment-badge">+ Advice</span>@endif
                                                                     </small>
-                                                                    <div class="intelligent-comment-preview">
-                                                                        <div class="intelligent-comment-text">{!! nl2br(e($intelligentComment)) !!}</div>
+                                                                    <div class="intelligent-comment-preview p-2">
+                                                                        <div class="intelligent-comment-text small">{!! nl2br(e(Str::limit($intelligentComment, 150))) !!}</div>
                                                                     </div>
                                                                 </div>
                                                                 @endif
 
                                                                 @if($currentComment)
-                                                                <div class="mb-3">
-                                                                    <small class="text-success d-block mb-1"><i class="ri-chat-check-line"></i> Previously saved comment</small>
-                                                                    <div class="saved-comment-preview">
-                                                                        <small class="text-secondary">{!! nl2br(e($currentCommentPlain)) !!}</small>
+                                                                <div class="mb-2">
+                                                                    <small class="text-success d-block mb-1"><i class="ri-chat-check-line"></i> Saved Comment</small>
+                                                                    <div class="saved-comment-preview p-2">
+                                                                        <small class="text-secondary">{!! nl2br(e(Str::limit($currentCommentPlain, 100))) !!}</small>
                                                                     </div>
                                                                 </div>
                                                                 @endif
 
-                                                                <select class="form-select teacher-comment-dropdown auto-save-comment"
+                                                                <select class="form-select form-select-sm teacher-comment-dropdown auto-save-comment"
                                                                         name="teacher_comments[{{ $student->id }}]"
                                                                         data-student-id="{{ $student->id }}"
-                                                                        data-original-value="{{ $currentCommentPlain }}"
-                                                                        style="min-width: 250px;">
+                                                                        data-original-value="{{ $currentCommentPlain }}">
                                                                     <option value="">-- Select Comment --</option>
 
                                                                     @foreach ($standardPersonalizedComments[$student->id] ?? [] as $comment)
@@ -376,9 +506,9 @@
                                                                             $isSelected = ($currentCommentPlain == $commentPlain);
                                                                         @endphp
                                                                         <option value="{{ $commentPlain }}" {{ $isSelected ? 'selected' : '' }}>
-                                                                            {{ Str::limit($commentPlain, 100, '...') }}
+                                                                            {{ Str::limit($commentPlain, 80) }}
                                                                             @if(str_contains($commentPlain, 'should work harder'))
-                                                                                <span class="badge bg-warning ms-2">+ Advice</span>
+                                                                                <span class="badge bg-warning ms-2">Advice</span>
                                                                             @endif
                                                                         </option>
                                                                     @endforeach
@@ -389,67 +519,56 @@
                                                                             $isSelected = ($currentCommentPlain == $intelligentPlain);
                                                                         @endphp
                                                                         <option value="{{ $intelligentPlain }}" class="intelligent-option" {{ $isSelected ? 'selected' : '' }}>
-                                                                            💡 Use Grade Summary Comment (Cumulative)
-                                                                            @if($hasWeakAdvice)<span class="badge bg-warning ms-2">Improvement advice</span>@endif
+                                                                            💡 Use AI Comment (Cumulative)
                                                                         </option>
                                                                     @endif
                                                                 </select>
 
                                                                 <button type="button" class="comment-info-icon grades-trigger btn btn-link p-0"
                                                                         data-student-id="{{ $student->id }}"
-                                                                        data-student-name="{{ $student->lastname }} {{ $student->firstname }} {{ $student->othername }}">
+                                                                        data-student-name="{{ $student->lastname }} {{ $student->firstname }}">
                                                                     <i class="ri-eye-line"></i>
                                                                 </button>
 
+                                                                <!-- Tooltip for detailed grades -->
                                                                 <div class="grades-tooltip position-bottom" id="tooltip-{{ $student->id }}">
                                                                     <div class="tooltip-header">
-                                                                        <span id="tooltip-title-{{ $student->id }}">Cumulative Grades</span>
+                                                                        <span id="tooltip-title-{{ $student->id }}">Performance Details</span>
                                                                         <button type="button" class="tooltip-close"><i class="ri-close-line"></i></button>
                                                                     </div>
                                                                     <div class="tooltip-body">
-                                                                        <div class="text-center mb-3 p-3 bg-light rounded">
-                                                                            <div class="row">
-                                                                                <div class="col-6"><strong>Total Score:</strong> {{ $analytics['total_score'] ?? 0 }}</div>
-                                                                                <div class="col-6"><strong>Cumulative Average:</strong> <span class="{{ ($analytics['average'] ?? 0) < 50 ? 'text-danger' : 'text-success' }}">{{ $analytics['average'] ?? 0 }}</span></div>
+                                                                        <div class="row mb-3">
+                                                                            <div class="col-6">
+                                                                                <div class="bg-light rounded p-2 text-center">
+                                                                                    <small class="text-muted">Term Total</small>
+                                                                                    <h5 class="mb-0">{{ $analytics['term_total'] ?? 0 }}</h5>
+                                                                                </div>
                                                                             </div>
-                                                                            <div class="row mt-2">
-                                                                                <div class="col-6"><strong>Subjects:</strong> {{ $analytics['subjects'] ?? 0 }}</div>
-                                                                                <div class="col-6"><strong>Position:</strong> <strong class="text-primary">{{ $analytics['position_text'] ?? '-' }}</strong></div>
-                                                                            </div>
-                                                                            <div class="mt-3">
-                                                                                <strong>Grade Distribution:</strong>
-                                                                                A: {{ $analytics['grade_counts']['A'] ?? 0 }} |
-                                                                                B: {{ $analytics['grade_counts']['B'] ?? 0 }} |
-                                                                                C: {{ $analytics['grade_counts']['C'] ?? 0 }} |
-                                                                                D/F: {{ ($analytics['grade_counts']['D'] ?? 0) + ($analytics['grade_counts']['F'] ?? 0) }}
+                                                                            <div class="col-6">
+                                                                                <div class="bg-info bg-opacity-10 rounded p-2 text-center">
+                                                                                    <small class="text-info">Cumulative Total</small>
+                                                                                    <h5 class="mb-0 text-info">{{ $analytics['total_score'] ?? 0 }}</h5>
+                                                                                </div>
                                                                             </div>
                                                                         </div>
-                                                                        <div class="text-center mt-3 pt-3 border-top">
-                                                                            <small class="text-muted d-block mb-2">Class Average: <strong>{{ $classAnalytics['average'] }}</strong></small>
-                                                                            @php
-                                                                                $diff = ($analytics['average'] ?? 0) - $classAnalytics['average'];
-                                                                                $above = $diff > 0.5;
-                                                                                $below = $diff < -0.5;
-                                                                            @endphp
-                                                                            @if($above)
-                                                                                <span class="text-success fw-bold"><i class="ri-arrow-up-line"></i> +{{ round(abs($diff), 1) }} above class average</span>
-                                                                            @elseif($below)
-                                                                                <span class="text-danger fw-bold"><i class="ri-arrow-down-line"></i> {{ round(abs($diff), 1) }} below class average</span>
-                                                                            @else
-                                                                                <span class="text-info fw-bold"><i class="ri-subtract-line"></i> At class average</span>
-                                                                            @endif
+                                                                        <div class="text-center mb-3 p-2 bg-light rounded">
+                                                                            <div class="row">
+                                                                                <div class="col-4"><strong>Avg:</strong> {{ $analytics['average'] ?? 0 }}</div>
+                                                                                <div class="col-4"><strong>Position:</strong> {{ $analytics['position_text'] ?? '-' }}</div>
+                                                                                <div class="col-4"><strong>Class Avg:</strong> {{ $classAnalytics['average'] }}</div>
+                                                                            </div>
                                                                         </div>
                                                                         <table class="table table-sm">
                                                                             <thead>
                                                                                 <tr>
                                                                                     <th>Subject</th>
-                                                                                    <th>Cumulative Score</th>
+                                                                                    <th>Term</th>
+                                                                                    <th>Cumulative</th>
                                                                                     <th>Grade</th>
                                                                                 </tr>
                                                                             </thead>
                                                                             <tbody id="grades-body-{{ $student->id }}"></tbody>
                                                                         </table>
-                                                                        <div class="text-center py-4 text-muted d-none" id="no-grades-{{ $student->id }}">No grades available</div>
                                                                     </div>
                                                                 </div>
                                                             </td>
@@ -460,7 +579,7 @@
                                         </div>
                                     </div>
 
-                                    <!-- Mobile Cards -->
+                                    <!-- Mobile Cards View -->
                                     <div class="mobile-cards">
                                         @foreach ($students as $index => $student)
                                             @php
@@ -473,8 +592,6 @@
                                                 $analytics = $studentAnalytics[$student->id] ?? [];
                                                 $myAvg = $analytics['average'] ?? 0;
                                                 $diff = $myAvg - $classAnalytics['average'];
-                                                $above = $diff > 0.5;
-                                                $below = $diff < -0.5;
                                             @endphp
                                             <div class="student-card" data-student-id="{{ $student->id }}">
                                                 <div class="student-header">
@@ -483,10 +600,11 @@
                                                         <div class="student-details">
                                                             <h6>
                                                                 {{ $student->lastname }} {{ $student->firstname }} {{ $student->othername }}
-                                                                @if($currentComment)<span class="badge bg-success ms-2" style="font-size:0.7rem;">Commented</span>@endif
+                                                                @if($currentComment)<span class="badge bg-success ms-2">✓</span>@endif
                                                             </h6>
                                                             <div class="student-meta">
-                                                                SN: {{ $index + 1 }} | Admission: {{ $student->admissionNo }} | Gender: {{ $student->gender ?? 'N/A' }}
+                                                                <i class="ri-id-card-line"></i> {{ $student->admissionNo }} |
+                                                                <i class="ri-user-line"></i> {{ $student->gender ?? 'N/A' }}
                                                             </div>
                                                         </div>
                                                     </div>
@@ -494,125 +612,73 @@
                                                 <div class="student-body">
                                                     <div class="performance-summary">
                                                         <div class="summary-title">
-                                                            <i class="ri-bar-chart-line"></i> Cumulative Performance Analytics
-                                                            @if($hasWeakAdvice)<span class="badge bg-warning ms-auto">Needs Improvement</span>@endif
+                                                            <i class="ri-bar-chart-line"></i> Performance Summary
                                                         </div>
                                                         <div class="summary-grid">
                                                             <div class="summary-item">
-                                                                <div class="summary-label">Cumulative Average</div>
-                                                                <div class="summary-value {{ $myAvg < 50 ? 'text-danger' : 'text-success' }}">{{ $myAvg }}</div>
+                                                                <div class="summary-label">Term Average</div>
+                                                                <div class="summary-value">{{ $analytics['term_average'] ?? 0 }}</div>
                                                             </div>
                                                             <div class="summary-item">
-                                                                <div class="summary-label">Class Average</div>
-                                                                <div class="summary-value fw-bold">{{ $classAnalytics['average'] }}</div>
+                                                                <div class="summary-label">Cumulative Avg</div>
+                                                                <div class="summary-value">{{ $myAvg }}</div>
                                                             </div>
                                                             <div class="summary-item">
                                                                 <div class="summary-label">Position</div>
-                                                                <div class="summary-value text-primary fw-bold">{{ $analytics['position_text'] ?? '-' }}</div>
+                                                                <div class="summary-value">{{ $analytics['position_text'] ?? '-' }}</div>
                                                             </div>
                                                             <div class="summary-item">
                                                                 <div class="summary-label">Total Score</div>
                                                                 <div class="summary-value">{{ $analytics['total_score'] ?? 0 }}</div>
                                                             </div>
                                                         </div>
-
-                                                        <div class="text-center mt-3">
-                                                            @if($above)
-                                                                <div class="alert alert-success py-2 mb-0">
-                                                                    <i class="ri-arrow-up-line"></i> <strong>Above class average</strong> (+{{ round(abs($diff), 1) }})
-                                                                </div>
-                                                            @elseif($below)
-                                                                <div class="alert alert-danger py-2 mb-0">
-                                                                    <i class="ri-arrow-down-line"></i> <strong>Below class average</strong> ({{ round(abs($diff), 1) }} behind)
-                                                                </div>
+                                                        <div class="text-center mt-2 small">
+                                                            @if($diff > 0.5)
+                                                                <span class="text-success"><i class="ri-arrow-up-line"></i> +{{ round(abs($diff), 1) }} above average</span>
+                                                            @elseif($diff < -0.5)
+                                                                <span class="text-warning"><i class="ri-arrow-down-line"></i> {{ round(abs($diff), 1) }} below average</span>
                                                             @else
-                                                                <div class="alert alert-info py-2 mb-0">
-                                                                    <i class="ri-subtract-line"></i> <strong>At class average</strong>
-                                                                </div>
+                                                                <span class="text-white-50">At class average</span>
                                                             @endif
-                                                        </div>
-
-                                                        <div class="text-center mt-2">
-                                                            <small class="text-muted">
-                                                                Grades: A({{ $analytics['grade_counts']['A'] ?? 0 }}) B({{ $analytics['grade_counts']['B'] ?? 0 }}) C({{ $analytics['grade_counts']['C'] ?? 0 }}) D/F({{ ($analytics['grade_counts']['D'] ?? 0) + ($analytics['grade_counts']['F'] ?? 0) }})
-                                                            </small>
                                                         </div>
                                                     </div>
 
                                                     <div class="subjects-grid">
                                                         @foreach ($subjects as $subject)
                                                             @php
-                                                                $score = $scores->where('student_id', $student->id)->where('subject_name', $subject)->first();
-                                                                $g = collect($studentGrades[$student->id] ?? [])->firstWhere('subject', $subject);
+                                                                $termScore = $termScores->where('student_id', $student->id)->where('subject_name', $subject)->first();
+                                                                $cumulativeScore = $scores->where('student_id', $student->id)->where('subject_name', $subject)->first();
+                                                                $termTotal = $termScore?->total ?? 0;
+                                                                $cumTotal = $cumulativeScore?->total ?? 0;
                                                             @endphp
                                                             <div class="subject-item">
                                                                 <div class="subject-name">{{ $subject }}</div>
-                                                                <div class="subject-score {{ ($score && $score->total < 50) ? 'highlight-red' : '' }}">{{ $score?->total ?? '-' }}</div>
-                                                                @if($g)
-                                                                    <div class="subject-grade grade-{{ strtolower($g['grade']) }}">
-                                                                        {{ $g['grade'] }}
-                                                                        @if($isSenior)
-                                                                            <br><small style="font-size:0.7em;">({{ $g['grade_letter'] }})</small>
-                                                                        @endif
-                                                                    </div>
-                                                                @endif
-                                                                @if($schoolterm != '1st Term' && $schoolterm != 'First Term')
-                                                                    <small class="text-muted" style="font-size: 0.6rem;">cumulative</small>
-                                                                @endif
+                                                                <div class="small text-muted">Term: <strong class="{{ $termTotal < 50 ? 'text-danger' : 'text-success' }}">{{ $termTotal ?: '-' }}</strong></div>
+                                                                <div class="small text-info">Cum: <strong>{{ $cumTotal ?: '-' }}</strong></div>
                                                             </div>
                                                         @endforeach
                                                     </div>
 
                                                     @if($intelligentComment)
-                                                    <div class="intelligent-comment-section mb-3">
-                                                        <div class="comment-label-mobile"><i class="ri-lightbulb-line"></i> Cumulative Grade Summary Comment</div>
-                                                        <div class="intelligent-comment-preview">
-                                                            <div class="intelligent-comment-text">{!! nl2br(e($intelligentComment)) !!}</div>
-                                                            @if($hasWeakAdvice)<small class="text-muted d-block mt-2"><i class="ri-alert-line"></i> Includes improvement advice</small>@endif
-                                                        </div>
-                                                    </div>
-                                                    @endif
-
-                                                    @if($currentComment)
-                                                    <div class="mb-3">
-                                                        <div class="comment-label-mobile"><i class="ri-chat-check-line text-success"></i> Previously Saved Comment</div>
-                                                        <div class="saved-comment-preview">
-                                                            <small class="text-secondary">{!! nl2br(e($currentCommentPlain)) !!}</small>
-                                                        </div>
+                                                    <div class="intelligent-comment-section mb-2">
+                                                        <small><i class="ri-lightbulb-line"></i> AI Suggestion</small>
+                                                        <div class="small mt-1">{{ Str::limit($intelligentComment, 120) }}</div>
                                                     </div>
                                                     @endif
 
                                                     <div class="comment-section-mobile">
-                                                        <div class="comment-label-mobile"><i class="ri-chat-3-line"></i> Principal's Comment</div>
-                                                        <select class="form-select teacher-comment-dropdown auto-save-comment"
+                                                        <label class="comment-label-mobile"><i class="ri-chat-3-line"></i> Principal's Comment</label>
+                                                        <select class="form-select form-select-sm auto-save-comment"
                                                                 name="teacher_comments[{{ $student->id }}]"
                                                                 data-student-id="{{ $student->id }}"
                                                                 data-original-value="{{ $currentCommentPlain }}">
                                                             <option value="">-- Select Comment --</option>
-
                                                             @foreach ($standardPersonalizedComments[$student->id] ?? [] as $comment)
-                                                                @php
-                                                                    $commentPlain = strip_tags($comment);
-                                                                    $isSelected = ($currentCommentPlain == $commentPlain);
-                                                                @endphp
-                                                                <option value="{{ $commentPlain }}" {{ $isSelected ? 'selected' : '' }}>
-                                                                    {{ Str::limit($commentPlain, 100, '...') }}
-                                                                    @if(str_contains($commentPlain, 'should work harder'))
-                                                                        <span class="badge bg-warning ms-2">+ Advice</span>
-                                                                    @endif
+                                                                @php $commentPlain = strip_tags($comment); @endphp
+                                                                <option value="{{ $commentPlain }}" {{ $currentCommentPlain == $commentPlain ? 'selected' : '' }}>
+                                                                    {{ Str::limit($commentPlain, 60) }}
                                                                 </option>
                                                             @endforeach
-
-                                                            @if(isset($intelligentComments[$student->id]) && !in_array(strip_tags($intelligentComments[$student->id]), array_map('strip_tags', $standardPersonalizedComments[$student->id] ?? [])))
-                                                                @php
-                                                                    $intelligentPlain = strip_tags($intelligentComments[$student->id]);
-                                                                    $isSelected = ($currentCommentPlain == $intelligentPlain);
-                                                                @endphp
-                                                                <option value="{{ $intelligentPlain }}" class="intelligent-option" {{ $isSelected ? 'selected' : '' }}>
-                                                                    💡 Use Cumulative Grade Summary Comment
-                                                                    @if($hasWeakAdvice)<span class="badge bg-warning ms-2">Improvement advice</span>@endif
-                                                                </option>
-                                                            @endif
                                                         </select>
                                                     </div>
                                                 </div>
@@ -620,10 +686,9 @@
                                         @endforeach
                                     </div>
 
-                                    <!-- Save All Button -->
                                     <div class="row mt-4">
                                         <div class="col-12 text-end">
-                                            <button type="submit" class="btn btn-primary btn-save-all" id="saveAllBtn">
+                                            <button type="submit" class="btn btn-primary btn-save-all">
                                                 <i class="ri-save-line me-1"></i> Save All Comments
                                             </button>
                                             <span class="saving-indicator ms-2 text-muted" id="savingIndicator" style="display: none;">
@@ -644,82 +709,26 @@
 </div>
 
 <style>
-    .spin-icon {
-        animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
+    .spin-icon { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 </style>
 
 <script>
-window.studentGrades = @json($studentGrades);
+// First, we need to pass both term and cumulative scores to JavaScript
+window.studentTermScores = @json($termScores ?? []);
+window.studentCumScores = @json($scores);
+window.studentGradesData = @json($studentGrades);
+
 let activeTooltip = null;
 
 function showToast(message, type = 'info') {
     const existing = document.querySelector('.auto-save-toast');
     if (existing) existing.remove();
-
     const toast = document.createElement('div');
     toast.className = `auto-save-toast alert alert-${type} alert-dismissible fade show`;
-    toast.innerHTML = `
-        <div class="d-flex align-items-center">
-            <i class="ri-${type === 'success' ? 'checkbox-circle' : (type === 'danger' ? 'error-warning' : 'information')}-fill me-2 fs-5"></i>
-            <span>${escapeHtml(message)}</span>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>`;
+    toast.innerHTML = `<div class="d-flex align-items-center"><i class="ri-${type === 'success' ? 'checkbox-circle' : 'information'}-fill me-2"></i><span>${escapeHtml(message)}</span><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
-}
-
-function closeAllTooltips() {
-    document.querySelectorAll('.grades-tooltip.show').forEach(t => t.classList.remove('show'));
-    activeTooltip = null;
-    document.querySelectorAll('.grades-trigger.active').forEach(t => t.classList.remove('active'));
-}
-
-function showTooltip(tooltipId, studentId, studentName) {
-    const tooltip = document.getElementById(tooltipId);
-    if (!tooltip) return;
-    closeAllTooltips();
-    document.querySelector(`.grades-trigger[data-student-id="${studentId}"]`)?.classList.add('active');
-    document.getElementById(`tooltip-title-${studentId}`).textContent = studentName + "'s Cumulative Grades";
-
-    const grades = window.studentGrades[studentId] || [];
-    const tbody = document.getElementById(`grades-body-${studentId}`);
-    const noGrades = document.getElementById(`no-grades-${studentId}`);
-    tbody.innerHTML = '';
-
-    if (grades.length === 0) {
-        noGrades.classList.remove('d-none');
-    } else {
-        noGrades.classList.add('d-none');
-        grades.forEach(g => {
-            let color = 'secondary';
-            const gradeLetter = g.grade_letter || g.grade.charAt(0);
-
-            if (gradeLetter === 'A') color = 'success';
-            else if (gradeLetter === 'B') color = 'info';
-            else if (gradeLetter === 'C') color = 'secondary';
-            else if (gradeLetter === 'D') color = 'warning';
-            else if (gradeLetter === 'E') color = 'warning';
-            else if (gradeLetter === 'F') color = 'danger';
-
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td><strong>${escapeHtml(g.subject)}</strong></td>
-                <td class="text-center fw-bold ${g.score < 50 ? 'text-danger' : 'text-success'}">${g.score}</td>
-                <td class="text-center">
-                    <span class="badge bg-${color} grade-badge grade-${g.grade.toLowerCase()}">
-                        ${escapeHtml(g.grade)}
-                    </span>
-                </td>`;
-            tbody.appendChild(row);
-        });
-    }
-    tooltip.classList.add('show');
-    activeTooltip = tooltipId;
 }
 
 function escapeHtml(text) {
@@ -728,199 +737,123 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+function closeAllTooltips() {
+    document.querySelectorAll('.grades-tooltip.show').forEach(t => t.classList.remove('show'));
+    activeTooltip = null;
+}
+
+function showTooltip(tooltipId, studentId, studentName) {
+    const tooltip = document.getElementById(tooltipId);
+    if (!tooltip) return;
+    closeAllTooltips();
+    document.getElementById(`tooltip-title-${studentId}`).textContent = `${studentName}'s Performance`;
+
+    const grades = window.studentGradesData[studentId] || [];
+    const tbody = document.getElementById(`grades-body-${studentId}`);
+    tbody.innerHTML = '';
+
+    grades.forEach(g => {
+        let gradeClass = 'grade-f';
+        if (g.grade_letter === 'A') gradeClass = 'grade-a';
+        else if (g.grade_letter === 'B') gradeClass = 'grade-b';
+        else if (g.grade_letter === 'C') gradeClass = 'grade-c';
+        else if (g.grade_letter === 'D') gradeClass = 'grade-d';
+        else if (g.grade_letter === 'E') gradeClass = 'grade-e';
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>${escapeHtml(g.subject)}</strong></td>
+            <td class="text-center">${g.term_score || '-'}</td>
+            <td class="text-center fw-bold ${g.score < 50 ? 'text-danger' : 'text-success'}">${g.score}</td>
+            <td class="text-center"><span class="grade-badge ${gradeClass}">${escapeHtml(g.grade)}</span></td>
+        `;
+        tbody.appendChild(row);
+    });
+
+    tooltip.classList.add('show');
+    activeTooltip = tooltipId;
+}
+
 // Auto-save functionality
 document.querySelectorAll('.auto-save-comment').forEach(select => {
-    select.addEventListener('change', function () {
+    select.addEventListener('change', function() {
         const studentId = this.dataset.studentId;
         const comment = this.value.trim();
         const original = this.dataset.originalValue || '';
-
         if (comment === original) return;
 
-        const originalBorder = this.style.borderColor;
-        const originalBg = this.style.backgroundColor;
-
-        this.style.borderColor = '#ffc107';
-        this.style.backgroundColor = '#fff3cd';
         this.disabled = true;
-
-        const option = this.selectedOptions[0];
-        const originalText = option ? option.textContent : '';
-        if (option) {
-            option.textContent = 'Saving...';
-            option.disabled = true;
-        }
-
         const formData = new FormData();
-        formData.append('_token', document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}');
+        formData.append('_token', '{{ csrf_token() }}');
         formData.append(`teacher_comments[${studentId}]`, comment);
 
         fetch('{{ route("myprincipalscomment.updateComments", [$schoolclassid, $sessionid, $termid]) }}', {
             method: 'POST',
             body: formData,
-            headers: {
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(async response => {
-            if (!response.ok) {
-                let errorMsg = `HTTP ${response.status}: ${response.statusText}`;
-                try {
-                    const errorData = await response.json();
-                    errorMsg = errorData.message || errorMsg;
-                } catch (e) {}
-                throw new Error(errorMsg);
-            }
-            return response.json();
-        })
+        .then(res => res.json())
         .then(data => {
             if (data.success) {
                 this.dataset.originalValue = comment;
-                this.style.borderColor = '#28a745';
-                this.style.backgroundColor = '#d1e7dd';
-                showToast(data.message || 'Comment saved successfully!', 'success');
-
-                const savedCommentDiv = this.closest('td')?.querySelector('.saved-comment-preview');
-                if (savedCommentDiv && comment) {
-                    savedCommentDiv.innerHTML = `<small class="text-secondary">${escapeHtml(comment).replace(/\n/g, '<br>')}</small>`;
-                }
-
-                setTimeout(() => {
-                    this.style.borderColor = originalBorder;
-                    this.style.backgroundColor = originalBg;
-                    this.disabled = false;
-                }, 2000);
-            } else {
-                throw new Error(data.message || 'Server returned error');
-            }
+                showToast('Comment saved!', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else throw new Error(data.message);
         })
-        .catch(error => {
-            console.error('Auto-save error:', error);
-            this.value = original;
-            this.style.borderColor = '#dc3545';
-            this.style.backgroundColor = '#f8d7da';
-            showToast('Error saving comment: ' + error.message, 'danger');
-
-            setTimeout(() => {
-                this.style.borderColor = originalBorder;
-                this.style.backgroundColor = originalBg;
-                this.disabled = false;
-            }, 3000);
-        })
-        .finally(() => {
-            if (option) {
-                option.textContent = originalText;
-                option.disabled = false;
-            }
-        });
+        .catch(error => showToast('Error: ' + error.message, 'danger'))
+        .finally(() => this.disabled = false);
     });
 });
 
-// Form submission handler
+// Form submission
 document.getElementById('commentsForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
-
-    const submitBtn = document.getElementById('saveAllBtn');
-    const savingIndicator = document.getElementById('savingIndicator');
+    const submitBtn = document.querySelector('.btn-save-all');
     const originalText = submitBtn.innerHTML;
-
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="ri-loader-4-line spin-icon me-1"></i> Saving...';
-    savingIndicator.style.display = 'inline-block';
-
-    const formData = new FormData(this);
 
     fetch(this.action, {
         method: 'POST',
-        body: formData,
-        headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-        }
+        body: new FormData(this),
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
     })
-    .then(async response => {
-        if (!response.ok) {
-            let errorMsg = `HTTP ${response.status}`;
-            try {
-                const errorData = await response.json();
-                errorMsg = errorData.message || errorMsg;
-            } catch (e) {}
-            throw new Error(errorMsg);
-        }
-        return response.json();
-    })
+    .then(res => res.json())
     .then(data => {
         if (data.success) {
             showToast(data.message, 'success');
-            document.querySelectorAll('.auto-save-comment').forEach(select => {
-                select.dataset.originalValue = select.value;
-            });
-            document.querySelectorAll('.saved-comment-preview').forEach(preview => {
-                const select = preview.closest('td')?.querySelector('.auto-save-comment');
-                if (select && select.value) {
-                    preview.innerHTML = `<small class="text-secondary">${escapeHtml(select.value).replace(/\n/g, '<br>')}</small>`;
-                }
-            });
             setTimeout(() => location.reload(), 2000);
-        } else {
-            throw new Error(data.message || 'Save failed');
-        }
+        } else throw new Error(data.message);
     })
-    .catch(error => {
-        console.error('Bulk save error:', error);
-        showToast('Error saving comments: ' + error.message, 'danger');
-    })
+    .catch(error => showToast('Error: ' + error.message, 'danger'))
     .finally(() => {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
-        savingIndicator.style.display = 'none';
     });
 });
 
 // Tooltip handlers
-if (window.innerWidth > 991) {
+if (window.innerWidth > 1199) {
     document.querySelectorAll('.grades-trigger').forEach(trigger => {
-        let hoverTimeout;
-        trigger.addEventListener('mouseenter', function() {
-            hoverTimeout = setTimeout(() => {
-                showTooltip(`tooltip-${this.dataset.studentId}`, this.dataset.studentId, this.dataset.studentName);
-            }, 300);
-        });
-        trigger.addEventListener('mouseleave', () => clearTimeout(hoverTimeout));
         trigger.addEventListener('click', function(e) {
             e.preventDefault();
-            e.stopPropagation();
             const tid = `tooltip-${this.dataset.studentId}`;
-            activeTooltip === tid ? closeAllTooltips() : showTooltip(tid, this.dataset.studentId, this.dataset.studentName);
+            showTooltip(tid, this.dataset.studentId, this.dataset.studentName);
         });
     });
-
     document.querySelectorAll('.tooltip-close').forEach(btn => btn.addEventListener('click', closeAllTooltips));
-    document.addEventListener('keydown', e => e.key === 'Escape' && closeAllTooltips());
     document.addEventListener('click', e => {
         if (activeTooltip && !document.getElementById(activeTooltip)?.contains(e.target)) {
-            const trigger = document.querySelector(`.grades-trigger[data-student-id="${activeTooltip.replace('tooltip-', '')}"]`);
-            if (!trigger || !trigger.contains(e.target)) closeAllTooltips();
+            closeAllTooltips();
         }
     });
 }
 
 // Search functionality
 document.getElementById('searchInput')?.addEventListener('input', function() {
-    const term = this.value.toLowerCase().trim();
-    document.querySelectorAll('.desktop-table tbody tr').forEach(el => {
+    const term = this.value.toLowerCase();
+    document.querySelectorAll('.desktop-table tbody tr, .mobile-cards .student-card').forEach(el => {
         el.style.display = term === '' || el.textContent.toLowerCase().includes(term) ? '' : 'none';
-    });
-    document.querySelectorAll('.mobile-cards .student-card').forEach(el => {
-        el.style.display = term === '' || el.textContent.toLowerCase().includes(term) ? '' : 'none';
-    });
-});
-
-// Initialize original values on load
-document.addEventListener('DOMContentLoaded', () => {
-    document.querySelectorAll('.auto-save-comment').forEach(s => {
-        s.dataset.originalValue = s.value;
     });
 });
 </script>
