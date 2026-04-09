@@ -302,6 +302,16 @@
         text-align: center;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
+
+    /* Auto-save indicator */
+    .auto-saving {
+        background-color: #fff3cd !important;
+        border-color: #ffc107 !important;
+    }
+    .auto-saved {
+        background-color: #d1e7dd !important;
+        border-color: #28a745 !important;
+    }
 </style>
 
 <div class="main-content class-broadsheet">
@@ -646,7 +656,7 @@
                                                                                 </tr>
                                                                             </thead>
                                                                             <tbody id="grades-body-{{ $student->id }}"></tbody>
-                                                                         </table>
+                                                                        </table>
                                                                     </div>
                                                                 </div>
                                                             </td>
@@ -775,12 +785,13 @@
                                         @endforeach
                                     </div>
 
+                                    <!-- SAVE ALL BUTTON -->
                                     <div class="row mt-4">
                                         <div class="col-12 text-end">
                                             <button type="submit" class="btn btn-primary btn-save-all" id="saveAllBtn">
                                                 <i class="ri-save-line me-1"></i> Save All Comments
                                             </button>
-                                            <span class="saving-indicator ms-2 text-muted" id="savingIndicator">
+                                            <span class="saving-indicator ms-2 text-muted" id="savingIndicator" style="display: none;">
                                                 <i class="ri-loader-4-line spin-icon me-1"></i> Saving...
                                             </span>
                                         </div>
@@ -810,7 +821,7 @@ function showToast(message, type = 'info') {
     if (existing) existing.remove();
 
     const toast = document.createElement('div');
-    toast.className = `auto-save-toast alert alert-${type} alert-dismissible fade show`;
+    toast.className = ⁠ auto-save-toast alert alert-${type} alert-dismissible fade show ⁠;
     toast.innerHTML = `
         <div class="d-flex align-items-center">
             <i class="ri-${type === 'success' ? 'checkbox-circle' : 'information'}-fill me-2 fs-5"></i>
@@ -837,10 +848,10 @@ function showTooltip(tooltipId, studentId, studentName) {
     if (!tooltip) return;
     closeAllTooltips();
 
-    document.getElementById(`tooltip-title-${studentId}`).textContent = `${studentName}'s Performance`;
+    document.getElementById(⁠ tooltip-title-${studentId} ⁠).textContent = ⁠ ${studentName}'s Performance ⁠;
 
     const grades = window.studentGradesData[studentId] || [];
-    const tbody = document.getElementById(`grades-body-${studentId}`);
+    const tbody = document.getElementById(⁠ grades-body-${studentId} ⁠);
     if (tbody) {
         tbody.innerHTML = '';
 
@@ -871,7 +882,7 @@ function showTooltip(tooltipId, studentId, studentName) {
     activeTooltip = tooltipId;
 }
 
-// Auto-save functionality for comment dropdowns
+// AUTO-SAVE FUNCTIONALITY - Individual comment saves
 document.querySelectorAll('.auto-save-comment').forEach(select => {
     select.addEventListener('change', function() {
         const studentId = this.dataset.studentId;
@@ -886,7 +897,7 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
 
         const formData = new FormData();
         formData.append('_token', '{{ csrf_token() }}');
-        formData.append(`teacher_comments[${studentId}]`, comment);
+        formData.append(⁠ teacher_comments[${studentId}] ⁠, comment);
 
         fetch('{{ route("myprincipalscomment.updateComments", [$schoolclassid, $sessionid, $termid]) }}', {
             method: 'POST',
@@ -919,7 +930,7 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
     });
 });
 
-// Bulk save all comments
+// BULK SAVE ALL COMMENTS - Submit button handler
 document.getElementById('commentsForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -928,18 +939,25 @@ document.getElementById('commentsForm')?.addEventListener('submit', function(e) 
     const originalText = submitBtn.innerHTML;
 
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="ri-loader-4-line spin-icon me-1"></i> Saving All...';
+    submitBtn.innerHTML = '<i class="ri-loader-4-line spin-icon me-1"></i> Saving All Comments...';
     savingIndicator.style.display = 'inline-block';
 
     fetch(this.action, {
         method: 'POST',
         body: new FormData(this),
-        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
     })
     .then(res => res.json())
     .then(data => {
         if (data.success) {
-            showToast(data.message, 'success');
+            showToast(data.message || 'All comments saved successfully!', 'success');
+            // Update original values for all selects
+            document.querySelectorAll('.auto-save-comment').forEach(select => {
+                select.dataset.originalValue = select.value;
+            });
             setTimeout(() => location.reload(), 2000);
         } else {
             throw new Error(data.message || 'Save failed');
@@ -947,7 +965,7 @@ document.getElementById('commentsForm')?.addEventListener('submit', function(e) 
     })
     .catch(error => {
         console.error('Bulk save error:', error);
-        showToast('Error: ' + error.message, 'danger');
+        showToast('Error saving comments: ' + error.message, 'danger');
     })
     .finally(() => {
         submitBtn.disabled = false;
@@ -962,7 +980,7 @@ if (window.innerWidth > 1199) {
         trigger.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            const tid = `tooltip-${this.dataset.studentId}`;
+            const tid = ⁠ tooltip-${this.dataset.studentId} ⁠;
             if (activeTooltip === tid) {
                 closeAllTooltips();
             } else {
@@ -977,7 +995,7 @@ if (window.innerWidth > 1199) {
 
     document.addEventListener('click', function(e) {
         if (activeTooltip && !document.getElementById(activeTooltip)?.contains(e.target)) {
-            const trigger = document.querySelector(`.grades-trigger[data-student-id="${activeTooltip.replace('tooltip-', '')}"]`);
+            const trigger = document.querySelector(⁠ .grades-trigger[data-student-id="${activeTooltip.replace('tooltip-', '')}"] ⁠);
             if (!trigger || !trigger.contains(e.target)) {
                 closeAllTooltips();
             }
