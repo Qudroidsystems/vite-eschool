@@ -50,7 +50,7 @@ class MyPrincipalsCommentController extends Controller
             ->with(compact('assignments', 'pagetitle', 'currentSession', 'currentTerm'));
     }
 
- public function classBroadsheet($schoolclassid, $sessionid, $termid)
+public function classBroadsheet($schoolclassid, $sessionid, $termid)
 {
     $isAssigned = Principalscomment::where('staffId', Auth::id())
         ->where('schoolclassid', $schoolclassid)
@@ -109,6 +109,9 @@ class MyPrincipalsCommentController extends Controller
             'subject.subject as subject_name',
             'broadsheets.cum as total',  // Cumulative score (averaged across terms)
         ]);
+
+    // Rename cumulativeScores to scores for blade compatibility
+    $scores = $cumulativeScores;
 
     $profiles = Studentpersonalityprofile::where('schoolclassid', $schoolclassid)
         ->where('termid', $termid)
@@ -441,8 +444,8 @@ class MyPrincipalsCommentController extends Controller
         ->with(compact(
             'students',
             'subjects',
-            'termScores',      // Term scores for display
-            'scores',          // Cumulative scores (renamed from $cumulativeScores for blade compatibility)
+            'termScores',
+            'scores',  // This is now defined as $cumulativeScores renamed
             'profiles',
             'schoolclass',
             'schoolterm',
