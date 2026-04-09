@@ -50,7 +50,7 @@
     .intelligent-comment-preview {
         font-size: 0.9rem;
         line-height: 1.4;
-        white-space: pre-line;
+        white-space: pre-wrap;
         background-color: white;
         border: 1px solid #dee2e6;
         border-radius: 6px;
@@ -74,7 +74,7 @@
         padding: 10px;
         font-size: 0.875rem;
         line-height: 1.5;
-        white-space: pre-line;
+        white-space: pre-wrap;
         max-height: 120px;
         overflow-y: auto;
     }
@@ -176,6 +176,14 @@
     .comment-label-mobile { font-weight: 600; margin-bottom: 8px; font-size: 0.95rem; color: #495057; display: flex; align-items: center; gap: 8px; }
     .btn-save-all { padding: 10px 24px; font-weight: 600; }
     .saving-indicator { display: none; }
+    .comment-option-text {
+        white-space: normal;
+        line-height: 1.4;
+    }
+    select option {
+        white-space: normal;
+        padding: 8px;
+    }
 
     @media (min-width: 992px) {
         .desktop-table { display: block !important; }
@@ -273,7 +281,7 @@
                                                         <th>Student</th>
                                                         <th>Gender</th>
                                                         @foreach ($subjects as $subject)<th>{{ $subject }}</th>@endforeach
-                                                        <th>Principal's Comment</th>
+                                                        <th style="min-width: 300px;">Principal's Comment</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -282,6 +290,8 @@
                                                             $picture = $student->picture ? basename($student->picture) : 'unnamed.jpg';
                                                             $imagePath = asset('storage/student_avatars/' . $picture);
                                                             $currentComment = $profiles[$student->id] ?? '';
+                                                            // Strip any HTML tags from stored comment for display in dropdown
+                                                            $currentCommentPlain = strip_tags($currentComment);
                                                             $intelligentComment = $intelligentComments[$student->id] ?? '';
                                                             $hasWeakAdvice = !empty($studentGradeAnalysis[$student->id]['weak_subjects'] ?? []);
                                                             $analytics = $studentAnalytics[$student->id] ?? [];
@@ -313,7 +323,7 @@
                                                                         @if($hasWeakAdvice)<span class="badge bg-warning intelligent-comment-badge">Includes improvement advice</span>@endif
                                                                     </small>
                                                                     <div class="intelligent-comment-preview">
-                                                                        <div class="intelligent-comment-text">{{ nl2br(e($intelligentComment)) }}</div>
+                                                                        <div class="intelligent-comment-text">{!! nl2br(e($intelligentComment)) !!}</div>
                                                                     </div>
                                                                 </div>
                                                                 @endif
@@ -322,7 +332,7 @@
                                                                 <div class="mb-3">
                                                                     <small class="text-success d-block mb-1"><i class="ri-chat-check-line"></i> Previously saved comment</small>
                                                                     <div class="saved-comment-preview">
-                                                                        <small class="text-secondary">{{ nl2br(e($currentComment)) }}</small>
+                                                                        <small class="text-secondary">{!! nl2br(e($currentCommentPlain)) !!}</small>
                                                                     </div>
                                                                 </div>
                                                                 @endif
@@ -330,20 +340,29 @@
                                                                 <select class="form-select teacher-comment-dropdown auto-save-comment"
                                                                         name="teacher_comments[{{ $student->id }}]"
                                                                         data-student-id="{{ $student->id }}"
-                                                                        data-original-value="{{ $currentComment }}">
+                                                                        data-original-value="{{ $currentCommentPlain }}"
+                                                                        style="min-width: 250px;">
                                                                     <option value="">-- Select Comment --</option>
 
                                                                     @foreach ($standardPersonalizedComments[$student->id] ?? [] as $comment)
-                                                                        <option value="{{ $comment }}" {{ $currentComment == $comment ? 'selected' : '' }}>
-                                                                            {{ Str::limit($comment, 80, '...') }}
-                                                                            @if(str_contains($comment, 'should work harder'))
+                                                                        @php
+                                                                            $commentPlain = strip_tags($comment);
+                                                                            $isSelected = ($currentCommentPlain == $commentPlain);
+                                                                        @endphp
+                                                                        <option value="{{ $commentPlain }}" {{ $isSelected ? 'selected' : '' }}>
+                                                                            {{ Str::limit($commentPlain, 100, '...') }}
+                                                                            @if(str_contains($commentPlain, 'should work harder'))
                                                                                 <span class="badge bg-warning ms-2">+ Advice</span>
                                                                             @endif
                                                                         </option>
                                                                     @endforeach
 
-                                                                    @if(isset($intelligentComments[$student->id]) && !in_array($intelligentComments[$student->id], $standardPersonalizedComments[$student->id] ?? []))
-                                                                        <option value="{{ $intelligentComments[$student->id] }}" class="intelligent-option" {{ $currentComment == $intelligentComments[$student->id] ? 'selected' : '' }}>
+                                                                    @if(isset($intelligentComments[$student->id]) && !in_array(strip_tags($intelligentComments[$student->id]), array_map('strip_tags', $standardPersonalizedComments[$student->id] ?? [])))
+                                                                        @php
+                                                                            $intelligentPlain = strip_tags($intelligentComments[$student->id]);
+                                                                            $isSelected = ($currentCommentPlain == $intelligentPlain);
+                                                                        @endphp
+                                                                        <option value="{{ $intelligentPlain }}" class="intelligent-option" {{ $isSelected ? 'selected' : '' }}>
                                                                             💡 Use Grade Summary Comment
                                                                             @if($hasWeakAdvice)<span class="badge bg-warning ms-2">Improvement advice</span>@endif
                                                                         </option>
@@ -407,8 +426,9 @@
                                                                         <div class="text-center py-4 text-muted d-none" id="no-grades-{{ $student->id }}">No grades available</div>
                                                                     </div>
                                                                 </div>
-                                                            </td>
-                                                        </tr>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
                                                     @endforeach
                                                 </tbody>
                                             </table>
@@ -422,6 +442,7 @@
                                                 $picture = $student->picture ? basename($student->picture) : 'unnamed.jpg';
                                                 $imagePath = asset('storage/student_avatars/' . $picture);
                                                 $currentComment = $profiles[$student->id] ?? '';
+                                                $currentCommentPlain = strip_tags($currentComment);
                                                 $intelligentComment = $intelligentComments[$student->id] ?? '';
                                                 $hasWeakAdvice = !empty($studentGradeAnalysis[$student->id]['weak_subjects'] ?? []);
                                                 $analytics = $studentAnalytics[$student->id] ?? [];
@@ -518,7 +539,7 @@
                                                     <div class="intelligent-comment-section mb-3">
                                                         <div class="comment-label-mobile"><i class="ri-lightbulb-line"></i> Grade Summary Comment</div>
                                                         <div class="intelligent-comment-preview">
-                                                            <div class="intelligent-comment-text">{{ nl2br(e($intelligentComment)) }}</div>
+                                                            <div class="intelligent-comment-text">{!! nl2br(e($intelligentComment)) !!}</div>
                                                             @if($hasWeakAdvice)<small class="text-muted d-block mt-2"><i class="ri-alert-line"></i> Includes improvement advice</small>@endif
                                                         </div>
                                                     </div>
@@ -528,7 +549,7 @@
                                                     <div class="mb-3">
                                                         <div class="comment-label-mobile"><i class="ri-chat-check-line text-success"></i> Previously Saved Comment</div>
                                                         <div class="saved-comment-preview">
-                                                            <small class="text-secondary">{{ nl2br(e($currentComment)) }}</small>
+                                                            <small class="text-secondary">{!! nl2br(e($currentCommentPlain)) !!}</small>
                                                         </div>
                                                     </div>
                                                     @endif
@@ -538,20 +559,28 @@
                                                         <select class="form-select teacher-comment-dropdown auto-save-comment"
                                                                 name="teacher_comments[{{ $student->id }}]"
                                                                 data-student-id="{{ $student->id }}"
-                                                                data-original-value="{{ $currentComment }}">
+                                                                data-original-value="{{ $currentCommentPlain }}">
                                                             <option value="">-- Select Comment --</option>
 
                                                             @foreach ($standardPersonalizedComments[$student->id] ?? [] as $comment)
-                                                                <option value="{{ $comment }}" {{ $currentComment == $comment ? 'selected' : '' }}>
-                                                                    {{ Str::limit($comment, 80, '...') }}
-                                                                    @if(str_contains($comment, 'should work harder'))
+                                                                @php
+                                                                    $commentPlain = strip_tags($comment);
+                                                                    $isSelected = ($currentCommentPlain == $commentPlain);
+                                                                @endphp
+                                                                <option value="{{ $commentPlain }}" {{ $isSelected ? 'selected' : '' }}>
+                                                                    {{ Str::limit($commentPlain, 100, '...') }}
+                                                                    @if(str_contains($commentPlain, 'should work harder'))
                                                                         <span class="badge bg-warning ms-2">+ Advice</span>
                                                                     @endif
                                                                 </option>
                                                             @endforeach
 
-                                                            @if(isset($intelligentComments[$student->id]) && !in_array($intelligentComments[$student->id], $standardPersonalizedComments[$student->id] ?? []))
-                                                                <option value="{{ $intelligentComments[$student->id] }}" class="intelligent-option" {{ $currentComment == $intelligentComments[$student->id] ? 'selected' : '' }}>
+                                                            @if(isset($intelligentComments[$student->id]) && !in_array(strip_tags($intelligentComments[$student->id]), array_map('strip_tags', $standardPersonalizedComments[$student->id] ?? [])))
+                                                                @php
+                                                                    $intelligentPlain = strip_tags($intelligentComments[$student->id]);
+                                                                    $isSelected = ($currentCommentPlain == $intelligentPlain);
+                                                                @endphp
+                                                                <option value="{{ $intelligentPlain }}" class="intelligent-option" {{ $isSelected ? 'selected' : '' }}>
                                                                     💡 Use Grade Summary Comment
                                                                     @if($hasWeakAdvice)<span class="badge bg-warning ms-2">Improvement advice</span>@endif
                                                                 </option>
@@ -609,7 +638,7 @@ function showToast(message, type = 'info') {
     toast.innerHTML = `
         <div class="d-flex align-items-center">
             <i class="ri-${type === 'success' ? 'checkbox-circle' : (type === 'danger' ? 'error-warning' : 'information')}-fill me-2 fs-5"></i>
-            <span>${message}</span>
+            <span>${escapeHtml(message)}</span>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>`;
     document.body.appendChild(toast);
@@ -724,6 +753,12 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
                 this.style.backgroundColor = '#d1e7dd';
                 showToast(data.message || 'Comment saved successfully!', 'success');
 
+                // Update the previously saved comment preview if it exists
+                const savedCommentDiv = this.closest('td')?.querySelector('.saved-comment-preview');
+                if (savedCommentDiv && comment) {
+                    savedCommentDiv.innerHTML = `<small class="text-secondary">${escapeHtml(comment).replace(/\n/g, '<br>')}</small>`;
+                }
+
                 setTimeout(() => {
                     this.style.borderColor = originalBorder;
                     this.style.backgroundColor = originalBg;
@@ -769,12 +804,6 @@ document.getElementById('commentsForm')?.addEventListener('submit', function(e) 
 
     const formData = new FormData(this);
 
-    // Debug: Log what's being submitted
-    console.log('=== Submitting Comments ===');
-    for (let pair of formData.entries()) {
-        console.log(pair[0] + ':', pair[1] ? pair[1].substring(0, 100) : 'empty');
-    }
-
     fetch(this.action, {
         method: 'POST',
         body: formData,
@@ -801,7 +830,13 @@ document.getElementById('commentsForm')?.addEventListener('submit', function(e) 
             document.querySelectorAll('.auto-save-comment').forEach(select => {
                 select.dataset.originalValue = select.value;
             });
-            // Optionally reload after 2 seconds
+            // Update all previews
+            document.querySelectorAll('.saved-comment-preview').forEach(preview => {
+                const select = preview.closest('td')?.querySelector('.auto-save-comment');
+                if (select && select.value) {
+                    preview.innerHTML = `<small class="text-secondary">${escapeHtml(select.value).replace(/\n/g, '<br>')}</small>`;
+                }
+            });
             setTimeout(() => location.reload(), 2000);
         } else {
             throw new Error(data.message || 'Save failed');
@@ -849,11 +884,9 @@ if (window.innerWidth > 991) {
 // Search functionality
 document.getElementById('searchInput')?.addEventListener('input', function() {
     const term = this.value.toLowerCase().trim();
-    // Desktop search
     document.querySelectorAll('.desktop-table tbody tr').forEach(el => {
         el.style.display = term === '' || el.textContent.toLowerCase().includes(term) ? '' : 'none';
     });
-    // Mobile search
     document.querySelectorAll('.mobile-cards .student-card').forEach(el => {
         el.style.display = term === '' || el.textContent.toLowerCase().includes(term) ? '' : 'none';
     });
