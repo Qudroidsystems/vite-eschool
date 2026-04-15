@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Class Results - {{ $metadata['class_name'] }} - {{ $metadata['session'] }} - {{ $metadata['term'] }}</title>
     <style>
+        /* Basic reset and font setup */
         * {
             margin: 0;
             padding: 0;
@@ -43,6 +44,7 @@
                 padding: 0;
                 text-align: center;
             }
+
             .student-section {
                 width: 190mm;
                 max-height: 287mm;
@@ -51,6 +53,7 @@
                 page-break-after: always;
                 text-align: left;
             }
+
             .student-section:last-child {
                 page-break-after: avoid;
             }
@@ -73,6 +76,22 @@
         .fraction .denominator {
             padding-top: 3px;
             display: block;
+        }
+
+        span.text-dot-space2 {
+            border-bottom: 1px dotted #666;
+            display: inline-block;
+            min-height: 14px;
+            font-weight: bold;
+            font-size: 12px;
+            width: 150px;
+        }
+
+        .school-name1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #1e3a8a;
+            text-align: center;
         }
 
         .school-name2 {
@@ -118,6 +137,10 @@
             margin: 8px 0;
         }
 
+        .header {
+            margin-bottom: 6px;
+        }
+
         .header-table {
             width: 100%;
             table-layout: fixed;
@@ -134,22 +157,13 @@
             border-radius: 1px;
         }
 
-        .photo-frame {
-            border: 3px solid #090909;
-            border-radius: 8px;
-            overflow: hidden;
-            background: white;
-            padding: 2px;
-            width: 80px;
-            height: 100px;
-            margin: 0 auto;
-            text-align: center;
-        }
-
-        .photo-frame img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+        .school-motto, .school-address, .school-website, .school-email {
+            font-size: 11px;
+            font-weight: 900;
+            color: #000000;
+            margin: 1px 0;
+            text-align: left;
+            line-height: 1.2;
         }
 
         .student-info-section {
@@ -168,9 +182,32 @@
             color: #000000;
         }
 
-        .info-row {
-            margin-bottom: 2px;
-            line-height: 1.2;
+        .rd1, .rd2, .rd3, .rd4, .rd5, .rd6, .rd7, .rd8, .rd9, .rd10 {
+            border-bottom: 2px dotted #6b7280;
+            margin-left: 6px;
+            min-width: 60px;
+            display: inline-block;
+            font-weight: 800;
+            padding-bottom: 1px;
+            font-size: 9px;
+            color: #000000;
+        }
+
+        .photo-frame {
+            border: 3px solid #090909;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+            padding: 2px;
+            width: 80px;
+            height: 100px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .photo-frame img {
+            width: 100%;
+            height: 100%;
         }
 
         .result-table table {
@@ -188,6 +225,24 @@
             padding: 6px 3px;
             text-align: center;
             font-size: 8px;
+        }
+
+        .result-table thead th:nth-child(3),
+        .result-table thead th:nth-child(4),
+        .result-table thead th:nth-child(5) {
+            width: 30px;
+        }
+
+        .result-table thead th:nth-child(6) {
+            width: 60px;
+        }
+
+        .result-table thead th:nth-child(8) {
+            width: 50px;
+        }
+
+        .result-table tbody tr {
+            font-weight: 800;
         }
 
         .result-table tbody td {
@@ -213,14 +268,53 @@
             font-weight: 900;
         }
 
-        .abs-text {
-            color: #f59e0b !important;
+        .highlight-bold {
+            font-weight: 900 !important;
+        }
+
+        .assessment-table {
+            width: 100%;
+            border: 2px solid #000000;
+            border-collapse: collapse;
+            margin-bottom: 6px;
+        }
+
+        .assessment-table thead th {
+            background: #fbbf24;
+            color: white;
+            font-weight: 600;
+            border: 1px solid #000000;
+            padding: 4px;
+            text-align: center;
+            font-size: 8px;
+        }
+
+        .assessment-table tbody td {
+            border: 1px solid #000000;
+            padding: 3px 4px;
+            background: white;
+            font-size: 7px;
+            color: #000000;
             font-weight: bold;
         }
 
-        .zero-text {
-            color: #dc2626 !important;
-            font-weight: bold;
+        .assessment-table tbody tr:nth-child(even) td {
+            background: #f0fdf4;
+        }
+
+        .grade-display {
+            background: #fbbf24;
+            color: white;
+            border-radius: 10px;
+            padding: 6px;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .grade-display span {
+            font-size: 9px;
+            font-weight: 600;
+            margin: 0 4px;
         }
 
         .remarks-table {
@@ -244,6 +338,7 @@
             font-size: 12px;
         }
 
+        /* Full-width dotted underline for remarks */
         .full-width-dots {
             display: block;
             width: 100%;
@@ -254,6 +349,11 @@
             font-size: 12px;
             line-height: 1.5;
             word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .principal-remark {
+            min-height: 100px;
         }
 
         .promotion-status {
@@ -262,20 +362,25 @@
             font-size: 10px !important;
         }
 
+        /* Promotion status color classes */
         .promotion-status.promotion-promoted {
             color: #1e40af !important;
+            font-weight: 900 !important;
         }
 
         .promotion-status.promotion-repeat {
             color: #dc2626 !important;
+            font-weight: 900 !important;
         }
 
         .promotion-status.promotion-parents {
             color: #dc2626 !important;
+            font-weight: 900 !important;
         }
 
         .promotion-status.promotion-default {
             color: #6b7280 !important;
+            font-weight: 900 !important;
         }
 
         .footer-section {
@@ -287,13 +392,60 @@
             margin-top: 6px;
         }
 
-        .text-dot-space2 {
-            border-bottom: 1px dotted #666;
-            display: inline-block;
-            min-height: 14px;
+        .h5 {
+            font-size: 9px;
             font-weight: bold;
-            font-size: 12px;
-            width: 150px;
+            margin-bottom: 4px;
+            color: #047857;
+        }
+
+        .student-info-table {
+            width: 100%;
+            margin-bottom: 4px;
+            table-layout: fixed;
+        }
+
+        .student-info-table td {
+            padding: 1px;
+            vertical-align: top;
+        }
+
+        .assessment-layout-table {
+            width: 100%;
+            margin-bottom: 8px;
+            table-layout: fixed;
+        }
+
+        .assessment-layout-table td {
+            width: 50%;
+            vertical-align: top;
+            padding: 0 1%;
+        }
+
+        .footer-layout-table {
+            width: 100%;
+        }
+
+        .footer-layout-table td {
+            padding: 3px;
+            text-align: center;
+        }
+
+        .info-row {
+            margin-bottom: 2px;
+            line-height: 1.2;
+        }
+
+        .info-row .result-details {
+            margin-right: 4px;
+        }
+
+        .info-row.students-count {
+            margin-top: 2px;
+        }
+
+        .text-center {
+            text-align: center;
         }
 
         .font-bold {
@@ -304,11 +456,26 @@
             color: #02175e;
         }
 
+        .student-section-inner {
+            width: 100%;
+            height: auto;
+        }
+
         .powered-by {
             font-size: 12px;
             color: #000000;
             font-weight: 700;
             margin-top: 6px;
+        }
+
+        .abs-text {
+            color: #f59e0b !important;
+            font-weight: bold;
+        }
+
+        .zero-text {
+            color: #dc2626 !important;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -316,177 +483,356 @@
     @foreach ($allStudentData as $index => $studentData)
         <div class="student-section">
             <div class="student-section-inner">
-                @php
-                    $schoolInfo = $studentData['schoolInfo'] ?? null;
-                    $student = $studentData['students'] && $studentData['students']->isNotEmpty() ? $studentData['students']->first() : null;
-                    $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
-                @endphp
-
-                <!-- Header -->
-                <table class="header-table">
-                    <tr>
-                        <td width="25%">
-                            <div class="school-logo">
-                                <img class="header-img" src="{{ $studentData['school_logo_path'] ?? public_path('storage/school_logos/default.jpg') }}" alt="School Logo">
-                            </div>
-                        </td>
-                        <td width="50%">
-                            <div class="info-row"><p class="school-name2">{{ $schoolInfo->school_name ?? 'TOPCLASS COLLEGE' }}</p></div>
-                            <div class="info-row"><span class="result-details">Motto:</span> <span class="info-value font-bold">{{ $schoolInfo->school_motto ?? 'Developing the total child' }}</span></div>
-                            <div class="info-row"><span class="result-details">Address:</span> <span class="info-value font-bold">{{ $schoolInfo->school_address ?? '39, Okegbala Street, Ondo.' }}</span></div>
-                            <div class="info-row"><span class="result-details">Phone:</span> <span class="info-value font-bold">{{ $schoolInfo->school_phone ?? '+234806 770 6684' }}</span></div>
-                        </td>
-                        <td width="25%">
-                            <div class="photo-frame">
-                                @if ($student && $student->picture)
-                                    <img src="{{ $studentData['student_image_path'] ?? public_path('storage/student_avatars/unnamed.jpg') }}" alt="Student Photo">
-                                @else
-                                    <img src="{{ public_path('storage/student_avatars/unnamed.jpg') }}" alt="Default Photo">
-                                @endif
-                            </div>
-                        </td>
-                    </tr>
+                <!-- Header Section -->
+                <div class="header">
+                    @php
+                        $schoolInfo = $studentData['schoolInfo'] ?? null;
+                        $student = $studentData['students'] && $studentData['students']->isNotEmpty() ? $studentData['students']->first() : null;
+                    @endphp
+                    <table class="header-table">
+                        <tr>
+                            <td width="25%">
+                                <div class="school-logo">
+                                    <img class="header-img" src="{{ $studentData['school_logo_path'] ?? public_path('storage/school_logos/default.jpg') }}" alt="School Logo">
+                                </div>
+                            </td>
+                            <td width="50%">
+                                <div class="info-row">
+                                     <p class="school-name2">{{ $schoolInfo->school_name ?? 'TOPCLASS COLLEGE' }}</p>
+                                </div>
+                                <div class="info-row">
+                                    <span class="result-details">Motto:</span>
+                                    <span class="info-value font-bold">{{ $schoolInfo->school_motto ?? 'Developing the total child' }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="result-details">Address:</span>
+                                    <span class="info-value font-bold">{{ $schoolInfo->school_address ?? '39, Okegbala Street, Ondo.' }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="result-details">Phone:</span>
+                                    <span class="info-value font-bold">{{ $schoolInfo->school_phone ?? '+234806 770 6684' }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="result-details">Email:</span>
+                                    <span class="info-value font-bold">{{ $schoolInfo->school_email ?? 'info@topclasscollege.ng' }}</span>
+                                </div>
+                                <div class="info-row">
+                                    <span class="result-details">Website:</span>
+                                    <span class="info-value font-bold">{{ $schoolInfo->school_website ?? 'https://topclasscollege.ng' }}</span>
+                                </div>
+                            </td>
+                            <td width="25%">
+                                <div class="photo-frame">
+                                    @if ($studentData['students'] && $studentData['students']->isNotEmpty() && $student->picture)
+                                        <img src="{{ $studentData['student_image_path'] ?? public_path('storage/student_avatars/unnamed.jpg') }}" alt="{{ $student->fname ?? 'Student' }}'s picture">
+                                    @else
+                                        <img src="{{ public_path('storage/student_avatars/unnamed.jpg') }}" alt="Default Photo">
+                                    @endif
+                                </div>
+                            </td>
+                        </tr>
+                    </table>
                     <div class="header-divider"></div>
                     <div class="header-divider2"></div>
                     <div class="report-title">{{ strtoupper($metadata['term']) }} {{ strtoupper($metadata['session']) }} ACADEMIC SESSION TERMINAL PROGRESS REPORT</div>
+                </div>
 
-                <!-- Student Info -->
+                <!-- Student Information Section -->
                 <div class="student-info-section">
-                    <table style="width: 100%;">
+                    <table class="student-info-table">
                         <tr>
-                            <td width="33%">
-                                <div class="info-row"><span class="result-details">Name:</span> <span class="info-value font-bold">{{ strtoupper($student->lastname ?? '') }} {{ $student->fname ?? '' }} {{ $student->othername ?? '' }}</span></div>
-                                <div class="info-row"><span class="result-details">Session:</span> <span class="info-value font-bold">{{ $studentData['schoolsession'] ?? 'N/A' }}</span></div>
-                                <div class="info-row"><span class="result-details">Term:</span> <span class="info-value font-bold">{{ $studentData['schoolterm'] ?? 'N/A' }}</span></div>
-                            </td>
-                            <td width="33%">
-                                <div class="info-row"><span class="result-details">Class:</span> <span class="info-value font-bold">{{ $studentData['schoolclass']->schoolclass ?? 'N/A' }} {{ $studentData['schoolclass']->armRelation->arm ?? '' }}</span></div>
-                                <div class="info-row"><span class="result-details">DOB:</span> <span class="info-value font-bold">{{ $student->dateofbirth ?? 'N/A' }}</span></div>
-                                <div class="info-row"><span class="result-details">Adm No:</span> <span class="info-value font-bold">{{ $student->admissionNo ?? 'N/A' }}</span></div>
-                            </td>
-                            <td width="33%">
-                                <div class="info-row"><span class="result-details">Sex:</span> <span class="info-value font-bold">{{ $student->gender ?? 'N/A' }}</span></div>
-                                <div class="info-row"><span class="result-details">Students in Class:</span> <span class="info-value font-bold">{{ $studentData['numberOfStudents'] ?? 'N/A' }}</span></div>
+                            <td width="100%">
+                                @if ($studentData['students'] && $studentData['students']->isNotEmpty())
+                                    @php
+                                        $student = $studentData['students']->first();
+                                        $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
+                                    @endphp
+                                    <table style="width: 100%; table-layout: fixed;">
+                                        <tr>
+                                            <td width="41%">
+                                                <div class="info-row">
+                                                    <span class="result-details">Name:</span>
+                                                    <span class="info-value font-bold">{{ strtoupper($student->lastname ?? 'NO INFO') }} {{ $student->fname ?? '' }} {{ $student->othername ?? '' }}</span>
+                                                </div>
+                                                <div class="info-row">
+                                                    <span class="result-details">Session:</span>
+                                                    <span class="info-value font-bold">{{ $studentData['schoolsession'] ?? 'NO INFO' }}</span>
+                                                </div>
+                                                <div class="info-row">
+                                                    <span class="result-details">Term:</span>
+                                                    <span class="info-value font-bold">{{ $studentData['schoolterm'] ?? 'NO INFO' }}</span>
+                                                </div>
+                                            </td>
+                                            <td width="29%">
+                                                <div class="info-row">
+                                                    <span class="result-details">Class:</span>
+                                                    <span class="info-value font-bold">{{ $studentData['schoolclass']->schoolclass ?? 'NO INFO' }} {{ $studentData['schoolclass']->armRelation->arm ?? 'NO INFO' }}</span>
+                                                </div>
+                                                <div class="info-row">
+                                                    <span class="result-details">DOB:</span>
+                                                    <span class="info-value font-bold">
+                                                        @php
+                                                            $dob = $student->dateofbirth ?? null;
+                                                            $formattedDob = 'NO INFO';
+                                                            if ($dob) {
+                                                                try {
+                                                                    if (is_numeric($dob)) {
+                                                                        $unixTimestamp = ($dob - 25569) * 86400;
+                                                                        $formattedDob = date('jS F, Y', $unixTimestamp);
+                                                                    } else {
+                                                                        $formattedDob = \Carbon\Carbon::parse($dob)->format('jS F, Y');
+                                                                    }
+                                                                } catch (\Exception $e) {
+                                                                    $formattedDob = $dob;
+                                                                }
+                                                            }
+                                                        @endphp
+                                                        {{ $formattedDob }}
+                                                    </span>
+                                                </div>
+                                                <div class="info-row">
+                                                    <span class="result-details">Adm No:</span>
+                                                    <span class="info-value font-bold">{{ $student->admissionNo ?? 'NO INFO' }}</span>
+                                                </div>
+                                            </td>
+                                            <td width="30%">
+                                                <div class="info-row">
+                                                    <span class="result-details">Sex:</span>
+                                                    <span class="info-value font-bold">{{ $student->gender ?? 'NO INFO' }}</span>
+                                                </div>
+                                                <div class="info-row">
+                                                    <span class="result-details">Date School Opened:</span>
+                                                    <span class="info-value font-bold">
+                                                        @php
+                                                            $dateSchoolOpened = $schoolInfo->date_school_opened ?? null;
+                                                            $formattedDateSchoolOpened = 'NO INFO';
+                                                            if ($dateSchoolOpened) {
+                                                                try {
+                                                                    $formattedDateSchoolOpened = \Carbon\Carbon::parse($dateSchoolOpened)->format('jS F, Y');
+                                                                } catch (\Exception $e) {
+                                                                    $formattedDateSchoolOpened = $dateSchoolOpened;
+                                                                }
+                                                            }
+                                                        @endphp
+                                                        {{ $formattedDateSchoolOpened }}
+                                                    </span>
+                                                </div>
+                                                <div class="info-row">
+                                                    <span class="result-details">Times School Opened:</span>
+                                                    <span class="info-value font-bold">{{ $schoolInfo->no_of_times_school_opened ?? 'NO INFO' }}</span>
+                                                </div>
+                                                <div class="info-row students-count">
+                                                    <span class="result-details">Students in Class:</span>
+                                                    <span class="info-value font-bold">{{ $studentData['numberOfStudents'] ?? 'NO INFO' }}</span>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </table>
+                                @else
+                                    <div class="info-row">
+                                        <span class="result-details">No student data available.</span>
+                                    </div>
+                                @endif
                             </td>
                         </tr>
                     </table>
                 </div>
 
-                <!-- Results Table -->
+                <!-- Results Table - USING CALCULATED PROPERTIES -->
                 <div class="result-table">
                     <table>
                         <thead>
+                            <tr>
+                                <th></th>
+                                <th>Subjects</th>
+                                <th>a</th>
+                                <th>b</th>
+                                <th>c</th>
+                                <th>d</th>
+                                <th>e</th>
+                                <th>f</th>
+                                @if($metadata['term'] != 'First Term')
+                                <th>g</th>
+                                @endif
+                                <th>{{ $metadata['term'] == 'First Term' ? 'g' : 'h' }}</th>
+                                <th>{{ $metadata['term'] == 'First Term' ? 'h' : 'i' }}</th>
+                                <th>{{ $metadata['term'] == 'First Term' ? 'i' : 'j' }}</th>
+                                <th>{{ $metadata['term'] == 'First Term' ? 'j' : 'k' }}</th>
+                            </tr>
                             <tr>
                                 <th>S/N</th>
                                 <th>Subjects</th>
                                 <th>T1</th>
                                 <th>T2</th>
                                 <th>T3</th>
-                                <th>d<br><small>(a+b+c)/3</small></th>
-                                <th>e<br><small>Exam</small></th>
-                                <th>f<br><small>(d+e)/2</small></th>
-                                <th>g<br><small>B/F</small></th>
-                                <th>h<br><small>Cum<br>(f+g)/2</small></th>
+                                <th>
+                                    <div class="fraction">
+                                        <div class="numerator">a + b + c</div>
+                                        <div class="denominator">3</div>
+                                    </div>
+                                </th>
+                                <th>Term Exams</th>
+                                <th>
+                                    <div class="fraction">
+                                        <div class="numerator">d + e</div>
+                                        <div class="denominator">2</div>
+                                    </div>
+                                </th>
+                                @if($metadata['term'] != 'First Term')
+                                <th>B/F</th>
+                                @endif
+                                <th>{{ $metadata['term'] == 'First Term' ? 'Term Total (f)' : 'Cum (f/g)/2' }}</th>
                                 <th>Grade</th>
                                 <th>PSN</th>
                                 <th>Class Avg</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($studentData['scores'] as $idx => $score)
-                                @php
-                                    // Get numeric values for calculations
-                                    $numCa1 = $score->ca1_numeric ?? null;
-                                    $numCa2 = $score->ca2_numeric ?? null;
-                                    $numCa3 = $score->ca3_numeric ?? null;
-                                    $numExam = $score->exam_numeric ?? null;
-                                    $numBf = $score->bf_numeric ?? null;
-
-                                    // Calculate column d (average of available CAs)
-                                    $caValues = [];
-                                    if ($numCa1 !== null) $caValues[] = $numCa1;
-                                    if ($numCa2 !== null) $caValues[] = $numCa2;
-                                    if ($numCa3 !== null) $caValues[] = $numCa3;
-                                    $colD = count($caValues) > 0 ? round(array_sum($caValues) / count($caValues), 1) : null;
-
-                                    // Calculate column f (average of d and exam)
-                                    $fComponents = [];
-                                    if ($colD !== null) $fComponents[] = $colD;
-                                    if ($numExam !== null) $fComponents[] = $numExam;
-                                    $colF = count($fComponents) > 0 ? round(array_sum($fComponents) / count($fComponents), 1) : null;
-
-                                    // Calculate column h (average of f and bf)
-                                    $hComponents = [];
-                                    if ($colF !== null) $hComponents[] = $colF;
-                                    if ($numBf !== null) $hComponents[] = $numBf;
-                                    $colH = count($hComponents) > 0 ? round(array_sum($hComponents) / count($hComponents), 1) : null;
-
-                                    // Determine grade
-                                    $grade = '-';
-                                    if ($colH !== null) {
-                                        if ($colH >= 70) $grade = 'A';
-                                        elseif ($colH >= 60) $grade = 'B';
-                                        elseif ($colH >= 50) $grade = 'C';
-                                        elseif ($colH >= 40) $grade = 'D';
-                                        else $grade = 'F';
-                                    }
-                                @endphp
+                            @forelse ($studentData['scores'] as $index => $score)
                                 <tr>
-                                    <td>{{ $idx + 1 }}</td>
-                                    <td class="subject-name">{{ $score->subject_name ?? 'N/A' }}</td>
-                                    <td class="@if($score->ca1_display == '0') zero-text @elseif($score->ca1_display == 'ABS') abs-text @elseif(is_numeric($score->ca1_display) && $score->ca1_display < 50) highlight-red @endif">{{ $score->ca1_display ?? '-' }}</td>
-                                    <td class="@if($score->ca2_display == '0') zero-text @elseif($score->ca2_display == 'ABS') abs-text @elseif(is_numeric($score->ca2_display) && $score->ca2_display < 50) highlight-red @endif">{{ $score->ca2_display ?? '-' }}</td>
-                                    <td class="@if($score->ca3_display == '0') zero-text @elseif($score->ca3_display == 'ABS') abs-text @elseif(is_numeric($score->ca3_display) && $score->ca3_display < 50) highlight-red @endif">{{ $score->ca3_display ?? '-' }}</td>
-                                    <td class="@if($colD !== null && $colD < 50) highlight-red @endif">{{ $colD !== null ? $colD : '-' }}</td>
-                                    <td class="@if($score->exam_display == '0') zero-text @elseif($score->exam_display == 'ABS') abs-text @elseif(is_numeric($score->exam_display) && $score->exam_display < 50) highlight-red @endif">{{ $score->exam_display ?? '-' }}</td>
-                                    <td class="@if($colF !== null && $colF < 50) highlight-red @endif">{{ $colF !== null ? $colF : '-' }}</td>
-                                    <td class="@if($score->bf_display == '0') zero-text @elseif($score->bf_display == 'ABS') abs-text @elseif(is_numeric($score->bf_display) && $score->bf_display < 50) highlight-red @endif">{{ $score->bf_display ?? '-' }}</td>
-                                    <td class="@if($colH !== null && $colH < 50) highlight-red @endif">{{ $colH !== null ? $colH : '-' }}</td>
-                                    <td class="@if(in_array($grade, ['F', 'F9'])) highlight-red @endif">{{ $grade }}</td>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td>
+
+                                    <!-- T1 - ca1_display (handles ABS vs 0) -->
+                                    <td class="@if($score->ca1_display == '0') zero-text @elseif($score->ca1_display == 'ABS') abs-text @elseif(is_numeric($score->ca1_display) && $score->ca1_display < 50) highlight-red @endif">
+                                        {{ $score->ca1_display ?? '-' }}
+                                    </td>
+
+                                    <!-- T2 - ca2_display -->
+                                    <td class="@if($score->ca2_display == '0') zero-text @elseif($score->ca2_display == 'ABS') abs-text @elseif(is_numeric($score->ca2_display) && $score->ca2_display < 50) highlight-red @endif">
+                                        {{ $score->ca2_display ?? '-' }}
+                                    </td>
+
+                                    <!-- T3 - ca3_display -->
+                                    <td class="@if($score->ca3_display == '0') zero-text @elseif($score->ca3_display == 'ABS') abs-text @elseif(is_numeric($score->ca3_display) && $score->ca3_display < 50) highlight-red @endif">
+                                        {{ $score->ca3_display ?? '-' }}
+                                    </td>
+
+                                    <!-- Column d - ca_average (calculated from available CAs) -->
+                                    <td class="@if(is_numeric($score->ca_average) && $score->ca_average < 50) highlight-red @endif">
+                                        {{ $score->ca_average ?? '-' }}
+                                    </td>
+
+                                    <!-- Column e - exam_display -->
+                                    <td class="@if($score->exam_display == '0') zero-text @elseif($score->exam_display == 'ABS') abs-text @elseif(is_numeric($score->exam_display) && $score->exam_display < 50) highlight-red @endif">
+                                        {{ $score->exam_display ?? '-' }}
+                                    </td>
+
+                                    <!-- Column f - f_score (average of d and e) -->
+                                    <td class="@if(is_numeric($score->f_score) && $score->f_score < 50) highlight-red @endif">
+                                        {{ $score->f_score ?? '-' }}
+                                    </td>
+
+                                    @if($metadata['term'] != 'First Term')
+                                    <!-- Column g - bf_display -->
+                                    <td class="@if($score->bf_display == '0') zero-text @elseif($score->bf_display == 'ABS') abs-text @elseif(is_numeric($score->bf_display) && $score->bf_display < 50) highlight-red @endif">
+                                        {{ $score->bf_display ?? '-' }}
+                                    </td>
+                                    @endif
+
+                                    <!-- Column h/Cum - cum_score (average of f and g) -->
+                                    <td class="@if(is_numeric($score->cum_score) && $score->cum_score < 50) highlight-red @endif">
+                                        {{ $score->cum_score ?? '-' }}
+                                    </td>
+
+                                    <!-- Grade -->
+                                    <td class="@if(in_array($score->grade ?? '', ['F', 'F9', 'E', 'E8'])) highlight-red @endif">
+                                        {{ $score->grade ?? '-' }}
+                                    </td>
+
+                                    <!-- Position -->
                                     <td>{{ $score->position ?? '-' }}</td>
+
+                                    <!-- Class Average -->
                                     <td>{{ $score->class_average ?? '-' }}</td>
+
                                 </tr>
                             @empty
-                                <tr><td colspan="13" class="text-center">No scores available.</td></tr>
+                                <tr>
+                                    <td colspan="{{ $metadata['term'] == 'First Term' ? 12 : 13 }}" class="text-center">No scores available.</td>
+                                </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Remarks -->
+                <!-- Remarks Section -->
                 <table class="remarks-table">
                     <tbody>
+                        <!-- Row 1: Class Teacher & Guidance Counselor side by side -->
                         <tr>
-                            <td width="50%"><div class="h6">Class Teacher's Remark Signature/Date</div><div class="full-width-dots">{{ $profile ? ($profile->classteachercomment ?? 'N/A') : 'N/A' }}</div></td>
-                            <td width="50%"><div class="h6">Guidance Counselor's Remark Signature/Date</div><div class="full-width-dots">{{ $profile ? ($profile->guidancescomment ?? 'N/A') : 'N/A' }}</div></td>
+                            <td width="50%">
+                                <div class="h6">Class Teacher's Remark Signature/Date</div>
+                                <div class="full-width-dots">
+                                    {{ $profile ? ($profile->classteachercomment ?? 'NO INFO') : 'NO INFO' }}
+                                </div>
+                            </td>
+                            <td width="50%">
+                                <div class="h6">Guidance Counselor's Remark Signature/Date</div>
+                                <div class="full-width-dots">
+                                    {{ $profile ? ($profile->guidancescomment ?? 'NO INFO') : 'NO INFO' }}
+                                </div>
+                            </td>
                         </tr>
+
+                        <!-- Row 2: Principal's Remark & Promotion Status (full width) -->
                         <tr>
                             <td colspan="2">
                                 <div class="h6">Principal's Remark & Promotion Status</div>
-                                <div class="full-width-dots">
-                                    {{ $profile ? ($profile->principalscomment ?? 'N/A') : 'N/A' }}
+                                <div class="full-width-dots principal-remark">
+                                    {{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}
                                     @php
                                         $status = $studentData['promotionStatusValue'] ?? null;
                                         $statusUpper = strtoupper(trim($status ?? ''));
                                         $statusClass = 'promotion-default';
-                                        if (str_contains($statusUpper, 'PROMOTED') && !str_contains($statusUpper, 'TRIAL')) $statusClass = 'promotion-promoted';
-                                        elseif (str_contains($statusUpper, 'TRIAL')) $statusClass = 'promotion-repeat';
-                                        elseif (str_contains($statusUpper, 'REPEAT')) $statusClass = 'promotion-repeat';
-                                        elseif (str_contains($statusUpper, 'PRINCIPAL') || str_contains($statusUpper, 'PARENTS')) $statusClass = 'promotion-parents';
+
+                                        if (str_contains($statusUpper, 'PROMOTED') && !str_contains($statusUpper, 'TRIAL')) {
+                                            $statusClass = 'promotion-promoted';
+                                        } elseif (str_contains($statusUpper, 'TRIAL') || str_contains($statusUpper, 'PROMOTED ON TRIAL')) {
+                                            $statusClass = 'promotion-repeat';
+                                        } elseif (str_contains($statusUpper, 'REPEAT')) {
+                                            $statusClass = 'promotion-repeat';
+                                        } elseif (str_contains($statusUpper, 'PRINCIPAL') || str_contains($statusUpper, 'PARENTS')) {
+                                            $statusClass = 'promotion-parents';
+                                        }
+
                                         $statusText = $status ?? 'Not applicable for this term';
                                     @endphp
                                     <br><br>
-                                    <span class="promotion-status {{ $statusClass }}">PROMOTION STATUS: {{ $statusText }}</span>
+                                    <span class="promotion-status {{ $statusClass }}">
+                                        PROMOTION STATUS: {{ $statusText }}
+                                    </span>
                                 </div>
                             </td>
                         </tr>
                     </tbody>
                 </table>
 
-                <!-- Footer -->
+                <!-- Footer Section -->
                 <div class="footer-section">
-                    <div><span class="font-bold">This Result was issued on </span><span class="text-dot-space2">18th December, 2025</span><span class="font-bold"> and collected by</span><span>.......................................</span></div>
-                    <div><span class="font-bold text-primary">Next Term Begins:</span><span class="text-dot-space2">........................</span></div>
+                    <table class="footer-layout-table">
+                        <tr>
+                            <td>
+                                <span class="font-bold">This Result was issued on  </span>
+                                <span class="text-dot-space2"> 18th December, 2025</span>
+
+                                <span class="font-bold">and collected by</span>
+                                <span class="">.......................................</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <span class="font-bold text-primary">Next Term Begins:</span>
+                                <span class="text-dot-space2">
+                                    @php
+                                        $nextTermBegins = $schoolInfo->date_next_term_begins ?? null;
+                                        $formattedNextTermBegins = $nextTermBegins ? \Carbon\Carbon::parse($nextTermBegins)->format('jS F, Y') : '........................';
+                                    @endphp
+                                    {{ $formattedNextTermBegins }}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
                     <div class="powered-by">Powered by Qudroid Systems | www.qudroid.co | +2349057522004</div>
                 </div>
             </div>
