@@ -469,49 +469,37 @@ Route::post('/reports/generate', [StudentResultsController::class, 'generateRepo
 
 
         // ── Existing routes (already in your project) ────────────────────────────────
-        Route::get('/subjects', [SubjectOperationController::class, 'index'])
-            ->name('subjects.index');
+        Route::get('/subjects', [SubjectOperationController::class, 'index']) ->name('subjects.index');
 
-        Route::post('/subjectregistration', [SubjectOperationController::class, 'store'])
-            ->name('subjects.store');
+        Route::post('/subjectregistration', [SubjectOperationController::class, 'store']) ->name('subjects.store');
 
         Route::get('/subjectoperation/subjectinfo/{id}/{schoolclassid}/{termid}/{sessionid}',
-            [SubjectOperationController::class, 'subjectinfo'])
-            ->name('subjects.subjectinfo');
-
+            [SubjectOperationController::class, 'subjectinfo'])->name('subjects.subjectinfo');
+        Route::post('/subjectregistration/destroy', [SubjectOperationController::class, 'destroy'])->name('subjectregistration.destroy');
         // DELETE  /subjects/registered-classes  — used by the JS unregister flow
-        Route::delete('/subjects/registered-classes', [SubjectOperationController::class, 'destroy'])
-            ->name('subjects.destroy');
+        Route::delete('/subjects/registered-classes', [SubjectOperationController::class, 'destroy'])->name('subjects.destroy');
 
-        Route::get('/subjects/registered-classes', [SubjectOperationController::class, 'getRegisteredClasses'])
-            ->name('subjects.registered-classes');
+        Route::get('/subjects/registered-classes', [SubjectOperationController::class, 'getRegisteredClasses'])->name('subjects.registered-classes');
 
-        Route::post('/subjectregistration/batch', [SubjectOperationController::class, 'batchRegister'])
-            ->name('subjectregistration.batch');
+        Route::post('/subjectregistration/batch', [SubjectOperationController::class, 'batchRegister'])->name('subjectregistration.batch');
 
         // ── NEW routes for snapshot / archive features ────────────────────────────────
 
         // GET  paginated snapshot-group list  (Unregistered History modal)
-        Route::get('/subjectoperation/archived', [SubjectOperationController::class, 'getArchivedRegistrations'])
-            ->name('subjectoperation.archived');
+        Route::get('/subjectoperation/archived', [SubjectOperationController::class, 'getArchivedRegistrations'])->name('subjectoperation.archived');
 
         // GET  individual student rows + scores inside one snapshot
-        Route::get('/subjectoperation/snapshot/detail', [SubjectOperationController::class, 'getSnapshotDetail'])
-            ->name('subjectoperation.snapshot.detail');
+        Route::get('/subjectoperation/snapshot/detail', [SubjectOperationController::class, 'getSnapshotDetail'])->name('subjectoperation.snapshot.detail');
 
         // POST restore one or many archive records (re-registers + restores scores)
-        Route::post('/subjectoperation/restore', [SubjectOperationController::class, 'restoreRegistration'])
-            ->name('subjectoperation.restore');
+        Route::post('/subjectoperation/restore', [SubjectOperationController::class, 'restoreRegistration'])->name('subjectoperation.restore');
 
         // DELETE permanently remove a batch of archive records
         Route::delete('/subjectoperation/archive/batch-delete',
-            [SubjectOperationController::class, 'permanentlyDeleteArchiveBatch'])
-            ->name('subjectoperation.archive.batch-delete');
+            [SubjectOperationController::class, 'permanentlyDeleteArchiveBatch'])->name('subjectoperation.archive.batch-delete');
 
         // DELETE permanently remove a single archive record
-        Route::delete('/subjectoperation/archive/{archiveId}',
-            [SubjectOperationController::class, 'permanentlyDeleteArchive'])
-            ->name('subjectoperation.archive.delete');
+        Route::delete('/subjectoperation/archive/{archiveId}',[SubjectOperationController::class, 'permanentlyDeleteArchive']) ->name('subjectoperation.archive.delete');
 
         // Resource route (keep last so named routes above take priority)
         Route::resource('subjectoperation', SubjectOperationController::class);
