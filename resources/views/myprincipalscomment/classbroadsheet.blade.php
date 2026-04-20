@@ -814,9 +814,7 @@
         </div>
     </div>
 </div>
-
 <script>
-// Pass PHP data to JavaScript
 window.studentGradesData = @json($studentGrades);
 let activeTooltip = null;
 
@@ -863,7 +861,6 @@ function showTooltip(tooltipId, studentId, studentName) {
 
     if (tbody) {
         tbody.innerHTML = '';
-
         if (grades.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No grades available</td></tr>';
         } else {
@@ -893,6 +890,77 @@ function showTooltip(tooltipId, studentId, studentName) {
     activeTooltip = tooltipId;
 }
 
+// Update the saved comment preview in the UI without reloading
+function updateCommentUI(studentId, comment) {
+    // Find all rows/cards for this student (covers both desktop and mobile)
+    document.querySelectorAll('[data-student-id="' + studentId + '"]').forEach(function(container) {
+
+        // Update the "Comment saved" indicator in the student name cell (desktop)
+        var nameCell = container.querySelector('td:nth-child(3) div > div');
+        if (nameCell) {
+            var savedBadge = nameCell.querySelector('.text-success');
+            if (comment) {
+                if (!savedBadge) {
+                    var small = document.createElement('small');
+                    small.className = 'd-block text-success mt-1';
+                    small.innerHTML = '<i class="ri-check-double-line"></i> Comment saved';
+                    nameCell.appendChild(small);
+                }
+            } else {
+                if (savedBadge) savedBadge.remove();
+            }
+        }
+
+        // Update saved comment preview box (desktop)
+        var commentCell = container.querySelector('.comment-cell');
+        if (commentCell) {
+            var existingPreviewWrapper = commentCell.querySelector('.mb-2:not(.intelligent-comment-section)');
+
+            if (comment) {
+                var previewText = comment.length > 100 ? comment.substring(0, 100) + '...' : comment;
+                if (existingPreviewWrapper) {
+                    // Update existing preview
+                    var previewBox = existingPreviewWrapper.querySelector('.saved-comment-preview small');
+                    if (previewBox) previewBox.textContent = previewText;
+                } else {
+                    // Create new preview block
+                    var newWrapper = document.createElement('div');
+                    newWrapper.className = 'mb-2';
+                    newWrapper.innerHTML =
+                        '<small class="text-success d-block mb-1">' +
+                            '<i class="ri-chat-check-line"></i> <strong>Saved Comment</strong>' +
+                        '</small>' +
+                        '<div class="saved-comment-preview">' +
+                            '<small class="text-secondary">' + escapeHtml(previewText) + '</small>' +
+                        '</div>';
+
+                    // Insert before the select dropdown
+                    var selectEl = commentCell.querySelector('select');
+                    if (selectEl) {
+                        commentCell.insertBefore(newWrapper, selectEl);
+                    }
+                }
+            } else {
+                if (existingPreviewWrapper) existingPreviewWrapper.remove();
+            }
+        }
+
+        // Update the mobile card checkmark badge
+        var mobileHeader = container.querySelector('.student-details h6');
+        if (mobileHeader) {
+            var mobileBadge = mobileHeader.querySelector('.badge.bg-success');
+            if (comment && !mobileBadge) {
+                var badge = document.createElement('span');
+                badge.className = 'badge bg-success ms-2';
+                badge.textContent = '✓';
+                mobileHeader.appendChild(badge);
+            } else if (!comment && mobileBadge) {
+                mobileBadge.remove();
+            }
+        }
+    });
+}
+
 // AUTO-SAVE: Save a single student's comment on dropdown change
 document.querySelectorAll('.auto-save-comment').forEach(function(select) {
     select.addEventListener('change', function() {
@@ -901,7 +969,6 @@ document.querySelectorAll('.auto-save-comment').forEach(function(select) {
         var original  = this.dataset.originalValue || '';
         var self      = this;
 
-        // Nothing changed — skip
         if (comment === original) return;
 
         self.style.backgroundColor = '#fff3cd';
@@ -922,11 +989,21 @@ document.querySelectorAll('.auto-save-comment').forEach(function(select) {
         .then(function(res) { return res.json(); })
         .then(function(data) {
             if (data.success) {
+                // Update original value tracker
                 self.dataset.originalValue = comment;
+                // Also sync the sibling select (desktop/mobile mirror)
+                document.querySelectorAll('.auto-save-comment[data-student-id="' + studentId + '"]').forEach(function(s) {
+                    s.value = comment;
+                    s.dataset.originalValue = comment;
+                });
+                // Update UI in place — no reload
+                updateCommentUI(studentId, comment);
                 self.style.backgroundColor = '#d1e7dd';
                 self.disabled = false;
-                showToast('Comment saved successfully!', 'success');
-                setTimeout(function() { location.reload(); }, 1500);
+                showToast('Comment saved!', 'success');
+                setTimeout(function() {
+                    self.style.backgroundColor = '';
+                }, 1500);
             } else {
                 throw new Error(data.message || 'Save failed');
             }
@@ -944,23 +1021,35 @@ document.querySelectorAll('.auto-save-comment').forEach(function(select) {
     });
 });
 
-// BULK SAVE: Save all comments when the form is submitted
+// BULK SAVE: Save all visible comments
 var commentsForm = document.getElementById('commentsForm');
 if (commentsForm) {
     commentsForm.addEventListener('submit', function(e) {
         e.preventDefault();
 
-        var submitBtn      = document.getElementById('saveAllBtn');
+        var submitBtn       = document.getElementById('saveAllBtn');
         var savingIndicator = document.getElementById('savingIndicator');
-        var originalText   = submitBtn.innerHTML;
+        var originalText    = submitBtn.innerHTML;
 
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<i class="ri-loader-4-line spin-icon me-1"></i> Saving All Comments...';
         savingIndicator.style.display = 'inline-block';
 
+        // Only collect from visible selects to avoid duplicate hidden/visible conflicts
+        var formData = new FormData();
+        formData.append('_token', '{{ csrf_token() }}');
+
+        document.querySelectorAll('.auto-save-comment').forEach(function(select) {
+            if (select.offsetParent === null) return; // skip hidden (CSS display:none)
+            var val = select.value.trim();
+            if (val !== '') {
+                formData.append('teacher_comments[' + select.dataset.studentId + ']', val);
+            }
+        });
+
         fetch(this.action, {
             method: 'POST',
-            body: new FormData(this),
+            body: formData,
             headers: {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
@@ -969,11 +1058,16 @@ if (commentsForm) {
         .then(function(res) { return res.json(); })
         .then(function(data) {
             if (data.success) {
-                showToast(data.message || 'All comments saved successfully!', 'success');
+                // Update UI for all students that had a value selected
                 document.querySelectorAll('.auto-save-comment').forEach(function(select) {
-                    select.dataset.originalValue = select.value;
+                    if (select.offsetParent === null) return;
+                    var val = select.value.trim();
+                    if (val) {
+                        select.dataset.originalValue = val;
+                        updateCommentUI(select.dataset.studentId, val);
+                    }
                 });
-                setTimeout(function() { location.reload(); }, 2000);
+                showToast(data.message || 'All comments saved successfully!', 'success');
             } else {
                 throw new Error(data.message || 'Save failed');
             }
@@ -999,7 +1093,6 @@ if (window.innerWidth > 1199) {
             var sid  = this.dataset.studentId;
             var name = this.dataset.studentName;
             var tid  = 'tooltip-' + sid;
-
             if (activeTooltip === tid) {
                 closeAllTooltips();
             } else {
@@ -1017,7 +1110,6 @@ if (window.innerWidth > 1199) {
         var activeEl  = document.getElementById(activeTooltip);
         var activeSid = activeTooltip.replace('tooltip-', '');
         var trigger   = document.querySelector('.grades-trigger[data-student-id="' + activeSid + '"]');
-
         if (activeEl && !activeEl.contains(e.target) && (!trigger || !trigger.contains(e.target))) {
             closeAllTooltips();
         }
@@ -1028,27 +1120,20 @@ if (window.innerWidth > 1199) {
     });
 }
 
-// Search functionality
+// Search
 var searchInput = document.getElementById('searchInput');
 if (searchInput) {
     searchInput.addEventListener('input', function() {
         var term = this.value.toLowerCase().trim();
-
-        // Desktop rows
         document.querySelectorAll('.desktop-table tbody tr').forEach(function(row) {
-            var text = row.textContent.toLowerCase();
-            row.style.display = (term === '' || text.includes(term)) ? '' : 'none';
+            row.style.display = (term === '' || row.textContent.toLowerCase().includes(term)) ? '' : 'none';
         });
-
-        // Mobile cards
         document.querySelectorAll('.mobile-cards .student-card').forEach(function(card) {
-            var text = card.textContent.toLowerCase();
-            card.style.display = (term === '' || text.includes(term)) ? '' : 'none';
+            card.style.display = (term === '' || card.textContent.toLowerCase().includes(term)) ? '' : 'none';
         });
     });
 }
 
-// Store original values on page load
 document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.auto-save-comment').forEach(function(select) {
         select.dataset.originalValue = select.value;
