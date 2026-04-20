@@ -303,7 +303,6 @@
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
-    /* Auto-save indicator */
     .auto-saving {
         background-color: #fff3cd !important;
         border-color: #ffc107 !important;
@@ -481,7 +480,6 @@
                                                                     $termClass = $termTotal < 40 ? 'highlight-red' : ($termTotal < 50 ? 'highlight-orange' : ($termTotal >= 70 ? 'highlight-green' : ''));
                                                                     $cumClass = $cumTotal < 40 ? 'highlight-red' : ($cumTotal < 50 ? 'highlight-orange' : ($cumTotal >= 70 ? 'highlight-green' : ''));
 
-                                                                    // Get grade for cumulative score
                                                                     $cumGrade = '';
                                                                     if ($cumTotal > 0) {
                                                                         if ($isSenior) {
@@ -570,9 +568,6 @@
                                                                         @endphp
                                                                         <option value="{{ $commentPlain }}" {{ $isSelected ? 'selected' : '' }}>
                                                                             {{ Str::limit($commentPlain, 70) }}
-                                                                            @if(str_contains($commentPlain, 'should work harder'))
-                                                                                <span class="badge bg-warning ms-2">⚠️ Advice</span>
-                                                                            @endif
                                                                         </option>
                                                                     @endforeach
 
@@ -778,6 +773,15 @@
                                                                     {{ Str::limit($commentPlain, 50) }}
                                                                 </option>
                                                             @endforeach
+
+                                                            @if(isset($intelligentComments[$student->id]) && !in_array(strip_tags($intelligentComments[$student->id]), array_map('strip_tags', $standardPersonalizedComments[$student->id] ?? [])))
+                                                                @php
+                                                                    $intelligentPlain = strip_tags($intelligentComments[$student->id]);
+                                                                @endphp
+                                                                <option value="{{ $intelligentPlain }}" {{ $currentCommentPlain == $intelligentPlain ? 'selected' : '' }}>
+                                                                    💡 Use AI Generated Comment
+                                                                </option>
+                                                            @endif
                                                         </select>
                                                     </div>
                                                 </div>
@@ -812,67 +816,74 @@
 </div>
 
 <script>
-// Pass data to JavaScript
+// Pass PHP data to JavaScript
 window.studentGradesData = @json($studentGrades);
 let activeTooltip = null;
 
-function showToast(message, type = 'info') {
-    const existing = document.querySelector('.auto-save-toast');
+function showToast(message, type) {
+    type = type || 'info';
+    var existing = document.querySelector('.auto-save-toast');
     if (existing) existing.remove();
 
-    const toast = document.createElement('div');
-    toast.className = ⁠ auto-save-toast alert alert-${type} alert-dismissible fade show ⁠;
-    toast.innerHTML = `
-        <div class="d-flex align-items-center">
-            <i class="ri-${type === 'success' ? 'checkbox-circle' : 'information'}-fill me-2 fs-5"></i>
-            <span>${escapeHtml(message)}</span>
-            <button type="button" class="btn-close ms-3" data-bs-dismiss="alert"></button>
-        </div>`;
+    var toast = document.createElement('div');
+    toast.className = 'auto-save-toast alert alert-' + type + ' alert-dismissible fade show';
+    toast.innerHTML =
+        '<div class="d-flex align-items-center">' +
+            '<i class="ri-' + (type === 'success' ? 'checkbox-circle' : 'information') + '-fill me-2 fs-5"></i>' +
+            '<span>' + escapeHtml(message) + '</span>' +
+            '<button type="button" class="btn-close ms-3" data-bs-dismiss="alert"></button>' +
+        '</div>';
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    setTimeout(function() { toast.remove(); }, 3000);
 }
 
 function escapeHtml(text) {
-    const div = document.createElement('div');
+    var div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
 
 function closeAllTooltips() {
-    document.querySelectorAll('.grades-tooltip.show').forEach(t => t.classList.remove('show'));
+    document.querySelectorAll('.grades-tooltip.show').forEach(function(t) {
+        t.classList.remove('show');
+    });
     activeTooltip = null;
 }
 
 function showTooltip(tooltipId, studentId, studentName) {
-    const tooltip = document.getElementById(tooltipId);
+    var tooltip = document.getElementById(tooltipId);
     if (!tooltip) return;
     closeAllTooltips();
 
-    document.getElementById(⁠ tooltip-title-${studentId} ⁠).textContent = ⁠ ${studentName}'s Performance ⁠;
+    var titleEl = document.getElementById('tooltip-title-' + studentId);
+    if (titleEl) titleEl.textContent = studentName + "'s Performance";
 
-    const grades = window.studentGradesData[studentId] || [];
-    const tbody = document.getElementById(⁠ grades-body-${studentId} ⁠);
+    var grades = window.studentGradesData[studentId] || [];
+    var tbody = document.getElementById('grades-body-' + studentId);
+
     if (tbody) {
         tbody.innerHTML = '';
 
         if (grades.length === 0) {
             tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No grades available</td></tr>';
         } else {
-            grades.forEach(g => {
-                let gradeClass = 'grade-f';
+            grades.forEach(function(g) {
+                var gradeClass = 'grade-f';
                 if (g.grade_letter === 'A') gradeClass = 'grade-a';
                 else if (g.grade_letter === 'B') gradeClass = 'grade-b';
                 else if (g.grade_letter === 'C') gradeClass = 'grade-c';
                 else if (g.grade_letter === 'D') gradeClass = 'grade-d';
                 else if (g.grade_letter === 'E') gradeClass = 'grade-e';
 
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td><strong>${escapeHtml(g.subject)}</strong></td>
-                    <td class="text-center fw-bold ${g.term_score < 50 ? 'text-danger' : 'text-success'}">${g.term_score || '-'}</td>
-                    <td class="text-center fw-bold ${g.score < 50 ? 'text-danger' : 'text-success'}">${g.score || '-'}</td>
-                    <td class="text-center"><span class="grade-badge ${gradeClass}">${escapeHtml(g.grade)}</span></td>
-                `;
+                var termScoreClass = (g.term_score < 50) ? 'text-danger' : 'text-success';
+                var cumScoreClass  = (g.score < 50) ? 'text-danger' : 'text-success';
+
+                var row = document.createElement('tr');
+                row.innerHTML =
+                    '<td><strong>' + escapeHtml(g.subject) + '</strong></td>' +
+                    '<td class="text-center fw-bold ' + termScoreClass + '">' + (g.term_score || '-') + '</td>' +
+                    '<td class="text-center fw-bold ' + cumScoreClass + '">' + (g.score || '-') + '</td>' +
+                    '<td class="text-center"><span class="grade-badge ' + gradeClass + '">' + escapeHtml(g.grade) + '</span></td>';
                 tbody.appendChild(row);
             });
         }
@@ -882,123 +893,133 @@ function showTooltip(tooltipId, studentId, studentName) {
     activeTooltip = tooltipId;
 }
 
-// AUTO-SAVE FUNCTIONALITY - Individual comment saves
-document.querySelectorAll('.auto-save-comment').forEach(select => {
+// AUTO-SAVE: Save a single student's comment on dropdown change
+document.querySelectorAll('.auto-save-comment').forEach(function(select) {
     select.addEventListener('change', function() {
-        const studentId = this.dataset.studentId;
-        const comment = this.value.trim();
-        const original = this.dataset.originalValue || '';
+        var studentId = this.dataset.studentId;
+        var comment   = this.value.trim();
+        var original  = this.dataset.originalValue || '';
+        var self      = this;
 
+        // Nothing changed — skip
         if (comment === original) return;
 
-        const originalBg = this.style.backgroundColor;
-        this.style.backgroundColor = '#fff3cd';
-        this.disabled = true;
+        self.style.backgroundColor = '#fff3cd';
+        self.disabled = true;
 
-        const formData = new FormData();
+        var formData = new FormData();
         formData.append('_token', '{{ csrf_token() }}');
-        formData.append(⁠ teacher_comments[${studentId}] ⁠, comment);
+        formData.append('teacher_comments[' + studentId + ']', comment);
 
         fetch('{{ route("myprincipalscomment.updateComments", [$schoolclassid, $sessionid, $termid]) }}', {
             method: 'POST',
             body: formData,
-            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
         })
-        .then(res => res.json())
-        .then(data => {
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
             if (data.success) {
-                this.dataset.originalValue = comment;
-                this.style.backgroundColor = '#d1e7dd';
+                self.dataset.originalValue = comment;
+                self.style.backgroundColor = '#d1e7dd';
+                self.disabled = false;
                 showToast('Comment saved successfully!', 'success');
-                setTimeout(() => {
-                    location.reload();
-                }, 1500);
+                setTimeout(function() { location.reload(); }, 1500);
             } else {
                 throw new Error(data.message || 'Save failed');
             }
         })
-        .catch(error => {
-            console.error('Save error:', error);
-            this.value = original;
-            this.style.backgroundColor = '#f8d7da';
+        .catch(function(error) {
+            console.error('Auto-save error:', error);
+            self.value = original;
+            self.style.backgroundColor = '#f8d7da';
+            self.disabled = false;
             showToast('Error: ' + error.message, 'danger');
-            setTimeout(() => {
-                this.style.backgroundColor = originalBg;
-                this.disabled = false;
+            setTimeout(function() {
+                self.style.backgroundColor = '';
             }, 2000);
         });
     });
 });
 
-// BULK SAVE ALL COMMENTS - Submit button handler
-document.getElementById('commentsForm')?.addEventListener('submit', function(e) {
-    e.preventDefault();
+// BULK SAVE: Save all comments when the form is submitted
+var commentsForm = document.getElementById('commentsForm');
+if (commentsForm) {
+    commentsForm.addEventListener('submit', function(e) {
+        e.preventDefault();
 
-    const submitBtn = document.getElementById('saveAllBtn');
-    const savingIndicator = document.getElementById('savingIndicator');
-    const originalText = submitBtn.innerHTML;
+        var submitBtn      = document.getElementById('saveAllBtn');
+        var savingIndicator = document.getElementById('savingIndicator');
+        var originalText   = submitBtn.innerHTML;
 
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="ri-loader-4-line spin-icon me-1"></i> Saving All Comments...';
-    savingIndicator.style.display = 'inline-block';
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="ri-loader-4-line spin-icon me-1"></i> Saving All Comments...';
+        savingIndicator.style.display = 'inline-block';
 
-    fetch(this.action, {
-        method: 'POST',
-        body: new FormData(this),
-        headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            showToast(data.message || 'All comments saved successfully!', 'success');
-            // Update original values for all selects
-            document.querySelectorAll('.auto-save-comment').forEach(select => {
-                select.dataset.originalValue = select.value;
-            });
-            setTimeout(() => location.reload(), 2000);
-        } else {
-            throw new Error(data.message || 'Save failed');
-        }
-    })
-    .catch(error => {
-        console.error('Bulk save error:', error);
-        showToast('Error saving comments: ' + error.message, 'danger');
-    })
-    .finally(() => {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
-        savingIndicator.style.display = 'none';
+        fetch(this.action, {
+            method: 'POST',
+            body: new FormData(this),
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data.success) {
+                showToast(data.message || 'All comments saved successfully!', 'success');
+                document.querySelectorAll('.auto-save-comment').forEach(function(select) {
+                    select.dataset.originalValue = select.value;
+                });
+                setTimeout(function() { location.reload(); }, 2000);
+            } else {
+                throw new Error(data.message || 'Save failed');
+            }
+        })
+        .catch(function(error) {
+            console.error('Bulk save error:', error);
+            showToast('Error saving comments: ' + error.message, 'danger');
+        })
+        .finally(function() {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            savingIndicator.style.display = 'none';
+        });
     });
-});
+}
 
-// Tooltip handlers for desktop
+// Tooltip triggers — desktop only
 if (window.innerWidth > 1199) {
-    document.querySelectorAll('.grades-trigger').forEach(trigger => {
+    document.querySelectorAll('.grades-trigger').forEach(function(trigger) {
         trigger.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            const tid = ⁠ tooltip-${this.dataset.studentId} ⁠;
+            var sid  = this.dataset.studentId;
+            var name = this.dataset.studentName;
+            var tid  = 'tooltip-' + sid;
+
             if (activeTooltip === tid) {
                 closeAllTooltips();
             } else {
-                showTooltip(tid, this.dataset.studentId, this.dataset.studentName);
+                showTooltip(tid, sid, name);
             }
         });
     });
 
-    document.querySelectorAll('.tooltip-close').forEach(btn => {
+    document.querySelectorAll('.tooltip-close').forEach(function(btn) {
         btn.addEventListener('click', closeAllTooltips);
     });
 
     document.addEventListener('click', function(e) {
-        if (activeTooltip && !document.getElementById(activeTooltip)?.contains(e.target)) {
-            const trigger = document.querySelector(⁠ .grades-trigger[data-student-id="${activeTooltip.replace('tooltip-', '')}"] ⁠);
-            if (!trigger || !trigger.contains(e.target)) {
-                closeAllTooltips();
-            }
+        if (!activeTooltip) return;
+        var activeEl  = document.getElementById(activeTooltip);
+        var activeSid = activeTooltip.replace('tooltip-', '');
+        var trigger   = document.querySelector('.grades-trigger[data-student-id="' + activeSid + '"]');
+
+        if (activeEl && !activeEl.contains(e.target) && (!trigger || !trigger.contains(e.target))) {
+            closeAllTooltips();
         }
     });
 
@@ -1008,25 +1029,28 @@ if (window.innerWidth > 1199) {
 }
 
 // Search functionality
-document.getElementById('searchInput')?.addEventListener('input', function() {
-    const term = this.value.toLowerCase().trim();
+var searchInput = document.getElementById('searchInput');
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        var term = this.value.toLowerCase().trim();
 
-    // Desktop search
-    document.querySelectorAll('.desktop-table tbody tr').forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = term === '' || text.includes(term) ? '' : 'none';
+        // Desktop rows
+        document.querySelectorAll('.desktop-table tbody tr').forEach(function(row) {
+            var text = row.textContent.toLowerCase();
+            row.style.display = (term === '' || text.includes(term)) ? '' : 'none';
+        });
+
+        // Mobile cards
+        document.querySelectorAll('.mobile-cards .student-card').forEach(function(card) {
+            var text = card.textContent.toLowerCase();
+            card.style.display = (term === '' || text.includes(term)) ? '' : 'none';
+        });
     });
+}
 
-    // Mobile search
-    document.querySelectorAll('.mobile-cards .student-card').forEach(card => {
-        const text = card.textContent.toLowerCase();
-        card.style.display = term === '' || text.includes(term) ? '' : 'none';
-    });
-});
-
-// Initialize original values on load
+// Store original values on page load
 document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.auto-save-comment').forEach(select => {
+    document.querySelectorAll('.auto-save-comment').forEach(function(select) {
         select.dataset.originalValue = select.value;
     });
 });
