@@ -83,7 +83,7 @@
                                                     <a href="{{ route('myprincipalscomment.classbroadsheet', [
                                                         $assignment->schoolclassid,
                                                         $currentSession->id ?? 1,
-                                                        $currentTerm->id ?? 1
+                                                        2
                                                     ]) }}"
                                                        class="btn btn-soft-success btn-sm">
                                                         <i class="ph-eye me-1"></i> View Broadsheet & Enter Comments
@@ -106,7 +106,7 @@
                                     </tbody>
                                 </table>
 
-                                <!-- No Search Results -->
+                                <!-- No Search Results - Hidden by default -->
                                 <div id="noSearchResults" class="text-center py-5" style="display: none;">
                                     <lord-icon src="https://cdn.lordicon.com/msoeawqm.json"
                                                trigger="loop"
@@ -128,23 +128,22 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    var searchInput    = document.getElementById('classSearchInput');
-    var tbody          = document.getElementById('assignmentsBody');
-    var noSearchResults = document.getElementById('noSearchResults');
-    var visibleClasses = document.getElementById('visibleClasses');
-    var emptyStateRow  = document.getElementById('emptyStateRow');
+    const searchInput = document.getElementById('classSearchInput');
+    const tbody = document.getElementById('assignmentsBody');
+    const rows = tbody.querySelectorAll('.assignment-row');
+    const emptyStateRow = document.getElementById('emptyStateRow');
+    const noSearchResults = document.getElementById('noSearchResults');
+    const totalClasses = document.getElementById('totalClasses');
+    const visibleClasses = document.getElementById('visibleClasses');
 
-    if (!searchInput || !tbody) return;
-
-    var rows = tbody.querySelectorAll('.assignment-row');
-    if (rows.length === 0) return;
+    if (!searchInput || rows.length === 0) return;
 
     searchInput.addEventListener('input', function () {
-        var term = this.value.toLowerCase().trim();
-        var visibleCount = 0;
+        const term = this.value.toLowerCase().trim();
+        let visibleCount = 0;
 
-        rows.forEach(function(row) {
-            var searchText = row.getAttribute('data-search-text') || '';
+        rows.forEach(row => {
+            const searchText = row.getAttribute('data-search-text') || '';
             if (term === '' || searchText.includes(term)) {
                 row.style.display = '';
                 visibleCount++;
@@ -153,14 +152,23 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
+        // Update visible count
         visibleClasses.textContent = visibleCount;
 
-        if (visibleCount === 0 && term !== '') {
-            noSearchResults.style.display = 'block';
-            if (emptyStateRow) emptyStateRow.style.display = 'none';
+        // Handle display states
+        if (visibleCount === 0) {
+            // Show "No results" only if searching and nothing matches
+            if (term !== '') {
+                noSearchResults.style.display = 'block';
+                if (emptyStateRow) emptyStateRow.style.display = 'none';
+            } else {
+                // If no search term but no assignments originally
+                noSearchResults.style.display = 'none';
+                if (emptyStateRow) emptyStateRow.style.display = 'table-row';
+            }
         } else {
             noSearchResults.style.display = 'none';
-            if (emptyStateRow && term === '') emptyStateRow.style.display = 'table-row';
+            if (emptyStateRow) emptyStateRow.style.display = 'none';
         }
     });
 });
