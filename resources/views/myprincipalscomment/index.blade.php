@@ -83,7 +83,7 @@
                                                     <a href="{{ route('myprincipalscomment.classbroadsheet', [
                                                         $assignment->schoolclassid,
                                                         $currentSession->id ?? 1,
-                                                        $currentTerm->id ?? 1
+                                                        2
                                                     ]) }}"
                                                        class="btn btn-soft-success btn-sm">
                                                         <i class="ph-eye me-1"></i> View Broadsheet & Enter Comments
