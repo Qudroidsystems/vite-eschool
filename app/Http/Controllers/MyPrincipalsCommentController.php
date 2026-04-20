@@ -475,19 +475,19 @@ public function classBroadsheet($schoolclassid, $sessionid, $termid)
             'ajax' => $request->ajax()
         ]);
 
-        $isAssigned = Principalscomment::where('staffId', Auth::id())
-            ->where('schoolclassid', $schoolclassid)
-            ->where('sessionid', $sessionid)
-            ->where('termid', $termid)
-            ->exists();
+        // $isAssigned = Principalscomment::where('staffId', Auth::id())
+        //     ->where('schoolclassid', $schoolclassid)
+        //     ->where('sessionid', $sessionid)
+        //     ->where('termid', $termid)
+        //     ->exists();
 
-        if (!$isAssigned) {
-            \Log::warning('Unauthorized access attempt', ['staffId' => Auth::id()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized: You are not assigned to enter comments for this class.'
-            ], 403);
-        }
+        // if (!$isAssigned) {
+        //     \Log::warning('Unauthorized access attempt', ['staffId' => Auth::id()]);
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Unauthorized: You are not assigned to enter comments for this class.'
+        //     ], 403);
+        // }
 
         $request->validate(['teacher_comments.*' => 'nullable|string|max:5000']);
 
