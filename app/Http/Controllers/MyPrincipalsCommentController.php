@@ -259,8 +259,8 @@ public function classBroadsheet($schoolclassid, $sessionid, $termid)
         $studentId = $student->id;
         $firstName = $student->fname;
 
-        $pronoun = strtoupper($student->gender) === 'MALE' ? 'You' : 'You';
-        $possessive = strtoupper($student->gender) === 'MALE' ? 'You' : 'You';
+        $pronoun = strtoupper($student->gender) === 'MALE' ? 'You' : 'Your';
+        $possessive = strtoupper($student->gender) === 'MALE' ? 'You' : 'Your';
 
         $weakSubjects = $studentGradeAnalysis[$studentId]['weak_subjects'] ?? [];
         $advice = '';
