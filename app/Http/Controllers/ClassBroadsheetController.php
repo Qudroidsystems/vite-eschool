@@ -22,11 +22,6 @@ class ClassBroadsheetController extends Controller
 {
     /**
      * Display the class broadsheet for a given class, session, and term.
-     *
-     * @param int $schoolclassid
-     * @param int $sessionid
-     * @param int $termid
-     * @return \Illuminate\View\View
      */
     public function classBroadsheet($schoolclassid, $sessionid, $termid)
     {
@@ -56,33 +51,29 @@ class ClassBroadsheetController extends Controller
         ]);
 
         // Ensure a Studentpersonalityprofile exists for each student
+        // NOTE: staffid is NOT used as a lookup key to avoid creating duplicate blank records
         foreach ($students as $student) {
             $profile = Studentpersonalityprofile::firstOrNew([
-                'studentid' => $student->id,
+                'studentid'     => $student->id,
                 'schoolclassid' => $schoolclassid,
-                'sessionid' => $sessionid,
-                'termid' => $termid,
-                //'staffid' => Auth::user()->id
+                'sessionid'     => $sessionid,
+                'termid'        => $termid,
             ]);
 
-            // Set fields for new records
             if (!$profile->exists) {
-                $profile->studentid = $student->id;
-                $profile->schoolclassid = $schoolclassid;
-                $profile->sessionid = $sessionid;
-                $profile->termid = $termid;
-                $profile->staffid = Auth::user()->id;
-                $profile->classteachercomment = null;
-                $profile->guidancescomment = null;
+                $profile->staffid                    = Auth::user()->id;
+                $profile->classteachercomment        = null;
+                $profile->guidancescomment           = null;
                 $profile->remark_on_other_activities = null;
-                $profile->no_of_times_school_absent = null;
-                $profile->signature = null;
+                $profile->no_of_times_school_absent  = null;
+                $profile->signature                  = null;
                 $profile->save();
+
                 Log::info("Created new profile for student ID: {$student->id}", [
                     'schoolclassid' => $schoolclassid,
-                    'sessionid' => $sessionid,
-                    'termid' => $termid,
-                    'staffid' => Auth::user()->id,
+                    'sessionid'     => $sessionid,
+                    'termid'        => $termid,
+                    'staffid'       => Auth::user()->id,
                 ]);
             }
         }
@@ -117,11 +108,11 @@ class ClassBroadsheetController extends Controller
                 'broadsheets.avg as class_average',
             ]);
 
-        // Fetch personality profiles for comments and other fields, filtered by staffid
+        // Fetch personality profiles WITHOUT staffid filter so all comments are visible
+        // regardless of which staff member originally entered them
         $personalityProfiles = Studentpersonalityprofile::where('schoolclassid', $schoolclassid)
             ->where('sessionid', $sessionid)
             ->where('termid', $termid)
-            ->where('staffid', Auth::user()->id)
             ->get([
                 'studentid',
                 'classteachercomment',
@@ -134,10 +125,10 @@ class ClassBroadsheetController extends Controller
         // Log profiles for debugging
         Log::info('Personality profiles fetched', [
             'schoolclassid' => $schoolclassid,
-            'sessionid' => $sessionid,
-            'termid' => $termid,
-            'staffid' => Auth::user()->id,
-            'profiles' => $personalityProfiles->toArray(),
+            'sessionid'     => $sessionid,
+            'termid'        => $termid,
+            'staffid'       => Auth::user()->id,
+            'profiles'      => $personalityProfiles->toArray(),
         ]);
 
         // Fetch schoolclass with arm
@@ -145,7 +136,7 @@ class ClassBroadsheetController extends Controller
             ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
             ->first(['schoolclass.schoolclass', 'schoolclass.arm', 'schoolarm.arm']);
 
-        $schoolterm = Schoolterm::where('id', $termid)->value('term') ?? 'N/A';
+        $schoolterm    = Schoolterm::where('id', $termid)->value('term') ?? 'N/A';
         $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
 
         return view('classbroadsheet.classbroadsheet')
@@ -163,46 +154,41 @@ class ClassBroadsheetController extends Controller
     }
 
     /**
-     * Update class teacher and guidance counselor comments, remark on other activities, absence count, and signature for students.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param int $schoolclassid
-     * @param int $sessionid
-     * @param int $termid
-     * @return \Illuminate\Http\RedirectResponse
+     * Update class teacher and guidance counselor comments, remark on other activities,
+     * absence count, and signature for students.
      */
     public function updateComments(Request $request, $schoolclassid, $sessionid, $termid)
     {
         // Log the request for debugging
         Log::info('updateComments called', [
-            'schoolclassid' => $schoolclassid,
-            'sessionid' => $sessionid,
-            'termid' => $termid,
-            'raw_post_data' => $_POST,
-            'request_data' => $request->all(),
-            'has_file' => $request->hasFile('signature'),
+            'schoolclassid'   => $schoolclassid,
+            'sessionid'       => $sessionid,
+            'termid'          => $termid,
+            'raw_post_data'   => $_POST,
+            'request_data'    => $request->all(),
+            'has_file'        => $request->hasFile('signature'),
         ]);
 
         // Validate the input
         $request->validate([
-            'teacher_comments.*' => 'nullable|string|max:1000',
-            'guidance_comments.*' => 'nullable|string|max:1000',
-            'remarks_on_other_activities.*' => 'nullable|string|max:1000',
-            'no_of_times_school_absent.*' => 'nullable|integer|min:0',
-            'signature' => 'mimes:jpg,png,pdf|max:5048', // 2MB max
+            'teacher_comments.*'             => 'nullable|string|max:1000',
+            'guidance_comments.*'            => 'nullable|string|max:1000',
+            'remarks_on_other_activities.*'  => 'nullable|string|max:1000',
+            'no_of_times_school_absent.*'    => 'nullable|integer|min:0',
+            'signature'                      => 'nullable|mimes:jpg,jpeg,png,pdf|max:5048',
         ]);
 
-        $teacherComments = $request->input('teacher_comments', []);
-        $guidanceComments = $request->input('guidance_comments', []);
+        $teacherComments          = $request->input('teacher_comments', []);
+        $guidanceComments         = $request->input('guidance_comments', []);
         $remarksOnOtherActivities = $request->input('remarks_on_other_activities', []);
-        $noOfTimesSchoolAbsent = $request->input('no_of_times_school_absent', []);
+        $noOfTimesSchoolAbsent    = $request->input('no_of_times_school_absent', []);
 
         // Check if any data was provided
-        if (empty($teacherComments) && empty($guidanceComments) && empty($remarksOnOtherActivities) && empty($noOfTimesSchoolAbsent)) {
-            Log::warning('No data provided for update (excluding signature)', [
+        if (empty($teacherComments) && empty($guidanceComments) && empty($remarksOnOtherActivities) && empty($noOfTimesSchoolAbsent) && !$request->hasFile('signature')) {
+            Log::warning('No data provided for update', [
                 'schoolclassid' => $schoolclassid,
-                'sessionid' => $sessionid,
-                'termid' => $termid,
+                'sessionid'     => $sessionid,
+                'termid'        => $termid,
             ]);
             return redirect()->back()->with('error', 'No data provided to update.');
         }
@@ -210,10 +196,10 @@ class ClassBroadsheetController extends Controller
         // Handle signature file upload
         $signaturePath = null;
         if ($request->hasFile('signature')) {
-            $file = $request->file('signature');
-            $filename = 'signature_' . time() . '.' . $file->getClientOriginalExtension();
+            $file          = $request->file('signature');
+            $filename      = 'signature_' . time() . '.' . $file->getClientOriginalExtension();
             $signaturePath = $file->storeAs('public/signatures', $filename);
-            $signaturePath = str_replace('public/', '', $signaturePath); // Store path relative to storage
+            $signaturePath = str_replace('public/', '', $signaturePath);
             Log::info('Signature uploaded', ['path' => $signaturePath]);
         }
 
@@ -221,68 +207,71 @@ class ClassBroadsheetController extends Controller
         DB::beginTransaction();
         try {
             $updatedCount = 0;
+
             foreach ($teacherComments as $studentId => $teacherComment) {
-                $guidanceComment = $guidanceComments[$studentId] ?? '';
-                $remarkOnOtherActivities = $remarksOnOtherActivities[$studentId] ?? '';
-                $absenceCount = $noOfTimesSchoolAbsent[$studentId] ?? null;
+                $guidanceComment          = $guidanceComments[$studentId] ?? '';
+                $remarkOnOtherActivities  = $remarksOnOtherActivities[$studentId] ?? '';
+                $absenceCount             = $noOfTimesSchoolAbsent[$studentId] ?? null;
 
-                // Log each student update
                 Log::info("Processing student ID: $studentId", [
-                    'teacherComment' => $teacherComment,
-                    'guidanceComment' => $guidanceComment,
+                    'teacherComment'          => $teacherComment,
+                    'guidanceComment'         => $guidanceComment,
                     'remarkOnOtherActivities' => $remarkOnOtherActivities,
-                    'noOfTimesSchoolAbsent' => $absenceCount,
-                    'signature' => $signaturePath,
+                    'noOfTimesSchoolAbsent'   => $absenceCount,
+                    'signature'               => $signaturePath,
                 ]);
 
-                // Find or create the Studentpersonalityprofile record
+                // Find or create the profile WITHOUT staffid as a lookup key
+                // This ensures we update the existing record rather than creating a duplicate
                 $profile = Studentpersonalityprofile::firstOrNew([
-                    'studentid' => $studentId,
+                    'studentid'     => $studentId,
                     'schoolclassid' => $schoolclassid,
-                    'sessionid' => $sessionid,
-                    'termid' => $termid,
-                    'staffid' => Auth::user()->id,
+                    'sessionid'     => $sessionid,
+                    'termid'        => $termid,
                 ]);
 
-                // Update fields (allow empty strings or null to overwrite)
-                $profile->classteachercomment = $teacherComment;
-                $profile->guidancescomment = $guidanceComment;
-                $profile->remark_on_other_activities = $remarkOnOtherActivities;
-                $profile->no_of_times_school_absent = $absenceCount;
-                $profile->signature = $signaturePath;
+                // Set staffid only on new records; preserve original staffid on existing ones
+                if (!$profile->exists) {
+                    $profile->staffid = Auth::user()->id;
+                }
 
-                // Save only if there are changes to avoid unnecessary updates
+                $profile->classteachercomment        = $teacherComment;
+                $profile->guidancescomment           = $guidanceComment;
+                $profile->remark_on_other_activities = $remarkOnOtherActivities;
+                $profile->no_of_times_school_absent  = $absenceCount;
+
+                // Only overwrite signature if a new one was uploaded
+                if ($signaturePath) {
+                    $profile->signature = $signaturePath;
+                }
+
                 if ($profile->isDirty()) {
                     $profile->save();
                     $updatedCount++;
                     Log::info("Saved profile for student ID: $studentId", [
-                        'staffid' => $profile->staffid,
-                        'classteachercomment' => $teacherComment,
-                        'guidancescomment' => $guidanceComment,
+                        'staffid'                    => $profile->staffid,
+                        'classteachercomment'        => $teacherComment,
+                        'guidancescomment'           => $guidanceComment,
                         'remark_on_other_activities' => $remarkOnOtherActivities,
-                        'no_of_times_school_absent' => $absenceCount,
-                        'signature' => $signaturePath,
+                        'no_of_times_school_absent'  => $absenceCount,
+                        'signature'                  => $signaturePath,
                     ]);
                 } else {
                     Log::info("No changes to save for student ID: $studentId");
                 }
             }
 
-            // Log executed queries
-            DB::enableQueryLog();
-            Log::info('Executed queries', DB::getQueryLog());
-            DB::disableQueryLog();
-
             DB::commit();
             return redirect()->route('classbroadsheet.viewcomments', [$schoolclassid, $sessionid, $termid])
                 ->with('success', "Data updated successfully for $updatedCount students.");
+
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Error updating data: ' . $e->getMessage(), [
                 'schoolclassid' => $schoolclassid,
-                'sessionid' => $sessionid,
-                'termid' => $termid,
-                'error' => $e->getMessage(),
+                'sessionid'     => $sessionid,
+                'termid'        => $termid,
+                'error'         => $e->getMessage(),
             ]);
             return redirect()->back()->with('error', 'Failed to update data: ' . $e->getMessage());
         }
