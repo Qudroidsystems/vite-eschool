@@ -113,23 +113,38 @@ class ViewStudentReportController extends Controller
         };
     }
 
-    protected function calculateJuniorGrade($score)
+    /**
+     * Calculate grade based on cumulative score
+     * This ensures grade is always calculated from the actual numeric value
+     */
+    protected function calculateGrade($cumulativeScore, $isSenior = false, $classcategory = null)
     {
-        if ($score >= 70 && $score <= 100) {
-            return 'A';
-        } elseif ($score >= 60) {
-            return 'B';
-        } elseif ($score >= 50) {
-            return 'C';
-        } elseif ($score >= 40) {
-            return 'D';
+        if ($cumulativeScore === null || !is_numeric($cumulativeScore)) {
+            return '-';
         }
-        return 'F';
+
+        // Use class category grade calculation if available and senior
+        if ($isSenior && $classcategory && method_exists($classcategory, 'calculateGrade')) {
+            return $classcategory->calculateGrade($cumulativeScore);
+        }
+
+        // Junior grade calculation
+        if ($cumulativeScore >= 70) {
+            return 'A';
+        } elseif ($cumulativeScore >= 60) {
+            return 'B';
+        } elseif ($cumulativeScore >= 50) {
+            return 'C';
+        } elseif ($cumulativeScore >= 40) {
+            return 'D';
+        } else {
+            return 'F';
+        }
     }
 
     protected function getDefaultGrade($score)
     {
-        return $this->calculateJuniorGrade($score);
+        return $this->calculateGrade($score, false);
     }
 
     protected function getRemark($grade)
@@ -266,11 +281,8 @@ class ViewStudentReportController extends Controller
                         $newPosition = $this->formatOrdinal($newPosition);
                     }
 
-                    $grade = $record->cum == 0 ? '-' : (
-                        $isSenior && $schoolclass->classcategory !== null
-                            ? $schoolclass->classcategory->calculateGrade($record->cum)
-                            : $this->calculateJuniorGrade($record->cum)
-                    );
+                    // Recalculate grade based on actual cum value
+                    $grade = $record->cum == 0 ? '-' : $this->calculateGrade($record->cum, $isSenior, $schoolclass->classcategory);
                     $remark = $this->getRemark($grade);
 
                     if (
@@ -405,6 +417,10 @@ class ViewStudentReportController extends Controller
                     'broadsheets.avg as class_average',
                 ])->get();
 
+            // Get schoolclass info for grade calculation
+            $schoolclass = Schoolclass::with('classcategory')->find($schoolclassid);
+            $isSenior = $schoolclass && $schoolclass->classcategory ? $schoolclass->classcategory->is_senior : false;
+
             // ==============================================
             // CALCULATE SCORES WITH PROPER 0 vs ABS HANDLING
             // ==============================================
@@ -467,6 +483,18 @@ class ViewStudentReportController extends Controller
                 $score->bf_display = $this->formatScore($bf, $originalBf);  // Column g
                 $score->cum_score = $this->formatScore($columnH);  // Column h (Cum)
                 $score->cum_numeric = $columnH; // Store numeric value for grade calculation
+
+                // CRITICAL FIX: Recalculate grade based on actual cumulative numeric value
+                // This ensures grade is correct even if database has outdated grade
+                if ($score->cum_numeric !== null && is_numeric($score->cum_numeric)) {
+                    $score->grade = $this->calculateGrade($score->cum_numeric, $isSenior, $schoolclass ? $schoolclass->classcategory : null);
+
+                    // Also recalculate remark based on new grade
+                    $score->remark = $this->getRemark($score->grade);
+                } else {
+                    $score->grade = '-';
+                    $score->remark = '-';
+                }
 
                 // Store raw numeric values for template calculations
                 $score->ca1_numeric = $ca1;
@@ -546,28 +574,8 @@ class ViewStudentReportController extends Controller
                     $subjectName = $compulsorySubject->subject_name;
                     $score = $scores->firstWhere('subject_id', $subjectId);
 
-                    // Get the grade based on cum_numeric
-                    $grade = '-';
-                    if ($score && $score->cum_numeric !== null) {
-                        if ($isSenior) {
-                            if ($score->cum_numeric >= 75) $grade = 'A1';
-                            elseif ($score->cum_numeric >= 70) $grade = 'B2';
-                            elseif ($score->cum_numeric >= 65) $grade = 'B3';
-                            elseif ($score->cum_numeric >= 60) $grade = 'C4';
-                            elseif ($score->cum_numeric >= 55) $grade = 'C5';
-                            elseif ($score->cum_numeric >= 50) $grade = 'C6';
-                            elseif ($score->cum_numeric >= 45) $grade = 'D7';
-                            elseif ($score->cum_numeric >= 40) $grade = 'E8';
-                            else $grade = 'F9';
-                        } else {
-                            if ($score->cum_numeric >= 70) $grade = 'A';
-                            elseif ($score->cum_numeric >= 60) $grade = 'B';
-                            elseif ($score->cum_numeric >= 50) $grade = 'C';
-                            elseif ($score->cum_numeric >= 40) $grade = 'D';
-                            else $grade = 'F';
-                        }
-                        $score->grade = $grade;
-                    }
+                    // Get the grade based on cum_numeric (already recalculated above)
+                    $grade = $score ? $score->grade : '-';
 
                     $compulsorySubjectLog[] = [
                         'subject_id' => $subjectId,
@@ -777,9 +785,8 @@ class ViewStudentReportController extends Controller
         ]);
 
         $schoolclass = Schoolclass::with('classcategory')->findOrFail($request->schoolclass_id);
-        $grade = $schoolclass->classcategory
-            ? $schoolclass->classcategory->calculateGrade($request->cum)
-            : $this->getDefaultGrade($request->cum);
+        $isSenior = $schoolclass->classcategory ? $schoolclass->classcategory->is_senior : false;
+        $grade = $this->calculateGrade($request->cum, $isSenior, $schoolclass->classcategory);
 
         return response()->json(['grade' => $grade]);
     }
