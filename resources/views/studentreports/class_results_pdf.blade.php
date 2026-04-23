@@ -814,7 +814,7 @@
                         <tr>
                             <td>
                                 <span class="font-bold">This Result was issued on  </span>
-                                <span class="text-dot-space2"> 18th December, 2025</span>
+                                <span class="text-dot-space2"> 27th April, 2026</span>
 
                                 <span class="font-bold">and collected by</span>
                                 <span class="">.......................................</span>
