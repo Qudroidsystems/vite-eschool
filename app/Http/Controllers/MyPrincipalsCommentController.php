@@ -11,7 +11,6 @@ use App\Models\Schoolsession;
 use App\Models\Principalscomment;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use App\Models\Studentpersonalityprofile;
 
 class MyPrincipalsCommentController extends Controller
@@ -22,19 +21,15 @@ class MyPrincipalsCommentController extends Controller
         $this->middleware('permission:Update my-principals-comment', ['only' => ['classBroadsheet', 'updateComments']]);
     }
 
-    // =========================================================================
-    // INDEX – list of assigned classes
-    // =========================================================================
-
     public function index()
     {
         $pagetitle = "My Principal's Comment Assignments";
 
         $assignments = Principalscomment::where('staffId', Auth::id())
-            ->join('schoolclass',    'principalscomments.schoolclassid', '=', 'schoolclass.id')
-            ->leftJoin('schoolarm',  'schoolarm.id',    '=', 'schoolclass.arm')
+            ->join('schoolclass', 'principalscomments.schoolclassid', '=', 'schoolclass.id')
+            ->leftJoin('schoolarm',     'schoolarm.id',     '=', 'schoolclass.arm')
             ->leftJoin('schoolsession', 'principalscomments.sessionid', '=', 'schoolsession.id')
-            ->leftJoin('schoolterm', 'principalscomments.termid',   '=', 'schoolterm.id')
+            ->leftJoin('schoolterm',    'principalscomments.termid',    '=', 'schoolterm.id')
             ->select([
                 'principalscomments.id',
                 'schoolclass.id as schoolclassid',
@@ -50,21 +45,16 @@ class MyPrincipalsCommentController extends Controller
 
         $currentSession = Schoolsession::where('status', 'Current')->first()
             ?? Schoolsession::latest()->first();
-        $currentTerm    = Schoolterm::latest()->first();
+        $currentTerm = Schoolterm::latest()->first();
 
         return view('myprincipalscomment.index')
             ->with(compact('assignments', 'pagetitle', 'currentSession', 'currentTerm'));
     }
 
-    // =========================================================================
-    // CLASS BROADSHEET
-    // =========================================================================
-
     public function classBroadsheet($schoolclassid, $sessionid, $termid)
     {
         $pagetitle = "Principal's Comment & Class Broadsheet";
 
-        // ── Students ──────────────────────────────────────────────────────────
         $students = Studentclass::where('schoolclassid', $schoolclassid)
             ->where('sessionid', $sessionid)
             ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
@@ -72,16 +62,15 @@ class MyPrincipalsCommentController extends Controller
             ->orderBy('studentRegistration.lastname')
             ->orderBy('studentRegistration.firstname')
             ->get([
-                'studentRegistration.id as id',
+                'studentRegistration.id          as id',
                 'studentRegistration.admissionNo as admissionNo',
-                'studentRegistration.firstname as fname',
-                'studentRegistration.lastname as lastname',
-                'studentRegistration.othername as othername',
-                'studentRegistration.gender as gender',
-                'studentpicture.picture as picture',
+                'studentRegistration.firstname   as fname',
+                'studentRegistration.lastname    as lastname',
+                'studentRegistration.othername   as othername',
+                'studentRegistration.gender      as gender',
+                'studentpicture.picture          as picture',
             ]);
 
-        // ── Subjects ──────────────────────────────────────────────────────────
         $subjects = Broadsheets::where('broadsheet_records.schoolclass_id', $schoolclassid)
             ->where('broadsheets.term_id', $termid)
             ->where('broadsheet_records.session_id', $sessionid)
@@ -92,7 +81,7 @@ class MyPrincipalsCommentController extends Controller
             ->pluck('subject.subject')
             ->toArray();
 
-        // ── Term scores (current term only) ───────────────────────────────────
+        // Term scores (current term only)
         $termScores = Broadsheets::where('broadsheet_records.schoolclass_id', $schoolclassid)
             ->where('broadsheets.term_id', $termid)
             ->where('broadsheet_records.session_id', $sessionid)
@@ -104,7 +93,7 @@ class MyPrincipalsCommentController extends Controller
                 'broadsheets.total as total',
             ]);
 
-        // ── Cumulative scores ─────────────────────────────────────────────────
+        // Cumulative scores
         $cumulativeScores = Broadsheets::where('broadsheet_records.schoolclass_id', $schoolclassid)
             ->where('broadsheets.term_id', $termid)
             ->where('broadsheet_records.session_id', $sessionid)
@@ -119,22 +108,22 @@ class MyPrincipalsCommentController extends Controller
         // Alias for blade compatibility
         $scores = $cumulativeScores;
 
-        // ── Existing comments ─────────────────────────────────────────────────
         $profiles = Studentpersonalityprofile::where('schoolclassid', $schoolclassid)
-            ->where('termid', $termid)
+            ->where('termid',    $termid)
             ->where('sessionid', $sessionid)
             ->pluck('principalscomment', 'studentid')
             ->toArray();
 
-        // ── Class meta ────────────────────────────────────────────────────────
-        $schoolclass             = Schoolclass::with('arm')->findOrFail($schoolclassid);
-        $schoolclass->arm_name   = $schoolclass->arm?->arm ?? '';
-        $schoolterm              = Schoolterm::find($termid)?->term    ?? 'N/A';
-        $schoolsession           = Schoolsession::find($sessionid)?->session ?? 'N/A';
-        $classCategory           = $schoolclass->classcategory()->first();
-        $isSenior                = $classCategory?->is_senior ?? false;
+        $schoolclass           = Schoolclass::with('arm')->findOrFail($schoolclassid);
+        $schoolclass->arm_name = $schoolclass->arm?->arm ?? '';
 
-        // ── Grade analysis ────────────────────────────────────────────────────
+        $schoolterm    = Schoolterm::find($termid)?->term         ?? 'N/A';
+        $schoolsession = Schoolsession::find($sessionid)?->session ?? 'N/A';
+
+        $classCategory = $schoolclass->classcategory()->first();
+        $isSenior      = $classCategory?->is_senior ?? false;
+
+        // Raw grades for cumulative analysis
         $rawGrades = Broadsheets::where('broadsheet_records.schoolclass_id', $schoolclassid)
             ->where('broadsheets.term_id', $termid)
             ->where('broadsheet_records.session_id', $sessionid)
@@ -151,7 +140,7 @@ class MyPrincipalsCommentController extends Controller
         $studentGradeAnalysis = [];
 
         foreach ($rawGrades as $row) {
-            $total       = $row->total      ?? 0;
+            $total       = $row->total ?? 0;
             $studentId   = $row->student_id;
             $subjectName = $row->subject_name;
 
@@ -163,12 +152,32 @@ class MyPrincipalsCommentController extends Controller
                 ];
             }
 
-            [$grade, $gradeLetter] = $this->calculateGrade($total, $isSenior);
+            // Grade calculation
+            if ($isSenior) {
+                if ($total >= 75)     { $grade = 'A1'; $gradeLetter = 'A'; }
+                elseif ($total >= 70) { $grade = 'B2'; $gradeLetter = 'B'; }
+                elseif ($total >= 65) { $grade = 'B3'; $gradeLetter = 'B'; }
+                elseif ($total >= 60) { $grade = 'C4'; $gradeLetter = 'C'; }
+                elseif ($total >= 55) { $grade = 'C5'; $gradeLetter = 'C'; }
+                elseif ($total >= 50) { $grade = 'C6'; $gradeLetter = 'C'; }
+                elseif ($total >= 45) { $grade = 'D7'; $gradeLetter = 'D'; }
+                elseif ($total >= 40) { $grade = 'E8'; $gradeLetter = 'E'; }
+                else                  { $grade = 'F9'; $gradeLetter = 'F'; }
+            } else {
+                if ($total >= 70)     { $grade = 'A'; $gradeLetter = 'A'; }
+                elseif ($total >= 60) { $grade = 'B'; $gradeLetter = 'B'; }
+                elseif ($total >= 50) { $grade = 'C'; $gradeLetter = 'C'; }
+                elseif ($total >= 40) { $grade = 'D'; $gradeLetter = 'D'; }
+                else                  { $grade = 'F'; $gradeLetter = 'F'; }
+            }
 
-            $termScore  = $termScores->where('student_id', $studentId)->where('subject_name', $subjectName)->first();
-            $termTotal  = $termScore?->total ?? 0;
+            $termScore = $termScores
+                ->where('student_id',   $studentId)
+                ->where('subject_name', $subjectName)
+                ->first();
+            $termTotal = $termScore?->total ?? 0;
 
-            $gradeEntry = [
+            $studentGrades[$studentId][] = [
                 'subject'      => $subjectName,
                 'score'        => $total,
                 'term_score'   => $termTotal,
@@ -176,8 +185,14 @@ class MyPrincipalsCommentController extends Controller
                 'grade_letter' => $gradeLetter,
             ];
 
-            $studentGrades[$studentId][]                              = $gradeEntry;
-            $studentGradeAnalysis[$studentId]['grades'][]             = $gradeEntry;
+            $studentGradeAnalysis[$studentId]['grades'][] = [
+                'subject'      => $subjectName,
+                'score'        => $total,
+                'term_score'   => $termTotal,
+                'grade'        => $grade,
+                'grade_letter' => $gradeLetter,
+            ];
+
             $studentGradeAnalysis[$studentId]['counts'][$gradeLetter]++;
 
             if (in_array($gradeLetter, ['C', 'D', 'E', 'F'])) {
@@ -191,7 +206,11 @@ class MyPrincipalsCommentController extends Controller
             }
         }
 
-        // ── Standard personalised comments ────────────────────────────────────
+        // ── Standard personalised comments ───────────────────────────────────
+        // These speak DIRECTLY to the student (second person).
+        // Always use "You should" and "your performance" — no gender variables needed.
+        $standardPersonalizedComments = [];
+
         $baseTemplates = [
             "Excellent result {NAME}, keep it up!",
             "A very good result {NAME}, keep it up!",
@@ -202,27 +221,32 @@ class MyPrincipalsCommentController extends Controller
             "{NAME}, wake up and be serious.",
         ];
 
-        $standardPersonalizedComments = [];
-
         foreach ($students as $student) {
-            $studentId   = $student->id;
-            $firstName   = $student->fname;
-            $weakSubjects= $studentGradeAnalysis[$studentId]['weak_subjects'] ?? [];
+            $studentId = $student->id;
+            $firstName = $student->fname;
 
-            // ── FIX: use correct second-person pronouns ────────────────────
-            // Comments speak directly TO the student, so always use "you/your"
-            $advice = '';
+            $weakSubjects = $studentGradeAnalysis[$studentId]['weak_subjects'] ?? [];
+            $advice       = '';
+
             if (!empty($weakSubjects)) {
                 usort($weakSubjects, function ($a, $b) {
                     $order = ['F' => 0, 'E' => 1, 'D' => 2, 'C' => 3];
                     return $order[$a['grade_letter']] <=> $order[$b['grade_letter']];
                 });
 
-                $subjectList  = array_map(fn($ws) => strtoupper($ws['subject']) . ' (' . $ws['grade'] . ')', $weakSubjects);
-                $subjectsText = $this->formatList($subjectList);
+                $subjectList = array_map(
+                    fn($ws) => strtoupper($ws['subject']) . ' (' . $ws['grade'] . ')',
+                    $weakSubjects
+                );
 
-                // Correct: "You should work harder … to improve your performance."
-                $advice = "\n\nYou should work harder in {$subjectsText} to improve your performance.";
+                $subjectsText = count($subjectList) === 1
+                    ? $subjectList[0]
+                    : (count($subjectList) === 2
+                        ? implode(' and ', $subjectList)
+                        : implode(', ', array_slice($subjectList, 0, -1)) . ' and ' . end($subjectList));
+
+                // Second-person — hardcoded, no gender variables
+                $advice = "\n\nYou should work harder in $subjectsText to improve your performance.";
             }
 
             $options = [];
@@ -234,25 +258,41 @@ class MyPrincipalsCommentController extends Controller
             $standardPersonalizedComments[$studentId] = $options;
         }
 
-        // ── Intelligent comments (third-person) ───────────────────────────────
+        // ── Intelligent comments ──────────────────────────────────────────────
+        // These describe the student in THIRD person (He/She, his/her).
         $intelligentComments = [];
 
         foreach ($students as $student) {
-            $studentId   = $student->id;
-            $firstName   = $student->fname;
-            $analysis    = $studentGradeAnalysis[$studentId] ?? ['counts' => [], 'weak_subjects' => []];
+            $studentId = $student->id;
+            $firstName = $student->fname;
+            $analysis  = $studentGradeAnalysis[$studentId] ?? ['counts' => [], 'weak_subjects' => []];
 
-            // Grade summary sentence
             $gradeParts = [];
             foreach (['A', 'B', 'C', 'D', 'E', 'F'] as $g) {
                 $count = $analysis['counts'][$g] ?? 0;
-                if ($count > 0) $gradeParts[] = "$count {$g}" . ($count > 1 ? "'s" : '');
+                if ($count > 0) {
+                    $gradeParts[] = "$count {$g}" . ($count > 1 ? "'s" : '');
+                }
             }
+
             $gradeSummary = !empty($gradeParts)
-                ? $this->formatList($gradeParts)
+                ? (count($gradeParts) === 1
+                    ? $gradeParts[0]
+                    : implode(', ', array_slice($gradeParts, 0, -1)) . ' and ' . end($gradeParts))
                 : 'no grades recorded';
 
-            // Term context
+            $totalGrades    = array_sum($analysis['counts']);
+            $goodGrades     = ($analysis['counts']['A'] ?? 0) + ($analysis['counts']['B'] ?? 0);
+            $percentageGood = $totalGrades > 0 ? ($goodGrades / $totalGrades) * 100 : 0;
+
+            if ($percentageGood >= 80)     $baseComment = "Excellent result {NAME}, keep it up!";
+            elseif ($percentageGood >= 70) $baseComment = "A very good result {NAME}, keep it up!";
+            elseif ($percentageGood >= 60) $baseComment = "Good result {NAME}, keep it up!";
+            elseif ($percentageGood >= 50) $baseComment = "Average result {NAME}, there's still room for improvement next term.";
+            elseif ($percentageGood >= 40) $baseComment = "{NAME}, you can do better next term.";
+            elseif ($percentageGood >= 30) $baseComment = "{NAME}, you need to sit up and be serious.";
+            else                           $baseComment = "{NAME}, wake up and be serious.";
+
             $termInfo = '';
             if (in_array($schoolterm, ['2nd Term', 'Second Term'])) {
                 $termInfo = ' (Cumulative average of 1st and 2nd terms)';
@@ -260,27 +300,12 @@ class MyPrincipalsCommentController extends Controller
                 $termInfo = ' (Cumulative average of 1st, 2nd and 3rd terms)';
             }
 
-            // Base comment from performance %
-            $totalGrades  = array_sum($analysis['counts']);
-            $goodGrades   = ($analysis['counts']['A'] ?? 0) + ($analysis['counts']['B'] ?? 0);
-            $percentGood  = $totalGrades > 0 ? ($goodGrades / $totalGrades) * 100 : 0;
+            $comment = "$firstName has $gradeSummary$termInfo. "
+                . str_replace('{NAME}', $firstName, $baseComment);
 
-            $baseComment = match (true) {
-                $percentGood >= 80 => "Excellent result {NAME}, keep it up!",
-                $percentGood >= 70 => "A very good result {NAME}, keep it up!",
-                $percentGood >= 60 => "Good result {NAME}, keep it up!",
-                $percentGood >= 50 => "Average result {NAME}, there's still room for improvement next term.",
-                $percentGood >= 40 => "{NAME}, you can do better next term.",
-                $percentGood >= 30 => "{NAME}, you need to sit up and be serious.",
-                default            => "{NAME}, wake up and be serious.",
-            };
-
-            $comment = "{$firstName} has {$gradeSummary}{$termInfo}. " . str_replace('{NAME}', $firstName, $baseComment);
-
-            // ── FIX: correct third-person pronouns based on gender ────────────
-            $isMale     = strtoupper($student->gender) === 'MALE';
-            $pronoun    = $isMale ? 'He'  : 'She';
-            $possessive = $isMale ? 'his' : 'her';
+            // Third-person pronouns — gender-aware
+            $pronoun    = strtoupper($student->gender) === 'MALE' ? 'He'  : 'She';
+            $possessive = strtoupper($student->gender) === 'MALE' ? 'his' : 'her';
 
             $weakSubjects = $analysis['weak_subjects'] ?? [];
             if (!empty($weakSubjects)) {
@@ -289,32 +314,40 @@ class MyPrincipalsCommentController extends Controller
                     return $order[$a['grade_letter']] <=> $order[$b['grade_letter']];
                 });
 
-                $subjectList  = array_map(fn($ws) => $ws['subject'] . ' (' . $ws['grade'] . ')', $weakSubjects);
-                $subjectsText = $this->formatList($subjectList);
+                $subjectList = array_map(
+                    fn($ws) => $ws['subject'] . ' (' . $ws['grade'] . ')',
+                    $weakSubjects
+                );
 
-                // Correct: "He/She should work harder … to improve his/her performance."
-                $comment .= "\n\n{$pronoun} should work harder in {$subjectsText} to improve {$possessive} performance.";
+                $subjectsText = count($subjectList) === 1
+                    ? $subjectList[0]
+                    : (count($subjectList) === 2
+                        ? implode(' and ', $subjectList)
+                        : implode(', ', array_slice($subjectList, 0, -1)) . ' and ' . end($subjectList));
+
+                // Third-person: He/She should work harder... to improve his/her performance.
+                $comment .= "\n\n$pronoun should work harder in $subjectsText to improve $possessive performance.";
             }
 
             $intelligentComments[$studentId] = $comment;
         }
 
-        // ── Student totals & positions ────────────────────────────────────────
+        // ── Student analytics ─────────────────────────────────────────────────
         $studentTotals     = [];
         $studentTermTotals = [];
 
         foreach ($students as $student) {
-            $sid      = $student->id;
-            $totalCum = 0;
-            $totalTerm= 0;
-            $count    = 0;
+            $sid       = $student->id;
+            $totalCum  = 0;
+            $totalTerm = 0;
+            $count     = 0;
 
             foreach ($subjects as $subject) {
-                $cumRow  = $cumulativeScores->where('student_id', $sid)->where('subject_name', $subject)->first();
-                $termRow = $termScores->where('student_id', $sid)->where('subject_name', $subject)->first();
+                $cumScore  = $cumulativeScores->where('student_id', $sid)->where('subject_name', $subject)->first();
+                $termScore = $termScores->where('student_id',       $sid)->where('subject_name', $subject)->first();
 
-                if ($cumRow)  { $totalCum  += $cumRow->total;  $count++; }
-                if ($termRow) { $totalTerm += $termRow->total; }
+                if ($cumScore)  { $totalCum  += $cumScore->total;  $count++; }
+                if ($termScore) { $totalTerm += $termScore->total; }
             }
 
             $studentTotals[$sid] = [
@@ -322,84 +355,89 @@ class MyPrincipalsCommentController extends Controller
                 'average'  => $count > 0 ? round($totalCum  / $count, 1) : 0,
                 'subjects' => $count,
             ];
+
             $studentTermTotals[$sid] = [
                 'total'   => $totalTerm,
                 'average' => $count > 0 ? round($totalTerm / $count, 1) : 0,
             ];
         }
 
-        // Positions (by cumulative average)
-        $sortedStudents = $students->sortByDesc(fn($s) => $studentTotals[$s->id]['average'] ?? 0)->values();
-        $positions      = [];
-        $rank           = 1;
-        $prevAvg        = null;
+        // Positions based on cumulative averages
+        $sortedStudents = $students
+            ->sortByDesc(fn($s) => $studentTotals[$s->id]['average'] ?? 0)
+            ->values();
+
+        $positions = [];
+        $rank      = 1;
+        $prevAvg   = null;
 
         foreach ($sortedStudents as $index => $student) {
             $avg = $studentTotals[$student->id]['average'];
-            if ($index > 0 && $avg < $prevAvg) $rank = $index + 1;
+            if ($index > 0 && $avg < $prevAvg) {
+                $rank = $index + 1;
+            }
             $positions[$student->id] = $rank;
             $prevAvg = $avg;
         }
 
-        // Class analytics
         $classTotalScore    = array_sum(array_column($studentTotals, 'total'));
         $classTotalSubjects = array_sum(array_column($studentTotals, 'subjects'));
-        $classAnalytics     = [
-            'average'        => $classTotalSubjects > 0 ? round($classTotalScore / $classTotalSubjects, 1) : 0,
+        $classAverage       = $classTotalSubjects > 0
+            ? round($classTotalScore / $classTotalSubjects, 1)
+            : 0;
+
+        $classAnalytics = [
+            'average'        => $classAverage,
             'total_students' => $students->count(),
         ];
 
-        // Per-student analytics
         $studentAnalytics = [];
         foreach ($students as $student) {
             $sid      = $student->id;
             $analysis = $studentGradeAnalysis[$sid] ?? ['counts' => []];
             $totals   = $studentTotals[$sid];
-            $termTots = $studentTermTotals[$sid];
+            $termTot  = $studentTermTotals[$sid];
             $position = $positions[$sid] ?? null;
 
             $studentAnalytics[$sid] = [
                 'total_score'   => $totals['total'],
                 'average'       => $totals['average'],
-                'term_total'    => $termTots['total'],
-                'term_average'  => $termTots['average'],
+                'term_total'    => $termTot['total'],
+                'term_average'  => $termTot['average'],
                 'subjects'      => $totals['subjects'],
                 'position'      => $position,
-                'position_text' => $position ? $this->ordinal($position) : '-',
+                'position_text' => $position ? $this->getPositionSuffix($position) : '-',
                 'grade_counts'  => $analysis['counts'],
             ];
         }
 
-        return view('myprincipalscomment.classbroadsheet')->with(compact(
-            'students',
-            'subjects',
-            'termScores',
-            'scores',
-            'profiles',
-            'schoolclass',
-            'schoolterm',
-            'schoolsession',
-            'schoolclassid',
-            'sessionid',
-            'termid',
-            'pagetitle',
-            'studentGrades',
-            'studentGradeAnalysis',
-            'intelligentComments',
-            'standardPersonalizedComments',
-            'studentAnalytics',
-            'classAnalytics',
-            'isSenior'
-        ));
+        return view('myprincipalscomment.classbroadsheet')
+            ->with(compact(
+                'students',
+                'subjects',
+                'termScores',
+                'scores',
+                'profiles',
+                'schoolclass',
+                'schoolterm',
+                'schoolsession',
+                'schoolclassid',
+                'sessionid',
+                'termid',
+                'pagetitle',
+                'studentGrades',
+                'studentGradeAnalysis',
+                'intelligentComments',
+                'standardPersonalizedComments',
+                'studentAnalytics',
+                'classAnalytics',
+                'isSenior'
+            ));
     }
-
-    // =========================================================================
-    // UPDATE COMMENTS
-    // =========================================================================
 
     public function updateComments(Request $request, $schoolclassid, $sessionid, $termid)
     {
-        Log::info('Update Comments Request Received', [
+        \Log::info('Update Comments Request Received', [
             'schoolclassid'  => $schoolclassid,
             'sessionid'      => $sessionid,
             'termid'         => $termid,
@@ -410,10 +448,10 @@ class MyPrincipalsCommentController extends Controller
 
         $request->validate(['teacher_comments.*' => 'nullable|string|max:5000']);
 
-        $comments      = $request->input('teacher_comments', []);
-        $updatedCount  = 0;
-        $createdCount  = 0;
-        $skippedCount  = 0;
+        $comments     = $request->input('teacher_comments', []);
+        $updatedCount = 0;
+        $createdCount = 0;
+        $skippedCount = 0;
 
         DB::beginTransaction();
         try {
@@ -457,10 +495,10 @@ class MyPrincipalsCommentController extends Controller
 
             $totalProcessed = $updatedCount + $createdCount;
             $message = $totalProcessed > 0
-                ? "Successfully saved: {$updatedCount} updated, {$createdCount} created. Skipped: {$skippedCount} empty."
-                : "No changes detected. {$skippedCount} empty comments skipped.";
+                ? "Successfully saved: $updatedCount updated, $createdCount created. Skipped: $skippedCount empty comments."
+                : "No changes detected. $skippedCount empty comments skipped.";
 
-            Log::info('Update completed', [
+            \Log::info('Update completed', [
                 'updated' => $updatedCount,
                 'created' => $createdCount,
                 'skipped' => $skippedCount,
@@ -476,8 +514,10 @@ class MyPrincipalsCommentController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error saving principals comments', [
+
+            \Log::error('Error saving principals comments', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'line'  => $e->getLine(),
                 'file'  => $e->getFile(),
             ]);
@@ -489,60 +529,18 @@ class MyPrincipalsCommentController extends Controller
         }
     }
 
-    // =========================================================================
-    // PRIVATE HELPERS
-    // =========================================================================
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
-    /**
-     * Calculate grade and grade letter from a score.
-     */
-    private function calculateGrade(float $total, bool $isSenior): array
+    private function getPositionSuffix(int $num): string
     {
-        if ($isSenior) {
-            return match (true) {
-                $total >= 75 => ['A1', 'A'],
-                $total >= 70 => ['B2', 'B'],
-                $total >= 65 => ['B3', 'B'],
-                $total >= 60 => ['C4', 'C'],
-                $total >= 55 => ['C5', 'C'],
-                $total >= 50 => ['C6', 'C'],
-                $total >= 45 => ['D7', 'D'],
-                $total >= 40 => ['E8', 'E'],
-                default      => ['F9', 'F'],
-            };
+        if ($num % 100 >= 11 && $num % 100 <= 13) {
+            return $num . 'th';
         }
-
-        return match (true) {
-            $total >= 70 => ['A', 'A'],
-            $total >= 60 => ['B', 'B'],
-            $total >= 50 => ['C', 'C'],
-            $total >= 40 => ['D', 'D'],
-            default      => ['F', 'F'],
-        };
-    }
-
-    /**
-     * Format an array into a human-readable list.
-     * e.g. ['a','b','c'] → "a, b and c"
-     */
-    private function formatList(array $items): string
-    {
-        if (count($items) === 1) return $items[0];
-        if (count($items) === 2) return implode(' and ', $items);
-        return implode(', ', array_slice($items, 0, -1)) . ' and ' . end($items);
-    }
-
-    /**
-     * Return ordinal suffix for a number (1st, 2nd, 3rd …).
-     */
-    private function ordinal(int $num): string
-    {
-        if ($num % 100 >= 11 && $num % 100 <= 13) return $num . 'th';
-        return $num . match ($num % 10) {
-            1 => 'st',
-            2 => 'nd',
-            3 => 'rd',
-            default => 'th',
+        return match ($num % 10) {
+            1       => $num . 'st',
+            2       => $num . 'nd',
+            3       => $num . 'rd',
+            default => $num . 'th',
         };
     }
 }
