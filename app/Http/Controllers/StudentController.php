@@ -872,11 +872,18 @@ public function update(Request $request, $id): JsonResponse
         // 1. Core student record
         $student = Student::findOrFail($id);
 
+        // FIX: Handle title field - if empty, set a default based on gender
+        $title = $request->title;
+        if (empty($title)) {
+            $title = $request->gender === 'Male' ? 'Master' : 'Miss';
+            Log::info('Title was empty, set default: ' . $title);
+        }
+
         $student->admissionNo        = $request->admissionMode === 'auto'
             ? $this->generateAdmissionNumber()
             : $request->admissionNo;
         $student->admission_date     = $request->admissionDate;
-        $student->title              = $request->title;
+        $student->title              = $title;  // Use the fixed title value
         $student->admissionYear      = $request->admissionYear;
         $student->firstname          = $request->firstname;
         $student->lastname           = $request->lastname;
@@ -907,6 +914,7 @@ public function update(Request $request, $id): JsonResponse
         $student->registeredBy       = auth()->user()->id;
         $student->save();
 
+        // Rest of your update code remains the same...
         // 2. Studentclass
         $existingClass = Studentclass::where('studentId', $id)
             ->where('termid',    $request->termid)
@@ -995,28 +1003,23 @@ public function update(Request $request, $id): JsonResponse
         ]);
 
         // 8. StudentCurrentTerm - FIXED
-        // First, check if there's already a record for this specific combination
         $existingTerm = StudentCurrentTerm::where('studentId', $id)
             ->where('termId', $request->termid)
             ->where('sessionId', $request->sessionid)
             ->first();
 
         if ($existingTerm) {
-            // Update existing record
             $existingTerm->update([
                 'schoolclassId' => $request->schoolclassid,
                 'is_current'    => true
             ]);
 
-            // Set all other term records for this student to is_current = false
             StudentCurrentTerm::where('studentId', $id)
                 ->where('id', '!=', $existingTerm->id)
                 ->update(['is_current' => false]);
         } else {
-            // Create new record - first, set all existing to false
             StudentCurrentTerm::where('studentId', $id)->update(['is_current' => false]);
 
-            // Then create the new record
             StudentCurrentTerm::create([
                 'studentId'     => $id,
                 'schoolclassId' => $request->schoolclassid,
@@ -1086,7 +1089,6 @@ public function update(Request $request, $id): JsonResponse
         ], 500);
     }
 }
-
 
 
     protected function deleteImage($filename)
