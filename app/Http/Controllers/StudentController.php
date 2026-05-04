@@ -872,18 +872,26 @@ public function update(Request $request, $id): JsonResponse
         // 1. Core student record
         $student = Student::findOrFail($id);
 
-        // FIX: Handle title field - if empty, set a default based on gender
+        // Handle title field - if empty, set default based on gender
         $title = $request->title;
         if (empty($title)) {
             $title = $request->gender === 'Male' ? 'Master' : 'Miss';
-            Log::info('Title was empty, set default: ' . $title);
+            Log::info('Title was empty, set default: ' . $title . ' for student ID: ' . $id);
         }
 
-        $student->admissionNo        = $request->admissionMode === 'auto'
-            ? $this->generateAdmissionNumber()
-            : $request->admissionNo;
+        // Handle admission number
+        if ($request->admissionMode === 'auto') {
+            $admissionResponse = $this->getLastAdmissionNumber(new Request(['year' => $request->admissionYear]));
+            $admissionData = json_decode($admissionResponse->getContent(), true);
+            if ($admissionData['success']) {
+                $student->admissionNo = $admissionData['admissionNo'];
+            }
+        } else {
+            $student->admissionNo = $request->admissionNo;
+        }
+
         $student->admission_date     = $request->admissionDate;
-        $student->title              = $title;  // Use the fixed title value
+        $student->title              = $title;
         $student->admissionYear      = $request->admissionYear;
         $student->firstname          = $request->firstname;
         $student->lastname           = $request->lastname;
@@ -914,10 +922,9 @@ public function update(Request $request, $id): JsonResponse
         $student->registeredBy       = auth()->user()->id;
         $student->save();
 
-        // Rest of your update code remains the same...
-        // 2. Studentclass
+        // 2. Studentclass - Update or create
         $existingClass = Studentclass::where('studentId', $id)
-            ->where('termid',    $request->termid)
+            ->where('termid', $request->termid)
             ->where('sessionid', $request->sessionid)
             ->first();
 
@@ -932,7 +939,7 @@ public function update(Request $request, $id): JsonResponse
             ]);
         }
 
-        // 3. PromotionStatus
+        // 3. PromotionStatus - Update or create
         PromotionStatus::updateOrCreate(
             [
                 'studentId'     => $id,
@@ -946,7 +953,7 @@ public function update(Request $request, $id): JsonResponse
             ]
         );
 
-        // 4. Parent
+        // 4. Parent Registration - Update or create
         $parent = ParentRegistration::firstOrNew(['studentId' => $id]);
         $parent->father_title      = $request->father_title;
         $parent->mother_title      = $request->mother_title;
@@ -961,20 +968,18 @@ public function update(Request $request, $id): JsonResponse
         $parent->parent_address    = $request->parent_address;
         $parent->save();
 
-        // 5. Picture
+        // 5. Student Picture - Update or create
         $picture = Studentpicture::firstOrNew(['studentid' => $id]);
         if ($request->hasFile('avatar')) {
+            // Delete old image if exists
             if ($picture->picture && $picture->picture !== 'unnamed.jpg') {
-                $oldPath = storage_path('app/public/images/student_avatars/' . $picture->picture);
-                if (file_exists($oldPath)) {
-                    try {
-                        Storage::delete('public/images/student_avatars/' . $picture->picture);
-                    } catch (\Exception $e) {
-                        Log::warning('Could not delete old avatar: ' . $e->getMessage());
-                    }
+                try {
+                    Storage::delete('public/images/student_avatars/' . $picture->picture);
+                } catch (\Exception $e) {
+                    Log::warning('Could not delete old avatar: ' . $e->getMessage());
                 }
             }
-            $path            = $this->storeImage($request->file('avatar'), 'images/student_avatars');
+            $path = $this->storeImage($request->file('avatar'), 'images/student_avatars');
             $picture->picture = basename($path);
         }
         if (!$picture->picture) {
@@ -982,7 +987,7 @@ public function update(Request $request, $id): JsonResponse
         }
         $picture->save();
 
-        // 6. Student house
+        // 6. Student House - Update or create
         if ($request->filled('schoolhouseid')) {
             Studenthouse::updateOrCreate(
                 [
@@ -994,7 +999,7 @@ public function update(Request $request, $id): JsonResponse
             );
         }
 
-        // 7. Personality profile
+        // 7. Personality Profile - Create if not exists
         Studentpersonalityprofile::firstOrCreate([
             'studentid'     => $id,
             'schoolclassid' => $request->schoolclassid,
@@ -1002,34 +1007,14 @@ public function update(Request $request, $id): JsonResponse
             'sessionid'     => $request->sessionid,
         ]);
 
-        // 8. StudentCurrentTerm - FIXED
-        $existingTerm = StudentCurrentTerm::where('studentId', $id)
-            ->where('termId', $request->termid)
-            ->where('sessionId', $request->sessionid)
-            ->first();
-
-        if ($existingTerm) {
-            $existingTerm->update([
-                'schoolclassId' => $request->schoolclassid,
-                'is_current'    => true
-            ]);
-
-            StudentCurrentTerm::where('studentId', $id)
-                ->where('id', '!=', $existingTerm->id)
-                ->update(['is_current' => false]);
-        } else {
-            StudentCurrentTerm::where('studentId', $id)->update(['is_current' => false]);
-
-            StudentCurrentTerm::create([
-                'studentId'     => $id,
-                'schoolclassId' => $request->schoolclassid,
-                'termId'        => $request->termid,
-                'sessionId'     => $request->sessionid,
-                'is_current'    => true,
-            ]);
-        }
+        // 8. StudentCurrentTerm - PROPERLY HANDLE UNIQUE CONSTRAINT
+        $this->updateStudentCurrentTerm($id, $request->schoolclassid, $request->termid, $request->sessionid);
 
         DB::commit();
+
+        // Clear cache for this student
+        Cache::forget('student_' . $id);
+        Cache::forget('student_terms_' . $id);
 
         return response()->json([
             'success'  => true,
@@ -1057,15 +1042,15 @@ public function update(Request $request, $id): JsonResponse
                 'nin_number'         => $student->nin_number,
                 'blood_group'        => $student->blood_group,
                 'mother_tongue'      => $student->mother_tongue,
-                'father_name'        => $parent->father          ?? '',
-                'father_phone'       => $parent->father_phone    ?? '',
+                'father_name'        => $parent->father ?? '',
+                'father_phone'       => $parent->father_phone ?? '',
                 'father_occupation'  => $parent->father_occupation ?? '',
-                'mother_name'        => $parent->mother          ?? '',
-                'mother_phone'       => $parent->mother_phone    ?? '',
-                'parent_address'     => $parent->parent_address  ?? '',
+                'mother_name'        => $parent->mother ?? '',
+                'mother_phone'       => $parent->mother_phone ?? '',
+                'parent_address'     => $parent->parent_address ?? '',
                 'student_category'   => $student->student_category,
                 'reason_for_leaving' => $student->reason_for_leaving,
-                'picture'            => $picture->picture        ?? 'unnamed.jpg',
+                'picture'            => $picture->picture ?? 'unnamed.jpg',
                 'state'              => $student->state,
                 'local'              => $student->local,
                 'statusId'           => $student->statusId,
@@ -1080,6 +1065,23 @@ public function update(Request $request, $id): JsonResponse
         Log::error("Student ID {$id} not found during update");
         return response()->json(['success' => false, 'message' => 'Student not found'], 404);
 
+    } catch (\Illuminate\Database\QueryException $e) {
+        DB::rollBack();
+        Log::error("Database error updating student ID {$id}: {$e->getMessage()}");
+
+        // Check if it's a duplicate entry error
+        if ($e->errorInfo[1] == 1062) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Duplicate entry error. The student may already have a current term record. Please try again.',
+            ], 409);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Database error: ' . $e->getMessage(),
+        ], 500);
+
     } catch (\Exception $e) {
         DB::rollBack();
         Log::error("Error updating student ID {$id}: {$e->getMessage()}\n{$e->getTraceAsString()}");
@@ -1087,6 +1089,88 @@ public function update(Request $request, $id): JsonResponse
             'success' => false,
             'message' => 'Failed to update student: ' . $e->getMessage(),
         ], 500);
+    }
+}
+
+/**
+ * Helper method to update student current term while respecting unique constraint
+ */
+private function updateStudentCurrentTerm($studentId, $schoolclassId, $termId, $sessionId)
+{
+    try {
+        // First, check if there's already a record for this specific term/session
+        $existingTerm = StudentCurrentTerm::where('studentId', $studentId)
+            ->where('termId', $termId)
+            ->where('sessionId', $sessionId)
+            ->first();
+
+        if ($existingTerm) {
+            // Before updating, set all other records to is_current = false
+            StudentCurrentTerm::where('studentId', $studentId)
+                ->where('id', '!=', $existingTerm->id)
+                ->update(['is_current' => false]);
+
+            // Now update the existing record
+            $existingTerm->update([
+                'schoolclassId' => $schoolclassId,
+                'is_current'    => true
+            ]);
+
+            Log::info('Updated existing current term record', [
+                'student_id' => $studentId,
+                'record_id' => $existingTerm->id
+            ]);
+        } else {
+            // Check if there's any record marked as current for this student
+            $currentRecord = StudentCurrentTerm::where('studentId', $studentId)
+                ->where('is_current', true)
+                ->first();
+
+            if ($currentRecord) {
+                // Set the existing current record to false
+                $currentRecord->update(['is_current' => false]);
+                Log::info('Unset previous current term record', [
+                    'student_id' => $studentId,
+                    'old_record_id' => $currentRecord->id
+                ]);
+            }
+
+            // Create the new record
+            $newRecord = StudentCurrentTerm::create([
+                'studentId'     => $studentId,
+                'schoolclassId' => $schoolclassId,
+                'termId'        => $termId,
+                'sessionId'     => $sessionId,
+                'is_current'    => true,
+            ]);
+
+            Log::info('Created new current term record', [
+                'student_id' => $studentId,
+                'record_id' => $newRecord->id
+            ]);
+        }
+
+    } catch (\Illuminate\Database\QueryException $e) {
+        // If we still get a duplicate error, do a more aggressive cleanup
+        if ($e->errorInfo[1] == 1062) {
+            Log::warning('Duplicate entry detected, performing aggressive cleanup for student: ' . $studentId);
+
+            // Delete ALL current term records for this student
+            StudentCurrentTerm::where('studentId', $studentId)->delete();
+
+            // Create fresh record
+            StudentCurrentTerm::create([
+                'studentId'     => $studentId,
+                'schoolclassId' => $schoolclassId,
+                'termId'        => $termId,
+                'sessionId'     => $sessionId,
+                'is_current'    => true,
+            ]);
+
+            Log::info('Aggressive cleanup completed for student: ' . $studentId);
+        } else {
+            throw $e;
+        }
     }
 }
 
