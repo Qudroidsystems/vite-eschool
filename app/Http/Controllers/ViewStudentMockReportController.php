@@ -336,7 +336,7 @@ class ViewStudentMockReportController extends Controller
                     'studentRegistration.id as id',
                     'studentRegistration.admissionNo as admissionNo',
                     'studentRegistration.firstname as fname',
-                    'studentRegistration.home_address as homeaddress',
+                    'studentRegistration.home_address2 as homeaddress',
                     'studentRegistration.lastname as lastname',
                     'studentRegistration.othername as othername',
                     'studentRegistration.dateofbirth as dateofbirth',
