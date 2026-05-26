@@ -724,32 +724,28 @@
                                     </td>
 
                                     <!-- Column f - f_score (average of d and e) -->
-                                    <td class="@if(is_numeric($score->f_score) && $score->f_score < 50) highlight-red @endif">
-                                        {{ $score->f_score ?? '-' }}
-                                    </td>
-
                                    {{-- Column f = (d+e)/2 --}}
-                                    <td class="@if(is_numeric($score->f_score) && $score->f_score < 50) highlight-red @endif">
-                                        {{ $score->f_score ?? '-' }}
-                                    </td>
+<td class="@if(is_numeric($score->f_score) && $score->f_score < 50) highlight-red @endif">
+    {{ $score->f_score ?? '-' }}
+</td>
 
-                                    @if($metadata['term'] != 'First Term')
-                                        {{-- Column g = B/F --}}
-                                        <td class="@if($score->bf_display == '0') zero-text @elseif($score->bf_display == 'ABS') abs-text @elseif(is_numeric($score->bf_display) && $score->bf_display < 50) highlight-red @endif">
-                                            {{ $score->bf_display ?? '-' }}
-                                        </td>
-                                        {{-- Column h = Cum = (f+g)/2 --}}
-                                        <td class="@if(is_numeric($score->cum_score) && $score->cum_score < 50) highlight-red @endif">
-                                            {{ $score->cum_score ?? '-' }}
-                                        </td>
-                                    @endif
+@if($metadata['term'] != 'First Term')
+    {{-- Column g = B/F --}}
+    <td class="@if($score->bf_display == '0') zero-text @elseif($score->bf_display == 'ABS') abs-text @elseif(is_numeric($score->bf_display) && $score->bf_display < 50) highlight-red @endif">
+        {{ $score->bf_display ?? '-' }}
+    </td>
+    {{-- Column h = Cum = (f+g)/2 --}}
+    <td class="@if(is_numeric($score->cum_score) && $score->cum_score < 50) highlight-red @endif">
+        {{ $score->cum_score ?? '-' }}
+    </td>
+@endif
 
-                                    {{-- Grade (based on f for Term 1, based on cum for Term 2/3) --}}
-                                    <td class="@if(in_array($score->grade ?? '', ['F', 'F9', 'E', 'E8'])) highlight-red @endif">
-                                        {{ $score->grade ?? '-' }}
-                                    </td>
-                                    <td>{{ $score->position ?? '-' }}</td>
-                                    <td>{{ $score->class_average ?? '-' }}</td>
+{{-- Grade (based on f for Term 1, based on cum for Term 2/3) --}}
+<td class="@if(in_array($score->grade ?? '', ['F', 'F9', 'E', 'E8'])) highlight-red @endif">
+    {{ $score->grade ?? '-' }}
+</td>
+<td>{{ $score->position ?? '-' }}</td>
+<td>{{ $score->class_average ?? '-' }}</td>
 
                                 </tr>
                             @empty
