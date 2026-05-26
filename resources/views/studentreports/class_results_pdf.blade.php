@@ -641,7 +641,7 @@
                 <!-- Results Table - USING CALCULATED PROPERTIES -->
                 <div class="result-table">
                     <table>
-                        <thead>
+                       <thead>
                             <tr>
                                 <th></th>
                                 <th>Subjects</th>
@@ -652,12 +652,12 @@
                                 <th>e</th>
                                 <th>f</th>
                                 @if($metadata['term'] != 'First Term')
-                                <th>g</th>
+                                    <th>g</th>
+                                    <th>h</th>
                                 @endif
-                                <th>{{ $metadata['term'] == 'First Term' ? 'g' : 'h' }}</th>
-                                <th>{{ $metadata['term'] == 'First Term' ? 'h' : 'i' }}</th>
-                                <th>{{ $metadata['term'] == 'First Term' ? 'i' : 'j' }}</th>
-                                <th>{{ $metadata['term'] == 'First Term' ? 'j' : 'k' }}</th>
+                                <th>{{ $metadata['term'] == 'First Term' ? 'g' : 'i' }}</th>  {{-- Grade --}}
+                                <th>{{ $metadata['term'] == 'First Term' ? 'h' : 'j' }}</th>  {{-- PSN --}}
+                                <th>{{ $metadata['term'] == 'First Term' ? 'i' : 'k' }}</th>  {{-- Avg --}}
                             </tr>
                             <tr>
                                 <th>S/N</th>
@@ -667,21 +667,26 @@
                                 <th>T3</th>
                                 <th>
                                     <div class="fraction">
-                                        <div class="numerator">a + b + c</div>
+                                        <div class="numerator">a+b+c</div>
                                         <div class="denominator">3</div>
                                     </div>
                                 </th>
                                 <th>Term Exams</th>
                                 <th>
                                     <div class="fraction">
-                                        <div class="numerator">d + e</div>
+                                        <div class="numerator">d+e</div>
                                         <div class="denominator">2</div>
                                     </div>
                                 </th>
                                 @if($metadata['term'] != 'First Term')
-                                <th>B/F</th>
+                                    <th>B/F</th>
+                                    <th>
+                                        <div class="fraction">
+                                            <div class="numerator">f+g</div>
+                                            <div class="denominator">2</div>
+                                        </div>
+                                    </th>
                                 @endif
-                                <th>{{ $metadata['term'] == 'First Term' ? 'Term Total (f)' : 'Cum (f/g)/2' }}</th>
                                 <th>Grade</th>
                                 <th>PSN</th>
                                 <th>Class Avg</th>
@@ -723,27 +728,27 @@
                                         {{ $score->f_score ?? '-' }}
                                     </td>
 
-                                    @if($metadata['term'] != 'First Term')
-                                    <!-- Column g - bf_display -->
-                                    <td class="@if($score->bf_display == '0') zero-text @elseif($score->bf_display == 'ABS') abs-text @elseif(is_numeric($score->bf_display) && $score->bf_display < 50) highlight-red @endif">
-                                        {{ $score->bf_display ?? '-' }}
+                                   {{-- Column f = (d+e)/2 --}}
+                                    <td class="@if(is_numeric($score->f_score) && $score->f_score < 50) highlight-red @endif">
+                                        {{ $score->f_score ?? '-' }}
                                     </td>
+
+                                    @if($metadata['term'] != 'First Term')
+                                        {{-- Column g = B/F --}}
+                                        <td class="@if($score->bf_display == '0') zero-text @elseif($score->bf_display == 'ABS') abs-text @elseif(is_numeric($score->bf_display) && $score->bf_display < 50) highlight-red @endif">
+                                            {{ $score->bf_display ?? '-' }}
+                                        </td>
+                                        {{-- Column h = Cum = (f+g)/2 --}}
+                                        <td class="@if(is_numeric($score->cum_score) && $score->cum_score < 50) highlight-red @endif">
+                                            {{ $score->cum_score ?? '-' }}
+                                        </td>
                                     @endif
 
-                                    <!-- Column h/Cum - cum_score (average of f and g) -->
-                                    <td class="@if(is_numeric($score->cum_score) && $score->cum_score < 50) highlight-red @endif">
-                                        {{ $score->cum_score ?? '-' }}
-                                    </td>
-
-                                    <!-- Grade -->
+                                    {{-- Grade (based on f for Term 1, based on cum for Term 2/3) --}}
                                     <td class="@if(in_array($score->grade ?? '', ['F', 'F9', 'E', 'E8'])) highlight-red @endif">
                                         {{ $score->grade ?? '-' }}
                                     </td>
-
-                                    <!-- Position -->
                                     <td>{{ $score->position ?? '-' }}</td>
-
-                                    <!-- Class Average -->
                                     <td>{{ $score->class_average ?? '-' }}</td>
 
                                 </tr>
