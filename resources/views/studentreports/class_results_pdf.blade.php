@@ -735,9 +735,9 @@
         {{ $score->bf_display ?? '-' }}
     </td>
     {{-- Column h = Cum = (f+g)/2 --}}
-    <td class="@if(is_numeric($score->cum_score) && $score->cum_score < 50) highlight-red @endif">
+    {{-- <td class="@if(is_numeric($score->cum_score) && $score->cum_score < 50) highlight-red @endif">
         {{ $score->cum_score ?? '-' }}
-    </td>
+    </td> --}}
 @endif
 
 {{-- Grade (based on f for Term 1, based on cum for Term 2/3) --}}
