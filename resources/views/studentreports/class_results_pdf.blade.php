@@ -12,142 +12,136 @@
         }
 
         body {
-            font-family: 'DejaVu Sans', 'Segoe UI', Arial, sans-serif;
-            font-size: 11px;
+            font-family: 'DejaVu Sans', Arial, sans-serif;
+            font-size: 12px;
             line-height: 1.4;
-            color: #333;
             padding: 20px;
         }
 
-        /* Main container */
-        .report-container {
-            max-width: 1280px;
-            margin: 0 auto;
-            background: white;
-        }
-
-        /* Header Section */
-        .school-header {
-            text-align: center;
+        /* Header Styles */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 20px;
-            border-bottom: 2px solid #1a3a5c;
+            border-bottom: 2px solid #000;
             padding-bottom: 15px;
         }
 
+        .school-info {
+            text-align: center;
+            flex: 1;
+        }
+
         .school-name {
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
             letter-spacing: 2px;
-            color: #1a3a5c;
-            margin-bottom: 5px;
         }
 
         .school-motto {
-            font-size: 12px;
+            font-size: 11px;
             font-style: italic;
-            color: #666;
         }
 
         .school-address {
             font-size: 10px;
-            color: #666;
-            margin-top: 5px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
         }
 
         /* Report Title */
         .report-title {
             text-align: center;
-            font-size: 16px;
-            font-weight: bold;
             margin: 15px 0;
-            text-transform: uppercase;
-            color: #1a3a5c;
+            font-size: 14px;
+            font-weight: bold;
+            text-decoration: underline;
         }
 
-        /* Student Info Section */
+        /* Student Info Table */
         .student-info {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
-            font-size: 10px;
+            font-size: 11px;
         }
 
         .student-info td {
-            padding: 5px 8px;
-            border: 1px solid #ddd;
-            vertical-align: top;
+            padding: 4px 8px;
+            border: 1px solid #000;
         }
 
-        .student-info td:first-child {
+        .student-info td.label {
             font-weight: bold;
             width: 180px;
-            background-color: #f9f9f9;
+            background-color: #f5f5f5;
         }
 
         /* Results Table */
-        .result-table {
+        .results-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 20px;
             font-size: 10px;
+            margin-bottom: 20px;
         }
 
-        .result-table th,
-        .result-table td {
-            border: 1px solid #ddd;
-            padding: 6px 4px;
+        .results-table th,
+        .results-table td {
+            border: 1px solid #000;
+            padding: 5px 3px;
             vertical-align: middle;
-            text-align: center;
         }
 
-        .result-table th {
-            background-color: #f5f5f5;
+        .results-table th {
+            background-color: #f0f0f0;
             font-weight: bold;
             text-align: center;
-            padding: 8px 4px;
         }
 
-        .result-table td:first-child,
-        .result-table th:first-child {
-            width: 40px;
+        .results-table td {
+            text-align: center;
         }
 
-        .result-table td:nth-child(2),
-        .result-table th:nth-child(2) {
+        .results-table td.subject-name {
             text-align: left;
-            min-width: 150px;
+            font-weight: 500;
         }
 
         .fraction {
             display: inline-block;
             text-align: center;
-            line-height: 1.3;
+            vertical-align: middle;
+            line-height: 1.2;
         }
 
         .fraction .numerator {
             border-bottom: 1px solid #000;
-            padding: 0 3px;
+            padding: 0 2px;
         }
 
         .fraction .denominator {
-            padding: 0 3px;
+            padding: 0 2px;
         }
 
-        /* Score Highlighting */
+        /* Color Classes */
         .highlight-red {
-            background-color: #ffebee;
-            color: #c62828;
+            background-color: #ffcccc;
+            color: #cc0000;
             font-weight: bold;
-        }
-
-        .zero-text {
-            color: #999;
-            font-style: italic;
         }
 
         .abs-text {
-            color: #ff9800;
-            font-weight: bold;
+            color: #ff6600;
+            font-style: italic;
+        }
+
+        .zero-text {
+            color: #999999;
         }
 
         /* Remarks Section */
@@ -162,39 +156,22 @@
         }
 
         .remarks-table td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            vertical-align: top;
-        }
-
-        .remarks-table td:first-child {
-            width: 200px;
-            font-weight: bold;
-            background-color: #f9f9f9;
-        }
-
-        /* Principal Section */
-        .principal-section {
-            margin-top: 20px;
-            border-top: 1px solid #ddd;
-            padding-top: 15px;
-        }
-
-        .principal-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .principal-table td {
             padding: 8px;
+            border: 1px solid #000;
             vertical-align: top;
+        }
+
+        .remarks-table td.label {
+            font-weight: bold;
+            width: 180px;
+            background-color: #f5f5f5;
         }
 
         .signature-line {
-            border-top: 1px solid #000;
-            width: 200px;
-            margin-top: 30px;
-            padding-top: 5px;
+            display: inline-block;
+            width: 150px;
+            border-bottom: 1px solid #000;
+            margin-left: 10px;
         }
 
         /* Footer */
@@ -202,263 +179,273 @@
             margin-top: 30px;
             text-align: center;
             font-size: 9px;
-            color: #999;
-            border-top: 1px solid #eee;
-            padding-top: 15px;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
         }
 
-        /* Print Styles */
-        @media print {
-            body {
-                padding: 0;
-                margin: 0;
-            }
+        /* Utilities */
+        .text-center {
+            text-align: center;
+        }
 
-            .result-table th {
-                background-color: #f5f5f5 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
+        .text-right {
+            text-align: right;
+        }
 
-            .highlight-red {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
+        .bold {
+            font-weight: bold;
+        }
 
-            .no-break {
-                page-break-inside: avoid;
-            }
+        .mb-10 {
+            margin-bottom: 10px;
+        }
+
+        .mt-20 {
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
     @php
         $isFirstTerm = ($metadata['term_id'] ?? $termid ?? 1) == 1;
-        $isSecondOrThirdTerm = !$isFirstTerm;
         $student = $students->first();
     @endphp
 
-    <div class="report-container">
-        {{-- School Header --}}
-        <div class="school-header">
+    {{-- Header --}}
+    <div class="header">
+        @if(isset($school_logo_path) && $school_logo_path)
+            <img src="{{ $school_logo_path }}" class="logo" alt="School Logo">
+        @endif
+        <div class="school-info">
             <div class="school-name">{{ $schoolInfo->school_name ?? 'TOPCLASS COLLEGE' }}</div>
             <div class="school-motto">{{ $schoolInfo->school_motto ?? 'Developing the total child' }}</div>
             <div class="school-address">{{ $schoolInfo->school_address ?? '39, Okegbala Street, Ondo.' }}</div>
-            <div class="school-address">
-                Phone: {{ $schoolInfo->school_phone ?? '+234806 770 6684' }} |
-                Email: {{ $schoolInfo->school_email ?? 'info@topclasscollege.ng' }}
-            </div>
+            <div class="school-contact">Phone: {{ $schoolInfo->school_phone ?? '+234806 770 6684' }} | Email: {{ $schoolInfo->school_email ?? 'info@topclasscollege.ng' }}</div>
         </div>
+        @if(isset($student_image_path) && $student_image_path)
+            <img src="{{ $student_image_path }}" class="logo" alt="Student Photo">
+        @else
+            <div style="width:80px;"></div>
+        @endif
+    </div>
 
-        {{-- Report Title --}}
-        <div class="report-title">
-            {{ $metadata['term'] ?? $schoolterm ?? 'Term' }} TERMINAL PROGRESS REPORT<br>
-            {{ $metadata['session'] ?? $schoolsession ?? '2025/2026' }} ACADEMIC SESSION
-        </div>
+    {{-- Report Title --}}
+    <div class="report-title">
+        {{ $metadata['term'] ?? $schoolterm ?? 'FIRST' }} TERM {{ $metadata['session'] ?? $schoolsession ?? '' }} ACADEMIC SESSION TERMINAL PROGRESS REPORT
+    </div>
 
-        {{-- Student Information --}}
-        <table class="student-info">
-            <tr>
-                <td>Name:</td>
-                <td>{{ $student->lastname ?? '' }} {{ $student->fname ?? '' }} {{ $student->othername ?? '' }}</td>
-                <td>Session:</td>
-                <td>{{ $metadata['session'] ?? $schoolsession ?? '-' }}</td>
-            </tr>
-            <tr>
-                <td>Class:</td>
-                <td>{{ $schoolclass->schoolclass ?? 'N/A' }} {{ $schoolclass->armRelation->arm ?? '' }}</td>
-                <td>Term:</td>
-                <td>{{ $metadata['term'] ?? $schoolterm ?? '-' }}</td>
-            </tr>
-            <tr>
-                <td>DOB:</td>
-                <td>{{ $student->dateofbirth ?? '-' }}</td>
-                <td>Adm No:</td>
-                <td>{{ $student->admissionNo ?? '-' }}</td>
-            </tr>
-            <tr>
-                <td>Sex:</td>
-                <td>{{ $student->gender ?? '-' }}</td>
-                <td>Students in Class:</td>
-                <td>{{ $numberOfStudents ?? 0 }}</td>
-            </tr>
-        </table>
+    {{-- Student Information --}}
+    <table class="student-info">
+        <tr>
+            <td class="label">Name:</td>
+            <td>{{ $student->lastname ?? '' }} {{ $student->fname ?? '' }} {{ $student->othername ?? '' }}</td>
+            <td class="label">Session:</td>
+            <td>{{ $metadata['session'] ?? $schoolsession ?? '' }}</td>
+            <td class="label">Term:</td>
+            <td>{{ $metadata['term'] ?? $schoolterm ?? '' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Class:</td>
+            <td>{{ $schoolclass->schoolclass ?? '' }} {{ $schoolclass->armRelation->arm ?? '' }}</td>
+            <td class="label">DOB:</td>
+            <td>{{ $student->dateofbirth ?? '' }}</td>
+            <td class="label">Adm No:</td>
+            <td>{{ $student->admissionNo ?? '' }}</td>
+        </tr>
+        <tr>
+            <td class="label">Sex:</td>
+            <td>{{ $student->gender ?? '' }}</td>
+            <td class="label">Date School Opened:</td>
+            <td>5th January, 2026</td>
+            <td class="label">Times School Opened:</td>
+            <td>102</td>
+        </tr>
+        <tr>
+            <td class="label">Students in Class:</td>
+            <td colspan="5">{{ $numberOfStudents ?? 0 }}</td>
+        </tr>
+    </table>
 
-        {{-- Results Table --}}
-        <table class="result-table">
-            <thead>
-                {{-- First header row (letter labels) --}}
-                <tr>
-                    <th rowspan="2">S/N</th>
-                    <th rowspan="2">Subjects</th>
-                    <th colspan="3">Continuous Assessment</th>
-                    <th rowspan="2">d</th>
-                    <th rowspan="2">e</th>
-                    <th rowspan="2">f</th>
-                    @if($isSecondOrThirdTerm)
-                        <th rowspan="2">g</th>
-                        <th rowspan="2">h</th>
-                    @endif
-                    <th rowspan="2">{{ $isFirstTerm ? 'g' : 'i' }}</th>
-                    <th rowspan="2">{{ $isFirstTerm ? 'h' : 'j' }}</th>
-                    <th rowspan="2">{{ $isFirstTerm ? 'i' : 'k' }}</th>
-                </tr>
-                <tr>
-                    <th>a</th>
-                    <th>b</th>
-                    <th>c</th>
-                </tr>
-                {{-- Second header row (descriptive labels) --}}
-                <tr>
-                    <th colspan="3" style="display: none;"></th>
+    {{-- Results Table --}}
+    <table class="results-table">
+        <thead>
+            {{-- First header row (letter labels) --}}
+            <tr>
+                <th rowspan="2">S/N</th>
+                <th rowspan="2">Subjects</th>
+                <th colspan="3">Continuous Assessment</th>
+                <th rowspan="2">d</th>
+                <th rowspan="2">e</th>
+                <th rowspan="2">f</th>
+                @if(!$isFirstTerm)
+                    <th rowspan="2">g</th>
+                    <th rowspan="2">h</th>
+                @endif
+                <th rowspan="2">{{ $isFirstTerm ? 'g' : 'i' }}</th>
+                <th rowspan="2">{{ $isFirstTerm ? 'h' : 'j' }}</th>
+                <th rowspan="2">{{ $isFirstTerm ? 'i' : 'k' }}</th>
+            </tr>
+            <tr>
+                <th>a</th>
+                <th>b</th>
+                <th>c</th>
+            </tr>
+
+            {{-- Second header row (descriptive labels) --}}
+            <tr>
+                <th></th>
+                <th></th>
+                <th>T1</th>
+                <th>T2</th>
+                <th>T3</th>
+                <th>
+                    <div class="fraction">
+                        <div class="numerator">a+b+c</div>
+                        <div class="denominator">3</div>
+                    </div>
+                </th>
+                <th>Term Exams</th>
+                <th>
+                    <div class="fraction">
+                        <div class="numerator">d+e</div>
+                        <div class="denominator">2</div>
+                    </div>
+                </th>
+                @if(!$isFirstTerm)
+                    <th>B/F</th>
                     <th>
                         <div class="fraction">
-                            <div class="numerator">a+b+c</div>
-                            <div class="denominator">3</div>
-                        </div>
-                    </th>
-                    <th>Term Exams</th>
-                    <th>
-                        <div class="fraction">
-                            <div class="numerator">d+e</div>
+                            <div class="numerator">f+g</div>
                             <div class="denominator">2</div>
                         </div>
                     </th>
-                    @if($isSecondOrThirdTerm)
-                        <th>B/F</th>
-                        <th>
-                            <div class="fraction">
-                                <div class="numerator">f+g</div>
-                                <div class="denominator">2</div>
-                            </div>
-                        </th>
-                    @endif
-                    <th>Grade</th>
-                    <th>PSN</th>
-                    <th>Class Avg</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                @forelse($scores as $index => $score)
+                @endif
+                <th>Grade</th>
+                <th>PSN</th>
+                <th>Class Avg</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($scores as $index => $score)
                 <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td style="text-align: left;">{{ $score->subject_name ?? $score->subject ?? '-' }}</td>
+                    {{-- S/N --}}
+                    <td class="text-center">{{ $index + 1 }}</td>
 
-                    {{-- Column a: T1 / CA1 --}}
-                    <td class="@if(is_numeric($score->ca1_numeric) && $score->ca1_numeric < 50) highlight-red @endif">
+                    {{-- Subject Name --}}
+                    <td class="subject-name">{{ $score->subject_name ?? 'N/A' }}</td>
+
+                    {{-- Column a: T1 (CA1) --}}
+                    <td class="@if($score->ca1_display == 'ABS') abs-text @elseif(is_numeric($score->ca1_display) && $score->ca1_display < 50) highlight-red @endif">
                         {{ $score->ca1_display ?? '-' }}
                     </td>
 
-                    {{-- Column b: T2 / CA2 --}}
-                    <td class="@if(is_numeric($score->ca2_numeric) && $score->ca2_numeric < 50) highlight-red @endif">
+                    {{-- Column b: T2 (CA2) --}}
+                    <td class="@if($score->ca2_display == 'ABS') abs-text @elseif(is_numeric($score->ca2_display) && $score->ca2_display < 50) highlight-red @endif">
                         {{ $score->ca2_display ?? '-' }}
                     </td>
 
-                    {{-- Column c: T3 / CA3 --}}
-                    <td class="@if(is_numeric($score->ca3_numeric) && $score->ca3_numeric < 50) highlight-red @endif">
+                    {{-- Column c: T3 (CA3) --}}
+                    <td class="@if($score->ca3_display == 'ABS') abs-text @elseif(is_numeric($score->ca3_display) && $score->ca3_display < 50) highlight-red @endif">
                         {{ $score->ca3_display ?? '-' }}
                     </td>
 
-                    {{-- Column d: CA Average = (a+b+c)/3 --}}
-                    <td>{{ $score->ca_average ?? '-' }}</td>
+                    {{-- Column d: Average of available CAs (a+b+c)/3 --}}
+                    <td class="@if(is_numeric($score->ca_average) && $score->ca_average < 50) highlight-red @endif">
+                        {{ $score->ca_average ?? '-' }}
+                    </td>
 
                     {{-- Column e: Term Exams --}}
-                    <td class="@if(is_numeric($score->exam_numeric) && $score->exam_numeric < 50) highlight-red @endif">
+                    <td class="@if($score->exam_display == 'ABS') abs-text @elseif(is_numeric($score->exam_display) && $score->exam_display < 50) highlight-red @endif">
                         {{ $score->exam_display ?? '-' }}
                     </td>
 
-                    {{-- Column f = (d+e)/2 --}}
+                    {{-- Column f: (d+e)/2 --}}
                     <td class="@if(is_numeric($score->f_score) && $score->f_score < 50) highlight-red @endif">
                         {{ $score->f_score ?? '-' }}
                     </td>
 
-                    @if($isSecondOrThirdTerm)
-                        {{-- Column g = B/F (carryover from previous term) --}}
+                    {{-- Columns g & h: Only for Term 2 and Term 3 --}}
+                    @if(!$isFirstTerm)
+                        {{-- Column g: B/F (carryover from previous term) --}}
                         <td class="@if($score->bf_display == '0') zero-text @elseif($score->bf_display == 'ABS') abs-text @elseif(is_numeric($score->bf_display) && $score->bf_display < 50) highlight-red @endif">
                             {{ $score->bf_display ?? '-' }}
                         </td>
 
-                        {{-- Column h = Cumulative = (f+g)/2 --}}
+                        {{-- Column h: Cumulative = (f+g)/2 --}}
                         <td class="@if(is_numeric($score->cum_score) && $score->cum_score < 50) highlight-red @endif">
                             {{ $score->cum_score ?? '-' }}
                         </td>
                     @endif
 
-                    {{-- Grade (based on f for Term 1, based on cum for Term 2/3) --}}
+                    {{-- Grade Column --}}
                     <td class="@if(in_array($score->grade ?? '', ['F', 'F9', 'E', 'E8'])) highlight-red @endif">
                         {{ $score->grade ?? '-' }}
                     </td>
 
-                    {{-- Position (PSN) --}}
-                    <td>{{ $score->position ?? '-' }}</td>
+                    {{-- Position/PSN Column --}}
+                    <td class="text-center">
+                        {{ $score->position ?? '-' }}
+                    </td>
 
-                    {{-- Class Average --}}
-                    <td>{{ $score->class_average ?? '-' }}</td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="{{ $isFirstTerm ? 11 : 13 }}" style="text-align: center;">
-                        No subject records found for this student.
+                    {{-- Class Average Column --}}
+                    <td class="text-center">
+                        {{ $score->class_average ?? '-' }}
                     </td>
                 </tr>
-                @endforelse
-            </tbody>
-        </table>
+            @empty
+                <tr>
+                    <td colspan="{{ $isFirstTerm ? 11 : 13 }}" class="text-center">
+                        No results found for this student.
+                    </td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
 
-        {{-- Teacher and Counselor Remarks --}}
+    {{-- Remarks Section --}}
+    <div class="remarks-section">
         <table class="remarks-table">
             <tr>
-                <td>Class Teacher's Remark:</td>
-                <td>
-                    {{ $studentpp->class_teacher_remark ?? 'No comment' }}
-                    <div style="margin-top: 20px;">
-                        Signature/Date: _______________________
-                    </div>
+                <td class="label">Class Teacher's Remark:</td>
+                <td colspan="3">
+                    {{ $studentpp->class_teacher_remark ?? 'NO INFO' }}
+                    <span class="signature-line"></span> Signature/Date
                 </td>
             </tr>
             <tr>
-                <td>Guidance Counselor's Remark:</td>
-                <td>
-                    {{ $studentpp->guidance_counselor_remark ?? 'No comment' }}
-                    <div style="margin-top: 20px;">
-                        Signature/Date: _______________________
-                    </div>
+                <td class="label">Guidance Counselor's Remark:</td>
+                <td colspan="3">
+                    {{ $studentpp->guidance_counselor_remark ?? 'NO INFO' }}
+                    <span class="signature-line"></span> Signature/Date
                 </td>
             </tr>
+            <tr>
+                <td class="label">Principal's Remark & Promotion Status:</td>
+                <td colspan="3">
+                    {{ $studentpp->principalscomment ?? 'NO INFO' }}
+                </td>
+            </tr>
+            @if($isFirstTerm || $isSecondTerm)
+                <tr>
+                    <td class="label">Promotion Status:</td>
+                    <td colspan="3">
+                        Not applicable for this term
+                    </td>
+                </tr>
+            @else
+                <tr>
+                    <td class="label">Promotion Status:</td>
+                    <td colspan="3">
+                        <strong>{{ $promotionStatusValue ?? 'PENDING' }}</strong>
+                    </td>
+                </tr>
+            @endif
         </table>
+    </div>
 
-        {{-- Principal's Remark --}}
-        <div class="principal-section">
-            <table class="principal-table">
-                <tr>
-                    <td style="font-weight: bold; width: 180px;">Principal's Remark:</td>
-                    <td>{{ $studentpp->principalscomment ?? 'No comment' }}</td>
-                </tr>
-                <tr>
-                    <td style="font-weight: bold;">Promotion Status:</td>
-                    <td>
-                        <strong>{{ $promotionStatusValue ?? 'Not applicable for this term' }}</strong>
-                    </td>
-                </tr>
-                <tr>
-                    <td>&nbsp;</td>
-                    <td>
-                        <div style="margin-top: 30px;">
-                            <div style="float: right; text-align: center;">
-                                <div class="signature-line"></div>
-                                <div>Principal's Signature/Date</div>
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        {{-- Footer --}}
-        <div class="footer">
-            Generated on {{ date('F j, Y g:i A') }}
-        </div>
+    {{-- Footer --}}
+    <div class="footer">
+        Generated on {{ date('d-m-Y H:i:s') }} | Printed from TopClass College Portal
     </div>
 </body>
 </html>
