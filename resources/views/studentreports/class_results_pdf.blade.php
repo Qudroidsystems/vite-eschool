@@ -481,14 +481,16 @@
 </head>
 <body>
     @foreach ($allStudentData as $index => $studentData)
+        @php
+            $isFirstTerm = ($studentData['termid'] ?? 1) == 1;
+            $schoolInfo = $studentData['schoolInfo'] ?? null;
+            $student = $studentData['students'] && $studentData['students']->isNotEmpty() ? $studentData['students']->first() : null;
+            $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
+        @endphp
         <div class="student-section">
             <div class="student-section-inner">
                 <!-- Header Section -->
                 <div class="header">
-                    @php
-                        $schoolInfo = $studentData['schoolInfo'] ?? null;
-                        $student = $studentData['students'] && $studentData['students']->isNotEmpty() ? $studentData['students']->first() : null;
-                    @endphp
                     <table class="header-table">
                         <tr>
                             <td width="25%">
@@ -523,7 +525,7 @@
                             </td>
                             <td width="25%">
                                 <div class="photo-frame">
-                                    @if ($studentData['students'] && $studentData['students']->isNotEmpty() && $student->picture)
+                                    @if ($student && $student->picture)
                                         <img src="{{ $studentData['student_image_path'] ?? public_path('storage/student_avatars/unnamed.jpg') }}" alt="{{ $student->fname ?? 'Student' }}'s picture">
                                     @else
                                         <img src="{{ public_path('storage/student_avatars/unnamed.jpg') }}" alt="Default Photo">
@@ -534,7 +536,7 @@
                     </table>
                     <div class="header-divider"></div>
                     <div class="header-divider2"></div>
-                    <div class="report-title">{{ strtoupper($metadata['term']) }} {{ strtoupper($metadata['session']) }} ACADEMIC SESSION TERMINAL PROGRESS REPORT</div>
+                    <div class="report-title">{{ strtoupper($studentData['schoolterm'] ?? $metadata['term'] ?? 'FIRST') }} {{ strtoupper($studentData['schoolsession'] ?? $metadata['session'] ?? '') }} ACADEMIC SESSION TERMINAL PROGRESS REPORT</div>
                 </div>
 
                 <!-- Student Information Section -->
@@ -542,11 +544,7 @@
                     <table class="student-info-table">
                         <tr>
                             <td width="100%">
-                                @if ($studentData['students'] && $studentData['students']->isNotEmpty())
-                                    @php
-                                        $student = $studentData['students']->first();
-                                        $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
-                                    @endphp
+                                @if ($student)
                                     <table style="width: 100%; table-layout: fixed;">
                                         <tr>
                                             <td width="41%">
@@ -638,10 +636,10 @@
                     </table>
                 </div>
 
-                <!-- Results Table - USING CALCULATED PROPERTIES -->
+                <!-- Results Table -->
                 <div class="result-table">
                     <table>
-                       <thead>
+                        <thead>
                             <tr>
                                 <th></th>
                                 <th>Subjects</th>
@@ -651,13 +649,13 @@
                                 <th>d</th>
                                 <th>e</th>
                                 <th>f</th>
-                                @if($metadata['term'] != 'First Term')
+                                @if(!$isFirstTerm)
                                     <th>g</th>
                                     <th>h</th>
                                 @endif
-                                <th>{{ $metadata['term'] == 'First Term' ? 'g' : 'i' }}</th>  {{-- Grade --}}
-                                <th>{{ $metadata['term'] == 'First Term' ? 'h' : 'j' }}</th>  {{-- PSN --}}
-                                <th>{{ $metadata['term'] == 'First Term' ? 'i' : 'k' }}</th>  {{-- Avg --}}
+                                <th>{{ $isFirstTerm ? 'g' : 'i' }}</th>
+                                <th>{{ $isFirstTerm ? 'h' : 'j' }}</th>
+                                <th>{{ $isFirstTerm ? 'i' : 'k' }}</th>
                             </tr>
                             <tr>
                                 <th>S/N</th>
@@ -678,7 +676,7 @@
                                         <div class="denominator">2</div>
                                     </div>
                                 </th>
-                                @if($metadata['term'] != 'First Term')
+                                @if(!$isFirstTerm)
                                     <th>B/F</th>
                                     <th>
                                         <div class="fraction">
@@ -693,12 +691,12 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse ($studentData['scores'] as $index => $score)
+                            @forelse ($studentData['scores'] as $idx => $score)
                                 <tr>
-                                    <td>{{ $index + 1 }}</td>
+                                    <td>{{ $idx + 1 }}</td>
                                     <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td>
 
-                                    <!-- T1 - ca1_display (handles ABS vs 0) -->
+                                    <!-- T1 - ca1_display -->
                                     <td class="@if($score->ca1_display == '0') zero-text @elseif($score->ca1_display == 'ABS') abs-text @elseif(is_numeric($score->ca1_display) && $score->ca1_display < 50) highlight-red @endif">
                                         {{ $score->ca1_display ?? '-' }}
                                     </td>
@@ -713,7 +711,7 @@
                                         {{ $score->ca3_display ?? '-' }}
                                     </td>
 
-                                    <!-- Column d - ca_average (calculated from available CAs) -->
+                                    <!-- Column d - ca_average -->
                                     <td class="@if(is_numeric($score->ca_average) && $score->ca_average < 50) highlight-red @endif">
                                         {{ $score->ca_average ?? '-' }}
                                     </td>
@@ -723,34 +721,32 @@
                                         {{ $score->exam_display ?? '-' }}
                                     </td>
 
-                                    <!-- Column f - f_score (average of d and e) -->
-                                   {{-- Column f = (d+e)/2 --}}
-<td class="@if(is_numeric($score->f_score) && $score->f_score < 50) highlight-red @endif">
-    {{ $score->f_score ?? '-' }}
-</td>
+                                    <!-- Column f = (d+e)/2 -->
+                                    <td class="@if(is_numeric($score->f_score) && $score->f_score < 50) highlight-red @endif">
+                                        {{ $score->f_score ?? '-' }}
+                                    </td>
 
-@if($metadata['term'] != 'First Term')
-    {{-- Column g = B/F --}}
-    <td class="@if($score->bf_display == '0') zero-text @elseif($score->bf_display == 'ABS') abs-text @elseif(is_numeric($score->bf_display) && $score->bf_display < 50) highlight-red @endif">
-        {{ $score->bf_display ?? '-' }}
-    </td>
-    {{-- Column h = Cum = (f+g)/2 --}}
-    {{-- <td class="@if(is_numeric($score->cum_score) && $score->cum_score < 50) highlight-red @endif">
-        {{ $score->cum_score ?? '-' }}
-    </td> --}}
-@endif
+                                    @if(!$isFirstTerm)
+                                        {{-- Column g = B/F --}}
+                                        <td class="@if($score->bf_display == '0') zero-text @elseif($score->bf_display == 'ABS') abs-text @elseif(is_numeric($score->bf_display) && $score->bf_display < 50) highlight-red @endif">
+                                            {{ $score->bf_display ?? '-' }}
+                                        </td>
+                                        {{-- Column h = Cumulative = (f+g)/2 --}}
+                                        <td class="@if(is_numeric($score->cum_score) && $score->cum_score < 50) highlight-red @endif">
+                                            {{ $score->cum_score ?? '-' }}
+                                        </td>
+                                    @endif
 
-{{-- Grade (based on f for Term 1, based on cum for Term 2/3) --}}
-<td class="@if(in_array($score->grade ?? '', ['F', 'F9', 'E', 'E8'])) highlight-red @endif">
-    {{ $score->grade ?? '-' }}
-</td>
-<td>{{ $score->position ?? '-' }}</td>
-<td>{{ $score->class_average ?? '-' }}</td>
-
+                                    {{-- Grade --}}
+                                    <td class="@if(in_array($score->grade ?? '', ['F', 'F9', 'E', 'E8'])) highlight-red @endif">
+                                        {{ $score->grade ?? '-' }}
+                                    </td>
+                                    <td>{{ $score->position ?? '-' }}</td>
+                                    <td>{{ $score->class_average ?? '-' }}</td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="{{ $metadata['term'] == 'First Term' ? 12 : 13 }}" class="text-center">No scores available.</td>
+                                    <td colspan="{{ $isFirstTerm ? 12 : 14 }}" class="text-center">No scores available.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -760,7 +756,6 @@
                 <!-- Remarks Section -->
                 <table class="remarks-table">
                     <tbody>
-                        <!-- Row 1: Class Teacher & Guidance Counselor side by side -->
                         <tr>
                             <td width="50%">
                                 <div class="h6">Class Teacher's Remark Signature/Date</div>
@@ -775,8 +770,6 @@
                                 </div>
                             </td>
                         </tr>
-
-                        <!-- Row 2: Principal's Remark & Promotion Status (full width) -->
                         <tr>
                             <td colspan="2">
                                 <div class="h6">Principal's Remark & Promotion Status</div>
@@ -815,7 +808,7 @@
                         <tr>
                             <td>
                                 <span class="font-bold">This Result was issued on  </span>
-                                <span class="text-dot-space2"> 27th April, 2026</span>
+                                <span class="text-dot-space2"> 27th April, 2026</span>
 
                                 <span class="font-bold">and collected by</span>
                                 <span class="">.......................................</span>
