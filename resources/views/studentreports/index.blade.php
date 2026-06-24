@@ -51,7 +51,7 @@
                                 <div class="row g-3">
                                     <div class="col-xxl-3 col-sm-6">
                                         <select class="form-control" id="idclass" name="schoolclassid">
-                                            <option value="ALL">Select Class</option>
+                                            <option value="ALL">All Classes</option>
                                             @foreach ($schoolclasses as $class)
                                                 <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->arm }}</option>
                                             @endforeach
@@ -59,7 +59,7 @@
                                     </div>
                                     <div class="col-xxl-3 col-sm-6">
                                         <select class="form-control" id="idsession" name="sessionid">
-                                            <option value="ALL">Select Session</option>
+                                            <option value="ALL">All Sessions</option>
                                             @foreach ($schoolsessions as $session)
                                                 <option value="{{ $session->id }}">{{ $session->session }}</option>
                                             @endforeach
@@ -67,7 +67,7 @@
                                     </div>
                                     <div class="col-xxl-3 col-sm-6" id="termSelectContainer" style="display: none;">
                                         <select class="form-control" id="idterm" name="termid">
-                                            <option value="ALL">Select Term</option>
+                                            <option value="ALL">All Terms</option>
                                             <option value="1">First Term</option>
                                             <option value="2">Second Term</option>
                                             <option value="3">Third Term</option>
@@ -186,7 +186,8 @@
         const termSelectContainer = document.getElementById("termSelectContainer");
         const printAllBtn = document.getElementById("printAllBtn");
 
-        searchBtn.style.display = (classSelect.value !== 'ALL' && sessionSelect.value !== 'ALL') ? 'block' : 'none';
+        // Show search button if class OR session is selected (or both)
+        searchBtn.style.display = (classSelect.value !== 'ALL' || sessionSelect.value !== 'ALL') ? 'block' : 'none';
         termSelectContainer.style.display = 'none';
         printAllBtn.style.display = 'none';
         updateSelectionAlert();
@@ -196,8 +197,11 @@
         const termSelectContainer = document.getElementById("termSelectContainer");
         const printAllBtn = document.getElementById("printAllBtn");
         const studentCount = parseInt(document.getElementById("studentcount").innerText);
+        const classSelect = document.getElementById("idclass");
+        const sessionSelect = document.getElementById("idsession");
 
-        termSelectContainer.style.display = studentCount > 0 ? 'block' : 'none';
+        // Show term select only when both class and session are selected AND there are students
+        termSelectContainer.style.display = (classSelect.value !== 'ALL' && sessionSelect.value !== 'ALL' && studentCount > 0) ? 'block' : 'none';
         printAllBtn.style.display = 'none';
         updateSelectionAlert();
     }
@@ -206,8 +210,10 @@
         const termSelect = document.getElementById("idterm");
         const printAllBtn = document.getElementById("printAllBtn");
         const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+        const classSelect = document.getElementById("idclass");
+        const sessionSelect = document.getElementById("idsession");
 
-        printAllBtn.style.display = (termSelect.value !== 'ALL' && checkedCheckboxes.length > 0) ? 'block' : 'none';
+        printAllBtn.style.display = (classSelect.value !== 'ALL' && sessionSelect.value !== 'ALL' && termSelect.value !== 'ALL' && checkedCheckboxes.length > 0) ? 'block' : 'none';
         updateSelectionAlert();
     }
 
@@ -245,8 +251,9 @@
         const termValue = termSelect.value;
         const searchValue = searchInput ? searchInput.value.trim() : '';
 
-        if (classValue === 'ALL' || sessionValue === 'ALL') {
-            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="11" class="text-center">Select class and session to view students.</td></tr>';
+        // Allow search when either class or session is selected
+        if (classValue === 'ALL' && sessionValue === 'ALL') {
+            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="11" class="text-center">Select a class or session to view students.</td></tr>';
             document.getElementById('pagination-container').innerHTML = '';
             document.getElementById('studentcount').innerText = '0';
             document.getElementById('printAllBtn').style.display = 'none';
@@ -255,7 +262,7 @@
             Swal.fire({
                 icon: "warning",
                 title: "Missing Selection",
-                text: "Please select a valid class and session.",
+                text: "Please select at least a class or a session.",
                 showConfirmButton: true
             });
             return;
@@ -293,7 +300,7 @@
                 Swal.fire({
                     icon: "info",
                     title: "No Results",
-                    text: "No students found for the selected class and session.",
+                    text: "No students found for the selected criteria.",
                     showConfirmButton: true
                 });
             }
@@ -496,22 +503,38 @@
         classSelect.addEventListener("change", function () {
             updateSearchButtonVisibility();
             termSelect.value = 'ALL';
-            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="11" class="text-center">Select class and session to view students.</td></tr>';
-            document.getElementById('pagination-container').innerHTML = '';
-            document.getElementById('studentcount').innerText = '0';
+            // If class is ALL and session is ALL, show all students
+            if (this.value === 'ALL' && sessionSelect.value === 'ALL') {
+                filterData();
+            } else if (this.value !== 'ALL' || sessionSelect.value !== 'ALL') {
+                filterData();
+            } else {
+                document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="11" class="text-center">Select class and session to view students.</td></tr>';
+                document.getElementById('pagination-container').innerHTML = '';
+                document.getElementById('studentcount').innerText = '0';
+            }
         });
 
         sessionSelect.addEventListener("change", function () {
             updateSearchButtonVisibility();
             termSelect.value = 'ALL';
-            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="11" class="text-center">Select class and session to view students.</td></tr>';
-            document.getElementById('pagination-container').innerHTML = '';
-            document.getElementById('studentcount').innerText = '0';
+            // If session is ALL and class is ALL, show all students
+            if (this.value === 'ALL' && classSelect.value === 'ALL') {
+                filterData();
+            } else if (this.value !== 'ALL' || classSelect.value !== 'ALL') {
+                filterData();
+            } else {
+                document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="11" class="text-center">Select class and session to view students.</td></tr>';
+                document.getElementById('pagination-container').innerHTML = '';
+                document.getElementById('studentcount').innerText = '0';
+            }
         });
 
         termSelect.addEventListener("change", function () {
             updatePrintButtonVisibility();
             if (this.value !== 'ALL') {
+                filterData();
+            } else {
                 filterData();
             }
         });
@@ -524,6 +547,11 @@
                 const modalImage = modal.querySelector('#enlargedImage');
                 modalImage.src = imageSrc || '{{ asset('storage/student_avatars/unnamed.jpg') }}';
             });
+        }
+
+        // Initial load - show all students if both class and session are ALL
+        if (classSelect.value === 'ALL' && sessionSelect.value === 'ALL') {
+            filterData();
         }
     });
 </script>
