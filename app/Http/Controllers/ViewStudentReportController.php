@@ -1327,11 +1327,11 @@ class ViewStudentReportController extends Controller
 
 
 
-    public function getExaminers(Request $request)
+public function getExaminers(Request $request)
 {
     try {
-        $staff = User::role('Staff')->orderBy('name')->get(['id', 'name']);
-        return response()->json(['success' => true, 'data' => $staff]);
+        $users = User::orderBy('name')->get(['id', 'name']);
+        return response()->json(['success' => true, 'data' => $users]);
     } catch (Exception $e) {
         Log::error('Failed to fetch examiners', ['error' => $e->getMessage()]);
         return response()->json(['success' => false, 'message' => 'Failed to load examiners.'], 500);
