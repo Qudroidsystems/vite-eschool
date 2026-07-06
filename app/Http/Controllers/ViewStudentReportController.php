@@ -1321,6 +1321,192 @@ class ViewStudentReportController extends Controller
         return response()->json(['success' => true, 'data' => $classes]);
     }
 
+
+
+
+
+    public function getExaminers(Request $request)
+{
+    try {
+        $staff = User::role('Staff')->orderBy('name')->get(['id', 'name']);
+        return response()->json(['success' => true, 'data' => $staff]);
+    } catch (Exception $e) {
+        Log::error('Failed to fetch examiners', ['error' => $e->getMessage()]);
+        return response()->json(['success' => false, 'message' => 'Failed to load examiners.'], 500);
+    }
+}
+
+public function getSubjectTeachers(Request $request)
+{
+    $schoolclassid = $request->query('schoolclassid');
+    $sessionid     = $request->query('sessionid');
+    $termid        = $request->query('termid');
+
+    if (!$schoolclassid || $schoolclassid === 'ALL' || !$sessionid || $sessionid === 'ALL') {
+        return response()->json([
+            'success' => false,
+            'message' => 'Please select a valid class and session.'
+        ], 400);
+    }
+
+    try {
+        $query = SubjectTeacher::query()
+            ->join('subjectclass', 'subjectclass.subjectteacherid', '=', 'subjectteacher.id')
+            ->join('subject', 'subject.id', '=', 'subjectteacher.subjectid')
+            ->join('users', 'users.id', '=', 'subjectteacher.staffid')
+            ->where('subjectclass.schoolclassid', $schoolclassid)
+            ->where('subjectteacher.sessionid', $sessionid);
+
+        if ($termid && $termid !== 'ALL') {
+            $query->where('subjectteacher.termid', $termid);
+        }
+
+        $subjectTeachers = $query->select([
+                'subjectteacher.id as id',
+                'subject.subject as subject_name',
+                'users.name as teacher_name',
+            ])
+            ->distinct()
+            ->orderBy('subject.subject')
+            ->get()
+            ->map(fn($row) => [
+                'id'    => $row->id,
+                'label' => "{$row->subject_name} - {$row->teacher_name}",
+            ]);
+
+        return response()->json(['success' => true, 'data' => $subjectTeachers]);
+    } catch (Exception $e) {
+        Log::error('Failed to fetch subject teachers', [
+            'schoolclassid' => $schoolclassid,
+            'sessionid'     => $sessionid,
+            'termid'        => $termid,
+            'error'         => $e->getMessage(),
+        ]);
+        return response()->json(['success' => false, 'message' => 'Failed to load subject teachers.'], 500);
+    }
+}
+
+public function exportAttendanceSheet(Request $request)
+{
+    try {
+        $request->validate([
+            'schoolclassid'     => 'required|numeric',
+            'sessionid'         => 'required|numeric',
+            'termid'            => 'required|numeric',
+            'studentIds'        => 'required|array|min:1',
+            'examinerIds'       => 'required|array|min:1',
+            'subjectteacherid'  => 'required|numeric',
+            'examdate'          => 'required|date',
+            'examtime'          => 'required',
+        ]);
+
+        $schoolclassid    = $request->input('schoolclassid');
+        $sessionid        = $request->input('sessionid');
+        $termid           = $request->input('termid');
+        $studentIds       = $request->input('studentIds');
+        $examinerIds      = $request->input('examinerIds');
+        $subjectteacherid = $request->input('subjectteacherid');
+        $examdate         = $request->input('examdate');
+        $examtime         = $request->input('examtime');
+
+        $schoolclass = Schoolclass::with('armRelation')->findOrFail($schoolclassid);
+        $session     = Schoolsession::findOrFail($sessionid);
+        $term        = Schoolterm::find($termid);
+        $schoolInfo  = SchoolInformation::getActiveSchool();
+
+        $students = Student::whereIn('studentRegistration.id', $studentIds)
+            ->join('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+            ->where('studentclass.schoolclassid', $schoolclassid)
+            ->where('studentclass.sessionid', $sessionid)
+            ->select([
+                'studentRegistration.id',
+                'studentRegistration.admissionNo',
+                'studentRegistration.firstname',
+                'studentRegistration.lastname',
+                'studentRegistration.othername',
+            ])
+            ->orderBy('studentRegistration.lastname')
+            ->get();
+
+        if ($students->isEmpty()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No students found for the selected criteria.'
+            ], 404);
+        }
+
+        $examiners = User::whereIn('id', $examinerIds)->pluck('name')->toArray();
+
+        $subjectTeacher = SubjectTeacher::with(['subject', 'user'])->find($subjectteacherid);
+        $subjectTeacherLabel = $subjectTeacher
+            ? ($subjectTeacher->subject->subject ?? 'N/A') . ' - ' . ($subjectTeacher->user->name ?? 'N/A')
+            : 'N/A';
+
+        $logoPath = $schoolInfo ? $this->sanitizeImagePath($schoolInfo->getLogoUrlAttribute()) : null;
+
+        $viewData = [
+            'schoolInfo'          => $schoolInfo,
+            'schoolLogoPath'      => $logoPath,
+            'schoolclass'         => $schoolclass,
+            'session'             => $session,
+            'term'                => $term,
+            'students'            => $students,
+            'examiners'           => $examiners,
+            'subjectTeacherLabel' => $subjectTeacherLabel,
+            'examdate'            => \Carbon\Carbon::parse($examdate)->format('jS F, Y'),
+            'examtime'            => \Carbon\Carbon::parse($examtime)->format('h:i A'),
+        ];
+
+        $this->ensureDirectoriesExist();
+
+        $pdf = Pdf::loadView('studentreports.attendance_sheet_pdf', $viewData)
+            ->setPaper('A4', 'portrait')
+            ->setOptions([
+                'dpi'                     => 96,
+                'defaultFont'             => 'DejaVu Sans',
+                'isRemoteEnabled'         => true,
+                'isHtml5ParserEnabled'    => true,
+                'isFontSubsettingEnabled' => true,
+                'isPhpEnabled'            => false,
+                'chroot'                  => [public_path(), storage_path()],
+                'tempDir'                 => storage_path('app/temp/'),
+                'fontCache'               => storage_path('fonts/'),
+            ]);
+
+        $filename = 'Examination_Attendance_Sheet_' .
+            preg_replace('/[^A-Za-z0-9_-]/', '_', $schoolclass->schoolclass) . '_' .
+            preg_replace('/[^A-Za-z0-9_-]/', '_', $session->session) . '.pdf';
+
+        $pdfContent = $pdf->output();
+
+        if (empty($pdfContent)) {
+            return response()->json(['success' => false, 'message' => 'Generated PDF content is empty'], 500);
+        }
+
+        return response()->json([
+            'success'    => true,
+            'pdf_base64' => base64_encode($pdfContent),
+            'filename'   => $filename,
+        ]);
+
+    } catch (Exception $e) {
+        Log::error('Attendance Sheet Export Error', [
+            'error' => $e->getMessage(),
+            'file'  => $e->getFile(),
+            'line'  => $e->getLine(),
+        ]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to generate attendance sheet: ' . $e->getMessage(),
+        ], 500);
+    }
+}
+
+
+
+
+
+
     public function classBroadsheet($schoolclassid, $sessionid, $termid): View
     {
         $class     = Schoolclass::findOrFail($schoolclassid);

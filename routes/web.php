@@ -448,6 +448,11 @@ Route::post('/reports/generate', [StudentResultsController::class, 'generateRepo
     Route::get('/student-reports/registered-classes', [ViewStudentReportController::class, 'registeredClasses'])->name('studentreports.registeredClasses');
     Route::get('/class-broadsheet/{schoolclassid}/{sessionid}/{termid}', [ViewStudentReportController::class, 'classBroadsheet'])->name('classbroadsheet');
     Route::match(['get', 'post'], '/studentreports/export-class-results-pdf', [ViewStudentReportController::class, 'exportClassResultsPdf'])->name('studentreports.exportClassResultsPdf');
+   Route::get('studentreports/examiners', [ViewStudentReportController::class, 'getExaminers'])->name('studentreports.getExaminers');
+Route::get('studentreports/subject-teachers', [ViewStudentReportController::class, 'getSubjectTeachers'])->name('studentreports.getSubjectTeachers');
+Route::post('studentreports/export-attendance-sheet', [ViewStudentReportController::class, 'exportAttendanceSheet'])->name('studentreports.exportAttendanceSheet');
+
+
 
     Route::get('/studentmockreports', [ViewStudentMockReportController::class, 'index'])->name('studentmockreports.index');
     Route::get('/studentmockresult/{id}/{schoolclassid}/{sessionid}/{termid}', [ViewStudentMockReportController::class, 'studentmockresult'])->name('studentmockreports.studentmockresult');

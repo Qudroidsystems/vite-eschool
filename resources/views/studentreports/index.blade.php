@@ -79,9 +79,10 @@
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
                                     </div>
-                                    <div class="col-xxl-3 col-sm-6 d-flex gap-2">
-                                        <button type="button" class="btn btn-secondary w-50" id="searchBtn" style="display: none;" onclick="filterData()"><i class="bi bi-search align-baseline me-1"></i> Search</button>
-                                        <button type="button" class="btn btn-primary w-50" id="printAllBtn" style="display: none;" onclick="printAllResults()"><i class="bi bi-printer align-baseline me-1"></i> Print Selected Results</button>
+                                    <div class="col-xxl-6 col-sm-12 d-flex gap-2 flex-wrap">
+                                        <button type="button" class="btn btn-secondary" id="searchBtn" style="display: none;" onclick="filterData()"><i class="bi bi-search align-baseline me-1"></i> Search</button>
+                                        <button type="button" class="btn btn-primary" id="printAllBtn" style="display: none;" onclick="printAllResults()"><i class="bi bi-printer align-baseline me-1"></i> Print Selected Results</button>
+                                        <button type="button" class="btn btn-info text-white" id="attendanceSheetBtn" style="display: none;" onclick="openAttendanceSheetModal()"><i class="bi bi-clipboard-check align-baseline me-1"></i> Attendance Sheet</button>
                                     </div>
                                 </div>
                             </div>
@@ -139,6 +140,50 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Attendance Sheet Modal -->
+                <div id="attendanceSheetModal" class="modal fade" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Generate Examination Attendance Sheet</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p class="text-muted small mb-3" id="attendanceSheetSummary"></p>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Examiners <span class="text-danger">*</span> <small class="text-muted">(hold Ctrl/Cmd to select multiple)</small></label>
+                                    <select class="form-control" id="examinerSelect" multiple size="6"></select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Subject Teacher (who set the exam) <span class="text-danger">*</span></label>
+                                    <select class="form-control" id="subjectTeacherSelect">
+                                        <option value="">Select subject teacher</option>
+                                    </select>
+                                </div>
+
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Exam Date <span class="text-danger">*</span></label>
+                                        <input type="date" class="form-control" id="examDateInput">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Exam Time <span class="text-danger">*</span></label>
+                                        <input type="time" class="form-control" id="examTimeInput">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" id="generateAttendanceSheetBtn" onclick="generateAttendanceSheet()">
+                                    <i class="bi bi-printer align-baseline me-1"></i> Generate Sheet
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -185,17 +230,20 @@
         const searchBtn = document.getElementById("searchBtn");
         const termSelectContainer = document.getElementById("termSelectContainer");
         const printAllBtn = document.getElementById("printAllBtn");
+        const attendanceSheetBtn = document.getElementById("attendanceSheetBtn");
 
         // Show search button if class OR session is selected (or both)
         searchBtn.style.display = (classSelect.value !== 'ALL' || sessionSelect.value !== 'ALL') ? 'block' : 'none';
         termSelectContainer.style.display = 'none';
         printAllBtn.style.display = 'none';
+        attendanceSheetBtn.style.display = 'none';
         updateSelectionAlert();
     }
 
     function updateTermSelectVisibility() {
         const termSelectContainer = document.getElementById("termSelectContainer");
         const printAllBtn = document.getElementById("printAllBtn");
+        const attendanceSheetBtn = document.getElementById("attendanceSheetBtn");
         const studentCount = parseInt(document.getElementById("studentcount").innerText);
         const classSelect = document.getElementById("idclass");
         const sessionSelect = document.getElementById("idsession");
@@ -203,17 +251,22 @@
         // Show term select only when both class and session are selected AND there are students
         termSelectContainer.style.display = (classSelect.value !== 'ALL' && sessionSelect.value !== 'ALL' && studentCount > 0) ? 'block' : 'none';
         printAllBtn.style.display = 'none';
+        attendanceSheetBtn.style.display = 'none';
         updateSelectionAlert();
     }
 
     function updatePrintButtonVisibility() {
         const termSelect = document.getElementById("idterm");
         const printAllBtn = document.getElementById("printAllBtn");
+        const attendanceSheetBtn = document.getElementById("attendanceSheetBtn");
         const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
         const classSelect = document.getElementById("idclass");
         const sessionSelect = document.getElementById("idsession");
 
-        printAllBtn.style.display = (classSelect.value !== 'ALL' && sessionSelect.value !== 'ALL' && termSelect.value !== 'ALL' && checkedCheckboxes.length > 0) ? 'block' : 'none';
+        const shouldShow = (classSelect.value !== 'ALL' && sessionSelect.value !== 'ALL' && termSelect.value !== 'ALL' && checkedCheckboxes.length > 0);
+
+        printAllBtn.style.display = shouldShow ? 'block' : 'none';
+        attendanceSheetBtn.style.display = shouldShow ? 'block' : 'none';
         updateSelectionAlert();
     }
 
@@ -257,6 +310,7 @@
             document.getElementById('pagination-container').innerHTML = '';
             document.getElementById('studentcount').innerText = '0';
             document.getElementById('printAllBtn').style.display = 'none';
+            document.getElementById('attendanceSheetBtn').style.display = 'none';
             document.getElementById('termSelectContainer').style.display = 'none';
             updateSelectionAlert();
             Swal.fire({
@@ -418,6 +472,198 @@
                     });
                 });
             }
+        });
+    }
+
+    /* ==========================================================
+       EXAMINATION ATTENDANCE SHEET
+       ========================================================== */
+
+    function openAttendanceSheetModal() {
+        const classSelect = document.getElementById("idclass");
+        const sessionSelect = document.getElementById("idsession");
+        const termSelect = document.getElementById("idterm");
+        const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+
+        if (classSelect.value === 'ALL' || sessionSelect.value === 'ALL' || termSelect.value === 'ALL') {
+            Swal.fire({
+                icon: "warning",
+                title: "Missing Selection",
+                text: "Please select a valid class, session, and term.",
+                showConfirmButton: true
+            });
+            return;
+        }
+
+        if (checkedCheckboxes.length === 0) {
+            Swal.fire({
+                icon: "warning",
+                title: "No Students Selected",
+                text: "Please select at least one student.",
+                showConfirmButton: true
+            });
+            return;
+        }
+
+        // Reset previous selections
+        const examinerSelect = document.getElementById("examinerSelect");
+        const subjectTeacherSelect = document.getElementById("subjectTeacherSelect");
+        document.getElementById("examDateInput").value = '';
+        document.getElementById("examTimeInput").value = '';
+
+        document.getElementById("attendanceSheetSummary").innerText =
+            `Class: ${classSelect.options[classSelect.selectedIndex].text} | ` +
+            `Session: ${sessionSelect.options[sessionSelect.selectedIndex].text} | ` +
+            `Term: ${termSelect.options[termSelect.selectedIndex].text} | ` +
+            `Students Selected: ${checkedCheckboxes.length}`;
+
+        examinerSelect.innerHTML = '<option disabled>Loading examiners...</option>';
+        subjectTeacherSelect.innerHTML = '<option disabled>Loading subject teachers...</option>';
+
+        // Load examiners (Staff role users)
+        axios.get('{{ route("studentreports.getExaminers") }}', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function (response) {
+            const data = response.data.data || [];
+            if (data.length === 0) {
+                examinerSelect.innerHTML = '<option disabled>No staff found</option>';
+                return;
+            }
+            examinerSelect.innerHTML = data.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+        }).catch(function (error) {
+            console.error("Failed to load examiners:", error);
+            examinerSelect.innerHTML = '<option disabled>Failed to load examiners</option>';
+        });
+
+        // Load subject teachers for the selected class/session/term
+        axios.get('{{ route("studentreports.getSubjectTeachers") }}', {
+            params: {
+                schoolclassid: classSelect.value,
+                sessionid: sessionSelect.value,
+                termid: termSelect.value
+            },
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        }).then(function (response) {
+            const data = response.data.data || [];
+            if (data.length === 0) {
+                subjectTeacherSelect.innerHTML = '<option value="">No subject teachers found</option>';
+                return;
+            }
+            subjectTeacherSelect.innerHTML = '<option value="">Select subject teacher</option>' +
+                data.map(st => `<option value="${st.id}">${st.label}</option>`).join('');
+        }).catch(function (error) {
+            console.error("Failed to load subject teachers:", error);
+            subjectTeacherSelect.innerHTML = '<option value="">Failed to load subject teachers</option>';
+        });
+
+        const modalEl = document.getElementById('attendanceSheetModal');
+        new bootstrap.Modal(modalEl).show();
+    }
+
+    function generateAttendanceSheet() {
+        const classSelect = document.getElementById("idclass");
+        const sessionSelect = document.getElementById("idsession");
+        const termSelect = document.getElementById("idterm");
+        const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+        const selectedStudentIds = Array.from(checkedCheckboxes).map(checkbox => checkbox.value);
+
+        const examinerSelect = document.getElementById("examinerSelect");
+        const selectedExaminerIds = Array.from(examinerSelect.selectedOptions)
+            .map(opt => opt.value)
+            .filter(v => v);
+
+        const subjectTeacherId = document.getElementById("subjectTeacherSelect").value;
+        const examDate = document.getElementById("examDateInput").value;
+        const examTime = document.getElementById("examTimeInput").value;
+
+        if (selectedExaminerIds.length === 0) {
+            Swal.fire({
+                icon: "warning",
+                title: "Missing Examiners",
+                text: "Please select at least one examiner.",
+                showConfirmButton: true
+            });
+            return;
+        }
+
+        if (!subjectTeacherId) {
+            Swal.fire({
+                icon: "warning",
+                title: "Missing Subject Teacher",
+                text: "Please select the subject teacher who set the exam.",
+                showConfirmButton: true
+            });
+            return;
+        }
+
+        if (!examDate || !examTime) {
+            Swal.fire({
+                icon: "warning",
+                title: "Missing Date/Time",
+                text: "Please select the exam date and time.",
+                showConfirmButton: true
+            });
+            return;
+        }
+
+        const modalEl = document.getElementById('attendanceSheetModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        if (modalInstance) modalInstance.hide();
+
+        Swal.fire({
+            title: 'Generating Attendance Sheet...',
+            text: 'Please wait while the PDF is being generated.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        axios.post('{{ route("studentreports.exportAttendanceSheet") }}', {
+            schoolclassid: classSelect.value,
+            sessionid: sessionSelect.value,
+            termid: termSelect.value,
+            studentIds: selectedStudentIds,
+            examinerIds: selectedExaminerIds,
+            subjectteacherid: subjectTeacherId,
+            examdate: examDate,
+            examtime: examTime
+        }, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        }).then(function (response) {
+            console.log("Attendance sheet response:", response.data);
+            Swal.close();
+            if (response.data.success && response.data.pdf_base64) {
+                const byteCharacters = atob(response.data.pdf_base64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/pdf' });
+                const pdfUrl = URL.createObjectURL(blob);
+                window.open(pdfUrl, '_blank');
+                setTimeout(() => URL.revokeObjectURL(pdfUrl), 30000);
+            } else {
+                Swal.fire({
+                    icon: "error",
+                    title: "Error",
+                    text: response.data.message || "Failed to generate attendance sheet.",
+                    showConfirmButton: true
+                });
+            }
+        }).catch(function (error) {
+            Swal.close();
+            console.error("Attendance sheet generation error:", error);
+            Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: error.response?.data?.message || "Failed to generate attendance sheet.",
+                showConfirmButton: true
+            });
         });
     }
 
