@@ -1009,6 +1009,7 @@ function applyMockFilters() {
 }
 
 // ========== ADD FORM AJAX SUBJECT SEARCH ==========
+// ========== ADD FORM AJAX SUBJECT SEARCH ==========
 function initializeMockAddForm() {
     const form = document.getElementById('add-mocksubjectvetting-form');
     if (!form) return;
@@ -1019,77 +1020,98 @@ function initializeMockAddForm() {
     const clearSearchBtn = document.getElementById('mockClearSearchBtn');
     let searchTimeout;
 
+    function getCheckedTermIds() {
+        return Array.from(document.querySelectorAll('input[name="termid[]"]:checked'))
+            .map(cb => cb.value)
+            .join(',');
+    }
+
+    function runMockAddSearch(query) {
+        if (query.length < 2) {
+            resultsDiv.style.display = 'none';
+            clearSearchBtn.style.display = 'none';
+            return;
+        }
+        clearSearchBtn.style.display = 'block';
+        loadingDiv.style.display = 'block';
+        resultsDiv.style.display = 'none';
+
+        const excludeIds = Array.from(mockSelectedSubjects.keys()).join(',');
+        const termIds = getCheckedTermIds();
+
+        fetch(`/api/mock-subject-classes/search?q=${encodeURIComponent(query)}&exclude_ids=${excludeIds}&term_ids=${termIds}`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(response => {
+            loadingDiv.style.display = 'none';
+            if (!response.success) {
+                resultsDiv.innerHTML = `<div class="list-group-item text-danger">${response.message || 'Search failed'}</div>`;
+                resultsDiv.style.display = 'block';
+                return;
+            }
+            const data = response.data;
+            if (data.length === 0) {
+                resultsDiv.innerHTML = '<div class="list-group-item text-muted">No results found</div>';
+                resultsDiv.style.display = 'block';
+                return;
+            }
+            resultsDiv.innerHTML = data.map(item => {
+                const termColorClass = getTermColorClass(item.termid);
+                const termBgClass = getTermBgClass(item.termid);
+                return `
+                    <div class="list-group-item subject-search-item ${termBgClass}" data-id="${item.id}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">
+                                    ${escapeHtml(item.subjectname)}
+                                    ${item.subjectcode ? `<span class="text-muted">(${escapeHtml(item.subjectcode)})</span>` : ''}
+                                </div>
+                                <div class="small text-muted mt-1">
+                                    <i class="ri-group-line me-1"></i> Class: ${escapeHtml(item.sclass)} ${item.schoolarm ? `(${escapeHtml(item.schoolarm)})` : ''}<br>
+                                    <i class="ri-user-line me-1"></i> Teacher: ${escapeHtml(item.teachername)}<br>
+                                    <i class="ri-calendar-line me-1"></i> Session: ${escapeHtml(item.sessionname)}<br>
+                                    <i class="ri-calendar-event-line me-1"></i> Term: <span class="${termColorClass} fw-bold">${escapeHtml(item.termname)}</span>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-sm btn-primary add-subject-btn">
+                                <i class="ri-add-line me-1"></i>Add
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            resultsDiv.style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Search error:', error);
+            loadingDiv.style.display = 'none';
+            resultsDiv.innerHTML = '<div class="list-group-item text-danger">Network error</div>';
+            resultsDiv.style.display = 'block';
+        });
+    }
+
     if (searchInput) {
         searchInput.addEventListener('input', function() {
             const query = this.value.trim();
             clearTimeout(searchTimeout);
-            if (query.length < 2) {
-                resultsDiv.style.display = 'none';
-                clearSearchBtn.style.display = 'none';
-                return;
-            }
-            clearSearchBtn.style.display = 'block';
-            loadingDiv.style.display = 'block';
-            resultsDiv.style.display = 'none';
-
-            searchTimeout = setTimeout(() => {
-                const excludeIds = Array.from(mockSelectedSubjects.keys()).join(',');
-                fetch(`/api/mock-subject-classes/search?q=${encodeURIComponent(query)}&exclude_ids=${excludeIds}`, {
-                    headers: {
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(res => res.json())
-                .then(response => {
-                    loadingDiv.style.display = 'none';
-                    if (!response.success) {
-                        resultsDiv.innerHTML = `<div class="list-group-item text-danger">${response.message || 'Search failed'}</div>`;
-                        resultsDiv.style.display = 'block';
-                        return;
-                    }
-                    const data = response.data;
-                    if (data.length === 0) {
-                        resultsDiv.innerHTML = '<div class="list-group-item text-muted">No results found</div>';
-                        resultsDiv.style.display = 'block';
-                        return;
-                    }
-                    resultsDiv.innerHTML = data.map(item => {
-                        const termColorClass = getTermColorClass(item.termid);
-                        const termBgClass = getTermBgClass(item.termid);
-                        return `
-                            <div class="list-group-item subject-search-item ${termBgClass}" data-id="${item.id}">
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div class="flex-grow-1">
-                                        <div class="fw-bold">
-                                            ${escapeHtml(item.subjectname)}
-                                            ${item.subjectcode ? `<span class="text-muted">(${escapeHtml(item.subjectcode)})</span>` : ''}
-                                        </div>
-                                        <div class="small text-muted mt-1">
-                                            <i class="ri-group-line me-1"></i> Class: ${escapeHtml(item.sclass)} ${item.schoolarm ? `(${escapeHtml(item.schoolarm)})` : ''}<br>
-                                            <i class="ri-user-line me-1"></i> Teacher: ${escapeHtml(item.teachername)}<br>
-                                            <i class="ri-calendar-line me-1"></i> Session: ${escapeHtml(item.sessionname)}<br>
-                                            <i class="ri-calendar-event-line me-1"></i> Term: <span class="${termColorClass} fw-bold">${escapeHtml(item.termname)}</span>
-                                        </div>
-                                    </div>
-                                    <button type="button" class="btn btn-sm btn-primary add-subject-btn">
-                                        <i class="ri-add-line me-1"></i>Add
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
-                    resultsDiv.style.display = 'block';
-                })
-                .catch(error => {
-                    console.error('Search error:', error);
-                    loadingDiv.style.display = 'none';
-                    resultsDiv.innerHTML = '<div class="list-group-item text-danger">Network error</div>';
-                    resultsDiv.style.display = 'block';
-                });
-            }, 500);
+            searchTimeout = setTimeout(() => runMockAddSearch(query), 500);
         });
     }
+
+    // NEW: re-run search when checked terms change, if there's already a query typed
+    document.querySelectorAll('input[name="termid[]"]').forEach(cb => {
+        cb.addEventListener('change', () => {
+            const query = searchInput.value.trim();
+            if (query.length >= 2) {
+                clearTimeout(searchTimeout);
+                runMockAddSearch(query);
+            }
+        });
+    });
 
     if (clearSearchBtn) {
         clearSearchBtn.addEventListener('click', () => {
@@ -1156,7 +1178,6 @@ function initializeMockAddForm() {
         }
     });
 }
-
 function updateMockSelectedDisplay() {
     const container = document.getElementById('mockSelectedSubjectsContainer');
     const countSpan = document.getElementById('mockSelectedCount');
@@ -1297,9 +1318,12 @@ function initializeMockEditSubjectSearch() {
 
     if (!searchInput) return;
 
-    searchInput.addEventListener('input', function() {
-        const query = this.value.trim();
-        clearTimeout(searchTimeout);
+    function getSelectedEditTermId() {
+        const checked = document.querySelector('input[name="termid"]:checked');
+        return checked ? checked.value : '';
+    }
+
+    function runMockEditSearch(query) {
         if (query.length < 2) {
             resultsDiv.style.display = 'none';
             clearSearchBtn.style.display = 'none';
@@ -1309,64 +1333,81 @@ function initializeMockEditSubjectSearch() {
         loadingDiv.style.display = 'block';
         resultsDiv.style.display = 'none';
 
-        searchTimeout = setTimeout(() => {
-            const excludeId = mockEditSelectedSubject ? mockEditSelectedSubject.id : '';
-            fetch(`/api/mock-subject-classes/search?q=${encodeURIComponent(query)}&exclude_ids=${excludeId}`, {
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
-                    'Accept': 'application/json'
-                }
-            })
-            .then(res => res.json())
-            .then(response => {
-                loadingDiv.style.display = 'none';
-                if (!response.success) {
-                    resultsDiv.innerHTML = `<div class="list-group-item text-danger">${response.message || 'Search failed'}</div>`;
-                    resultsDiv.style.display = 'block';
-                    return;
-                }
-                const data = response.data;
-                if (data.length === 0) {
-                    resultsDiv.innerHTML = '<div class="list-group-item text-muted">No results found</div>';
-                    resultsDiv.style.display = 'block';
-                    return;
-                }
-                resultsDiv.innerHTML = data.map(item => {
-                    const termColorClass = getTermColorClass(item.termid);
-                    const termBgClass = getTermBgClass(item.termid);
-                    return `
-                        <div class="list-group-item edit-subject-search-item ${termBgClass}" data-id="${item.id}"
-                             data-name="${escapeHtml(item.subjectname)}"
-                             data-details='${JSON.stringify(item)}'>
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div class="flex-grow-1">
-                                    <div class="fw-bold">
-                                        ${escapeHtml(item.subjectname)}
-                                        ${item.subjectcode ? `<span class="text-muted">(${escapeHtml(item.subjectcode)})</span>` : ''}
-                                    </div>
-                                    <div class="small text-muted mt-1">
-                                        <i class="ri-group-line me-1"></i> Class: ${escapeHtml(item.sclass)} ${item.schoolarm ? `(${escapeHtml(item.schoolarm)})` : ''}<br>
-                                        <i class="ri-user-line me-1"></i> Teacher: ${escapeHtml(item.teachername)}<br>
-                                        <i class="ri-calendar-line me-1"></i> Session: ${escapeHtml(item.sessionname)}<br>
-                                        <i class="ri-calendar-event-line me-1"></i> Term: <span class="${termColorClass} fw-bold">${escapeHtml(item.termname)}</span>
-                                    </div>
+        const excludeId = mockEditSelectedSubject ? mockEditSelectedSubject.id : '';
+        const termId = getSelectedEditTermId();
+
+        fetch(`/api/mock-subject-classes/search?q=${encodeURIComponent(query)}&exclude_ids=${excludeId}&term_ids=${termId}`, {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content,
+                'Accept': 'application/json'
+            }
+        })
+        .then(res => res.json())
+        .then(response => {
+            loadingDiv.style.display = 'none';
+            if (!response.success) {
+                resultsDiv.innerHTML = `<div class="list-group-item text-danger">${response.message || 'Search failed'}</div>`;
+                resultsDiv.style.display = 'block';
+                return;
+            }
+            const data = response.data;
+            if (data.length === 0) {
+                resultsDiv.innerHTML = '<div class="list-group-item text-muted">No results found</div>';
+                resultsDiv.style.display = 'block';
+                return;
+            }
+            resultsDiv.innerHTML = data.map(item => {
+                const termColorClass = getTermColorClass(item.termid);
+                const termBgClass = getTermBgClass(item.termid);
+                return `
+                    <div class="list-group-item edit-subject-search-item ${termBgClass}" data-id="${item.id}"
+                         data-name="${escapeHtml(item.subjectname)}"
+                         data-details='${JSON.stringify(item)}'>
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="fw-bold">
+                                    ${escapeHtml(item.subjectname)}
+                                    ${item.subjectcode ? `<span class="text-muted">(${escapeHtml(item.subjectcode)})</span>` : ''}
                                 </div>
-                                <button type="button" class="btn btn-sm btn-primary edit-select-subject-btn">
-                                    <i class="ri-check-line me-1"></i>Select
-                                </button>
+                                <div class="small text-muted mt-1">
+                                    <i class="ri-group-line me-1"></i> Class: ${escapeHtml(item.sclass)} ${item.schoolarm ? `(${escapeHtml(item.schoolarm)})` : ''}<br>
+                                    <i class="ri-user-line me-1"></i> Teacher: ${escapeHtml(item.teachername)}<br>
+                                    <i class="ri-calendar-line me-1"></i> Session: ${escapeHtml(item.sessionname)}<br>
+                                    <i class="ri-calendar-event-line me-1"></i> Term: <span class="${termColorClass} fw-bold">${escapeHtml(item.termname)}</span>
+                                </div>
                             </div>
+                            <button type="button" class="btn btn-sm btn-primary edit-select-subject-btn">
+                                <i class="ri-check-line me-1"></i>Select
+                            </button>
                         </div>
-                    `;
-                }).join('');
-                resultsDiv.style.display = 'block';
-            })
-            .catch(error => {
-                console.error('Search error:', error);
-                loadingDiv.style.display = 'none';
-                resultsDiv.innerHTML = '<div class="list-group-item text-danger">Network error</div>';
-                resultsDiv.style.display = 'block';
-            });
-        }, 500);
+                    </div>
+                `;
+            }).join('');
+            resultsDiv.style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Search error:', error);
+            loadingDiv.style.display = 'none';
+            resultsDiv.innerHTML = '<div class="list-group-item text-danger">Network error</div>';
+            resultsDiv.style.display = 'block';
+        });
+    }
+
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => runMockEditSearch(query), 500);
+    });
+
+    // NEW: re-run search when the selected term radio changes, if there's already a query typed
+    document.querySelectorAll('.edit-term-checkbox').forEach(radio => {
+        radio.addEventListener('change', () => {
+            const query = searchInput.value.trim();
+            if (query.length >= 2) {
+                clearTimeout(searchTimeout);
+                runMockEditSearch(query);
+            }
+        });
     });
 
     if (clearSearchBtn) {
@@ -1406,7 +1447,6 @@ function initializeMockEditSubjectSearch() {
         });
     }
 }
-
 function updateMockEditSelectedDisplay() {
     const container = document.getElementById('mockEditSelectedSubjectContainer');
     const hiddenInput = document.getElementById('mockEditSelectedSubjectId');
