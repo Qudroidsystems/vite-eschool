@@ -60,6 +60,7 @@ class MockSubjectVettingController extends Controller
                 ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
                 ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
                 ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
+                ->where('schoolsession.status', 'Current')   // <-- NEW: only current session
                 ->where(function($q) use ($query) {
                     $q->where('subject.subject', 'LIKE', "%{$query}%")
                       ->orWhere('subject.subject_code', 'LIKE', "%{$query}%")
