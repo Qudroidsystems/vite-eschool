@@ -30,76 +30,88 @@ class SubjectVettingController extends Controller
     /**
      * Search subject classes via AJAX with term colors
      */
-    public function searchSubjectClasses(Request $request)
-    {
-        try {
-            $query = $request->get('q', '');
-            $excludeIds = $request->get('exclude_ids', []);
+  public function searchSubjectClasses(Request $request)
+{
+    try {
+        $query = $request->get('q', '');
+        $excludeIds = $request->get('exclude_ids', []);
+        $termIds = $request->get('term_ids', []);
 
-            if (strlen($query) < 2) {
-                return response()->json([
-                    'success' => true,
-                    'data' => []
-                ]);
-            }
-
-            $subjectClasses = Subjectclass::select(
-                    'subjectclass.id',
-                    'subject.subject as subjectname',
-                    'subject.subject_code as subjectcode',
-                    'schoolclass.schoolclass as sclass',
-                    'schoolarm.arm as schoolarm',
-                    'users.name as teachername',
-                    'schoolterm.id as termid',
-                    'schoolterm.term as termname',
-                    'schoolsession.id as sessionid',
-                    'schoolsession.session as sessionname',
-                    'schoolsession.status as sessionstatus'
-                )
-                ->leftJoin('schoolclass', 'subjectclass.schoolclassid', '=', 'schoolclass.id')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
-                ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
-                ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
-                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
-                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
-                ->where(function($q) use ($query) {
-                    $q->where('subject.subject', 'LIKE', "%{$query}%")
-                      ->orWhere('subject.subject_code', 'LIKE', "%{$query}%")
-                      ->orWhere('schoolclass.schoolclass', 'LIKE', "%{$query}%")
-                      ->orWhere('schoolarm.arm', 'LIKE', "%{$query}%")
-                      ->orWhere('users.name', 'LIKE', "%{$query}%")
-                      ->orWhere('schoolsession.session', 'LIKE', "%{$query}%")
-                      ->orWhere('schoolterm.term', 'LIKE', "%{$query}%");
-                })
-                ->when(!empty($excludeIds), function($q) use ($excludeIds) {
-                    if (is_array($excludeIds)) {
-                        $q->whereNotIn('subjectclass.id', $excludeIds);
-                    } elseif (str_contains($excludeIds, ',')) {
-                        $ids = explode(',', $excludeIds);
-                        $q->whereNotIn('subjectclass.id', $ids);
-                    } else {
-                        $q->where('subjectclass.id', '!=', $excludeIds);
-                    }
-                })
-                ->orderBy('schoolterm.id')
-                ->orderBy('subject.subject')
-                ->limit(30)
-                ->get();
-
+        if (strlen($query) < 2) {
             return response()->json([
                 'success' => true,
-                'data' => $subjectClasses
+                'data' => []
             ]);
-
-        } catch (\Exception $e) {
-            Log::error('Error searching subject classes: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Search failed: ' . $e->getMessage()
-            ], 500);
         }
+
+        $subjectClasses = Subjectclass::select(
+                'subjectclass.id',
+                'subject.subject as subjectname',
+                'subject.subject_code as subjectcode',
+                'schoolclass.schoolclass as sclass',
+                'schoolarm.arm as schoolarm',
+                'users.name as teachername',
+                'schoolterm.id as termid',
+                'schoolterm.term as termname',
+                'schoolsession.id as sessionid',
+                'schoolsession.session as sessionname',
+                'schoolsession.status as sessionstatus'
+            )
+            ->leftJoin('schoolclass', 'subjectclass.schoolclassid', '=', 'schoolclass.id')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+            ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
+            ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
+            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
+            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
+            ->where('schoolsession.status', 'Current')
+            ->when(!empty($termIds), function ($q) use ($termIds) {
+                if (is_array($termIds)) {
+                    $ids = $termIds;
+                } elseif (str_contains($termIds, ',')) {
+                    $ids = explode(',', $termIds);
+                } else {
+                    $ids = [$termIds];
+                }
+                $q->whereIn('schoolterm.id', $ids);
+            })
+            ->where(function($q) use ($query) {
+                $q->where('subject.subject', 'LIKE', "%{$query}%")
+                  ->orWhere('subject.subject_code', 'LIKE', "%{$query}%")
+                  ->orWhere('schoolclass.schoolclass', 'LIKE', "%{$query}%")
+                  ->orWhere('schoolarm.arm', 'LIKE', "%{$query}%")
+                  ->orWhere('users.name', 'LIKE', "%{$query}%")
+                  ->orWhere('schoolsession.session', 'LIKE', "%{$query}%")
+                  ->orWhere('schoolterm.term', 'LIKE', "%{$query}%");
+            })
+            ->when(!empty($excludeIds), function($q) use ($excludeIds) {
+                if (is_array($excludeIds)) {
+                    $q->whereNotIn('subjectclass.id', $excludeIds);
+                } elseif (str_contains($excludeIds, ',')) {
+                    $ids = explode(',', $excludeIds);
+                    $q->whereNotIn('subjectclass.id', $ids);
+                } else {
+                    $q->where('subjectclass.id', '!=', $excludeIds);
+                }
+            })
+            ->orderBy('schoolterm.id')
+            ->orderBy('subject.subject')
+            // ->limit(30)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $subjectClasses
+        ]);
+
+    } catch (\Exception $e) {
+        Log::error('Error searching subject classes: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Search failed: ' . $e->getMessage()
+        ], 500);
     }
+}
 
     /**
      * Get selected subject classes details
