@@ -197,6 +197,13 @@
             font-size: 48px;
             margin-bottom: 10px;
         }
+
+        /* Custom alert styles for better visibility */
+        .alert-session-expired {
+            border-left: 4px solid #ffc107;
+            background-color: #fff3cd;
+            color: #856404;
+        }
     </style>
 </head>
 
@@ -298,36 +305,69 @@
                                 <div class="card mb-0 border-0 shadow-none mb-0">
                                     <div class="card-body p-sm-5 m-lg-4">
                                         <!-- School Logo on Login Form -->
-                                     
-                                            <div class="logo-container">
-                                                @if($schoolInfo?->app_logo_url)
-                                                    <img src="{{ $schoolInfo->app_logo_url }}"
-                                                        alt="{{ $schoolInfo->school_name }}"
-                                                        class="school-login-logo"
-                                                        onerror="this.onerror=null; this.src='{{ asset('theme/layouts/assets/images/logo-dark.png') }}'">
-                                                @elseif($schoolInfo?->logo_url)
-                                                    <img src="{{ $schoolInfo->logo_url }}"
-                                                        alt="{{ $schoolInfo->school_name }}"
-                                                        class="school-login-logo"
-                                                        onerror="this.onerror=null; this.src='{{ asset('theme/layouts/assets/images/logo-dark.png') }}'">
-                                                @else
-                                                    <img src="{{ asset('theme/layouts/assets/images/logo-dark.png') }}"
-                                                        alt="School Logo"
-                                                        class="school-login-logo">
-                                                @endif
-                                            </div>
-                                            <div class="text-center mt-3">
+                                        <div class="logo-container">
+                                            @if($schoolInfo?->app_logo_url)
+                                                <img src="{{ $schoolInfo->app_logo_url }}"
+                                                    alt="{{ $schoolInfo->school_name }}"
+                                                    class="school-login-logo"
+                                                    onerror="this.onerror=null; this.src='{{ asset('theme/layouts/assets/images/logo-dark.png') }}'">
+                                            @elseif($schoolInfo?->logo_url)
+                                                <img src="{{ $schoolInfo->logo_url }}"
+                                                    alt="{{ $schoolInfo->school_name }}"
+                                                    class="school-login-logo"
+                                                    onerror="this.onerror=null; this.src='{{ asset('theme/layouts/assets/images/logo-dark.png') }}'">
+                                            @else
+                                                <img src="{{ asset('theme/layouts/assets/images/logo-dark.png') }}"
+                                                    alt="School Logo"
+                                                    class="school-login-logo">
+                                            @endif
+                                        </div>
+                                        <div class="text-center mt-3">
                                             <h5 class="fs-3xl">{{ $schoolInfo?->school_name ?? 'TopClass College' }} Portal</h5>
                                             <p class="text-muted">Sign in to continue</p>
                                         </div>
                                         <div class="p-2 mt-3">
-                                            <form method="POST" action="{{ route('login') }}">
+                                            <form method="POST" action="{{ route('login') }}" id="loginForm">
                                                 @csrf
 
+                                                {{-- Display session expired error message from 419 redirect --}}
+                                                @if(session('error'))
+                                                    <div class="alert alert-warning alert-dismissible fade show alert-session-expired" role="alert">
+                                                        <i class="ri-alert-line me-2"></i>
+                                                        <strong>{{ session('error') }}</strong>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                    </div>
+                                                @endif
+
+                                                {{-- Display validation errors --}}
+                                                @if ($errors->any())
+                                                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                                        <i class="ri-error-warning-line me-2"></i>
+                                                        <strong>Please fix the following errors:</strong>
+                                                        <ul class="mb-0 mt-1">
+                                                            @foreach ($errors->all() as $error)
+                                                                <li>{{ $error }}</li>
+                                                            @endforeach
+                                                        </ul>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                    </div>
+                                                @endif
+
+                                                {{-- Display success messages if any --}}
+                                                @if(session('success'))
+                                                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                                        <i class="ri-check-line me-2"></i>
+                                                        {{ session('success') }}
+                                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                                    </div>
+                                                @endif
+
                                                 <div class="mb-3">
-                                                    <label for="username" class="form-label">Email <span class="text-danger">*</span></label>
+                                                    <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
                                                     <div class="position-relative">
-                                                        <input type="email" class="form-control password-input @error('email') is-invalid @enderror" id="email" name="email" placeholder="Enter email" value="{{ old('email') }}" required autocomplete="email" autofocus>
+                                                        <input type="email" class="form-control @error('email') is-invalid @enderror"
+                                                               id="email" name="email" placeholder="Enter email"
+                                                               value="{{ old('email') }}" required autocomplete="email" autofocus>
                                                         @error('email')
                                                             <span class="invalid-feedback" role="alert">
                                                                 <strong>{{ $message }}</strong>
@@ -344,8 +384,11 @@
                                                     @endif
                                                     <label class="form-label" for="password-input">Password <span class="text-danger">*</span></label>
                                                     <div class="position-relative auth-pass-inputgroup mb-3">
-                                                        <input type="password" id="password" class="form-control pe-5 password-input @error('password') is-invalid @enderror" name="password" autocomplete="current-password" placeholder="Enter password" id="password-input" required>
-                                                        <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon" type="button" id="password-addon">
+                                                        <input type="password" id="password" class="form-control pe-5 password-input @error('password') is-invalid @enderror"
+                                                               name="password" autocomplete="current-password"
+                                                               placeholder="Enter password" required>
+                                                        <button class="btn btn-link position-absolute end-0 top-0 text-decoration-none text-muted password-addon"
+                                                                type="button" id="password-addon">
                                                             <i class="ri-eye-fill align-middle"></i>
                                                         </button>
                                                     </div>
@@ -357,12 +400,15 @@
                                                 </div>
 
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" value="" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="auth-remember-check">Remember me</label>
+                                                    <input class="form-check-input" type="checkbox" name="remember" id="remember" {{ old('remember') ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="remember">Remember me</label>
                                                 </div>
 
                                                 <div class="mt-4">
-                                                    <button class="btn btn-primary w-100" type="submit">Sign In</button>
+                                                    <button class="btn btn-primary w-100" type="submit" id="loginButton">
+                                                        <span id="loginText">Sign In</span>
+                                                        <span id="loginSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                                                    </button>
                                                 </div>
                                             </form>
 
@@ -398,27 +444,93 @@
     <script src="{{ asset('theme/layouts/assets/js/pages/swiper.init.js')}}"></script>
 
     <script>
-        // Initialize Bootstrap tooltips
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Bootstrap tooltips
             var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
             var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
                 return new bootstrap.Tooltip(tooltipTriggerEl);
             });
 
-            // Enhanced hover pause functionality
+            // Enhanced hover pause functionality for avatars
             const avatarItems = document.querySelectorAll('.auth-user-list li');
-
             avatarItems.forEach(item => {
-                // Pause this avatar on hover
                 item.addEventListener('mouseenter', function() {
                     this.style.animationPlayState = 'paused';
                 });
-
-                // Resume this avatar when mouse leaves
                 item.addEventListener('mouseleave', function() {
                     this.style.animationPlayState = 'running';
                 });
             });
+
+            // Auto-dismiss alerts after 5 seconds
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    if (alert) {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    }
+                }, 5000);
+            });
+
+            // Prevent multiple form submissions
+            const loginForm = document.getElementById('loginForm');
+            const loginButton = document.getElementById('loginButton');
+            const loginText = document.getElementById('loginText');
+            const loginSpinner = document.getElementById('loginSpinner');
+
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(e) {
+                    // Disable button and show spinner
+                    loginButton.disabled = true;
+                    loginText.textContent = 'Signing in...';
+                    loginSpinner.classList.remove('d-none');
+
+                    // Re-enable after 30 seconds (safety net)
+                    setTimeout(() => {
+                        loginButton.disabled = false;
+                        loginText.textContent = 'Sign In';
+                        loginSpinner.classList.add('d-none');
+                    }, 30000);
+                });
+            }
+
+            // Optional: Auto-refresh session token to prevent 419 errors
+            if (document.querySelector('meta[name="csrf-token"]')) {
+                // Refresh CSRF token every 55 minutes (before session expires)
+                setInterval(function() {
+                    fetch('{{ route("refresh.csrf") }}', {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.csrf_token) {
+                            const metaToken = document.querySelector('meta[name="csrf-token"]');
+                            const inputToken = document.querySelector('input[name="_token"]');
+                            if (metaToken) {
+                                metaToken.content = data.csrf_token;
+                            }
+                            if (inputToken) {
+                                inputToken.value = data.csrf_token;
+                            }
+                            console.log('CSRF token refreshed successfully');
+                        }
+                    })
+                    .catch(error => {
+                        // Silently fail - token will be refreshed on next page load
+                        console.log('CSRF refresh failed:', error);
+                    });
+                }, 3300000); // 55 minutes
+            }
+
+            // Clear session error on page load if it exists (prevents showing old errors)
+            if (sessionStorage.getItem('session_expired')) {
+                sessionStorage.removeItem('session_expired');
+            }
         });
     </script>
 </body>

@@ -62,6 +62,19 @@ Route::get('/', function () {
 
 Auth::routes();
 Route::get('/home', [HomeController::class, 'index'])->name('home');
+// ================================================
+// CSRF REFRESH ROUTE (Prevents 419 errors)
+// ================================================
+Route::get('/refresh-csrf', function () {
+    if (request()->ajax()) {
+        Session::regenerateToken();
+        return response()->json([
+            'csrf_token' => csrf_token(),
+            'success' => true
+        ]);
+    }
+    return abort(404);
+})->middleware('web')->name('refresh.csrf');
 
 Route::group(['middleware' => ['auth']], function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
